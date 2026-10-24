@@ -70,10 +70,8 @@ verify_no_quarantine_attribute() {
 
 verify_packaged_app_integrity() {
   local bundle="$1"
-  local sparkle="$bundle/Contents/Frameworks/Sparkle.framework"
 
   verify_no_quarantine_attribute "$bundle" || return 1
-  codesign --verify --deep --strict --verbose=2 "$sparkle" || return 1
   codesign --verify --deep --strict --verbose=2 "$bundle" || return 1
 }
 
@@ -95,7 +93,6 @@ esac
 # Load version info
 source "$ROOT/version.env"
 source "$ROOT/Scripts/package_product_paths.sh"
-source "$ROOT/Scripts/sparkle_signing_paths.sh"
 
 # SwiftBuild can record the deployment target as the SDK, enabling legacy native UI.
 CODEXBAR_MACOS_SDK_PATH=$(xcrun --sdk macosx --show-sdk-path)
@@ -276,16 +273,8 @@ if [[ -f "$ICON_SOURCE" ]]; then
 fi
 
 BUNDLE_ID="com.steipete.codexbar"
-FEED_URL="https://raw.githubusercontent.com/steipete/CodexBar/main/appcast.xml"
-AUTO_CHECKS=true
 if [[ "$LOWER_CONF" == "debug" ]]; then
   BUNDLE_ID="com.steipete.codexbar.debug"
-  FEED_URL=""
-  AUTO_CHECKS=false
-fi
-if [[ "$SIGNING_MODE" == "adhoc" ]]; then
-  FEED_URL=""
-  AUTO_CHECKS=false
 fi
 WIDGET_BUNDLE_ID="${BUNDLE_ID}.widget"
 resolve_package_signing_identity
@@ -375,9 +364,6 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>LSUIElement</key><true/>
     <key>CFBundleIconFile</key><string>Icon</string>
     <key>NSHumanReadableCopyright</key><string>© 2026 Peter Steinberger. MIT License.</string>
-    <key>SUFeedURL</key><string>${FEED_URL}</string>
-    <key>SUPublicEDKey</key><string>AGCY8w5vHirVfGGDGc8Szc5iuOqupZSh9pMj/Qs67XI=</string>
-    <key>SUEnableAutomaticChecks</key><${AUTO_CHECKS}/>
     <key>CodexBuildTimestamp</key><string>${BUILD_TIMESTAMP}</string>
     <key>CodexGitCommit</key><string>${GIT_COMMIT}</string>
     <key>CodexBarTeamID</key><string>${APP_TEAM_ID}</string>
@@ -570,13 +556,6 @@ strip_release_binary "$APP/Contents/PlugIns/CodexBarWidget.appex/Contents/MacOS/
 
 swiftpm_bin_path "${ARCH_LIST[0]}" PREFERRED_BUILD_DIR
 
-# Embed Sparkle.framework
-SPARKLE_SOURCE=$(codexbar_require_product_directory "$PREFERRED_BUILD_DIR" Sparkle.framework packaging)
-cp -R "$SPARKLE_SOURCE" "$APP/Contents/Frameworks/"
-chmod -R a+rX "$APP/Contents/Frameworks/Sparkle.framework"
-install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP/Contents/MacOS/CodexBar"
-# Re-sign Sparkle and all nested components with the selected package identity.
-SPARKLE="$APP/Contents/Frameworks/Sparkle.framework"
 if [[ "$SIGNING_MODE" == "adhoc" ]]; then
   CODESIGN_ID="-"
   CODESIGN_ARGS=(--force --sign "$CODESIGN_ID")
@@ -587,11 +566,6 @@ else
   CODESIGN_ARGS=(--force --timestamp --options runtime --sign "$CODESIGN_ID")
 fi
 function resign() { codesign "${CODESIGN_ARGS[@]}" "$1"; }
-# Validate Sparkle's nested layout before signing so framework layout drift fails clearly.
-SPARKLE_SIGNING_TARGETS=$(codexbar_sparkle_signing_targets "$SPARKLE")
-while IFS= read -r SPARKLE_TARGET; do
-  resign "$SPARKLE_TARGET"
-done <<<"$SPARKLE_SIGNING_TARGETS"
 
 if [[ -f "$ICON_TARGET" ]]; then
   cp "$ICON_TARGET" "$APP/Contents/Resources/Icon.icns"

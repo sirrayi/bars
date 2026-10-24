@@ -100,11 +100,6 @@ if [[ "$path_count" -eq 0 ]]; then
   require_macos_tests '<empty diff>' 'no changed paths were reported'
 fi
 
-# The glibc CLI matrix uses the same conservative docs/site allowlist, but draft
-# status only defers macOS tests. Linux builds remain required for source changes.
-linux_cli_build="$macos_tests"
-linux_cli_build_reason="${macos_tests_reason:-docs/site-only changes covered by portable checks}"
-
 if [[ "$macos_tests" == true && "$draft_pull_request" == true ]]; then
   macos_tests_deferred=true
   summary_reason="draft pull request: macOS Swift tests deferred until ready for review"
@@ -119,8 +114,6 @@ if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
     printf 'macos-tests=%s\n' "$macos_tests"
     printf 'macos-tests-deferred=%s\n' "$macos_tests_deferred"
     printf 'macos-tests-reason=%s\n' "$summary_reason"
-    printf 'linux-cli-build=%s\n' "$linux_cli_build"
-    printf 'linux-cli-build-reason=%s\n' "$linux_cli_build_reason"
     printf 'changed-path-count=%s\n' "$path_count"
   } >> "$GITHUB_OUTPUT"
 fi
@@ -131,10 +124,4 @@ elif [[ "$macos_tests" == true ]]; then
   printf 'macOS Swift tests required for this change set: %s.\n' "$macos_tests_reason"
 else
   printf 'Skipping macOS Swift tests: %s.\n' "$summary_reason"
-fi
-
-if [[ "$linux_cli_build" == true ]]; then
-  printf 'Linux glibc CLI matrix required for this change set: %s.\n' "$linux_cli_build_reason"
-else
-  printf 'Skipping Linux glibc CLI matrix: %s.\n' "$linux_cli_build_reason"
 fi

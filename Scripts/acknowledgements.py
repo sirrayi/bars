@@ -17,9 +17,6 @@ LOCKS = [Path('Package.resolved'), Path(
 PACKAGES = {
     'commander': ('Commander', ['Peter Steinberger'], 'MIT', ['LICENSE']),
     'keyboardshortcuts': ('KeyboardShortcuts', ['Sindre Sorhus'], 'MIT', ['license']),
-    'sparkle': ('Sparkle', ['Andy Matuschak', 'Elgato Systems GmbH', 'Kornel Lesiński',
-                           'Mayur Pawashe', 'C.W. Betts', 'Petroules Corporation', 'Big Nerd Ranch'],
-                'MIT / BSD / zlib', ['LICENSE', 'Vendor/ed25519-sparkle/license.txt']),
     'sweetcookiekit': ('SweetCookieKit', ['Peter Steinberger'], 'MIT', ['LICENSE']),
     'swift-asn1': ('swift-asn1', ['The SwiftASN1 Project'], 'Apache-2.0', ['NOTICE.txt', 'LICENSE.txt']),
     'swift-crypto': ('swift-crypto', ['The SwiftCrypto Project'], 'Apache-2.0', ['NOTICE.txt', 'LICENSE.txt']),

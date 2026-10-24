@@ -19,7 +19,7 @@ class AcknowledgementsTests(unittest.TestCase):
     def test_resolved_packages_and_vendored_notices_are_covered(self):
         notices.check(notices.ROOT, self.entries)
         rendered = notices.render(self.entries)
-        for expected in ['Commander', 'KeyboardShortcuts', 'Sparkle', 'SweetCookieKit', 'swift-log',
+        for expected in ['Commander', 'KeyboardShortcuts', 'SweetCookieKit', 'swift-log',
                          'swift-crypto', 'swift-asn1', 'Vortex', 'QuickJS', 'UNICODE LICENSE V3',
                          'BoringSSL', 'XKCP', 'Brian Gladman', 'Sucrase', '@jridgewell/gen-mapping',
                          '@jridgewell/resolve-uri', '@jridgewell/sourcemap-codec',
@@ -54,11 +54,6 @@ class AcknowledgementsTests(unittest.TestCase):
         entries = [item for item in self.entries if item['name'] != 'XKCP']
         with self.assertRaisesRegex(ValueError, 'missing'):
             notices.check(notices.ROOT, entries)
-
-    def test_release_archives_export_the_common_resource(self):
-        workflow = (notices.ROOT / '.github/workflows/release-cli.yml').read_text()
-        self.assertIn('Scripts/acknowledgements.py --text-output "$OUT_DIR/THIRD_PARTY_NOTICES"', workflow)
-        self.assertIn('CodexBarCLI codexbar VERSION THIRD_PARTY_NOTICES CodexBar_CodexBarCore.bundle', workflow)
 
 
 if __name__ == '__main__':

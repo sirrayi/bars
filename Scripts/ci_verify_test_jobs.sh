@@ -7,10 +7,6 @@ changes_result="${2:-}"
 macos_tests_required="${3:-}"
 macos_test_result="${4:-}"
 macos_tests_deferred="${5:-}"
-linux_musl_build_required="${6:-}"
-linux_musl_build_result="${7:-}"
-linux_build_result="${8-<missing>}"
-linux_build_required="${9-<missing>}"
 
 if [[ "$lint_result" != "success" ]]; then
   printf 'lint job finished with %s\n' "${lint_result:-<empty>}" >&2
@@ -21,20 +17,6 @@ if [[ "$changes_result" != "success" ]]; then
   printf 'changes job finished with %s\n' "${changes_result:-<empty>}" >&2
   exit 1
 fi
-
-case "${linux_build_required}:${linux_build_result}" in
-  true:success)
-    printf 'Linux glibc CLI matrix passed.\n'
-    ;;
-  false:skipped)
-    printf 'Linux glibc CLI matrix skipped by its path gate.\n'
-    ;;
-  *)
-    printf 'Linux glibc build gate/result mismatch: required=%s result=%s\n' \
-      "${linux_build_required:-<empty>}" "${linux_build_result:-<empty>}" >&2
-    exit 1
-    ;;
-esac
 
 case "${macos_tests_required}:${macos_tests_deferred}:${macos_test_result}" in
   true:false:success)
@@ -51,20 +33,6 @@ case "${macos_tests_required}:${macos_tests_deferred}:${macos_test_result}" in
     printf 'macOS test gate/result mismatch: required=%s deferred=%s result=%s\n' \
       "${macos_tests_required:-<empty>}" "${macos_tests_deferred:-<empty>}" \
       "${macos_test_result:-<empty>}" >&2
-    exit 1
-    ;;
-esac
-
-case "${linux_musl_build_required}:${linux_musl_build_result}" in
-  true:success)
-    printf 'Linux musl CLI build passed.\n'
-    ;;
-  false:skipped)
-    printf 'Linux musl CLI build skipped by its path gate.\n'
-    ;;
-  *)
-    printf 'Linux musl build gate/result mismatch: required=%s result=%s\n' \
-      "${linux_musl_build_required:-<empty>}" "${linux_musl_build_result:-<empty>}" >&2
     exit 1
     ;;
 esac
