@@ -60,8 +60,10 @@ public enum DevinProviderDescriptor {
                     ProviderColor(hex: 0xFFFFFF),
                 ]),
             tokenCost: ProviderTokenCostConfig(
-                supportsTokenCost: false,
-                noDataMessage: { "Devin cost summary is not supported." }),
+                supportsTokenCost: true,
+                noDataMessage: { "No Devin CLI sessions found in ~/.local/share/devin/cli/sessions.db." },
+                menuHintLines: [.estimate],
+                supportsTokenSnapshot: true),
             presentation: ProviderUsagePresentation(
                 costPresenter: { snapshot in
                     guard let cost = snapshot.providerCost, cost.period == "Extra usage balance" else {
@@ -82,6 +84,7 @@ public enum DevinProviderDescriptor {
             cli: ProviderCLIConfig(
                 name: "devin",
                 versionDetector: nil,
+                supportsCostCommand: true,
                 browserSupportExemption: { _, environment, settings in
                     #if os(Linux)
                     settings?.devin?.cookieSource == .manual &&

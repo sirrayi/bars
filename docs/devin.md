@@ -104,6 +104,23 @@ without enabling automatic auth; an empty override does not fall back to the con
 When reporting a failure, include the CodexBar, macOS, and browser versions, your selected Auth source, the browser used
 for Devin, and the exact error text. Do not share session values.
 
+## Cost estimates
+
+Devin CLI stores local session history in `~/.local/share/devin/cli/sessions.db` (SQLite). Assistant
+message nodes carry a `request_id`, `generation_model`, and per-request token metrics. The CLI
+re-inserts the same response as several nodes sharing one `request_id`, so CodexBar deduplicates on
+that ID and buckets each request by its earliest `created_at` in local days.
+
+Pricing is a list-price estimate, not ACU billing:
+
+- `swe-*` models and `compactor` are priced at $0 (free during Devin's promo) and count as priced.
+- Claude IDs like `claude-sonnet-5-5-xhigh` drop the Devin effort suffix and price through the
+  models.dev Anthropic catalog (`claude-*` input/output/cache rates).
+- Anything else stays unpriced; unknown models are never guessed.
+- `custom-pricing.json` overrides any of the above per model (`devin/<model>` or bare `<model>` keys).
+
+Only local Devin CLI sessions are covered; cloud Devin sessions are not part of this estimate.
+
 ## Data Source
 
 CodexBar requests:

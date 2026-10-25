@@ -606,6 +606,21 @@ public struct CostUsageFetcher: Sendable {
                 historyDays: clampedHistoryDays,
                 options: fallbackOptions))
         }
+        // Provider-specific by design: Devin reads the Devin CLI's local session ledger; SWE-2
+        // requests are free during the promo and Claude-routed requests price like Claude.
+        if provider == .devin {
+            return try await CostUsageTokenResult(snapshot: Self.loadDevinLocalSnapshot(
+                environment: environment,
+                now: now,
+                historyDays: clampedHistoryDays,
+                options: fallbackOptions,
+                pricingRefresh: PricingRefreshOptions(
+                    provider: .claude,
+                    isAllowed: allowPricingRefresh,
+                    retryUnknown: retryUnknownPricing,
+                    inBackground: refreshPricingInBackground),
+                modelsDevClient: modelsDevClient))
+        }
         if let remoteError {
             throw remoteError
         }
@@ -863,7 +878,7 @@ public struct CostUsageFetcher: Sendable {
         let reportContext: CostUsageReportContext?
     }
 
-    private static func unavailableLocalSnapshot(
+    static func unavailableLocalSnapshot(
         now: Date,
         historyDays: Int,
         calendar: Calendar) -> CostUsageTokenSnapshot
@@ -1121,7 +1136,7 @@ public struct CostUsageFetcher: Sendable {
         return view
     }
 
-    private struct PricingRefreshOptions: Sendable {
+    struct PricingRefreshOptions: Sendable {
         let provider: UsageProvider
         let isAllowed: Bool
         let retryUnknown: Bool
@@ -1134,7 +1149,7 @@ public struct CostUsageFetcher: Sendable {
         let client: ModelsDevClient
     }
 
-    private static func refreshPricingIfAllowed(
+    static func refreshPricingIfAllowed(
         options: PricingRefreshOptions,
         now: Date,
         cacheRoot: URL?,
