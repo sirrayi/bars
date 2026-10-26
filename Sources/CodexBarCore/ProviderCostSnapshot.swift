@@ -18,11 +18,7 @@ public struct ProviderCostSnapshot: Equatable, Codable, Sendable {
     public let balance: Double?
     /// Balance observation, including a confirmed absent or unavailable balance; independent of the budget age.
     public let balanceUpdatedAt: Date?
-    /// Codex shared workspace provenance; nil for other providers and legacy balance observations.
-    public let balanceIsWorkspace: Bool?
     public let updatedAt: Date
-    /// Codex-only unavailable observation. Optional for compatibility with successful and legacy snapshots.
-    var balanceIsUnavailable: Bool?
 
     public init(
         used: Double,
@@ -34,7 +30,6 @@ public struct ProviderCostSnapshot: Equatable, Codable, Sendable {
         personalUsed: Double? = nil,
         balance: Double? = nil,
         balanceUpdatedAt: Date? = nil,
-        balanceIsWorkspace: Bool? = nil,
         updatedAt: Date)
     {
         self.used = used
@@ -46,14 +41,7 @@ public struct ProviderCostSnapshot: Equatable, Codable, Sendable {
         self.personalUsed = personalUsed
         self.balance = balance
         self.balanceUpdatedAt = balanceUpdatedAt
-        self.balanceIsWorkspace = balanceIsWorkspace
         self.updatedAt = updatedAt
-        self.balanceIsUnavailable = nil
-    }
-
-    /// False for credit-denominated amounts (Codex extra usage), which have no currency to format.
-    package var isMonetary: Bool {
-        self.currencyCode != CodexExtraUsageCost.currencyCode
     }
 
     /// Projects a positive spend budget into a quota meter without assigning it a time-window cadence.
@@ -67,20 +55,7 @@ public struct ProviderCostSnapshot: Equatable, Codable, Sendable {
     }
 
     func replacing(balance: Double?) -> Self {
-        self.replacing(
-            balance: balance,
-            balanceUpdatedAt: self.balanceUpdatedAt,
-            balanceIsWorkspace: self.balanceIsWorkspace,
-            balanceIsUnavailable: self.balanceIsUnavailable)
-    }
-
-    func replacing(
-        balance: Double?,
-        balanceUpdatedAt: Date?,
-        balanceIsWorkspace: Bool?,
-        balanceIsUnavailable: Bool?) -> Self
-    {
-        var result = Self(
+        Self(
             used: self.used,
             limit: self.limit,
             currencyCode: self.currencyCode,
@@ -89,10 +64,7 @@ public struct ProviderCostSnapshot: Equatable, Codable, Sendable {
             nextRegenAmount: self.nextRegenAmount,
             personalUsed: self.personalUsed,
             balance: balance,
-            balanceUpdatedAt: balanceUpdatedAt,
-            balanceIsWorkspace: balanceIsWorkspace,
+            balanceUpdatedAt: self.balanceUpdatedAt,
             updatedAt: self.updatedAt)
-        result.balanceIsUnavailable = balanceIsUnavailable
-        return result
     }
 }

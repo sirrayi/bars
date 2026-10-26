@@ -17,21 +17,20 @@ struct StatusItemQuotaWarningFlashTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
 
         let now = Date()
-        controller.startQuotaWarningFlash(provider: .codex, postedAt: now)
+        controller.startQuotaWarningFlash(provider: .claude, postedAt: now)
 
-        #expect(controller.quotaWarningFlashActive(provider: .codex, now: now.addingTimeInterval(59)) == true)
-        #expect(controller.quotaWarningFlashActive(provider: .codex, now: now.addingTimeInterval(61)) == false)
+        #expect(controller.quotaWarningFlashActive(provider: .claude, now: now.addingTimeInterval(59)) == true)
+        #expect(controller.quotaWarningFlashActive(provider: .claude, now: now.addingTimeInterval(61)) == false)
     }
 
     @Test

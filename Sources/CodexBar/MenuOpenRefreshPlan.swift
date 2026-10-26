@@ -17,7 +17,6 @@ struct MenuOpenRefreshPlan: Equatable {
 
     let providers: [ProviderInstanceID]
     let scheduling: Scheduling
-    let refreshCodexDashboard: Bool
     let refreshTokenCost: Bool
 
     static func resolve(_ inputs: Inputs) -> Self {
@@ -25,7 +24,6 @@ struct MenuOpenRefreshPlan: Equatable {
             return Self(
                 providers: inputs.enabledProviders,
                 scheduling: .concurrent,
-                refreshCodexDashboard: inputs.enabledProviders.contains(.codex),
                 refreshTokenCost: !inputs.enabledProviders.isEmpty)
         }
 
@@ -38,7 +36,6 @@ struct MenuOpenRefreshPlan: Equatable {
         return Self(
             providers: providers,
             scheduling: .sequential,
-            refreshCodexDashboard: false,
             refreshTokenCost: false)
     }
 }

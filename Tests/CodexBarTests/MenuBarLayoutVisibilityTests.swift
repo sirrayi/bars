@@ -17,7 +17,7 @@ struct MenuBarLayoutVisibilityTests {
             appearanceName: appearance.rawValue,
             isDebugApp: false,
             now: fixtures.now)
-        let icon = try #require(ProviderBrandIcon.image(for: .codex))
+        let icon = try #require(ProviderBrandIcon.image(for: .claude))
         let output = MenuBarLayoutRenderer().render(
             layout: .defaultLayout, data: fixtures.data(), icon: icon, options: options)
         let button = NSButton(frame: NSRect(x: 0, y: 0, width: 100, height: 22))

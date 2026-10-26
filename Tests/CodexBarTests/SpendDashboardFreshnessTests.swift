@@ -334,11 +334,8 @@ final class SpendDashboardFreshnessFixture {
         self.settings.costUsageEnabled = true
         self.settings.costUsageHistoryDays = 30
         self.settings.costUsageBucketTimeZoneIdentifier = "UTC"
-        self.settings.openCodexUsageLogsEnabled = false
         let environment = ["HOME": self.env.root.path, "CODEX_HOME": self.env.codexHomeRoot.path]
-        self.settings._test_codexReconciliationEnvironment = environment
         self.store = UsageStore(
-            fetcher: UsageFetcher(environment: environment),
             browserDetection: BrowserDetection(homeDirectory: self.env.root.path, cacheTTL: 0),
             settings: self.settings,
             startupBehavior: .testing,
@@ -354,7 +351,7 @@ final class SpendDashboardFreshnessFixture {
     }
 
     func installSyntheticLoader() {
-        self.store._test_tokenUsageSnapshotLoaderOverride = { [self] provider, _, _, _, days in
+        self.store._test_tokenUsageSnapshotLoaderOverride = { [self] provider, _, _, days in
             #expect(provider == .claude)
             self.requests.append(days)
             let snapshot = self.snapshot(days: days, recentCost: self.latestCost)

@@ -68,14 +68,11 @@ extension StatusItemController {
         let selectedProvider = isOverviewSelected
             ? self.resolvedMenuProvider(enabledProviders: enabledProviders)
             : selection.provider
-        let currentProvider = selectedProvider ?? enabledProviders.first ?? .codex
-        let codexAccountDisplay = isOverviewSelected
-            ? nil
-            : self.codexAccountMenuDisplay(for: currentProvider)
+        let currentProvider = selectedProvider ?? enabledProviders.first ?? .claude
         let tokenAccountDisplay = isOverviewSelected
             ? nil
             : self.tokenAccountMenuDisplay(for: currentProvider)
-        let showAllAccounts = (tokenAccountDisplay?.showAll ?? false) || (codexAccountDisplay?.showAll ?? false)
+        let showAllAccounts = tokenAccountDisplay?.showAll ?? false
         let descriptor = self.makeMenuDescriptor(
             provider: selectedProvider,
             includeContextualActions: !isOverviewSelected)
@@ -87,13 +84,11 @@ extension StatusItemController {
             for: selection,
             in: menu,
             menuWidth: menuWidth,
-            codexAccountDisplay: codexAccountDisplay,
             tokenAccountDisplay: tokenAccountDisplay) == nil
         else { return }
 
         // Building sibling content updates the "last rendered display" trackers used by
         // smart-update compatibility checks; restore them so the live tab's state wins.
-        let savedCodexDisplay = self.lastCodexAccountMenuDisplay
         let savedTokenDisplay = self.lastTokenAccountMenuDisplay
         let scratch = NSMenu()
         scratch.autoenablesItems = false
@@ -105,13 +100,11 @@ extension StatusItemController {
                 currentProvider: currentProvider,
                 switcherSelection: selection,
                 menuWidth: menuWidth,
-                codexAccountDisplay: codexAccountDisplay,
                 tokenAccountDisplay: tokenAccountDisplay,
-                openAIContext: self.openAIWebContext(
+                submenuContext: self.menuSubmenuContext(
                     currentProvider: currentProvider,
                     showAllAccounts: showAllAccounts),
                 descriptor: descriptor))
-        self.lastCodexAccountMenuDisplay = savedCodexDisplay
         self.lastTokenAccountMenuDisplay = savedTokenDisplay
 
         let items = scratch.items
@@ -128,7 +121,6 @@ extension StatusItemController {
             selection: selection,
             context: MergedSwitcherContentCacheContext(
                 menuWidth: menuWidth,
-                codexAccountDisplay: codexAccountDisplay,
                 tokenAccountDisplay: tokenAccountDisplay,
                 contentVersion: self.menuSession.contentVersion))
     }

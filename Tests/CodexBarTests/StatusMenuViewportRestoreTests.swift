@@ -43,9 +43,7 @@ struct StatusMenuViewportRestoreTests {
 
     private func makeController(settings: SettingsStore) -> StatusItemController {
         let environment = Self.isolatedEnvironment()
-        let fetcher = UsageFetcher(environment: environment)
         let store = UsageStore(
-            fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -65,7 +63,7 @@ struct StatusMenuViewportRestoreTests {
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         return [
             "HOME": root.path,
-            "CODEX_HOME": root.appendingPathComponent(".codex", isDirectory: true).path,
+            "CODEX_HOME": root.appendingPathComponent(".opencode", isDirectory: true).path,
             "XDG_CONFIG_HOME": root.appendingPathComponent(".config", isDirectory: true).path,
         ]
     }
@@ -314,7 +312,7 @@ extension StatusMenuViewportRestoreTests {
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
         defer { controller.menuDidClose(menu) }
         let menuID = ObjectIdentifier(menu)
@@ -333,10 +331,10 @@ extension StatusMenuViewportRestoreTests {
             controller.refreshOpenMenusAfterExplicitStoreAction()
         }
         #expect(try controller.handleMenuTrackingShortcutEvent(self.keyEvent("r", keyCode: 15), menu: menu))
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.opencode)] == nil {
             await Task.yield()
         }
-        let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
+        let task = try #require(controller.manualRefreshTasks[.provider(.opencode)])
         gate.resume()
         await task.value
 
@@ -364,7 +362,7 @@ extension StatusMenuViewportRestoreTests {
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
         defer { controller.menuDidClose(menu) }
         controller.markMenuFresh(menu)
@@ -373,10 +371,10 @@ extension StatusMenuViewportRestoreTests {
         controller._test_menuViewportRestoreScheduler = { _ in scheduledCount += 1 }
         controller._test_manualRefreshOperation = {}
         controller.refreshMenuProviderNow(in: menu)
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.opencode)] == nil {
             await Task.yield()
         }
-        let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
+        let task = try #require(controller.manualRefreshTasks[.provider(.opencode)])
         await task.value
 
         #expect(scheduledCount == 0)
@@ -392,7 +390,7 @@ extension StatusMenuViewportRestoreTests {
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
         #expect(StatusItemController.attachedMenuScrollView(in: menu) == nil)
 
@@ -406,10 +404,10 @@ extension StatusMenuViewportRestoreTests {
             controller.refreshOpenMenusAfterExplicitStoreAction()
         }
         controller.refreshMenuProviderNow(in: menu)
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.opencode)] == nil {
             await Task.yield()
         }
-        let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
+        let task = try #require(controller.manualRefreshTasks[.provider(.opencode)])
         _ = self.attachScrollableViewport(to: menu)
 
         gate.resume()
@@ -431,9 +429,9 @@ extension StatusMenuViewportRestoreTests {
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
         let claudeMenu = controller.makeMenu(for: .claude)
-        let codexMenu = controller.makeMenu(for: .codex)
+        let codexMenu = controller.makeMenu(for: .opencode)
         controller.providerMenus[.claude] = claudeMenu
-        controller.providerMenus[.codex] = codexMenu
+        controller.providerMenus[.opencode] = codexMenu
         controller.menuWillOpen(claudeMenu)
         controller.menuWillOpen(codexMenu)
         defer {
@@ -472,7 +470,7 @@ extension StatusMenuViewportRestoreTests {
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
         defer { controller.menuDidClose(menu) }
 
@@ -486,10 +484,10 @@ extension StatusMenuViewportRestoreTests {
             controller.refreshOpenMenusAfterExplicitStoreAction()
         }
         controller.refreshMenuProviderNow(in: menu)
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.opencode)] == nil {
             await Task.yield()
         }
-        let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
+        let task = try #require(controller.manualRefreshTasks[.provider(.opencode)])
         #expect(!controller.menuSession.pendingViewportRestores.isEmpty)
 
         controller.menuDidClose(menu)
@@ -513,7 +511,7 @@ extension StatusMenuViewportRestoreTests {
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
 
         var scheduled: [@MainActor () -> Void] = []
@@ -524,10 +522,10 @@ extension StatusMenuViewportRestoreTests {
             controller.refreshOpenMenusAfterExplicitStoreAction()
         }
         controller.refreshMenuProviderNow(in: menu)
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.opencode)] == nil {
             await Task.yield()
         }
-        let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
+        let task = try #require(controller.manualRefreshTasks[.provider(.opencode)])
         await task.value
         #expect(scheduled.count == 1)
 
@@ -549,10 +547,10 @@ extension StatusMenuViewportRestoreTests {
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
         let submenu = controller.makeHostedSubviewPlaceholderMenu(
-            chartID: StatusItemController.usageBreakdownChartID)
+            chartID: StatusItemController.costHistoryChartID)
         controller.openMenus[ObjectIdentifier(submenu)] = submenu
 
         var scheduled: [@MainActor () -> Void] = []
@@ -569,10 +567,10 @@ extension StatusMenuViewportRestoreTests {
             controller.refreshOpenMenusAfterExplicitStoreAction()
         }
         controller.refreshMenuProviderNow(in: menu)
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.opencode)] == nil {
             await Task.yield()
         }
-        let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
+        let task = try #require(controller.manualRefreshTasks[.provider(.opencode)])
         await task.value
 
         #expect(scheduled.isEmpty)
@@ -602,7 +600,7 @@ extension StatusMenuViewportRestoreTests {
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
 
         var scheduled: [@MainActor () -> Void] = []
@@ -619,15 +617,15 @@ extension StatusMenuViewportRestoreTests {
             controller.refreshOpenMenusAfterExplicitStoreAction()
         }
         controller.refreshMenuProviderNow(in: menu)
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.opencode)] == nil {
             await Task.yield()
         }
-        let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
+        let task = try #require(controller.manualRefreshTasks[.provider(.opencode)])
         await task.value
         #expect(scheduled.count == 1)
 
         let submenu = controller.makeHostedSubviewPlaceholderMenu(
-            chartID: StatusItemController.usageBreakdownChartID)
+            chartID: StatusItemController.costHistoryChartID)
         controller.openMenus[ObjectIdentifier(submenu)] = submenu
         scheduled.removeFirst()()
 
@@ -657,7 +655,7 @@ extension StatusMenuViewportRestoreTests {
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
 
         var scheduled: [@MainActor () -> Void] = []
@@ -668,18 +666,18 @@ extension StatusMenuViewportRestoreTests {
             controller.refreshOpenMenusAfterExplicitStoreAction()
         }
         controller.refreshMenuProviderNow(in: menu)
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.opencode)] == nil {
             await Task.yield()
         }
-        let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
+        let task = try #require(controller.manualRefreshTasks[.provider(.opencode)])
         await task.value
         #expect(scheduled.count == 1)
 
-        controller.rebuildOpenMenuIfStillVisible(menu, provider: .codex)
+        controller.rebuildOpenMenuIfStillVisible(menu, provider: .opencode)
         #expect(!controller.menuNeedsRefresh(menu))
         controller.parentMenuRebuildPendingAfterHostedSubviewClose = true
         let submenu = controller.makeHostedSubviewPlaceholderMenu(
-            chartID: StatusItemController.usageBreakdownChartID)
+            chartID: StatusItemController.costHistoryChartID)
         controller.openMenus[ObjectIdentifier(submenu)] = submenu
         scheduled.removeFirst()()
 
@@ -697,7 +695,7 @@ extension StatusMenuViewportRestoreTests {
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
         let settingsItem = try #require(menu.items.first { $0.title == "Settings..." })
         controller.menu(menu, willHighlight: settingsItem)
@@ -710,10 +708,10 @@ extension StatusMenuViewportRestoreTests {
             controller.refreshOpenMenusAfterExplicitStoreAction()
         }
         controller.refreshMenuProviderNow(in: menu)
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.opencode)] == nil {
             await Task.yield()
         }
-        let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
+        let task = try #require(controller.manualRefreshTasks[.provider(.opencode)])
         await task.value
 
         #expect(scheduledCount == 0)
@@ -730,7 +728,7 @@ extension StatusMenuViewportRestoreTests {
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
 
         var scheduled: [@MainActor () -> Void] = []
@@ -741,10 +739,10 @@ extension StatusMenuViewportRestoreTests {
             controller.refreshOpenMenusAfterExplicitStoreAction()
         }
         controller.refreshMenuProviderNow(in: menu)
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.opencode)] == nil {
             await Task.yield()
         }
-        let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
+        let task = try #require(controller.manualRefreshTasks[.provider(.opencode)])
         await task.value
         #expect(scheduled.count == 1)
 
@@ -765,7 +763,7 @@ extension StatusMenuViewportRestoreTests {
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
         let overviewItem = NSMenuItem()
         overviewItem.view = NSView()
@@ -781,10 +779,10 @@ extension StatusMenuViewportRestoreTests {
             controller.menuSession.invalidate(allowsStaleContent: false, requiresRebuild: true)
         }
         controller.refreshMenuProviderNow(in: menu)
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.opencode)] == nil {
             await Task.yield()
         }
-        let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
+        let task = try #require(controller.manualRefreshTasks[.provider(.opencode)])
         await task.value
 
         #expect(scheduledCount == 0)
@@ -801,7 +799,7 @@ extension StatusMenuViewportRestoreTests {
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
 
         var scheduled: [@MainActor () -> Void] = []
@@ -812,10 +810,10 @@ extension StatusMenuViewportRestoreTests {
             controller.refreshOpenMenusAfterExplicitStoreAction()
         }
         controller.refreshMenuProviderNow(in: menu)
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.opencode)] == nil {
             await Task.yield()
         }
-        let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
+        let task = try #require(controller.manualRefreshTasks[.provider(.opencode)])
         await task.value
         #expect(scheduled.count == 1)
 
@@ -839,7 +837,7 @@ extension StatusMenuViewportRestoreTests {
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
         let refreshItem = try #require(menu.items.first(where: controller.isPersistentRefreshItem))
         let refreshView = try #require(refreshItem.view as? PersistentRefreshMenuView)
@@ -856,10 +854,10 @@ extension StatusMenuViewportRestoreTests {
         }
 
         #expect(refreshView.accessibilityPerformPress())
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.opencode)] == nil {
             await Task.yield()
         }
-        let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
+        let task = try #require(controller.manualRefreshTasks[.provider(.opencode)])
         #expect(controller.highlightedMenuItems[ObjectIdentifier(menu)] == nil)
         #expect(!refreshItem.isEnabled)
 
@@ -882,7 +880,7 @@ extension StatusMenuViewportRestoreTests {
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
         let scrollView = self.attachScrollableViewport(to: menu)
 
@@ -894,10 +892,10 @@ extension StatusMenuViewportRestoreTests {
             controller.refreshOpenMenusAfterExplicitStoreAction()
         }
         controller.refreshMenuProviderNow(in: menu)
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.opencode)] == nil {
             await Task.yield()
         }
-        let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
+        let task = try #require(controller.manualRefreshTasks[.provider(.opencode)])
 
         scrollView.contentView.scroll(to: NSPoint(x: 0, y: 120))
         gate.resume()
@@ -917,7 +915,7 @@ extension StatusMenuViewportRestoreTests {
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
 
         let gate = ViewportRefreshGate()
@@ -928,10 +926,10 @@ extension StatusMenuViewportRestoreTests {
             controller.refreshOpenMenusAfterExplicitStoreAction()
         }
         controller.refreshMenuProviderNow(in: menu)
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.opencode)] == nil {
             await Task.yield()
         }
-        let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
+        let task = try #require(controller.manualRefreshTasks[.provider(.opencode)])
         let initialGeneration = try #require(controller.menuSession
             .menuInteractionGeneration(for: ObjectIdentifier(menu)))
 
@@ -955,7 +953,7 @@ extension StatusMenuViewportRestoreTests {
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
         let scrollView = self.attachScrollableViewport(to: menu)
 
@@ -967,10 +965,10 @@ extension StatusMenuViewportRestoreTests {
             controller.refreshOpenMenusAfterExplicitStoreAction()
         }
         controller.refreshMenuProviderNow(in: menu)
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.opencode)] == nil {
             await Task.yield()
         }
-        let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
+        let task = try #require(controller.manualRefreshTasks[.provider(.opencode)])
         await task.value
         #expect(scheduled.count == 1)
 
@@ -991,7 +989,7 @@ extension StatusMenuViewportRestoreTests {
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
 
         var scheduled: [@MainActor () -> Void] = []
@@ -1002,10 +1000,10 @@ extension StatusMenuViewportRestoreTests {
             controller.refreshOpenMenusAfterExplicitStoreAction()
         }
         controller.refreshMenuProviderNow(in: menu)
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.opencode)] == nil {
             await Task.yield()
         }
-        let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
+        let task = try #require(controller.manualRefreshTasks[.provider(.opencode)])
         await task.value
         #expect(scheduled.count == 1)
 
@@ -1026,7 +1024,7 @@ extension StatusMenuViewportRestoreTests {
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
         defer { controller.menuDidClose(menu) }
 
@@ -1049,9 +1047,9 @@ extension StatusMenuViewportRestoreTests {
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
         let claudeMenu = controller.makeMenu(for: .claude)
-        let codexMenu = controller.makeMenu(for: .codex)
+        let codexMenu = controller.makeMenu(for: .opencode)
         controller.providerMenus[.claude] = claudeMenu
-        controller.providerMenus[.codex] = codexMenu
+        controller.providerMenus[.opencode] = codexMenu
         controller.menuWillOpen(claudeMenu)
 
         var scheduledCount = 0
@@ -1088,8 +1086,8 @@ extension StatusMenuViewportRestoreTests {
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = try #require(controller.makeMenu(for: .codex) as? StatusItemMenu)
-        controller.providerMenus[.codex] = menu
+        let menu = try #require(controller.makeMenu(for: .opencode) as? StatusItemMenu)
+        controller.providerMenus[.opencode] = menu
         controller.menuWillOpen(menu)
         let closedSession = try #require(menu.menuInteractionGeneration)
 
@@ -1110,10 +1108,10 @@ extension StatusMenuViewportRestoreTests {
         let reopenedSession = try #require(menu.menuInteractionGeneration)
         #expect(reopenedSession != closedSession)
 
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.opencode)] == nil {
             await Task.yield()
         }
-        let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
+        let task = try #require(controller.manualRefreshTasks[.provider(.opencode)])
         #expect(controller.menuSession.pendingViewportRestores.isEmpty)
 
         gate.resume()
@@ -1135,7 +1133,7 @@ extension StatusMenuViewportRestoreTests {
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
-        let rootMenu = controller.makeMenu(for: .codex)
+        let rootMenu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(rootMenu)
         let submenu = NSMenu()
         let submenuItem = NSMenuItem(title: "Submenu", action: nil, keyEquivalent: "")
@@ -1175,7 +1173,7 @@ extension StatusMenuViewportRestoreTests {
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
-        let rootMenu = controller.makeMenu(for: .codex)
+        let rootMenu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(rootMenu)
         defer { controller.menuDidClose(rootMenu) }
         let rootID = ObjectIdentifier(rootMenu)
@@ -1190,10 +1188,10 @@ extension StatusMenuViewportRestoreTests {
             controller.refreshOpenMenusAfterExplicitStoreAction()
         }
         controller.refreshMenuProviderNow(in: rootMenu)
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.opencode)] == nil {
             await Task.yield()
         }
-        let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
+        let task = try #require(controller.manualRefreshTasks[.provider(.opencode)])
         let refreshInteraction = try #require(controller.menuSession.menuInteractionGeneration(for: rootID))
 
         let submenu = NSMenu()
@@ -1221,7 +1219,7 @@ extension StatusMenuViewportRestoreTests {
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
-        let rootMenu = controller.makeMenu(for: .codex)
+        let rootMenu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(rootMenu)
         defer { controller.menuDidClose(rootMenu) }
 
@@ -1233,10 +1231,10 @@ extension StatusMenuViewportRestoreTests {
             controller.refreshOpenMenusAfterExplicitStoreAction()
         }
         controller.refreshMenuProviderNow(in: rootMenu)
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.opencode)] == nil {
             await Task.yield()
         }
-        let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
+        let task = try #require(controller.manualRefreshTasks[.provider(.opencode)])
         await task.value
         #expect(scheduled.count == 1)
 
@@ -1257,7 +1255,7 @@ extension StatusMenuViewportRestoreTests {
         let settings = self.makeSettings()
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        self.enableOnly([.claude, .codex], settings: settings)
+        self.enableOnly([.claude, .opencode], settings: settings)
         settings.selectedMenuProvider = .claude
         settings.mergedMenuLastSelectedWasOverview = false
 
@@ -1281,7 +1279,7 @@ extension StatusMenuViewportRestoreTests {
         }
         let task = try #require(controller.manualRefreshTasks[.provider(.claude)])
 
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .opencode
         gate.resume()
         await task.value
 
@@ -1294,7 +1292,7 @@ extension StatusMenuViewportRestoreTests {
         let settings = self.makeSettings()
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        self.enableOnly([.claude, .codex], settings: settings)
+        self.enableOnly([.claude, .opencode], settings: settings)
         settings.mergedOverviewSelectedProviders = []
         settings.selectedMenuProvider = .claude
         settings.mergedMenuLastSelectedWasOverview = false
@@ -1329,7 +1327,7 @@ extension StatusMenuViewportRestoreTests {
 
         let initialGeneration = try #require(controller.menuSession
             .menuInteractionGeneration(for: ObjectIdentifier(menu)))
-        controller.selectOverviewProvider(.codex, menu: menu)
+        controller.selectOverviewProvider(.opencode, menu: menu)
         controller.selectOverviewProvider(.claude, menu: menu)
         #expect(settings.selectedMenuProvider == .claude)
         #expect(controller.menuSession.menuInteractionGeneration(for: ObjectIdentifier(menu)) == initialGeneration + 2)
@@ -1345,7 +1343,7 @@ extension StatusMenuViewportRestoreTests {
         let settings = self.makeSettings()
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        self.enableOnly([.claude, .codex], settings: settings)
+        self.enableOnly([.claude, .opencode], settings: settings)
         settings.mergedOverviewSelectedProviders = []
         settings.selectedMenuProvider = .claude
         settings.mergedMenuLastSelectedWasOverview = false
@@ -1370,7 +1368,7 @@ extension StatusMenuViewportRestoreTests {
         menu.requestPersistentRefreshAction()
         let actionGeneration = try #require(controller.menuSession
             .menuInteractionGeneration(for: ObjectIdentifier(menu)))
-        controller.selectOverviewProvider(.codex, menu: menu)
+        controller.selectOverviewProvider(.opencode, menu: menu)
         controller.selectOverviewProvider(.claude, menu: menu)
         #expect(controller.menuSession.menuInteractionGeneration(for: ObjectIdentifier(menu)) == actionGeneration + 2)
 
@@ -1396,7 +1394,7 @@ extension StatusMenuViewportRestoreTests {
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
 
         let gate = ViewportRefreshGate()
@@ -1404,10 +1402,10 @@ extension StatusMenuViewportRestoreTests {
         controller._test_menuViewportRestoreScheduler = { _ in scheduledCount += 1 }
         controller._test_manualRefreshOperation = { await gate.wait() }
         controller.refreshMenuProviderNow(in: menu)
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.opencode)] == nil {
             await Task.yield()
         }
-        let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
+        let task = try #require(controller.manualRefreshTasks[.provider(.opencode)])
         #expect(!controller.menuSession.pendingViewportRestores.isEmpty)
 
         task.cancel()
@@ -1426,7 +1424,7 @@ extension StatusMenuViewportRestoreTests {
 
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
         defer { controller.menuDidClose(menu) }
 

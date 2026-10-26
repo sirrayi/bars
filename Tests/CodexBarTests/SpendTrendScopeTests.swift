@@ -106,9 +106,9 @@ struct SpendTrendScopeTests {
         let start = try Self.day(1, calendar: calendar)
         let end = try Self.day(endDay, month: endMonth, calendar: calendar)
         let sources: [(String, UsageProvider, Double?, String)] = [
-            ("native", .codex, 9, "Codex · #2"), ("opencodex", .codex, 5, "Codex"),
+            ("native", .devin, 9, "Devin · #2"), ("opencodex", .devin, 5, "Devin"),
             ("deepseek", .deepseek, 3, "DeepSeek"), ("idle", .claude, 0, "Claude"),
-            ("unknown", .opencode, nil, "OpenCode"), ("unused-account", .codex, 0, "Codex · #1"),
+            ("unknown", .opencode, nil, "OpenCode"), ("unused-account", .devin, 0, "Devin · #1"),
         ]
         let providers = sources.enumerated().map { rank, source in
             SpendDashboardModel.ProviderRow(
@@ -118,12 +118,11 @@ struct SpendTrendScopeTests {
                 displayName: source.3,
                 totalTokens: nil,
                 totalCost: source.2,
-                coveredDayCount: 7,
-                sourceKind: source.0 == "opencodex" ? .openCodex : .native)
+                coveredDayCount: 7)
         }
         let amounts: [(Int, String, UsageProvider, Double)] = [
-            (1, "native", .codex, 2), (1, "deepseek", .deepseek, 1), (2, "native", .codex, 3),
-            (7, "native", .codex, 4), (7, "opencodex", .codex, 5), (7, "deepseek", .deepseek, 2),
+            (1, "native", .devin, 2), (1, "deepseek", .deepseek, 1), (2, "native", .devin, 3),
+            (7, "native", .devin, 4), (7, "opencodex", .devin, 5), (7, "deepseek", .deepseek, 2),
             (2, "idle", .claude, 0),
         ]
         let daily = try amounts.map { day, id, provider, cost in
@@ -137,8 +136,8 @@ struct SpendTrendScopeTests {
                 stackEnd: cost)
         }
         let hours: [(Int, String, UsageProvider, Double)] = [
-            (30, "native", .codex, 10), (1, "native", .codex, 2), (1, "deepseek", .deepseek, 1),
-            (7, "native", .codex, 4), (7, "opencodex", .codex, 5), (7, "idle", .claude, 0),
+            (30, "native", .devin, 10), (1, "native", .devin, 2), (1, "deepseek", .deepseek, 1),
+            (7, "native", .devin, 4), (7, "opencodex", .devin, 5), (7, "idle", .claude, 0),
         ]
         let hourly = try hours.map { day, id, provider, cost in
             try SpendDashboardModel.HourlyPoint(

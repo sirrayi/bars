@@ -21,8 +21,8 @@ struct ProviderStatusRefreshPublicationTests {
 
         let scopedRefresh = Task {
             await ProviderInteractionContext.$current.withValue(.userInitiated) {
-                await store.refreshProvider(.codex)
-                await store.refreshProviderStatus(.codex)
+                await store.refreshProvider(.opencode)
+                await store.refreshProviderStatus(.opencode)
             }
         }
         await gate.waitUntilStarted()
@@ -30,15 +30,14 @@ struct ProviderStatusRefreshPublicationTests {
         let completed = await store.runRefresh(startupConnectivityRetryAttempt: nil)
         #expect(completed)
         #expect(requests == 2)
-        #expect(store.statuses[.codex]?.description == "Current incident")
-        #expect(store.providerStatusHadIssue[.codex] == true)
+        #expect(store.statuses[.opencode]?.description == "Current incident")
+        #expect(store.providerStatusHadIssue[.opencode] == true)
 
         await gate.resume()
         await scopedRefresh.value
 
-        #expect(store.statuses[.codex]?.description == "Current incident")
-        #expect(store.providerStatusHadIssue[.codex] == true)
-        await store.creditsRefreshTask?.value
+        #expect(store.statuses[.opencode]?.description == "Current incident")
+        #expect(store.providerStatusHadIssue[.opencode] == true)
         await store.tokenRefreshSequenceTask?.value
         store.memoryPressureReliefTask?.cancel()
         await store.memoryPressureReliefTask?.value
@@ -60,18 +59,18 @@ struct ProviderStatusRefreshPublicationTests {
             return Self.status(.major, description: "Current incident")
         }
 
-        let older = Task { await store.refreshProviderStatus(.codex) }
+        let older = Task { await store.refreshProviderStatus(.opencode) }
         await olderGate.waitUntilStarted()
-        let newer = Task { await store.refreshProviderStatus(.codex) }
+        let newer = Task { await store.refreshProviderStatus(.opencode) }
         await newerGate.waitUntilStarted()
         await olderGate.resume()
         await older.value
-        #expect(store.statuses[.codex]?.description == "Older operational status")
+        #expect(store.statuses[.opencode]?.description == "Older operational status")
         await newerGate.resume()
         await newer.value
 
-        #expect(store.statuses[.codex]?.description == "Current incident")
-        #expect(store.providerStatusHadIssue[.codex] == true)
+        #expect(store.statuses[.opencode]?.description == "Current incident")
+        #expect(store.providerStatusHadIssue[.opencode] == true)
     }
 
     @Test
@@ -88,15 +87,15 @@ struct ProviderStatusRefreshPublicationTests {
             throw URLError(.timedOut)
         }
 
-        let older = Task { await store.refreshProviderStatus(.codex) }
+        let older = Task { await store.refreshProviderStatus(.opencode) }
         await gate.waitUntilStarted()
-        await store.refreshProviderStatus(.codex)
-        #expect(store.statuses[.codex] == nil)
+        await store.refreshProviderStatus(.opencode)
+        #expect(store.statuses[.opencode] == nil)
         await gate.resume()
         await older.value
 
-        #expect(store.statuses[.codex]?.description == "Available incident")
-        #expect(store.providerStatusHadIssue[.codex] == true)
+        #expect(store.statuses[.opencode]?.description == "Available incident")
+        #expect(store.providerStatusHadIssue[.opencode] == true)
     }
 
     @Test
@@ -114,34 +113,34 @@ struct ProviderStatusRefreshPublicationTests {
             return Self.status(.major, description: "Current incident")
         }
 
-        let older = Task { await store.refreshProviderStatus(.codex) }
+        let older = Task { await store.refreshProviderStatus(.opencode) }
         await gate.waitUntilStarted()
-        await store.refreshProviderStatus(.codex)
+        await store.refreshProviderStatus(.opencode)
         await gate.resume()
         await older.value
 
-        #expect(store.statuses[.codex]?.description == "Current incident")
+        #expect(store.statuses[.opencode]?.description == "Current incident")
         #expect(store.startupConnectivityRetryNeeded == false)
     }
 
     @Test
     func `status publication ordering is independent for each provider`() async {
-        let store = Self.makeStore(providers: [.codex, .claude])
+        let store = Self.makeStore(providers: [.opencode, .claude])
         let gate = StatusPublicationGate()
         store._test_providerStatusFetchOverride = { provider in
-            if provider == .codex {
+            if provider == .opencode {
                 await gate.suspend()
             }
             return Self.status(.major, description: provider.rawValue)
         }
 
-        let codex = Task { await store.refreshProviderStatus(.codex) }
+        let codex = Task { await store.refreshProviderStatus(.opencode) }
         await gate.waitUntilStarted()
         await store.refreshProviderStatus(.claude)
         await gate.resume()
         await codex.value
 
-        #expect(store.statuses[.codex]?.description == "codex")
+        #expect(store.statuses[.opencode]?.description == "opencode")
         #expect(store.statuses[.claude]?.description == "claude")
     }
 
@@ -151,49 +150,35 @@ struct ProviderStatusRefreshPublicationTests {
         store._test_providerStatusFetchOverride = { _ in
             Self.status(.major, description: "Incident")
         }
-        await store.refreshProviderStatus(.codex)
-        #expect(store.providerStatusHadIssue[.codex] == true)
+        await store.refreshProviderStatus(.opencode)
+        #expect(store.providerStatusHadIssue[.opencode] == true)
 
         store._test_providerStatusFetchOverride = { _ in
             Self.status(.none, description: "Recovered")
         }
-        await store.refreshProviderStatus(.codex)
+        await store.refreshProviderStatus(.opencode)
 
-        #expect(store.statuses[.codex]?.description == "Recovered")
-        #expect(store.providerStatusHadIssue[.codex] == false)
+        #expect(store.statuses[.opencode]?.description == "Recovered")
+        #expect(store.providerStatusHadIssue[.opencode] == false)
     }
 
-    private static func makeStore(providers: Set<UsageProvider> = [.codex]) -> UsageStore {
+    private static func makeStore(providers: Set<UsageProvider> = [.opencode]) -> UsageStore {
         let settings = testSettingsStore(
             suiteName: "ProviderStatusRefreshPublicationTests",
             userDefaults: InMemoryUserDefaults(),
             keychainAccessPolicy: .init(setDisabled: { _ in }, isExplicitlyDisabled: { true }))
-        settings._test_codexAccountSnapshotLoader = { _ in
-            CodexAccountReconciliationSnapshot(
-                storedAccounts: [],
-                activeStoredAccount: nil,
-                liveSystemAccount: nil,
-                matchingStoredAccountForLiveSystemAccount: nil,
-                activeSource: .liveSystem,
-                hasUnreadableAddedAccountStore: false)
-        }
         settings.providerDetectionCompleted = true
         settings.refreshFrequency = .manual
         settings.statusChecksEnabled = true
         settings.costUsageEnabled = false
-        settings.openAIWebAccessEnabled = false
         settings.providerStorageFootprintsEnabled = false
         enableTestProviders(providers, settings: settings)
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
             environmentBase: [:])
         store._test_providerRefreshOverride = { _ in }
-        store._test_codexCreditsLoaderOverride = {
-            CreditsSnapshot(remaining: 0, events: [], updatedAt: Date(timeIntervalSince1970: 1_750_000_000))
-        }
         store._test_tokenUsageRefreshOverride = { _, _ in }
         return store
     }

@@ -51,7 +51,6 @@ struct ClaudeExtraWindowQuotaWarningTests {
 
         let notifier = SessionQuotaNotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier)
@@ -98,7 +97,6 @@ struct ClaudeExtraWindowQuotaWarningTests {
 
         let notifier = SessionQuotaNotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier)
@@ -136,7 +134,6 @@ struct ClaudeExtraWindowQuotaWarningTests {
 
         let notifier = SessionQuotaNotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier)
@@ -166,7 +163,6 @@ struct ClaudeExtraWindowQuotaWarningTests {
 
         let notifier = SessionQuotaNotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier)
@@ -207,7 +203,6 @@ struct ClaudeExtraWindowQuotaWarningTests {
 
         let notifier = SessionQuotaNotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier)
@@ -254,7 +249,6 @@ struct ClaudeExtraWindowQuotaWarningTests {
 
         let notifier = SessionQuotaNotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier)
@@ -301,7 +295,6 @@ struct ClaudeExtraWindowQuotaWarningTests {
 
         let notifier = SessionQuotaNotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier)

@@ -14,11 +14,9 @@ extension UsageStore {
                     return SpendDashboardLoadRequest(
                         configuration: SpendDashboardConfiguration(
                             costUsageEnabled: false,
-                            providerIDs: [],
-                            codexAccountIdentities: []),
+                            providerIDs: []),
                         capturedInputs: [],
                         unavailableSourceIDs: [],
-                        codexRequests: [],
                         now: Date(),
                         force: false)
                 }
@@ -26,9 +24,6 @@ extension UsageStore {
                     settings: self.settings,
                     store: self,
                     mode: mode)
-            },
-            cachedLoader: { request in
-                await SpendDashboardSource.loadCached(request)
             },
             publicationHandler: { [weak self] publication in
                 self?.spendDashboardPublication = publication
@@ -50,7 +45,6 @@ extension UsageStore {
         self.sharedSpendDashboardTokenPublicationDebounceTask?.cancel()
         self.sharedSpendDashboardTokenPublicationDebounceTask = nil
         self.sharedSpendDashboardControllerStorage?.stop()
-        self.cancelSpendDashboardCodexCostCatchUp()
     }
 
     private func observeSharedSpendDashboardConfiguration() {
@@ -79,10 +73,7 @@ extension UsageStore {
 
     func synchronizeSharedSpendDashboardAfterTokenPublication(for provider: UsageProvider) {
         guard self.sharedSpendDashboardObservationStarted else { return }
-        let isIndependent = Self.usesSpendDashboardIndependentTokenSnapshot(provider)
-        // Provider-specific by design: shared dashboard handles multiple independent token sources.
-        // Token publications both drive the shared dashboard.
-        guard provider == .codex || isIndependent else { return }
+        guard Self.usesSpendDashboardIndependentTokenSnapshot(provider) else { return }
         self.scheduleDebouncedTokenPublicationSync()
     }
 
@@ -107,11 +98,6 @@ extension UsageStore {
     }
 
     private func applySharedSpendDashboardConfiguration(_ configuration: SpendDashboardConfiguration) {
-        // Provider-specific by design: Codex's multi-account 365-day scanner is the shared source producer.
-        let codexRequests = configuration.providerIDs.contains(UsageProvider.codex.rawValue)
-            ? SpendDashboardSource.codexRequests(settings: self.settings, store: self)
-            : []
-        self.synchronizeSpendDashboardCodexCostCatchUp(accounts: codexRequests)
         self.sharedSpendDashboardController().update(configuration: configuration)
     }
 }

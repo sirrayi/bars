@@ -34,7 +34,6 @@ struct ClaudeCredentialQuotaWarningTests {
         settings.setQuotaWarningWindowEnabled(.weekly, enabled: true)
         let notifier = NotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: environment),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier,
@@ -88,7 +87,6 @@ struct ClaudeCredentialQuotaWarningTests {
         defer { settings.configFileWatcher?.stop() }
         let notifier = NotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: environment),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier,
@@ -132,7 +130,6 @@ struct ClaudeCredentialQuotaWarningTests {
         defer { settings.configFileWatcher?.stop() }
         let notifier = NotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: environment),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier,
@@ -191,7 +188,6 @@ struct ClaudeCredentialQuotaWarningTests {
         defer { settings.configFileWatcher?.stop() }
         let notifier = NotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: environment),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier,
@@ -333,7 +329,6 @@ struct ClaudeCredentialQuotaWarningTests {
         settings.setQuotaWarningWindowEnabled(.weekly, enabled: true)
         let notifier = NotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: environment),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier,
@@ -380,7 +375,6 @@ struct ClaudeCredentialQuotaWarningTests {
         defer { settings.configFileWatcher?.stop() }
         let notifier = NotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: environment),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier,
@@ -421,7 +415,6 @@ struct ClaudeCredentialQuotaWarningTests {
                                         result: .success(ProviderFetchResult(
                                             usage: snapshot,
                                             credits: nil,
-                                            dashboard: nil,
                                             sourceLabel: strategyKind == .cli ? "claude" : "oauth",
                                             strategyID: "fixture.usage",
                                             strategyKind: strategyKind,
@@ -445,13 +438,11 @@ struct ClaudeCredentialQuotaWarningTests {
 
     private func makeSettings(root: URL) throws -> SettingsStore {
         let defaults = InMemoryUserDefaults()
-        defaults.set(false, forKey: "openAIWebAccessEnabled")
         let config = CodexBarConfigStore(fileURL: root.appendingPathComponent("config.json"))
         try config.save(testConfigWithAllProvidersDisabled())
         let settings = SettingsStore(
             userDefaults: defaults,
             configStore: config,
-            codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
             opencodeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore(fileURL: root.appendingPathComponent("accounts.json")),

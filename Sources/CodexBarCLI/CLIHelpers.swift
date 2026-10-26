@@ -245,57 +245,6 @@ extension CodexBarCLI {
         }
     }
 
-    static func loadOpenAIDashboardIfAvailable(
-        usage: UsageSnapshot,
-        sourceLabel: String,
-        context: ProviderFetchContext) -> OpenAIDashboardSnapshot?
-    {
-        guard let cache = OpenAIDashboardCacheStore.load() else { return nil }
-        let snapshot: OpenAIDashboardSnapshot = if cache.snapshot.dailyBreakdown.isEmpty,
-                                                   !cache.snapshot.creditEvents.isEmpty
-        {
-            OpenAIDashboardSnapshot(
-                signedInEmail: cache.snapshot.signedInEmail,
-                accountID: cache.snapshot.accountID,
-                codeReviewRemainingPercent: cache.snapshot.codeReviewRemainingPercent,
-                codeReviewLimit: cache.snapshot.codeReviewLimit,
-                creditEvents: cache.snapshot.creditEvents,
-                dailyBreakdown: OpenAIDashboardSnapshot.makeDailyBreakdown(
-                    from: cache.snapshot.creditEvents,
-                    maxDays: 30),
-                usageBreakdown: cache.snapshot.usageBreakdown,
-                creditsPurchaseURL: cache.snapshot.creditsPurchaseURL,
-                primaryLimit: cache.snapshot.primaryLimit,
-                secondaryLimit: cache.snapshot.secondaryLimit,
-                extraRateWindows: cache.snapshot.extraRateWindows,
-                creditsRemaining: cache.snapshot.creditsRemaining,
-                creditsAvailable: cache.snapshot.creditsAvailable,
-                balanceIsWorkspace: cache.snapshot.balanceIsWorkspace,
-                codexCreditLimit: cache.snapshot.codexCreditLimit,
-                accountPlan: cache.snapshot.accountPlan,
-                subscriptionExpiresAt: cache.snapshot.subscriptionExpiresAt,
-                subscriptionRenewsAt: cache.snapshot.subscriptionRenewsAt,
-                updatedAt: cache.snapshot.updatedAt)
-        } else {
-            cache.snapshot
-        }
-
-        let input = CodexCLIDashboardAuthorityContext.makeCachedDashboardInput(
-            dashboard: snapshot,
-            cachedAccountEmail: cache.accountEmail,
-            usage: usage,
-            sourceLabel: sourceLabel,
-            context: context)
-        let decision = CodexDashboardAuthority.evaluate(input)
-        if decision.allowedEffects.contains(.cachedDashboardReuse) {
-            return snapshot
-        }
-        if decision.cleanup.contains(.dashboardCache) {
-            OpenAIDashboardCacheStore.clear()
-        }
-        return nil
-    }
-
     static func decodeWebTimeout(from values: ParsedValues) throws -> TimeInterval? {
         guard let raw = values.options["webTimeout"]?.last else { return nil }
         guard let seconds = Double(raw),
@@ -316,46 +265,18 @@ extension CodexBarCLI {
         return ProviderSourceMode(rawValue: raw)
     }
 
-    static func renderOpenAIWebDashboardText(_ dash: OpenAIDashboardSnapshot) -> String {
-        var lines: [String] = []
-        if let email = dash.signedInEmail, !email.isEmpty {
-            lines.append("Web session: \(email)")
-        }
-        if let remaining = dash.codeReviewRemainingPercent {
-            let percent = Int(remaining.rounded())
-            if let limit = dash.codeReviewLimit,
-               let reset = UsageFormatter.resetLine(for: limit, style: .countdown)
-            {
-                lines.append("Code review: \(percent)% remaining (\(reset))")
-            } else {
-                lines.append("Code review: \(percent)% remaining")
-            }
-        }
-        if let first = dash.creditEvents.first {
-            let day = first.date.formatted(date: .abbreviated, time: .omitted)
-            lines.append("Web history: \(dash.creditEvents.count) events (latest \(day))")
-        } else {
-            lines.append("Web history: none")
-        }
-        return lines.joined(separator: "\n")
-    }
-
     static func mapError(_ error: Error) -> ExitCode {
         switch error {
         case TTYCommandRunner.Error.binaryNotFound,
-             CodexStatusProbeError.codexNotInstalled,
              ClaudeUsageError.claudeNotInstalled:
             ExitCode(2)
-        case CodexStatusProbeError.timedOut,
-             TTYCommandRunner.Error.timedOut,
+        case TTYCommandRunner.Error.timedOut,
              ClaudeWebFetchStrategyError.timedOut,
              CostUsageError.timedOut:
             ExitCode(4)
         case ClaudeUsageError.parseFailed,
              ClaudeUsageError.oauthFailed,
-             CostUsageError.unsupportedProvider,
-             UsageError.decodeFailed,
-             UsageError.noRateLimitsFound:
+             CostUsageError.unsupportedProvider:
             ExitCode(3)
         default:
             .failure
@@ -379,7 +300,6 @@ extension CodexBarCLI {
                     status: nil,
                     usage: nil,
                     credits: nil,
-                    openaiDashboard: nil,
                     error: self.makeErrorPayload(code: .failure, message: error.localizedDescription, kind: .config))
                 self.printProviderPayloads([payload], output: output)
             } else {
@@ -434,10 +354,6 @@ extension CodexBarCLI {
 
     static func _decodeFormatForTesting(from values: ParsedValues) -> OutputFormat {
         self.decodeFormat(from: values)
-    }
-
-    static func _decodeCostGroupByForTesting(from values: ParsedValues) -> CostGroupBy {
-        self.decodeCostGroupBy(from: values)
     }
 
     static func _decodeWebTimeoutForTesting(from values: ParsedValues) throws -> TimeInterval? {

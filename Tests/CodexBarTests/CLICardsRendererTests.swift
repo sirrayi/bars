@@ -13,49 +13,9 @@ struct CLICardsRendererTests {
     }
 
     @Test
-    func `renders single codex card without color`() {
-        let identity = ProviderIdentitySnapshot(
-            providerID: .codex,
-            accountEmail: "user@example.com",
-            accountOrganization: nil,
-            loginMethod: "pro")
-        let snapshot = UsageSnapshot(
-            primary: .init(usedPercent: 12, windowMinutes: 300, resetsAt: nil, resetDescription: "today at 3:00 PM"),
-            secondary: .init(usedPercent: 25, windowMinutes: 10080, resetsAt: nil, resetDescription: "Fri at 9:00 AM"),
-            tertiary: nil,
-            updatedAt: Date(timeIntervalSince1970: 0),
-            identity: identity)
-        let card = CLICardsRenderer.makeCard(CLICardBuildInput(
-            provider: .codex,
-            snapshot: snapshot,
-            credits: CreditsSnapshot(remaining: 42, events: [], updatedAt: Date()),
-            source: "oauth",
-            status: nil,
-            notes: [],
-            useColor: false,
-            resetStyle: .absolute,
-            weeklyWorkDays: nil,
-            now: Date()))
-
-        let output = CLICardsRenderer.render(cards: [card], failures: [], terminalWidth: 80, useColor: false)
-
-        #expect(output.contains("Codex"))
-        #expect(output.contains("[oauth]"))
-        #expect(output.contains("PLAN Pro 20x"))
-        #expect(output.contains("Session"))
-        #expect(output.contains("88% left"))
-        #expect(output.contains("[ "))
-        #expect(output.contains("━"))
-        #expect(output.contains("Credits:"))
-        #expect(output.contains("42 left"))
-        #expect(output.contains("@ user@example.com"))
-        #expect(output.contains("╰"))
-    }
-
-    @Test
     func `card includes account line`() {
         let identity = ProviderIdentitySnapshot(
-            providerID: .codex,
+            providerID: .claude,
             accountEmail: "user@example.com",
             accountOrganization: nil,
             loginMethod: "pro")
@@ -66,7 +26,7 @@ struct CLICardsRendererTests {
             updatedAt: Date(timeIntervalSince1970: 0),
             identity: identity)
         let card = CLICardsRenderer.makeCard(CLICardBuildInput(
-            provider: .codex,
+            provider: .claude,
             snapshot: snapshot,
             credits: nil,
             source: "cli",
@@ -87,9 +47,9 @@ struct CLICardsRendererTests {
 
     @Test
     func `renders two card grid at fixed width`() {
-        let codex = CLICardModel(
-            provider: .codex,
-            title: "Codex",
+        let devin = CLICardModel(
+            provider: .devin,
+            title: "Devin",
             sourceLabel: "oauth",
             planBadge: "Pro",
             accountLine: nil,
@@ -108,9 +68,9 @@ struct CLICardsRendererTests {
             extraLines: [],
             statusLine: nil)
 
-        let output = CLICardsRenderer.render(cards: [codex, claude], failures: [], terminalWidth: 120, useColor: false)
+        let output = CLICardsRenderer.render(cards: [devin, claude], failures: [], terminalWidth: 120, useColor: false)
 
-        #expect(output.contains("Codex"))
+        #expect(output.contains("Devin"))
         #expect(output.contains("Claude"))
         #expect(output.contains("88% left"))
         #expect(output.contains("50% left"))
@@ -197,7 +157,7 @@ struct CLICardsRendererTests {
             tertiary: nil,
             updatedAt: now)
         let countdown = CLICardsRenderer.makeCard(CLICardBuildInput(
-            provider: .codex,
+            provider: .claude,
             snapshot: snapshot,
             credits: nil,
             source: "oauth",
@@ -208,7 +168,7 @@ struct CLICardsRendererTests {
             weeklyWorkDays: nil,
             now: now))
         let absolute = CLICardsRenderer.makeCard(CLICardBuildInput(
-            provider: .codex,
+            provider: .claude,
             snapshot: snapshot,
             credits: nil,
             source: "oauth",
@@ -228,8 +188,8 @@ struct CLICardsRendererTests {
     func `brief rows preserve account identity`() {
         let cards = [
             CLICardModel(
-                provider: .codex,
-                title: "Codex",
+                provider: .claude,
+                title: "Claude",
                 sourceLabel: "oauth",
                 planBadge: "Pro",
                 accountLine: "one@x.dev",
@@ -238,8 +198,8 @@ struct CLICardsRendererTests {
                 extraLines: [],
                 statusLine: nil),
             CLICardModel(
-                provider: .codex,
-                title: "Codex",
+                provider: .claude,
+                title: "Claude",
                 sourceLabel: "oauth",
                 planBadge: "Pro",
                 accountLine: "two@x.dev",
@@ -263,8 +223,8 @@ struct CLICardsRendererTests {
     @Test
     func `enhanced mode uses truecolor gradient bars`() {
         let card = CLICardModel(
-            provider: .codex,
-            title: "Codex",
+            provider: .claude,
+            title: "Claude",
             sourceLabel: "oauth",
             planBadge: "Pro",
             accountLine: nil,

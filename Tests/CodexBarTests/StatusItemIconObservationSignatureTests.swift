@@ -12,14 +12,14 @@ struct StatusItemIconObservationSignatureTests {
             suiteName: "StatusItemIconObservationSignatureTests-refresh-metadata")
         defer { controller.releaseStatusItemsForTesting() }
 
-        store.statuses[.codex] = ProviderStatus(
+        store.statuses[.opencode] = ProviderStatus(
             indicator: .none,
             description: "initial",
             updatedAt: Date(timeIntervalSince1970: 10))
         let baseline = controller.storeIconObservationSignature()
 
         store.isRefreshing = true
-        store.statuses[.codex] = ProviderStatus(
+        store.statuses[.opencode] = ProviderStatus(
             indicator: .none,
             description: "same indicator, newer timestamp",
             updatedAt: Date(timeIntervalSince1970: 20))
@@ -50,10 +50,10 @@ struct StatusItemIconObservationSignatureTests {
 
         store._setSnapshotForTesting(
             Self.makeSnapshot(
-                provider: .codex,
+                provider: .opencode,
                 email: "rotated-account@example.com",
                 updatedAt: Date(timeIntervalSince1970: 200)),
-            provider: .codex)
+            provider: .opencode)
 
         let signature = controller.storeIconObservationSignature()
 
@@ -73,10 +73,10 @@ struct StatusItemIconObservationSignatureTests {
 
         store._setSnapshotForTesting(
             Self.makeSnapshot(
-                provider: .codex,
+                provider: .opencode,
                 email: "rotated-account@example.com",
                 updatedAt: Date(timeIntervalSince1970: 200)),
-            provider: .codex)
+            provider: .opencode)
 
         let signature = controller.storeIconObservationSignature()
 
@@ -95,10 +95,10 @@ struct StatusItemIconObservationSignatureTests {
 
         store._setSnapshotForTesting(
             Self.makeSnapshot(
-                provider: .codex,
+                provider: .opencode,
                 email: "rotated-account@example.com",
                 updatedAt: Date(timeIntervalSince1970: 200)),
-            provider: .codex)
+            provider: .opencode)
 
         let signature = controller.storeIconObservationSignature()
 
@@ -115,7 +115,7 @@ struct StatusItemIconObservationSignatureTests {
         let registry = ProviderRegistry.shared
         let claudeMetadata = try #require(registry.metadata[.claude])
         settings.setProviderEnabled(provider: .claude, metadata: claudeMetadata, enabled: true)
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .opencode
         store._setSnapshotForTesting(
             Self.makeSnapshot(provider: .claude, email: "claude@example.com"),
             provider: .claude)
@@ -143,48 +143,13 @@ struct StatusItemIconObservationSignatureTests {
 
         store._setSnapshotForTesting(
             Self.makeSnapshot(
-                provider: .codex,
+                provider: .opencode,
                 email: "icon@example.com",
                 primaryUsedPercent: 42,
                 secondaryUsedPercent: 63),
-            provider: .codex)
+            provider: .opencode)
 
         #expect(controller.storeIconObservationSignature() != baseline)
-    }
-
-    @Test
-    func `store icon observation signature changes when credit fallback changes`() {
-        let (_, store, controller) = self.makeController(
-            suiteName: "StatusItemIconObservationSignatureTests-credit-fallback")
-        defer { controller.releaseStatusItemsForTesting() }
-
-        store._setSnapshotForTesting(
-            Self.makeSnapshot(
-                provider: .codex,
-                email: "icon@example.com",
-                primaryUsedPercent: 100,
-                secondaryUsedPercent: 20),
-            provider: .codex)
-        store.credits = CreditsSnapshot(remaining: 80, events: [], updatedAt: Date(timeIntervalSince1970: 100))
-        let baseline = controller.storeIconObservationSignature()
-
-        store.credits = CreditsSnapshot(remaining: 42, events: [], updatedAt: Date(timeIntervalSince1970: 200))
-
-        #expect(controller.storeIconObservationSignature() != baseline)
-    }
-
-    @Test
-    func `store icon observation signature ignores unused credit balance`() {
-        let (_, store, controller) = self.makeController(
-            suiteName: "StatusItemIconObservationSignatureTests-unused-credits")
-        defer { controller.releaseStatusItemsForTesting() }
-
-        store.credits = CreditsSnapshot(remaining: 80, events: [], updatedAt: Date(timeIntervalSince1970: 100))
-        let baseline = controller.storeIconObservationSignature()
-
-        store.credits = CreditsSnapshot(remaining: 42, events: [], updatedAt: Date(timeIntervalSince1970: 200))
-
-        #expect(controller.storeIconObservationSignature() == baseline)
     }
 
     @Test
@@ -212,13 +177,13 @@ struct StatusItemIconObservationSignatureTests {
             suiteName: "StatusItemIconObservationSignatureTests-status-indicator")
         defer { controller.releaseStatusItemsForTesting() }
 
-        store.statuses[.codex] = ProviderStatus(
+        store.statuses[.opencode] = ProviderStatus(
             indicator: .none,
             description: "initial",
             updatedAt: Date(timeIntervalSince1970: 10))
         let baseline = controller.storeIconObservationSignature()
 
-        store.statuses[.codex] = ProviderStatus(
+        store.statuses[.opencode] = ProviderStatus(
             indicator: .major,
             description: "major outage",
             updatedAt: Date(timeIntervalSince1970: 20))
@@ -251,7 +216,7 @@ struct StatusItemIconObservationSignatureTests {
 
         store._setTokenSnapshotForTesting(
             Self.makeTokenSnapshot(todayCost: 1.25, last30DaysCost: 12.50),
-            provider: .codex)
+            provider: .opencode)
 
         #expect(controller.storeIconObservationSignature() != baseline)
     }
@@ -265,12 +230,12 @@ struct StatusItemIconObservationSignatureTests {
 
         store._setTokenSnapshotForTesting(
             Self.makeTokenSnapshot(todayCost: 1.25, last30DaysCost: 12.50, sessionTokens: 100),
-            provider: .codex)
+            provider: .opencode)
         let baseline = controller.storeIconObservationSignature()
 
         store._setTokenSnapshotForTesting(
             Self.makeTokenSnapshot(todayCost: 9.99, last30DaysCost: 12.50, sessionTokens: 999),
-            provider: .codex)
+            provider: .opencode)
 
         #expect(controller.storeIconObservationSignature() == baseline)
     }
@@ -283,22 +248,22 @@ struct StatusItemIconObservationSignatureTests {
         defer { controller.releaseStatusItemsForTesting() }
         controller.updateIcons()
         let baseline = controller.lastObservedStoreIconWorkSignature
-        let usageUpdatedAt = store.snapshot(for: .codex)?.updatedAt
-        let usagePrimaryPercent = store.snapshot(for: .codex)?.primary?.usedPercent
+        let usageUpdatedAt = store.snapshot(for: .opencode)?.updatedAt
+        let usagePrimaryPercent = store.snapshot(for: .opencode)?.primary?.usedPercent
 
         store._setTokenSnapshotForTesting(
             Self.makeTokenSnapshot(todayCost: 1.25, last30DaysCost: 12.50),
-            provider: .codex)
+            provider: .opencode)
 
         for _ in 0..<100 where controller.lastObservedStoreIconWorkSignature == baseline {
             await Task.yield()
             try? await Task.sleep(for: .milliseconds(10))
         }
-        #expect(store.snapshot(for: .codex)?.updatedAt == usageUpdatedAt)
-        #expect(store.snapshot(for: .codex)?.primary?.usedPercent == usagePrimaryPercent)
+        #expect(store.snapshot(for: .opencode)?.updatedAt == usageUpdatedAt)
+        #expect(store.snapshot(for: .opencode)?.primary?.usedPercent == usagePrimaryPercent)
         #expect(controller.lastObservedStoreIconWorkSignature != baseline)
         #expect(
-            controller.menuBarLayoutCosts(provider: .codex).last30Days ==
+            controller.menuBarLayoutCosts(provider: .opencode).last30Days ==
                 UsageFormatter.currencyString(12.50, currencyCode: "USD"))
     }
 
@@ -317,7 +282,7 @@ struct StatusItemIconObservationSignatureTests {
         await store.widgetSnapshotPersistTask?.value
 
         #expect(widgetSnapshots.last?.usageBarsShowUsed == true)
-        #expect(widgetSnapshots.last?.entries.contains(where: { $0.provider == .codex }) == true)
+        #expect(widgetSnapshots.last?.entries.contains(where: { $0.provider == .opencode }) == true)
     }
 
     @Test
@@ -405,7 +370,7 @@ struct StatusItemIconObservationSignatureTests {
     private func makeController(
         suiteName: String,
         menuBarLayout: MenuBarLayout? = nil,
-        provider: UsageProvider = .codex)
+        provider: UsageProvider = .opencode)
         -> (SettingsStore, UsageStore, StatusItemController)
     {
         let settings = testSettingsStore(suiteName: suiteName)
@@ -424,8 +389,8 @@ struct StatusItemIconObservationSignatureTests {
         }
 
         let registry = ProviderRegistry.shared
-        if provider != .codex, let codexMeta = registry.metadata[.codex] {
-            settings.setProviderEnabled(provider: .codex, metadata: codexMeta, enabled: false)
+        if provider != .opencode, let codexMeta = registry.metadata[.opencode] {
+            settings.setProviderEnabled(provider: .opencode, metadata: codexMeta, enabled: false)
         }
         if provider != .claude, let claudeMeta = registry.metadata[.claude] {
             settings.setProviderEnabled(provider: .claude, metadata: claudeMeta, enabled: false)
@@ -434,10 +399,8 @@ struct StatusItemIconObservationSignatureTests {
             settings.setProviderEnabled(provider: provider, metadata: providerMeta, enabled: true)
         }
 
-        let fetcher = UsageFetcher()
         let environmentBase: [String: String] = [:]
         let store = UsageStore(
-            fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             environmentBase: environmentBase)
@@ -447,7 +410,7 @@ struct StatusItemIconObservationSignatureTests {
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)

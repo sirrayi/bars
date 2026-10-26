@@ -11,13 +11,13 @@ struct CodexBarConfigHooksTests {
                 HookRule(
                     id: "quota-low",
                     event: .quotaLow,
-                    provider: "codex",
+                    provider: "opencode",
                     threshold: 0.9,
                     executable: "/usr/bin/true",
                     timeoutSeconds: 30),
             ])
         let config = CodexBarConfig(
-            providers: [ProviderConfig(id: .codex, enabled: true)],
+            providers: [ProviderConfig(id: .claude, enabled: true)],
             hooks: hooks)
 
         let data = try JSONEncoder().encode(config)
@@ -28,7 +28,7 @@ struct CodexBarConfigHooksTests {
 }
 
 struct CodexBarConfigShareUsageTests {
-    private static let legacyJSON = Data(#"{"version":1,"providers":[{"id":"codex","enabled":true}]}"#.utf8)
+    private static let legacyJSON = Data(#"{"version":1,"providers":[{"id":"opencode","enabled":true}]}"#.utf8)
 
     @Test
     func `sharing is opt in and legacy configs omit the flag on round trip`() throws {

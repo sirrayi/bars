@@ -289,7 +289,6 @@ struct ClaudeCLIUsageSpawnThrottleTests {
             verbose: false,
             env: environment,
             settings: nil,
-            fetcher: UsageFetcher(environment: environment),
             claudeFetcher: ClaudeUsageFetcher(browserDetection: browserDetection, environment: environment),
             browserDetection: browserDetection,
             claudeOwnerCLIRecoveryOnly: claudeOwnerCLIRecoveryOnly)
@@ -341,7 +340,6 @@ struct ClaudeCLIUsageSpawnThrottleTests {
         return ProviderFetchResult(
             usage: usage,
             credits: nil,
-            dashboard: nil,
             sourceLabel: "claude",
             strategyID: "claude.cli",
             strategyKind: .cli)

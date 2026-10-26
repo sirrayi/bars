@@ -5,154 +5,6 @@ import Testing
 
 struct CLISnapshotTests {
     @Test
-    func `renders text snapshot for codex`() {
-        let identity = ProviderIdentitySnapshot(
-            providerID: .codex,
-            accountEmail: "user@example.com",
-            accountOrganization: nil,
-            loginMethod: "pro")
-        let snap = UsageSnapshot(
-            primary: .init(usedPercent: 12, windowMinutes: 300, resetsAt: nil, resetDescription: "today at 3:00 PM"),
-            secondary: .init(usedPercent: 25, windowMinutes: 10080, resetsAt: nil, resetDescription: "Fri at 9:00 AM"),
-            tertiary: nil,
-            updatedAt: Date(timeIntervalSince1970: 0),
-            identity: identity)
-
-        let output = CLIRenderer.renderText(
-            provider: .codex,
-            snapshot: snap,
-            credits: CreditsSnapshot(remaining: 42, events: [], updatedAt: Date()),
-            context: RenderContext(
-                header: "Codex 1.2.3 (codex-cli)",
-                status: ProviderStatusPayload(
-                    indicator: .minor,
-                    description: "Degraded performance",
-                    updatedAt: Date(timeIntervalSince1970: 0),
-                    url: "https://status.example.com"),
-                useColor: false,
-                resetStyle: .absolute))
-
-        #expect(output.contains("Codex 1.2.3 (codex-cli)"))
-        #expect(output.contains("Status: Partial outage – Degraded performance"))
-        #expect(output.contains("Codex"))
-        #expect(output.contains("Session: 88% left"))
-        #expect(output.contains("Weekly: 75% left"))
-        #expect(output.contains("Credits: 42"))
-        #expect(output.contains("Account: user@example.com"))
-        #expect(output.contains("Plan: Pro 20x"))
-    }
-
-    @Test
-    func `renders Codex limit reset credits`() {
-        let now = Date()
-        let expiresAt = now.addingTimeInterval(7200)
-        let resetCredits = CodexRateLimitResetCreditsSnapshot(
-            credits: [
-                CodexRateLimitResetCredit(
-                    id: "credit-1",
-                    resetType: "codex_rate_limits",
-                    status: .available,
-                    grantedAt: Date(timeIntervalSince1970: 0),
-                    expiresAt: expiresAt,
-                    redeemStartedAt: nil,
-                    redeemedAt: nil,
-                    title: nil,
-                    description: nil),
-                CodexRateLimitResetCredit(
-                    id: "expired-credit",
-                    resetType: "codex_rate_limits",
-                    status: .available,
-                    grantedAt: Date(timeIntervalSince1970: 0),
-                    expiresAt: now,
-                    redeemStartedAt: nil,
-                    redeemedAt: nil,
-                    title: nil,
-                    description: nil),
-            ],
-            availableCount: 99,
-            updatedAt: Date(timeIntervalSince1970: 0))
-        let snapshot = UsageSnapshot(
-            primary: .init(usedPercent: 10, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
-            secondary: nil,
-            tertiary: nil,
-            codexResetCredits: resetCredits,
-            updatedAt: Date(timeIntervalSince1970: 0))
-
-        let output = CLIRenderer.renderText(
-            provider: .codex,
-            snapshot: snapshot,
-            credits: nil,
-            context: RenderContext(
-                header: "Codex (oauth)",
-                status: nil,
-                useColor: false,
-                resetStyle: .countdown))
-
-        #expect(output.contains("Limit Reset Credits: 1 available"))
-        #expect(output.contains("Next reset credit expires"))
-    }
-
-    @Test
-    func `renders Codex prolite plan with multiplier display name`() {
-        let identity = ProviderIdentitySnapshot(
-            providerID: .codex,
-            accountEmail: "user@example.com",
-            accountOrganization: nil,
-            loginMethod: "prolite")
-        let snap = UsageSnapshot(
-            primary: .init(usedPercent: 12, windowMinutes: 300, resetsAt: nil, resetDescription: "today at 3:00 PM"),
-            secondary: nil,
-            tertiary: nil,
-            updatedAt: Date(timeIntervalSince1970: 0),
-            identity: identity)
-
-        let output = CLIRenderer.renderText(
-            provider: .codex,
-            snapshot: snap,
-            credits: nil,
-            context: RenderContext(
-                header: "Codex 1.2.3 (codex-cli)",
-                status: nil,
-                useColor: false,
-                resetStyle: .absolute))
-
-        #expect(output.contains("Plan: Pro 5x"))
-        #expect(!output.contains("Plan: Pro Lite"))
-        #expect(!output.contains("Plan: Prolite"))
-    }
-
-    @Test
-    func `renders Codex plan only limits as unavailable`() {
-        let identity = ProviderIdentitySnapshot(
-            providerID: .codex,
-            accountEmail: "user@example.com",
-            accountOrganization: nil,
-            loginMethod: "pro")
-        let snap = UsageSnapshot(
-            primary: nil,
-            secondary: nil,
-            tertiary: nil,
-            updatedAt: Date(timeIntervalSince1970: 0),
-            identity: identity)
-
-        let output = CLIRenderer.renderText(
-            provider: .codex,
-            snapshot: snap,
-            credits: nil,
-            context: RenderContext(
-                header: "Codex 1.2.3 (codex-cli)",
-                status: nil,
-                useColor: false,
-                resetStyle: .absolute))
-
-        #expect(output.contains("Limits: not available"))
-        #expect(output.contains("Account: user@example.com"))
-        #expect(output.contains("Plan: Pro 20x"))
-        #expect(!output.contains("Session:"))
-        #expect(!output.contains("Weekly:"))
-    }
-
-    @Test
     func `renders text snapshot for claude without weekly`() {
         let snap = UsageSnapshot(
             primary: .init(usedPercent: 2, windowMinutes: nil, resetsAt: nil, resetDescription: "3pm (Europe/Vienna)"),
@@ -216,7 +68,7 @@ struct CLISnapshotTests {
             updatedAt: now)
 
         let output = CLIRenderer.renderText(
-            provider: .codex,
+            provider: .opencode,
             snapshot: snap,
             credits: nil,
             context: RenderContext(
@@ -250,7 +102,7 @@ struct CLISnapshotTests {
             updatedAt: now)
 
         let output = CLIRenderer.renderText(
-            provider: .codex,
+            provider: .opencode,
             snapshot: snap,
             credits: nil,
             context: RenderContext(
@@ -263,41 +115,12 @@ struct CLISnapshotTests {
         #expect(output.contains("Pace: On pace | Expected 60% used | Lasts until reset"))
 
         let pace = try #require(CLIRenderer.providerPacePayload(
-            provider: .codex,
+            provider: .opencode,
             snapshot: snap,
             weeklyWorkDays: 5,
             now: now)?.secondary)
         #expect(pace.expectedUsedPercent == 60)
         #expect(pace.summary == "On pace | Expected 60% used | Lasts until reset")
-    }
-
-    @Test
-    func `renders session pace line when session window has reset`() {
-        let now = Date()
-        let snap = UsageSnapshot(
-            primary: .init(
-                usedPercent: 20,
-                windowMinutes: 300,
-                resetsAt: now.addingTimeInterval(2 * 60 * 60),
-                resetDescription: nil),
-            secondary: nil,
-            tertiary: nil,
-            updatedAt: now)
-
-        let output = CLIRenderer.renderText(
-            provider: .codex,
-            snapshot: snap,
-            credits: nil,
-            context: RenderContext(
-                header: "Codex 0.0.0 (codex-cli)",
-                status: nil,
-                useColor: false,
-                resetStyle: .countdown),
-            now: now)
-
-        #expect(output.contains("Session: 80% left"))
-        // 2h remaining of a 5h window => 3h elapsed => 60% expected; even rate easily lasts to reset.
-        #expect(output.contains("Pace: 40% in reserve | Expected 60% used | Lasts until reset | 1.5× headroom"))
     }
 
     @Test
@@ -327,65 +150,6 @@ struct CLISnapshotTests {
         // windowMinutes is nil, so the 5-hour (300 minute) session default must drive the pace.
         #expect(output.contains("Pace: 40% in reserve | Expected 60% used | Lasts until reset"))
         #expect(!output.contains("1.5× headroom"))
-    }
-
-    @Test
-    func `renders session pace deficit with run out estimate`() {
-        let now = Date()
-        let snap = UsageSnapshot(
-            primary: .init(
-                usedPercent: 50,
-                windowMinutes: 300,
-                resetsAt: now.addingTimeInterval(4 * 60 * 60),
-                resetDescription: nil),
-            secondary: nil,
-            tertiary: nil,
-            updatedAt: now)
-
-        let output = CLIRenderer.renderText(
-            provider: .codex,
-            snapshot: snap,
-            credits: nil,
-            context: RenderContext(
-                header: "Codex 0.0.0 (codex-cli)",
-                status: nil,
-                useColor: false,
-                resetStyle: .countdown),
-            now: now)
-
-        // 1h elapsed of a 5h window => 20% expected vs 50% used => burning ahead of pace.
-        // Session mirrors the GUI's "Projected empty" wording (weekly uses "Runs out").
-        #expect(output.contains("Pace: 30% in deficit | Expected 20% used | Projected empty in"))
-        #expect(!output.contains("Runs out"))
-    }
-
-    @Test
-    func `renders session pace on track and lasts until reset`() {
-        let now = Date(timeIntervalSince1970: 1_700_000_000)
-        // Exactly halfway through a 5h window with 50% used => On pace (delta 0); the even rate
-        // means the quota lasts precisely to the reset.
-        let snap = UsageSnapshot(
-            primary: .init(
-                usedPercent: 50,
-                windowMinutes: 300,
-                resetsAt: now.addingTimeInterval(2.5 * 60 * 60),
-                resetDescription: nil),
-            secondary: nil,
-            tertiary: nil,
-            updatedAt: now)
-
-        let output = CLIRenderer.renderText(
-            provider: .codex,
-            snapshot: snap,
-            credits: nil,
-            context: RenderContext(
-                header: "Codex 0.0.0 (codex-cli)",
-                status: nil,
-                useColor: false,
-                resetStyle: .countdown),
-            now: now)
-
-        #expect(output.contains("Pace: On pace | Expected 50% used | Lasts until reset"))
     }
 
     @Test
@@ -519,7 +283,7 @@ struct CLISnapshotTests {
             updatedAt: Date(timeIntervalSince1970: 0))
 
         let output = CLIRenderer.renderText(
-            provider: .codex,
+            provider: .claude,
             snapshot: snap,
             credits: nil,
             context: RenderContext(
@@ -540,7 +304,7 @@ struct CLISnapshotTests {
             updatedAt: Date(timeIntervalSince1970: 0))
 
         let output = CLIRenderer.renderText(
-            provider: .codex,
+            provider: .claude,
             snapshot: snap,
             credits: nil,
             context: RenderContext(

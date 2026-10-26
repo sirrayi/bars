@@ -22,7 +22,6 @@ struct ClaudeSwapMenuBarSnapshotTests {
         #expect(store.claudeTokenCostConfigDirectory == "/fixtures/claude-personal")
         store.claudeSwapAccountSnapshots = Self.swapAccounts(count: 2, activeNumber: 1)
         #expect(store.claudeTokenCostConfigDirectory == nil)
-        #expect(store.tokenCostScope(for: .claude).signature == "claude")
     }
 
     @Test
@@ -148,9 +147,9 @@ struct ClaudeSwapMenuBarSnapshotTests {
     func `swap accounts never override other providers`() throws {
         let store = Self.makeUsageStore(suite: "ClaudeSwapMenuBarSnapshotTests-other")
         store.claudeSwapAccountSnapshots = Self.swapAccounts(count: 2, activeNumber: 1)
-        store._setSnapshotForTesting(Self.ambientSnapshot(usedPercent: 12), provider: .codex)
+        store._setSnapshotForTesting(Self.ambientSnapshot(usedPercent: 12), provider: .opencode)
 
-        let snapshot = try #require(store.menuBarSnapshot(for: UsageProvider.codex.instanceID))
+        let snapshot = try #require(store.menuBarSnapshot(for: UsageProvider.opencode.instanceID))
         #expect(snapshot.primary?.usedPercent == 12)
     }
 
@@ -200,7 +199,6 @@ struct ClaudeSwapMenuBarSnapshotTests {
         let settings = SettingsStore(
             userDefaults: defaults,
             configStore: testConfigStore(suiteName: suite),
-            codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
             opencodeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore())
@@ -208,7 +206,6 @@ struct ClaudeSwapMenuBarSnapshotTests {
         settings.refreshFrequency = .manual
         settings.statusChecksEnabled = false
         return UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             environmentBase: [:])

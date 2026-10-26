@@ -41,7 +41,7 @@ struct ShareStatsPeriodTests {
                 modelBreakdowns: nil)],
             updatedAt: now)
         let model = SpendDashboardModel.build(
-            inputs: [.init(provider: .codex, displayName: "Codex", snapshot: snapshot)],
+            inputs: [.init(provider: .claude, displayName: "Codex", snapshot: snapshot)],
             requestedDays: 30,
             now: now,
             calendar: calendar)

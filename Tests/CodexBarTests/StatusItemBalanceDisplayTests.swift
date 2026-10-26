@@ -218,12 +218,11 @@ struct StatusItemBalanceDisplayTests {
     }
 
     func makeStoreAndController(settings: SettingsStore) -> (UsageStore, StatusItemController) {
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
@@ -232,92 +231,6 @@ struct StatusItemBalanceDisplayTests {
 }
 
 extension StatusItemBalanceDisplayTests {
-    @Test
-    func `Codex direct layout lanes suppress exhausted windows after reset in status item and preview`() {
-        let settings = self.makeSettings(
-            suiteName: "StatusItemBalanceDisplayTests-codex-direct-lane-expired",
-            provider: .codex)
-        let layout = MenuBarLayout(lines: [[.lanePercent(lane: .primary), .lanePercent(lane: .secondary)]])
-        let (store, controller) = self.makeStoreAndController(settings: settings)
-        defer { controller.releaseStatusItemsForTesting() }
-        let snapshot = UsageSnapshot(
-            primary: RateWindow(
-                usedPercent: 100,
-                windowMinutes: 300,
-                resetsAt: Date(timeIntervalSince1970: 1),
-                resetDescription: nil),
-            secondary: RateWindow(
-                usedPercent: 40,
-                windowMinutes: 10080,
-                resetsAt: Date().addingTimeInterval(3600),
-                resetDescription: nil),
-            updatedAt: Date())
-
-        store._setSnapshotForTesting(snapshot, provider: .codex)
-        store._setErrorForTesting(nil, provider: .codex)
-
-        let statusItemData = controller.menuBarLayoutRenderData(
-            provider: .codex,
-            snapshot: snapshot,
-            warningFlash: false)
-        let previewData = MenuBarLayoutPreview(
-            layout: layout,
-            provider: .codex,
-            settings: settings,
-            store: store)
-            .liveData(provider: .codex, snapshot: snapshot)
-
-        for data in [statusItemData, previewData] {
-            #expect(data.primary == nil)
-            #expect(data.secondary?.usedPercent == 40)
-        }
-    }
-
-    @Test
-    func `Codex direct primary lane preserves binding weekly cap in status item and preview`() throws {
-        let settings = self.makeSettings(
-            suiteName: "StatusItemBalanceDisplayTests-codex-direct-lane-cap",
-            provider: .codex)
-        let layout = MenuBarLayout(lines: [[.lanePercent(lane: .primary)]])
-        let (store, controller) = self.makeStoreAndController(settings: settings)
-        defer { controller.releaseStatusItemsForTesting() }
-        let now = Date()
-        let weeklyReset = now.addingTimeInterval(4 * 24 * 3600)
-        let snapshot = UsageSnapshot(
-            primary: RateWindow(
-                usedPercent: 1,
-                windowMinutes: 300,
-                resetsAt: now.addingTimeInterval(3 * 3600),
-                resetDescription: nil),
-            secondary: RateWindow(
-                usedPercent: 100,
-                windowMinutes: 10080,
-                resetsAt: weeklyReset,
-                resetDescription: nil),
-            updatedAt: now)
-
-        store._setSnapshotForTesting(snapshot, provider: .codex)
-        store._setErrorForTesting(nil, provider: .codex)
-
-        let statusItemData = controller.menuBarLayoutRenderData(
-            provider: .codex,
-            snapshot: snapshot,
-            warningFlash: false,
-            now: now)
-        let previewData = MenuBarLayoutPreview(
-            layout: layout,
-            provider: .codex,
-            settings: settings,
-            store: store)
-            .liveData(provider: .codex, snapshot: snapshot)
-
-        for data in [statusItemData, previewData] {
-            let primary = try #require(data.primary)
-            #expect(primary.usedPercent == 100)
-            #expect(primary.resetsAt == weeklyReset)
-        }
-    }
-
     @Test(arguments: [false, true])
     func `stored DeepSeek icon and percent layout shows balance in status item and preview`(showUsed: Bool) {
         let settings = self.makeSettings(

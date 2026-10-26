@@ -52,7 +52,7 @@ struct SpendTrendChartTests {
             },
             updatedAt: now)
         let group = try #require(SpendDashboardModel.build(
-            inputs: [.init(id: "unpriced", provider: .codex, displayName: "Demo account", snapshot: snapshot)],
+            inputs: [.init(id: "unpriced", provider: .claude, displayName: "Demo account", snapshot: snapshot)],
             requestedDays: 14,
             now: now,
             calendar: calendar).groups.first)
@@ -114,12 +114,12 @@ struct SpendTrendChartTests {
         #expect(model.total == 14)
         let labels = group.providers.map { SpendChartPalette.label($0, providers: group.providers) }
         #expect(Set(labels).count == 2)
-        let first = SpendChartPalette.color(sourceID: "a", provider: .codex, providers: group.providers)
-        let second = SpendChartPalette.color(sourceID: "b", provider: .codex, providers: group.providers)
+        let first = SpendChartPalette.color(sourceID: "a", provider: .claude, providers: group.providers)
+        let second = SpendChartPalette.color(sourceID: "b", provider: .claude, providers: group.providers)
         #expect(first != second)
         #expect(first == SpendChartPalette.color(
             sourceID: "a",
-            provider: .codex,
+            provider: .claude,
             providers: group.providers.reversed()))
     }
 
@@ -133,7 +133,7 @@ struct SpendTrendChartTests {
         let points = (0..<hours).map { index in
             SpendDashboardModel.HourlyPoint(
                 sourceID: "a",
-                provider: .codex,
+                provider: .claude,
                 providerName: "Codex",
                 hour: day.addingTimeInterval(Double(index) * 3600),
                 cost: 1,
@@ -221,7 +221,7 @@ struct SpendTrendChartTests {
         let points = try dates.enumerated().map { index, components in
             try SpendDashboardModel.DailyPoint(
                 sourceID: index.isMultiple(of: 2) ? "a" : "b",
-                provider: .codex,
+                provider: .claude,
                 providerName: "Codex",
                 day: #require(fixture.calendar.date(from: DateComponents(
                     year: 2026, month: components.0, day: components.1))),
@@ -283,7 +283,11 @@ struct SpendTrendChartTests {
                 daily: daily,
                 hourly: hourly,
                 updatedAt: now)
-            return SpendDashboardModel.ProviderInput(id: id, provider: .codex, displayName: "Codex", snapshot: snapshot)
+            return SpendDashboardModel.ProviderInput(
+                id: id,
+                provider: .claude,
+                displayName: "Codex",
+                snapshot: snapshot)
         }
         return try #require(SpendDashboardModel.build(
             inputs: inputs,

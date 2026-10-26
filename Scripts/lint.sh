@@ -25,10 +25,6 @@ ensure_typescript() {
   "${ROOT_DIR}/Scripts/install_lint_tools.sh" typescript
 }
 
-check_codex_parser_hash() {
-  "${ROOT_DIR}/Scripts/regenerate-codex-parser-hash.sh" --check
-}
-
 check_provider_manifests() {
   "${ROOT_DIR}/Scripts/regenerate-provider-manifests.sh" --check
   node "${ROOT_DIR}/Scripts/regenerate-provider-docs.mjs" --check
@@ -135,7 +131,6 @@ run_portable_checks() {
   python3 "${ROOT_DIR}/Scripts/acknowledgements.py"
   python3 "${ROOT_DIR}/Scripts/test_acknowledgements.py"
   check_package_resolved
-  check_codex_parser_hash
   check_provider_manifests
   check_package_product_paths
   check_package_strip

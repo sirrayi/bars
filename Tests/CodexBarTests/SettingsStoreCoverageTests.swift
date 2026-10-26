@@ -27,14 +27,14 @@ struct SettingsStoreCoverageTests {
         let settings = Self.makeSettingsStore()
         let metadata = ProviderRegistry.shared.metadata
 
-        try settings.setProviderEnabled(provider: .codex, metadata: #require(metadata[.codex]), enabled: true)
+        try settings.setProviderEnabled(provider: .opencode, metadata: #require(metadata[.opencode]), enabled: true)
         try settings.setProviderEnabled(provider: .claude, metadata: #require(metadata[.claude]), enabled: true)
         settings.selectedMenuProvider = .claude
 
         try settings.setProviderEnabled(provider: .claude, metadata: #require(metadata[.claude]), enabled: false)
 
         #expect(settings.selectedMenuProvider == nil)
-        #expect(settings.enabledProvidersOrdered(metadataByProvider: metadata) == [.codex])
+        #expect(settings.enabledProvidersOrdered(metadataByProvider: metadata) == [.opencode])
     }
 
     @Test
@@ -61,7 +61,7 @@ struct SettingsStoreCoverageTests {
     }
 
     @Test
-    func `background low power mode defaults off persists and drives effective web saver`() throws {
+    func `background low power mode defaults off persists`() throws {
         let suite = "SettingsStoreCoverageTests-background-low-power-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
@@ -71,21 +71,17 @@ struct SettingsStoreCoverageTests {
         #expect(initial.backgroundWorkLowPowerModePreference == .off)
         #expect(initial.backgroundWorkLowPowerModeEnabled == false)
         #expect(defaults.string(forKey: "backgroundWorkLowPowerModePreference") == "off")
-        #expect(initial.effectiveOpenAIWebBatterySaverEnabled == false)
 
         let revision = initial.backgroundWorkSettingsRevision
         initial.backgroundWorkLowPowerModePreference = .on
 
         #expect(initial.backgroundWorkSettingsRevision == revision + 1)
-        #expect(initial.effectiveOpenAIWebBatterySaverEnabled)
 
         let reloaded = Self.makeSettingsStore(userDefaults: defaults, configStore: configStore)
         #expect(reloaded.backgroundWorkLowPowerModeEnabled)
-        #expect(reloaded.effectiveOpenAIWebBatterySaverEnabled)
 
         reloaded.backgroundWorkLowPowerModePreference = .off
-        reloaded.openAIWebBatterySaverEnabled = true
-        #expect(reloaded.effectiveOpenAIWebBatterySaverEnabled)
+        #expect(!reloaded.backgroundWorkLowPowerModeEnabled)
     }
 
     @Test
@@ -552,7 +548,6 @@ struct SettingsStoreCoverageTests {
         SettingsStore(
             userDefaults: userDefaults,
             configStore: configStore,
-            codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
             opencodeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore())

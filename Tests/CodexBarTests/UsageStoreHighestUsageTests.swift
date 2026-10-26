@@ -13,15 +13,14 @@ struct UsageStoreHighestUsageTests {
         settings.statusChecksEnabled = false
 
         let registry = ProviderRegistry.shared
-        if let codexMeta = registry.metadata[.codex] {
-            settings.setProviderEnabled(provider: .codex, metadata: codexMeta, enabled: true)
+        if let codexMeta = registry.metadata[.devin] {
+            settings.setProviderEnabled(provider: .devin, metadata: codexMeta, enabled: true)
         }
         if let claudeMeta = registry.metadata[.claude] {
             settings.setProviderEnabled(provider: .claude, metadata: claudeMeta, enabled: true)
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
 
         let codexSnapshot = UsageSnapshot(
             primary: RateWindow(usedPercent: 25, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
@@ -32,15 +31,15 @@ struct UsageStoreHighestUsageTests {
             secondary: nil,
             updatedAt: Date())
 
-        store._setSnapshotForTesting(codexSnapshot, provider: .codex)
+        store._setSnapshotForTesting(codexSnapshot, provider: .devin)
         store._setSnapshotForTesting(claudeSnapshot, provider: .claude)
 
         let highest = store.providerWithHighestUsage()
         #expect(highest?.provider == .claude)
         #expect(highest?.usedPercent == 60)
 
-        let overviewHighest = store.providerWithHighestUsage(candidateProviders: [.codex])
-        #expect(overviewHighest?.provider == .codex)
+        let overviewHighest = store.providerWithHighestUsage(candidateProviders: [.devin])
+        #expect(overviewHighest?.provider == .devin)
         #expect(overviewHighest?.usedPercent == 25)
         #expect(store.providerWithHighestUsage(candidateProviders: []) == nil)
     }
@@ -66,7 +65,6 @@ struct UsageStoreHighestUsageTests {
 
         let now = Date(timeIntervalSince1970: 1_700_000_000)
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(
                 homeDirectory: "/synthetic-opencode-lane-pace",
                 cacheTTL: 0,
@@ -116,15 +114,14 @@ struct UsageStoreHighestUsageTests {
         settings.statusChecksEnabled = false
 
         let registry = ProviderRegistry.shared
-        if let codexMeta = registry.metadata[.codex] {
-            settings.setProviderEnabled(provider: .codex, metadata: codexMeta, enabled: true)
+        if let codexMeta = registry.metadata[.devin] {
+            settings.setProviderEnabled(provider: .devin, metadata: codexMeta, enabled: true)
         }
         if let claudeMeta = registry.metadata[.claude] {
             settings.setProviderEnabled(provider: .claude, metadata: claudeMeta, enabled: true)
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
 
         let codexSnapshot = UsageSnapshot(
             primary: RateWindow(usedPercent: 100, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
@@ -135,7 +132,7 @@ struct UsageStoreHighestUsageTests {
             secondary: nil,
             updatedAt: Date())
 
-        store._setSnapshotForTesting(codexSnapshot, provider: .codex)
+        store._setSnapshotForTesting(codexSnapshot, provider: .devin)
         store._setSnapshotForTesting(claudeSnapshot, provider: .claude)
 
         let highest = store.providerWithHighestUsage()

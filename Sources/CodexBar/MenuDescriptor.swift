@@ -45,8 +45,6 @@ struct MenuDescriptor {
         case changelog = "list.bullet.rectangle"
         case addAccount = "plus"
         case systemAccount = "person.crop.circle"
-        case workspaces = "folder"
-        case liveUsage = "chart.bar.xaxis"
         case switchAccount = "key"
         case openTerminal = "terminal"
         case loginToProvider = "arrow.right.square"
@@ -69,14 +67,10 @@ struct MenuDescriptor {
         case dashboard
         case statusPage
         case changelog
-        case addCodexAccount
-        case requestCodexSystemPromotion(UUID)
         case addProviderAccount(UsageProvider)
         case switchAccount(UsageProvider)
         case openTerminal(command: String)
         case loginToProvider(url: String)
-        case openCodexWorkspaces
-        case openOpenAILiveUsage
         case settings
         case providerSettings(UsageProvider)
         case about
@@ -92,15 +86,12 @@ struct MenuDescriptor {
         store: UsageStore,
         settings: SettingsStore,
         account: AccountInfo,
-        managedCodexAccountCoordinator: ManagedCodexAccountCoordinator? = nil,
-        codexAccountPromotionCoordinator: CodexAccountPromotionCoordinator? = nil,
         updateReady: Bool,
         availableUpdateVersion: String? = nil,
         isInstallingUpdate: Bool = false,
         canCheckForUpdates: Bool = false,
         versionText: String = AppVersion.shortVersion,
         includeContextualActions: Bool = true,
-        codexWorkspacesMenuEnabled: Bool = false,
         isKeepingAwake: Bool = false,
         agentSessionsEnabled: Bool = false,
         agentSessionLabelStyle: AgentSessionLabelStyle = .project,
@@ -146,15 +137,10 @@ struct MenuDescriptor {
         }
 
         if includeContextualActions {
-            let codexActionContext = CodexActionContext(
-                managedAccountCoordinator: managedCodexAccountCoordinator,
-                accountPromotionCoordinator: codexAccountPromotionCoordinator,
-                workspacesMenuEnabled: codexWorkspacesMenuEnabled)
             let actions = Self.actionsSection(
                 for: provider,
                 store: store,
-                account: account,
-                codexActionContext: codexActionContext)
+                account: account)
             if !actions.entries.isEmpty {
                 sections.append(actions)
             }
@@ -220,14 +206,8 @@ struct MenuDescriptor {
         now: Date) -> String
     {
         let state = session.state == .active ? "●" : "○"
-        let providerGlyph = switch session.provider {
-        case .codex: "⌘"
-        case .claude: "✦"
-        case .pi: "π"
-        }
         let label = labelStyle.label(for: session)
-        let providerTag = session.dialect?.rawValue ?? session.provider.rawValue
-        return "\(state) \(providerGlyph) \(label) — \(providerTag) · " +
+        return "\(state) ✦ \(label) — \(session.provider.rawValue) · " +
             "\(session.source.rawValue) · \(self.agentSessionAge(session, now: now))"
     }
 
@@ -490,17 +470,10 @@ struct MenuDescriptor {
         return nil
     }
 
-    private struct CodexActionContext {
-        let managedAccountCoordinator: ManagedCodexAccountCoordinator?
-        let accountPromotionCoordinator: CodexAccountPromotionCoordinator?
-        let workspacesMenuEnabled: Bool
-    }
-
     private static func actionsSection(
         for provider: UsageProvider?,
         store: UsageStore,
-        account: AccountInfo,
-        codexActionContext: CodexActionContext) -> Section
+        account: AccountInfo) -> Section
     {
         var entries: [Entry] = []
         let targetProvider = provider ?? store.enabledFirstPartyProviders().first
@@ -537,10 +510,7 @@ struct MenuDescriptor {
                 provider: targetProvider,
                 store: store,
                 settings: store.settings,
-                account: fallbackAccount,
-                managedCodexAccountCoordinator: codexActionContext.managedAccountCoordinator,
-                codexAccountPromotionCoordinator: codexActionContext.accountPromotionCoordinator,
-                codexWorkspacesMenuEnabled: codexActionContext.workspacesMenuEnabled)
+                account: fallbackAccount)
             ProviderCatalog.implementation(for: targetProvider)?
                 .appendActionMenuEntries(context: actionContext, entries: &entries)
         }
@@ -611,11 +581,11 @@ struct MenuDescriptor {
         if let enabled = store.enabledFirstPartyProviders().first {
             return .switchAccount(enabled)
         }
-        return .switchAccount(.codex)
+        return .switchAccount(.claude)
     }
 
     private static func hasAccount(for provider: UsageProvider?, store: UsageStore, account: AccountInfo) -> Bool {
-        let target = provider ?? store.enabledFirstPartyProviders().first ?? .codex
+        let target = provider ?? store.enabledFirstPartyProviders().first ?? .claude
         let snapshot = store.snapshot(for: target.instanceID)
         if let email = snapshot?.accountEmail(for: target),
            !email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -656,27 +626,10 @@ struct MenuDescriptor {
         snapshot: UsageSnapshot) -> (primary: String, secondary: String, tertiary: String, showsTertiary: Bool)
     {
         let presentation = ProviderDescriptorRegistry.descriptor(for: provider).presentation
-        let primaryLabel = if provider == .codex {
-            CodexConsumerProjection.rateTitle(
-                lane: .session,
-                windowMinutes: snapshot.primary?.windowMinutes,
-                sessionLabel: metadata.sessionLabel,
-                weeklyLabel: metadata.weeklyLabel)
-        } else {
-            presentation.rateWindowLabels(metadata: metadata, snapshot: snapshot).primary
-        }
-        let secondaryLabel = if provider == .codex {
-            CodexConsumerProjection.rateTitle(
-                lane: .weekly,
-                windowMinutes: snapshot.secondary?.windowMinutes,
-                sessionLabel: metadata.sessionLabel,
-                weeklyLabel: metadata.weeklyLabel)
-        } else {
-            presentation.rateWindowLabels(metadata: metadata, snapshot: snapshot).secondary
-        }
+        let labels = presentation.rateWindowLabels(metadata: metadata, snapshot: snapshot)
         return (
-            L(primaryLabel),
-            L(secondaryLabel),
+            L(labels.primary),
+            L(labels.secondary),
             metadata.opusLabel.map(L) ?? L("Sonnet"),
             metadata.supportsOpus)
     }
@@ -711,11 +664,7 @@ struct MenuDescriptor {
 
 private enum AccountFormatter {
     static func plan(_ text: String, provider: UsageProvider) -> String {
-        let cleaned = if provider == .codex {
-            CodexPlanFormatting.displayName(text) ?? UsageFormatter.cleanPlanName(text)
-        } else {
-            UsageFormatter.cleanPlanName(text)
-        }
+        let cleaned = UsageFormatter.cleanPlanName(text)
         return cleaned.isEmpty ? text : cleaned
     }
 }
@@ -732,14 +681,10 @@ extension MenuDescriptor.MenuAction {
         case .dashboard: MenuDescriptor.MenuActionSystemImage.dashboard.rawValue
         case .statusPage: MenuDescriptor.MenuActionSystemImage.statusPage.rawValue
         case .changelog: MenuDescriptor.MenuActionSystemImage.changelog.rawValue
-        case .addCodexAccount, .addProviderAccount: MenuDescriptor.MenuActionSystemImage.addAccount.rawValue
-        case .requestCodexSystemPromotion:
-            nil
+        case .addProviderAccount: MenuDescriptor.MenuActionSystemImage.addAccount.rawValue
         case .switchAccount: MenuDescriptor.MenuActionSystemImage.switchAccount.rawValue
         case .openTerminal: MenuDescriptor.MenuActionSystemImage.openTerminal.rawValue
         case .loginToProvider: MenuDescriptor.MenuActionSystemImage.loginToProvider.rawValue
-        case .openCodexWorkspaces: MenuDescriptor.MenuActionSystemImage.workspaces.rawValue
-        case .openOpenAILiveUsage: MenuDescriptor.MenuActionSystemImage.liveUsage.rawValue
         case .copyError: MenuDescriptor.MenuActionSystemImage.copyError.rawValue
         case .focusAgentSession:
             nil

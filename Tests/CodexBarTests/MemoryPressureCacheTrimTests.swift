@@ -98,7 +98,7 @@ struct MemoryPressureCacheTrimTests {
 
         let key = StatusItemController.MenuCardHeightCacheKey(
             id: "card",
-            scope: UsageProvider.codex.rawValue,
+            scope: UsageProvider.claude.rawValue,
             width: 30000,
             textScale: StatusItemController.menuCardHeightTextScaleToken(),
             fingerprint: "content:stable")
@@ -106,7 +106,6 @@ struct MemoryPressureCacheTrimTests {
         let entry = CachedMergedSwitcherMenuContent(
             requiredMenuContentVersion: 0,
             menuWidth: 300,
-            codexAccountDisplay: nil,
             tokenAccountDisplay: nil,
             localizationSignature: "",
             items: [])
@@ -115,7 +114,7 @@ struct MemoryPressureCacheTrimTests {
         controller.measuredStandardMenuWidthCache["width"] = 300
         controller.mergedSwitcherContentCaches[ObjectIdentifier(menu)] = [
             .overview: entry,
-            .provider(.codex): entry,
+            .provider(.claude): entry,
         ]
         controller.menuCardViewRecyclePool["card"] = NSView()
 
@@ -129,31 +128,6 @@ struct MemoryPressureCacheTrimTests {
         #expect(controller.measuredStandardMenuWidthCache.isEmpty)
         #expect(controller.mergedSwitcherContentCaches.isEmpty)
         #expect(controller.menuCardViewRecyclePool.isEmpty)
-    }
-
-    @Test
-    func `usage store trims OpenAI web debug cache without interrupting active refresh state`() {
-        let store = self.makeStore()
-        let taskToken = UUID()
-
-        store.openAIWebDebugLines = ["line 1", "line 2", "line 3"]
-        store.openAIDashboardCookieImportDebugLog = "line 1\nline 2\nline 3"
-        store.isRefreshing = true
-        store.refreshingProviders = [.codex]
-        store.tokenRefreshInFlight = [.codex]
-        store.openAIDashboardRefreshTaskKey = "codex@example.com:manual"
-        store.openAIDashboardRefreshTaskToken = taskToken
-
-        let summary = store.trimRebuildableCachesForMemoryPressure()
-
-        #expect(summary.openAIWebDebugLines == 3)
-        #expect(store.openAIWebDebugLines.isEmpty)
-        #expect(store.openAIDashboardCookieImportDebugLog == nil)
-        #expect(store.isRefreshing)
-        #expect(store.refreshingProviders == [.codex])
-        #expect(store.tokenRefreshInFlight == [.codex])
-        #expect(store.openAIDashboardRefreshTaskKey == "codex@example.com:manual")
-        #expect(store.openAIDashboardRefreshTaskToken == taskToken)
     }
 
     private func makeController() -> StatusItemController {
@@ -171,7 +145,6 @@ struct MemoryPressureCacheTrimTests {
     private func makeStore(settings: SettingsStore? = nil) -> UsageStore {
         let resolvedSettings = settings ?? self.makeSettings()
         return UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: resolvedSettings)
     }

@@ -105,7 +105,7 @@ struct MenuCardHeightFingerprintTests {
         sessionEquivalentDetail: UsagePaceText.SessionEquivalentDetail? = nil) -> UsageMenuCardView.Model
     {
         UsageMenuCardView.Model(
-            provider: .codex,
+            provider: .claude,
             providerName: "Secret Provider Name",
             email: "very-secret@example.com",
             subtitleText: "Signed in as very-secret@example.com",

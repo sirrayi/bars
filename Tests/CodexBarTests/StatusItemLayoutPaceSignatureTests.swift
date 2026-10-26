@@ -13,21 +13,19 @@ struct StatusItemLayoutPaceSignatureTests {
         settings.refreshFrequency = .manual
         settings.menuBarShowsBrandIconWithPercent = true
         settings.menuBarLayout = MenuBarLayout(lines: [[.windowResetCountdown(window: .weekly)]])
-        if let metadata = ProviderRegistry.shared.metadata[.codex] {
+        if let metadata = ProviderRegistry.shared.metadata[.opencode] {
             settings.setProviderEnabled(
-                provider: .codex,
+                provider: .opencode,
                 metadata: metadata,
                 enabled: true)
         }
-        let fetcher = UsageFetcher()
         let store = UsageStore(
-            fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
@@ -49,11 +47,11 @@ struct StatusItemLayoutPaceSignatureTests {
         }
         store._setSnapshotForTesting(
             snapshot(weeklyReset: now.addingTimeInterval(86400)),
-            provider: .codex)
+            provider: .opencode)
         let first = controller.storeIconObservationSignature()
         store._setSnapshotForTesting(
             snapshot(weeklyReset: now.addingTimeInterval(172_800)),
-            provider: .codex)
+            provider: .opencode)
         #expect(controller.storeIconObservationSignature() != first)
     }
 
@@ -76,12 +74,11 @@ struct StatusItemLayoutPaceSignatureTests {
             settings.setProviderEnabled(provider: .claude, metadata: claudeMeta, enabled: true)
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())

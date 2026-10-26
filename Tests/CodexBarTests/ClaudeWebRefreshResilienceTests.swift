@@ -169,7 +169,6 @@ struct ClaudeWebRefreshResilienceTests {
         }
 
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -219,7 +218,6 @@ struct ClaudeWebRefreshResilienceTests {
         let settings = SettingsStore(
             userDefaults: defaults,
             configStore: testConfigStore(suiteName: suite),
-            codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
             opencodeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore())

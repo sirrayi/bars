@@ -12,14 +12,14 @@ struct UsageUpdatedHookTests {
         defer { try? FileManager.default.removeItem(at: output) }
         let event = HookEvent(
             event: .usageUpdated,
-            provider: UsageProvider.codex.rawValue,
+            provider: UsageProvider.opencode.rawValue,
             timestamp: Date())
         let config = HooksConfig(
             enabled: true,
             events: [
                 HookRule(
                     event: .usageUpdated,
-                    provider: UsageProvider.codex.rawValue,
+                    provider: UsageProvider.opencode.rawValue,
                     executable: "/bin/sh",
                     arguments: ["-c", #"printf x >> "$1""#, "hook", output.path]),
             ])
@@ -56,7 +56,6 @@ struct UsageUpdatedHookTests {
                 hooks: hooks))
         settings.hidePersonalInfo = true
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -208,39 +207,6 @@ struct UsageUpdatedHookTests {
     }
 
     @Test
-    func `stacked Codex account success publishes a usage update`() async throws {
-        let output = Self.temporaryOutput("stacked-codex")
-        defer { try? FileManager.default.removeItem(at: output) }
-        let store = self.makeRefreshStore(output: output, provider: .codex)
-        let account = CodexVisibleAccount(
-            id: "live:owner-a",
-            email: "owner-a@example.com",
-            workspaceAccountID: "owner-a",
-            storedAccountID: nil,
-            selectionSource: .liveSystem,
-            isActive: true,
-            isLive: true,
-            canReauthenticate: false,
-            canRemove: false)
-        let snapshot = Self.identifiedSnapshot(
-            usedPercent: 45,
-            provider: .codex,
-            accountID: "owner-a",
-            email: account.email)
-
-        await store.applySelectedCodexVisibleAccountOutcome(
-            Self.outcome(snapshot: snapshot),
-            account: account,
-            snapshot: snapshot,
-            sourceLabel: "fixture",
-            limitResetOwnerKey: nil)
-
-        let payload = try await Self.waitForPayload(at: output)
-        #expect(payload["event"] as? String == "usage_updated")
-        #expect(payload["usagePercent"] as? Double == 0.45)
-    }
-
-    @Test
     func `superseded provider refresh cannot publish a usage update`() async throws {
         let output = Self.temporaryOutput("superseded")
         defer { try? FileManager.default.removeItem(at: output) }
@@ -291,7 +257,6 @@ struct UsageUpdatedHookTests {
                 providers: [ProviderConfig(id: provider.instanceID, enabled: true)],
                 hooks: hooks))
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             environmentBase: ["PATH": "/usr/bin:/bin"])
@@ -319,7 +284,6 @@ struct UsageUpdatedHookTests {
         settings.refreshFrequency = .manual
         settings.statusChecksEnabled = false
         return UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -331,7 +295,6 @@ struct UsageUpdatedHookTests {
             result: .success(ProviderFetchResult(
                 usage: snapshot,
                 credits: nil,
-                dashboard: nil,
                 sourceLabel: "fixture",
                 strategyID: "fixture.api-token",
                 strategyKind: .apiToken)),

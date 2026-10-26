@@ -61,7 +61,6 @@ struct ClaudeDebugDiagnosticsTests {
             settings.claudeCookieHeader = "sessionKey=sk-ant-session-token"
 
             return UsageStore(
-                fetcher: UsageFetcher(),
                 browserDetection: BrowserDetection(cacheTTL: 0),
                 settings: settings)
         }
@@ -110,7 +109,6 @@ struct ClaudeDebugDiagnosticsTests {
             settings.claudeWebExtrasEnabled = true
 
             return UsageStore(
-                fetcher: UsageFetcher(),
                 browserDetection: BrowserDetection(cacheTTL: 0),
                 settings: settings)
         }
@@ -152,7 +150,6 @@ struct ClaudeDebugDiagnosticsTests {
 
         let store = await MainActor.run {
             UsageStore(
-                fetcher: UsageFetcher(),
                 browserDetection: BrowserDetection(cacheTTL: 0),
                 settings: SettingsStore(
                     userDefaults: UserDefaults(),
@@ -190,7 +187,6 @@ struct ClaudeDebugDiagnosticsTests {
                 token: "sk-ant-oat-test-token")
 
             return UsageStore(
-                fetcher: UsageFetcher(),
                 browserDetection: BrowserDetection(cacheTTL: 0),
                 settings: settings)
         }
@@ -243,7 +239,6 @@ struct ClaudeDebugDiagnosticsTests {
             settings.claudeCookieSource = .off
 
             return UsageStore(
-                fetcher: UsageFetcher(),
                 browserDetection: BrowserDetection(cacheTTL: 0),
                 settings: settings)
         }
@@ -317,7 +312,6 @@ struct ClaudeDebugDiagnosticsTests {
             settings.claudeCookieSource = .off
 
             return UsageStore(
-                fetcher: UsageFetcher(),
                 browserDetection: BrowserDetection(cacheTTL: 0),
                 settings: settings)
         }
@@ -375,7 +369,6 @@ struct ClaudeDebugDiagnosticsTests {
             settings.claudeCookieSource = .off
 
             let store = UsageStore(
-                fetcher: UsageFetcher(),
                 browserDetection: BrowserDetection(cacheTTL: 0),
                 settings: settings)
             return (store, settings)

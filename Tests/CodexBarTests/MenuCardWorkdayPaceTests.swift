@@ -21,9 +21,9 @@ struct MenuCardWorkdayPaceTests {
             year: 2026,
             month: 6,
             day: 14)))
-        let metadata = try #require(ProviderDefaults.metadata[.codex])
+        let metadata = try #require(ProviderDefaults.metadata[.claude])
         let identity = ProviderIdentitySnapshot(
-            providerID: .codex,
+            providerID: .claude,
             accountEmail: "user@example.com",
             accountOrganization: nil,
             loginMethod: "Pro")
@@ -37,24 +37,11 @@ struct MenuCardWorkdayPaceTests {
             tertiary: nil,
             updatedAt: now,
             identity: identity)
-        let projection = CodexConsumerProjection.make(
-            surface: .liveCard,
-            context: CodexConsumerProjection.Context(
-                snapshot: snapshot,
-                rawUsageError: nil,
-                liveCredits: nil,
-                rawCreditsError: nil,
-                liveDashboard: nil,
-                rawDashboardError: nil,
-                dashboardAttachmentAuthorized: false,
-                dashboardRequiresLogin: false,
-                now: now))
 
         let model = UsageMenuCardView.Model.make(.init(
-            provider: .codex,
+            provider: .claude,
             metadata: metadata,
             snapshot: snapshot,
-            codexProjection: projection,
             credits: nil,
             creditsError: nil,
             dashboardError: nil,

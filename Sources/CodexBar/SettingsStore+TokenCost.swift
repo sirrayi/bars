@@ -3,11 +3,7 @@ import Foundation
 
 extension SettingsStore {
     func costSummaryShowsInline(for provider: UsageProvider) -> Bool {
-        // Provider-specific by design: Codex's local ledger can enable its summary without the global scanner.
-        let isEnabled = self.costUsageEnabled ||
-            (provider == .codex && self.codexLocalSessionCostLedgerEnabled)
-        return isEnabled &&
-            self.costSummaryDisplayStyle.showsInlineSummary
+        self.costUsageEnabled && self.costSummaryDisplayStyle.showsInlineSummary
     }
 
     func costSummaryShowsSubmenu(for provider: UsageProvider) -> Bool {
@@ -25,11 +21,7 @@ extension SettingsStore {
             guard let self else { return }
             let environment = ProcessInfo.processInfo.environment
             let hasSources = await Task.detached(priority: .utility) {
-                let processContexts = await LocalAgentSessionScanner().piSessionProcessContexts(
-                    environment: environment)
-                return Self.hasAnyTokenCostUsageSources(
-                    env: environment,
-                    processContexts: processContexts)
+                Self.hasAnyTokenCostUsageSources(env: environment)
             }.value
             guard hasSources else { return }
             guard UserDefaults.standard.object(forKey: "tokenCostUsageEnabled") == nil else { return }
@@ -41,10 +33,9 @@ extension SettingsStore {
         env: [String: String] = ProcessInfo.processInfo.environment,
         fileManager: FileManager = .default,
         homeDirectory: URL? = nil,
-        workingDirectory: URL? = nil,
-        processContexts: [PiSessionProcessContext] = []) -> Bool
+        workingDirectory: URL? = nil) -> Bool
     {
-        // Provider-specific by design: Codex, Claude, and Pi-family stores can auto-enable token cost.
+        // Provider-specific by design: Claude's local stores can auto-enable token cost.
         let home = homeDirectory ?? fileManager.homeDirectoryForCurrentUser
 
         func hasAnyJsonl(in root: URL) -> Bool {
@@ -59,45 +50,6 @@ extension SettingsStore {
                 return true
             }
             return false
-        }
-
-        let codexRoot: URL = {
-            let raw = env["CODEX_HOME"]?.trimmingCharacters(in: .whitespacesAndNewlines)
-            if let raw, !raw.isEmpty {
-                return URL(fileURLWithPath: raw).appendingPathComponent("sessions", isDirectory: true)
-            }
-            return home
-                .appendingPathComponent(".codex", isDirectory: true)
-                .appendingPathComponent("sessions", isDirectory: true)
-        }()
-
-        let archivedCodexRoot: URL? = {
-            guard codexRoot.lastPathComponent == "sessions" else { return nil }
-            return codexRoot
-                .deletingLastPathComponent()
-                .appendingPathComponent("archived_sessions", isDirectory: true)
-        }()
-
-        if hasAnyJsonl(in: codexRoot) {
-            return true
-        }
-        if let archivedCodexRoot, hasAnyJsonl(in: archivedCodexRoot) {
-            return true
-        }
-
-        var piEnvironment = env
-        if piEnvironment["HOME"]?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true {
-            piEnvironment["HOME"] = home.path
-        }
-        let piBaseDirectory = workingDirectory ?? URL(
-            fileURLWithPath: fileManager.currentDirectoryPath,
-            isDirectory: true)
-        let piRoots = PiFamilySessionRootResolver.costSessionRootURLs(
-            environment: piEnvironment,
-            baseDirectory: piBaseDirectory,
-            processContexts: processContexts)
-        if piRoots.contains(where: hasAnyJsonl(in:)) {
-            return true
         }
 
         let claudeRoots = ClaudeConfigPaths.costProjectsRoots(

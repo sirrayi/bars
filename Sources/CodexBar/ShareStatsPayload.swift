@@ -351,17 +351,7 @@ enum ShareStatsPayloadFactory {
         var names: [String: ShareStatsSubscriptionName] = [:]
         for group in model.groups {
             for row in group.providers {
-                let snapshots: [UsageSnapshot?] = if row.provider == .codex,
-                                                     row.id.hasPrefix("codex:")
-                {
-                    [
-                        store.codexAccountSnapshots.first {
-                            row.id == "codex:\($0.id)"
-                        }?.snapshot,
-                    ]
-                } else {
-                    [store.snapshot(for: row.provider.instanceID)]
-                }
+                let snapshots: [UsageSnapshot?] = [store.snapshot(for: row.provider.instanceID)]
                 if let name = ShareStatsSubscriptionName.first(from: snapshots, provider: row.provider) {
                     names[row.id] = name
                 }

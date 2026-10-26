@@ -42,7 +42,7 @@ final class SpendDashboardLongRangeRenderTests: XCTestCase {
             historyCoverageIsEstablished: true,
             daily: daily,
             updatedAt: now)
-        let input = SpendDashboardModel.ProviderInput(provider: .codex, displayName: "Codex", snapshot: snapshot)
+        let input = SpendDashboardModel.ProviderInput(provider: .claude, displayName: "Codex", snapshot: snapshot)
         var buildTimes: [Double] = []
         var model = SpendDashboardModel(requestedDays: 365, groups: [])
         for _ in 0..<11 {

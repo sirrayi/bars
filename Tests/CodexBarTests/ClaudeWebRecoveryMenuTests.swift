@@ -32,7 +32,6 @@ struct ClaudeWebRecoveryMenuTests {
         SettingsStore(
             userDefaults: InMemoryUserDefaults(),
             configStore: CodexBarConfigStore(fileURL: root.appendingPathComponent("config.json")),
-            codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
             opencodeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore(fileURL: root.appendingPathComponent("accounts.json")),
@@ -90,9 +89,7 @@ struct ClaudeWebRecoveryMenuTests {
         }
         settings.claudeCookieSource = cookieSource
         settings.claudeDesktopCookiesEnabled = desktopCookies
-        let fetcher = UsageFetcher()
         let store = UsageStore(
-            fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         store.claudeSwapAccountSnapshots = Self.claudeSwapAccounts(count: claudeSwapAccountCount)

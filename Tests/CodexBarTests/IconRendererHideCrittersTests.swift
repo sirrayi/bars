@@ -21,8 +21,7 @@ struct IconRendererHideCrittersTests {
     }
 
     @Test(arguments: [
-        IconStyle.codex,
-        .claude,
+        IconStyle.claude,
     ])
     func `hiding critters removes every decorated style twist`(style: IconStyle) throws {
         let decorated = self.icon(style: style, hideCritters: false)
@@ -57,7 +56,7 @@ struct IconRendererHideCrittersTests {
                 quotaLayoutPolicy: policy)
         }
 
-        let compact = IconRenderer.QuotaLayoutPolicy.provider(.codex)
+        let compact = IconRenderer.QuotaLayoutPolicy.provider(.opencode)
         let reserved = IconRenderer.QuotaLayoutPolicy.provider(.claude)
         let compactPrimary = image(primary: 46, weekly: nil, policy: compact)
         let compactSecondary = image(primary: nil, weekly: 46, policy: compact)
@@ -70,9 +69,9 @@ struct IconRendererHideCrittersTests {
     @Test
     func `morph icon honors hide critters at full progress`() throws {
         // At full progress the morph cross-fades into the bar icon, which carries
-        // the Codex face. A distinct cache key must keep the two renders separate.
-        let decorated = IconRenderer.makeMorphIcon(progress: 1, style: .codex, hideCritters: false)
-        let plain = IconRenderer.makeMorphIcon(progress: 1, style: .codex, hideCritters: true)
+        // the Claude critter. A distinct cache key must keep the two renders separate.
+        let decorated = IconRenderer.makeMorphIcon(progress: 1, style: .claude, hideCritters: false)
+        let plain = IconRenderer.makeMorphIcon(progress: 1, style: .claude, hideCritters: true)
 
         #expect(try self.pixels(decorated) != self.pixels(plain))
     }

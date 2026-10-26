@@ -172,8 +172,7 @@ extension UsageMenuCardView.Model {
             ? snapshot.quotaWeekSummaries(
                 resetAt: CostUsageTokenSnapshot.quotaWeekReset(from: weeklyWindow),
                 windowMinutes: weeklyWindow?.windowMinutes,
-                observedResetInstants: ignoresObservedResets
-                    ? [] : Self.redeemedWeeklyResetInstants(from: input.snapshot),
+                observedResetInstants: [],
                 resetObservations: observations,
                 now: input.now,
                 calendar: input.costUsageBucketCalendar)
@@ -368,13 +367,6 @@ extension UsageMenuCardView.Model {
         model.currencyCode = displayCurrencyCode
         model.chartTitle = L("Daily spend · %@", period)
         return model
-    }
-
-    private static func redeemedWeeklyResetInstants(from snapshot: UsageSnapshot?) -> [Date] {
-        snapshot?.codexResetCredits?.credits.compactMap { credit in
-            guard credit.status == .redeemed else { return nil }
-            return credit.redeemedAt
-        } ?? []
     }
 
     static func quotaMetricValue(_ value: String?, complete: Bool) -> String {

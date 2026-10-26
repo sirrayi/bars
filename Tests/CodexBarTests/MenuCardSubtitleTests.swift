@@ -18,14 +18,14 @@ struct MenuCardSubtitleTests {
             tertiary: nil,
             updatedAt: updatedAt,
             identity: ProviderIdentitySnapshot(
-                providerID: .codex,
+                providerID: .claude,
                 accountEmail: "codex@example.com",
                 accountOrganization: nil,
                 loginMethod: "Plus Plan"))
-        let metadata = try #require(ProviderDefaults.metadata[.codex])
+        let metadata = try #require(ProviderDefaults.metadata[.claude])
 
         let model = UsageMenuCardView.Model.make(.init(
-            provider: .codex,
+            provider: .claude,
             metadata: metadata,
             snapshot: snapshot,
             credits: nil,
@@ -60,14 +60,14 @@ struct MenuCardSubtitleTests {
             tertiary: nil,
             updatedAt: updatedAt,
             identity: ProviderIdentitySnapshot(
-                providerID: .codex,
+                providerID: .claude,
                 accountEmail: "codex@example.com",
                 accountOrganization: nil,
                 loginMethod: "Plus Plan"))
-        let metadata = try #require(ProviderDefaults.metadata[.codex])
+        let metadata = try #require(ProviderDefaults.metadata[.claude])
 
         let model = UsageMenuCardView.Model.make(.init(
-            provider: .codex,
+            provider: .claude,
             metadata: metadata,
             snapshot: snapshot,
             credits: nil,

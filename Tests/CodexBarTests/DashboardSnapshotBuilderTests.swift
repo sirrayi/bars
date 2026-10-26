@@ -9,16 +9,15 @@ struct DashboardSnapshotBuilderTests {
         let generatedAt = Date(timeIntervalSince1970: 1_800_000_000)
         let healthy = self.identityPayload(email: "user@example.com")
         let failed = ProviderPayload(
-            provider: .codex,
+            provider: .opencode,
             account: nil,
             version: nil,
             source: "auto",
             status: nil,
             usage: nil,
             credits: nil,
-            openaiDashboard: nil,
             error: ProviderErrorPayload(code: 1, message: "temporary failure", kind: .provider))
-        let rows: [UsageProvider: ProviderPayload] = [.claude: healthy, .codex: failed]
+        let rows: [UsageProvider: ProviderPayload] = [.claude: healthy, .opencode: failed]
         let producer = DashboardSnapshotProducer(
             collectUsage: { providers in
                 var output = UsageCommandOutput()
@@ -30,7 +29,7 @@ struct DashboardSnapshotBuilderTests {
             now: { generatedAt })
         let config = CodexBarConfig(providers: [
             ProviderConfig(id: .claude, enabled: true),
-            ProviderConfig(id: .codex, enabled: true),
+            ProviderConfig(id: .opencode, enabled: true),
         ])
 
         let result = try await producer.collect(
@@ -39,15 +38,15 @@ struct DashboardSnapshotBuilderTests {
             codexBarVersion: "9.8.7")
         let object = try self.jsonObject(result.payload)
         let providers = try #require(object["providers"] as? [[String: Any]])
-        let error = try #require(providers[0]["error"] as? [String: Any])
-        let identity = try #require(providers[1]["identity"] as? [String: Any])
-        let codexDisplay = try #require(providers[0]["display"] as? [String: Any])
-        let claudeDisplay = try #require(providers[1]["display"] as? [String: Any])
+        let error = try #require(providers[1]["error"] as? [String: Any])
+        let identity = try #require(providers[0]["identity"] as? [String: Any])
+        let openCodeDisplay = try #require(providers[1]["display"] as? [String: Any])
+        let claudeDisplay = try #require(providers[0]["display"] as? [String: Any])
 
-        #expect(providers.compactMap { $0["id"] as? String } == ["codex", "claude"])
+        #expect(providers.compactMap { $0["id"] as? String } == ["claude", "opencode"])
         #expect(identity["accountEmail"] as? String == "user@example.com")
         #expect(error["message"] as? String == "temporary failure")
-        #expect(codexDisplay["sortKey"] as? Int == 10)
+        #expect(openCodeDisplay["sortKey"] as? Int == 10)
         #expect(claudeDisplay["sortKey"] as? Int == 0)
         #expect(object["generatedAt"] as? String == "2027-01-15T08:00:00Z")
     }
@@ -82,13 +81,13 @@ struct DashboardSnapshotBuilderTests {
             tertiary: nil,
             updatedAt: updatedAt,
             identity: ProviderIdentitySnapshot(
-                providerID: .codex,
+                providerID: .opencode,
                 accountEmail: "user@example.com",
                 accountOrganization: nil,
                 loginMethod: "pro"))
 
         let payload = ProviderPayload(
-            provider: .codex,
+            provider: .opencode,
             account: nil,
             version: nil,
             source: "oauth",
@@ -99,10 +98,9 @@ struct DashboardSnapshotBuilderTests {
                 url: "https://status.example.com"),
             usage: usage,
             credits: CreditsSnapshot(remaining: 112.4, events: [], updatedAt: updatedAt),
-            openaiDashboard: nil,
             error: nil)
         let cost = CostPayload(
-            provider: "codex",
+            provider: "opencode",
             source: "local",
             updatedAt: costUpdatedAt,
             sessionTokens: 1000,
@@ -120,17 +118,10 @@ struct DashboardSnapshotBuilderTests {
                 costUSD: 1.04,
                 modelsUsed: nil,
                 modelBreakdowns: nil)],
-            projects: [CostProjectPayload(
-                name: "Private project",
-                path: "/private/work/project",
-                totalTokens: 1000,
-                totalCostUSD: 1.04,
-                daily: [],
-                modelBreakdowns: nil)],
             totals: nil,
             error: nil)
         let config = CodexBarConfig(providers: [
-            ProviderConfig(id: .codex, enabled: true),
+            ProviderConfig(id: .opencode, enabled: true),
             ProviderConfig(id: .claude, enabled: false),
         ])
 
@@ -153,8 +144,6 @@ struct DashboardSnapshotBuilderTests {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.withoutEscapingSlashes]
         let encoded = try #require(String(data: encoder.encode(snapshot), encoding: .utf8))
-        #expect(!encoded.contains("Private project"))
-        #expect(!encoded.contains("/private/work/project"))
         let display = try #require(provider["display"] as? [String: Any])
 
         #expect(object["schemaVersion"] as? Int == 1)
@@ -163,8 +152,8 @@ struct DashboardSnapshotBuilderTests {
         #expect(host["refreshIntervalSeconds"] as? Int == 60)
         #expect(host["usageBarsShowUsed"] as? Bool == false)
 
-        #expect(provider["id"] as? String == "codex")
-        #expect(provider["name"] as? String == "Codex")
+        #expect(provider["id"] as? String == "opencode")
+        #expect(provider["name"] as? String == "OpenCode")
         #expect(provider["enabled"] as? Bool == true)
         #expect(provider["source"] as? String == "oauth")
         #expect(provider["error"] is NSNull)
@@ -173,11 +162,11 @@ struct DashboardSnapshotBuilderTests {
         #expect(status["level"] as? String == "ok")
         #expect(status["label"] as? String == "Operational")
         #expect(identity["accountEmail"] as? String == "redacted@example.com")
-        #expect(identity["plan"] as? String == "Pro 20x")
+        #expect(identity["plan"] as? String == "Pro")
 
         #expect(windows.count == 2)
         #expect(windows[0]["kind"] as? String == "session")
-        #expect(windows[0]["label"] as? String == "Session")
+        #expect(windows[0]["label"] as? String == "5-hour")
         #expect(windows[0]["usedPercent"] as? Double == 28)
         #expect(windows[0]["remainingPercent"] as? Double == 72)
         #expect(windows[0]["resetAt"] as? String == "2027-01-15T09:00:00Z")
@@ -188,7 +177,7 @@ struct DashboardSnapshotBuilderTests {
         #expect(credits["unit"] as? String == "credits")
         #expect(costObject["todayUSD"] as? Double == 1.04)
         #expect(costObject["last30DaysUSD"] as? Double == 18.22)
-        #expect(display["accentColor"] as? String == "#49A3B0")
+        #expect(display["accentColor"] as? String == "#3B82F6")
         #expect(display["sortKey"] as? Int == 0)
         #expect(display["priority"] as? String == "normal")
     }
@@ -213,7 +202,6 @@ struct DashboardSnapshotBuilderTests {
             status: nil,
             usage: usage,
             credits: nil,
-            openaiDashboard: nil,
             error: nil)
 
         let snapshot = DashboardSnapshotBuilder.makeSnapshot(
@@ -320,20 +308,19 @@ struct DashboardSnapshotBuilderTests {
     @Test
     func `dashboard provider errors are projected without raw usage internals`() throws {
         let payload = ProviderPayload(
-            provider: .codex,
+            provider: .opencode,
             account: nil,
             version: nil,
             source: "auto",
             status: nil,
             usage: nil,
             credits: nil,
-            openaiDashboard: nil,
             error: ProviderErrorPayload(code: 1, message: "temporary failure", kind: .provider))
 
         let snapshot = DashboardSnapshotBuilder.makeSnapshot(
             usagePayloads: [payload],
             costPayloads: [],
-            config: CodexBarConfig(providers: [ProviderConfig(id: .codex, enabled: true)]),
+            config: CodexBarConfig(providers: [ProviderConfig(id: .opencode, enabled: true)]),
             identityMode: .redacted,
             generatedAt: Date(timeIntervalSince1970: 0),
             refreshInterval: 60,
@@ -394,7 +381,6 @@ struct DashboardSnapshotBuilderTests {
                 url: "https://status.anthropic.com"),
             usage: nil,
             credits: nil,
-            openaiDashboard: nil,
             error: nil)
 
         let snapshot = DashboardSnapshotBuilder.makeSnapshot(
@@ -593,7 +579,6 @@ struct DashboardSnapshotBuilderTests {
                     accountOrganization: nil,
                     loginMethod: "pro")),
             credits: nil,
-            openaiDashboard: nil,
             error: nil)
     }
 

@@ -120,7 +120,7 @@ struct UsageStoreManualTokenRefreshTests {
 
         #expect(await completion.isCompleted())
         #expect(await gate.hasFinished())
-        #expect(await gate.calls.map(\.provider) == [.codex])
+        #expect(await gate.calls.map(\.provider) == [.devin])
         #expect(await gate.calls.map(\.force) == [true])
     }
 
@@ -166,7 +166,7 @@ struct UsageStoreManualTokenRefreshTests {
         #expect(await completion.isCompleted())
         #expect(await scheduledGate.hasFinished())
         #expect(await forcedGate.hasFinished())
-        #expect(await recorder.calls.map(\.provider) == [.codex, .codex])
+        #expect(await recorder.calls.map(\.provider) == [.devin, .devin])
         #expect(await recorder.calls.map(\.force) == [false, true])
     }
 
@@ -195,7 +195,7 @@ struct UsageStoreManualTokenRefreshTests {
         await scheduledGate.waitForStart()
 
         let task = Task { @MainActor in
-            await store.refreshTokenUsageNow(for: .codex, force: true)
+            await store.refreshTokenUsageNow(for: .devin, force: true)
             await completion.markCompleted()
         }
 
@@ -212,13 +212,13 @@ struct UsageStoreManualTokenRefreshTests {
         #expect(await completion.isCompleted())
         #expect(await scheduledGate.hasFinished())
         #expect(await forcedGate.hasFinished())
-        #expect(await recorder.calls.map(\.provider) == [.codex, .codex])
+        #expect(await recorder.calls.map(\.provider) == [.devin, .devin])
         #expect(await recorder.calls.map(\.force) == [false, true])
     }
 
     @Test
     func `scoped manual refresh leaves unrelated scheduled token-cost refresh running`() async {
-        let store = Self.makeStore(enabledProviders: [.claude, .codex])
+        let store = Self.makeStore(enabledProviders: [.claude, .devin])
         let scheduledGate = TokenRefreshGate()
         let forcedGate = TokenRefreshGate()
         let recorder = TokenRefreshRecorder()
@@ -241,14 +241,14 @@ struct UsageStoreManualTokenRefreshTests {
         await scheduledGate.waitForStart()
 
         let task = Task { @MainActor in
-            await store.refreshTokenUsageNow(for: .claude, force: true)
+            await store.refreshTokenUsageNow(for: .devin, force: true)
             await completion.markCompleted()
         }
 
         await forcedGate.waitForStart()
         #expect(await scheduledGate.hasFinished() == false)
         #expect(await completion.isCompleted() == false)
-        #expect(await recorder.calls.map(\.provider) == [.codex, .claude])
+        #expect(await recorder.calls.map(\.provider) == [.claude, .devin])
         #expect(await recorder.calls.map(\.force) == [false, true])
 
         await forcedGate.release()
@@ -262,7 +262,7 @@ struct UsageStoreManualTokenRefreshTests {
 
     @Test
     func `scoped manual refresh preserves an unrelated token sequence before it starts`() async {
-        let store = Self.makeStore(enabledProviders: [.claude, .codex])
+        let store = Self.makeStore(enabledProviders: [.claude, .devin])
         let recorder = TokenRefreshRecorder()
         store._test_tokenUsageRefreshOverride = { provider, force in
             await recorder.record(provider: provider, force: force)
@@ -271,7 +271,7 @@ struct UsageStoreManualTokenRefreshTests {
         // Do not yield between installing the scheduled slot and starting the scoped refresh. This
         // exercises the window before the scheduled task receives its first MainActor turn.
         store.scheduleTokenRefreshForTesting()
-        await store.refreshTokenUsageNow(for: .claude, force: true)
+        await store.refreshTokenUsageNow(for: .devin, force: true)
 
         let recordedBothRefreshes = await recorder.waitForCallCount(2)
         #expect(recordedBothRefreshes)
@@ -279,8 +279,8 @@ struct UsageStoreManualTokenRefreshTests {
         await scheduledTask?.value
 
         let calls = await recorder.calls
-        #expect(calls.contains { $0.provider == .codex && !$0.force })
-        #expect(calls.contains { $0.provider == .claude && $0.force })
+        #expect(calls.contains { $0.provider == .claude && !$0.force })
+        #expect(calls.contains { $0.provider == .devin && $0.force })
     }
 
     @Test
@@ -301,7 +301,7 @@ struct UsageStoreManualTokenRefreshTests {
         await gate.release()
         await gate.waitForFinish()
         let calls = await gate.calls
-        #expect(calls.map(\.provider) == [.codex])
+        #expect(calls.map(\.provider) == [.devin])
         #expect(calls.map(\.force) == [false])
     }
 
@@ -318,7 +318,7 @@ struct UsageStoreManualTokenRefreshTests {
         let didRecord = await recorder.waitForCallCount(1)
         #expect(didRecord)
         await store.tokenRefreshSequenceTask?.value
-        #expect(await recorder.calls.map(\.provider) == [.codex])
+        #expect(await recorder.calls.map(\.provider) == [.devin])
         #expect(await recorder.calls.map(\.force) == [true])
     }
 
@@ -352,7 +352,7 @@ struct UsageStoreManualTokenRefreshTests {
         try? await Task.sleep(for: .milliseconds(50))
 
         #expect(await recorder.calls.map(\.force) == [false, true])
-        #expect(await recorder.calls.map(\.provider) == [.codex, .codex])
+        #expect(await recorder.calls.map(\.provider) == [.devin, .devin])
     }
 
     @Test
@@ -459,15 +459,11 @@ struct UsageStoreManualTokenRefreshTests {
         let store = Self.makeStore()
         let recorder = TokenRefreshRecorder()
         store._test_providerRefreshOverride = { _ in }
-        store._test_codexCreditsLoaderOverride = {
-            CreditsSnapshot(remaining: 25, events: [], updatedAt: Date())
-        }
         store._test_tokenUsageRefreshOverride = { provider, force in
             await recorder.record(provider: provider, force: force)
         }
         defer {
             store._test_providerRefreshOverride = nil
-            store._test_codexCreditsLoaderOverride = nil
             store._test_tokenUsageRefreshOverride = nil
         }
 
@@ -481,17 +477,15 @@ struct UsageStoreManualTokenRefreshTests {
         await store.refresh(enrichmentMode: .forcedBackground)
         await store.awaitForcedRefreshEnrichment()
 
-        #expect(await recorder.calls.map(\.provider) == [.codex, .codex])
+        #expect(await recorder.calls.map(\.provider) == [.devin, .devin])
         #expect(await recorder.calls.map(\.force) == [false, true])
     }
 
-    private static func makeStore(enabledProviders: Set<UsageProvider> = [.codex]) -> UsageStore {
+    private static func makeStore(enabledProviders: Set<UsageProvider> = [.devin]) -> UsageStore {
         let settings = testSettingsStore(suiteName: "UsageStoreManualTokenRefreshTests")
         settings.refreshFrequency = .manual
         settings.statusChecksEnabled = false
         settings.costUsageEnabled = true
-        settings.openAIWebAccessEnabled = false
-        settings.codexCookieSource = .off
         settings.providerDetectionCompleted = true
 
         let registry = ProviderRegistry.shared
@@ -508,11 +502,9 @@ struct UsageStoreManualTokenRefreshTests {
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         let environment = [
             "HOME": root.path,
-            "CODEX_HOME": root.appendingPathComponent(".codex", isDirectory: true).path,
             "XDG_CONFIG_HOME": root.appendingPathComponent(".config", isDirectory: true).path,
         ]
         return UsageStore(
-            fetcher: UsageFetcher(environment: environment),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,

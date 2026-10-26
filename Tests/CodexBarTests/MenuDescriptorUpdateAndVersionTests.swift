@@ -44,7 +44,7 @@ struct MenuDescriptorUpdateAndVersionTests {
             guard case let .text(label, .headline) = entry else { return nil }
             return label
         }
-        let name = try #require(ProviderRegistry.shared.metadata[.codex]?.displayName)
+        let name = try #require(ProviderRegistry.shared.metadata[.claude]?.displayName)
         #expect(headlines.first == name + (expected.isEmpty ? "" : " \(expected)"))
     }
 
@@ -65,17 +65,12 @@ struct MenuDescriptorUpdateAndVersionTests {
             userDefaults: InMemoryUserDefaults(),
             config: testConfigWithAllProvidersDisabled())
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             environmentBase: [:])
-        store.accountInfoCache[.codex] = UsageStore.AccountInfoCacheEntry(
-            account: AccountInfo(email: nil, plan: nil),
-            configRevision: settings.configRevision,
-            expiresAt: .distantFuture)
-        store.versions[.codex] = providerVersion
+        store.versions[.claude] = providerVersion
         return MenuDescriptor.build(
-            provider: providerVersion == nil ? nil : .codex,
+            provider: providerVersion == nil ? nil : .claude,
             store: store,
             settings: settings,
             account: AccountInfo(email: nil, plan: nil),

@@ -5,12 +5,8 @@ extension UsageStore {
         provider: UsageProvider,
         account: ProviderTokenAccount?,
         snapshot: UsageSnapshot,
-        accountKey: String?,
-        codexLimitResetOwnerKey: CodexLimitResetOwnerKey?) -> String?
+        accountKey: String?) -> String?
     {
-        if provider == .codex {
-            return codexLimitResetOwnerKey?.rawValue
-        }
         let identity = snapshot.identity(for: provider.instanceID)
         return account?.id.uuidString.lowercased()
             ?? accountKey

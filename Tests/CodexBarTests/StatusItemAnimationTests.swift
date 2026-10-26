@@ -38,12 +38,11 @@ struct StatusItemAnimationTests {
             settings.setProviderEnabled(provider: .claude, metadata: claudeMeta, enabled: true)
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -64,20 +63,19 @@ struct StatusItemAnimationTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
-        settings.setMenuBarMetricPreference(.secondary, for: .codex)
+        settings.selectedMenuProvider = .opencode
+        settings.setMenuBarMetricPreference(.secondary, for: .opencode)
 
         let registry = ProviderRegistry.shared
-        if let codexMeta = registry.metadata[.codex] {
-            settings.setProviderEnabled(provider: .codex, metadata: codexMeta, enabled: true)
+        if let codexMeta = registry.metadata[.opencode] {
+            settings.setProviderEnabled(provider: .opencode, metadata: codexMeta, enabled: true)
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -88,10 +86,10 @@ struct StatusItemAnimationTests {
             secondary: RateWindow(usedPercent: 42, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
             updatedAt: Date())
 
-        store._setSnapshotForTesting(snapshot, provider: .codex)
-        store._setErrorForTesting(nil, provider: .codex)
+        store._setSnapshotForTesting(snapshot, provider: .opencode)
+        store._setErrorForTesting(nil, provider: .opencode)
 
-        let window = controller.menuBarMetricWindow(for: .codex, snapshot: snapshot)
+        let window = controller.menuBarMetricWindow(for: .opencode, snapshot: snapshot)
 
         #expect(window?.usedPercent == 42)
     }
@@ -103,20 +101,19 @@ struct StatusItemAnimationTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
-        settings.setMenuBarMetricPreference(.primaryAndSecondary, for: .codex)
+        settings.selectedMenuProvider = .opencode
+        settings.setMenuBarMetricPreference(.primaryAndSecondary, for: .opencode)
 
         let registry = ProviderRegistry.shared
-        if let codexMeta = registry.metadata[.codex] {
-            settings.setProviderEnabled(provider: .codex, metadata: codexMeta, enabled: true)
+        if let codexMeta = registry.metadata[.opencode] {
+            settings.setProviderEnabled(provider: .opencode, metadata: codexMeta, enabled: true)
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -127,10 +124,10 @@ struct StatusItemAnimationTests {
             secondary: RateWindow(usedPercent: 91, windowMinutes: 7 * 24 * 60, resetsAt: nil, resetDescription: nil),
             updatedAt: Date())
 
-        store._setSnapshotForTesting(snapshot, provider: .codex)
-        store._setErrorForTesting(nil, provider: .codex)
+        store._setSnapshotForTesting(snapshot, provider: .opencode)
+        store._setErrorForTesting(nil, provider: .opencode)
 
-        let window = controller.menuBarMetricWindow(for: .codex, snapshot: snapshot)
+        let window = controller.menuBarMetricWindow(for: .opencode, snapshot: snapshot)
 
         #expect(window?.usedPercent == 91)
         #expect(window?.windowMinutes == 7 * 24 * 60)
@@ -262,12 +259,11 @@ struct StatusItemAnimationTests {
             settings.setProviderEnabled(provider: .claude, metadata: claudeMeta, enabled: true)
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -312,12 +308,11 @@ struct StatusItemAnimationTests {
             settings.setProviderEnabled(provider: .claude, metadata: claudeMeta, enabled: true)
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -364,12 +359,11 @@ struct StatusItemAnimationTests {
             settings.setProviderEnabled(provider: .claude, metadata: claudeMeta, enabled: true)
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -408,12 +402,11 @@ struct StatusItemAnimationTests {
             settings.setProviderEnabled(provider: .claude, metadata: claudeMeta, enabled: true)
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -464,12 +457,11 @@ struct StatusItemAnimationTests {
             settings.setProviderEnabled(provider: .claude, metadata: claudeMeta, enabled: true)
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -501,61 +493,6 @@ struct StatusItemAnimationTests {
     }
 
     @Test
-    func `codex combined menu bar metric pairs session usage with weekly pace`() {
-        // The combined metric is shared with Codex, which resolves its lanes through the consumer
-        // projection. The session usage must headline the pace/both readout there too — not the busier
-        // weekly lane that drives the icon/bar.
-        let settings = SettingsStore(
-            configStore: testConfigStore(suiteName: "StatusItemAnimationTests-codex-combined-session-pace"))
-        settings.statusChecksEnabled = false
-        settings.refreshFrequency = .manual
-        settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
-        settings.menuBarDisplayMode = .both
-        settings.usageBarsShowUsed = true
-        settings.setMenuBarMetricPreference(.primaryAndSecondary, for: .codex)
-
-        let registry = ProviderRegistry.shared
-        if let codexMeta = registry.metadata[.codex] {
-            settings.setProviderEnabled(provider: .codex, metadata: codexMeta, enabled: true)
-        }
-
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
-            store: store,
-            settings: settings,
-            account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
-            statusBar: self.makeStatusBarForTesting())
-        defer { controller.releaseStatusItemsForTesting() }
-
-        let now = Date()
-        // Weekly lane (91%) is busier than the session lane (12%), but neither is exhausted. The usage
-        // component must be the session lane while the pace is computed on the weekly lane.
-        let snapshot = UsageSnapshot(
-            primary: RateWindow(
-                usedPercent: 12,
-                windowMinutes: 300,
-                resetsAt: now.addingTimeInterval(4 * 60 * 60),
-                resetDescription: nil),
-            secondary: RateWindow(
-                usedPercent: 91,
-                windowMinutes: 7 * 24 * 60,
-                resetsAt: now.addingTimeInterval(60 * 60),
-                resetDescription: nil),
-            updatedAt: now)
-        store._setSnapshotForTesting(snapshot, provider: .codex)
-        store._setErrorForTesting(nil, provider: .codex)
-
-        let displayText = controller.menuBarDisplayText(for: .codex, snapshot: snapshot)
-
-        #expect(displayText?.hasPrefix("12% · ") == true)
-        #expect(displayText?.hasPrefix("91%") == false)
-    }
-
-    @Test
     func `claude combined menu bar metric surfaces an exhausted weekly lane in both mode`() {
         // When the weekly lane is exhausted it is the binding cap and has no pace, so the combined metric
         // must surface it instead of a roomy session number that would hide the spent weekly limit.
@@ -575,12 +512,11 @@ struct StatusItemAnimationTests {
             settings.setProviderEnabled(provider: .claude, metadata: claudeMeta, enabled: true)
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -630,12 +566,11 @@ struct StatusItemAnimationTests {
             settings.setProviderEnabled(provider: .claude, metadata: claudeMeta, enabled: true)
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -677,12 +612,11 @@ struct StatusItemAnimationTests {
             settings.setProviderEnabled(provider: .claude, metadata: claudeMeta, enabled: true)
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -712,141 +646,6 @@ struct StatusItemAnimationTests {
         // Spend-limit usage (45% of the cap), not the "5h 0%" placeholder lane.
         #expect(displayText == "45%")
         #expect(displayText?.contains("5h") == false)
-    }
-
-    @Test
-    func `codex menu bar pace does not fall back to session when weekly projection is unavailable`() {
-        let settings = SettingsStore(
-            configStore: testConfigStore(suiteName: "StatusItemAnimationTests-codex-no-weekly-pace"))
-        settings.statusChecksEnabled = false
-        settings.refreshFrequency = .manual
-        settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
-        settings.menuBarDisplayMode = .both
-        settings.usageBarsShowUsed = false
-        settings.setMenuBarMetricPreference(.primary, for: .codex)
-
-        let registry = ProviderRegistry.shared
-        if let codexMeta = registry.metadata[.codex] {
-            settings.setProviderEnabled(provider: .codex, metadata: codexMeta, enabled: true)
-        }
-
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
-            store: store,
-            settings: settings,
-            account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
-            statusBar: self.makeStatusBarForTesting())
-        defer { controller.releaseStatusItemsForTesting() }
-
-        let now = Date()
-        let snapshot = UsageSnapshot(
-            primary: RateWindow(
-                usedPercent: 80,
-                windowMinutes: 300,
-                resetsAt: now.addingTimeInterval(4 * 60 * 60),
-                resetDescription: nil),
-            secondary: nil,
-            updatedAt: now)
-        store._setSnapshotForTesting(snapshot, provider: .codex)
-        store._setErrorForTesting(nil, provider: .codex)
-
-        let displayText = controller.menuBarDisplayText(for: .codex, snapshot: snapshot)
-
-        #expect(displayText == "20%")
-    }
-
-    @Test
-    func `menu bar display text uses credits when codex weekly is exhausted`() {
-        let settings = SettingsStore(
-            configStore: testConfigStore(suiteName: "StatusItemAnimationTests-credits-fallback"))
-        settings.statusChecksEnabled = false
-        settings.refreshFrequency = .manual
-        settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
-        settings.menuBarDisplayMode = .percent
-        settings.usageBarsShowUsed = false
-        settings.setMenuBarMetricPreference(.secondary, for: .codex)
-
-        let registry = ProviderRegistry.shared
-        if let codexMeta = registry.metadata[.codex] {
-            settings.setProviderEnabled(provider: .codex, metadata: codexMeta, enabled: true)
-        }
-
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
-            store: store,
-            settings: settings,
-            account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
-            statusBar: self.makeStatusBarForTesting())
-
-        let snapshot = UsageSnapshot(
-            primary: RateWindow(usedPercent: 20, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
-            secondary: RateWindow(usedPercent: 100, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
-            updatedAt: Date())
-
-        let remainingCredits = (snapshot.primary?.usedPercent ?? 0) * 4.5 + (snapshot.secondary?.usedPercent ?? 0) / 10
-        store._setSnapshotForTesting(snapshot, provider: .codex)
-        store._setErrorForTesting(nil, provider: .codex)
-        store.credits = CreditsSnapshot(remaining: remainingCredits, events: [], updatedAt: Date())
-
-        let displayText = controller.menuBarDisplayText(for: .codex, snapshot: snapshot)
-        let expected = UsageFormatter
-            .creditsString(from: remainingCredits)
-            .replacingOccurrences(of: " left", with: "")
-
-        #expect(displayText == expected)
-    }
-
-    @Test
-    func `menu bar display text uses credits when codex session is exhausted`() {
-        let settings = SettingsStore(
-            configStore: testConfigStore(suiteName: "StatusItemAnimationTests-credits-fallback-session"))
-        settings.statusChecksEnabled = false
-        settings.refreshFrequency = .manual
-        settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
-        settings.menuBarDisplayMode = .percent
-        settings.usageBarsShowUsed = false
-        settings.setMenuBarMetricPreference(.primary, for: .codex)
-
-        let registry = ProviderRegistry.shared
-        if let codexMeta = registry.metadata[.codex] {
-            settings.setProviderEnabled(provider: .codex, metadata: codexMeta, enabled: true)
-        }
-
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
-            store: store,
-            settings: settings,
-            account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
-            statusBar: self.makeStatusBarForTesting())
-
-        let snapshot = UsageSnapshot(
-            primary: RateWindow(usedPercent: 100, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
-            secondary: RateWindow(usedPercent: 40, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
-            updatedAt: Date())
-
-        let remainingCredits = (snapshot.primary?.usedPercent ?? 0) - (snapshot.secondary?.usedPercent ?? 0) / 2
-        store._setSnapshotForTesting(snapshot, provider: .codex)
-        store._setErrorForTesting(nil, provider: .codex)
-        store.credits = CreditsSnapshot(remaining: remainingCredits, events: [], updatedAt: Date())
-
-        let displayText = controller.menuBarDisplayText(for: .codex, snapshot: snapshot)
-        let expected = UsageFormatter
-            .creditsString(from: remainingCredits)
-            .replacingOccurrences(of: " left", with: "")
-
-        #expect(displayText == expected)
     }
 
     @Test

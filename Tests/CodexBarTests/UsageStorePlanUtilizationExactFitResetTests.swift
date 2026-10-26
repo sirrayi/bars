@@ -21,7 +21,7 @@ struct UsageStorePlanUtilizationExactFitResetTests {
         let model = PlanUtilizationHistoryChartMenuView._modelSnapshotForTesting(
             selectedSeriesRawValue: "weekly:10080",
             histories: histories,
-            provider: .codex,
+            provider: .opencode,
             referenceDate: thirdBoundary)
 
         #expect(model.usedPercents == [62, 48, 20])
@@ -51,7 +51,7 @@ struct UsageStorePlanUtilizationExactFitResetTests {
         let model = PlanUtilizationHistoryChartMenuView._modelSnapshotForTesting(
             selectedSeriesRawValue: "session:300",
             histories: histories,
-            provider: .codex,
+            provider: .opencode,
             referenceDate: secondBoundary)
 
         #expect(model.usedPercents == [61, 18])
@@ -75,7 +75,7 @@ struct UsageStorePlanUtilizationExactFitResetTests {
         let model = PlanUtilizationHistoryChartMenuView._modelSnapshotForTesting(
             selectedSeriesRawValue: "session:300",
             histories: histories,
-            provider: .codex,
+            provider: .opencode,
             referenceDate: boundary)
 
         #expect(model.usedPercents == [48])
@@ -97,7 +97,7 @@ struct UsageStorePlanUtilizationExactFitResetTests {
         let model = PlanUtilizationHistoryChartMenuView._modelSnapshotForTesting(
             selectedSeriesRawValue: "session:300",
             histories: histories,
-            provider: .codex,
+            provider: .opencode,
             referenceDate: referenceDate)
 
         #expect(model.usedPercents == [62, 0, 0])
@@ -125,7 +125,7 @@ struct UsageStorePlanUtilizationExactFitResetTests {
         let model = PlanUtilizationHistoryChartMenuView._modelSnapshotForTesting(
             selectedSeriesRawValue: "weekly:10080",
             histories: histories,
-            provider: .codex,
+            provider: .opencode,
             referenceDate: fourthBoundary)
 
         #expect(model.usedPercents == [62, 48, 0, 20])
@@ -150,7 +150,7 @@ struct UsageStorePlanUtilizationExactFitResetTests {
         let model = PlanUtilizationHistoryChartMenuView._modelSnapshotForTesting(
             selectedSeriesRawValue: "weekly:10080",
             histories: histories,
-            provider: .codex,
+            provider: .opencode,
             referenceDate: fourthBoundary)
 
         #expect(model.axisIndexes == [0])
@@ -171,7 +171,7 @@ struct UsageStorePlanUtilizationExactFitResetTests {
         let model = PlanUtilizationHistoryChartMenuView._modelSnapshotForTesting(
             selectedSeriesRawValue: "weekly:10080",
             histories: histories,
-            provider: .codex,
+            provider: .opencode,
             referenceDate: secondBoundary.addingTimeInterval(-60))
 
         #expect(model.usedPercents == [62, 33])
@@ -194,7 +194,7 @@ struct UsageStorePlanUtilizationExactFitResetTests {
         let model = PlanUtilizationHistoryChartMenuView._modelSnapshotForTesting(
             selectedSeriesRawValue: "weekly:10080",
             histories: histories,
-            provider: .codex,
+            provider: .opencode,
             referenceDate: secondBoundary.addingTimeInterval(-60))
 
         #expect(model.usedPercents == [73, 35])

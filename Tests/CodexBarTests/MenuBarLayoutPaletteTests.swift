@@ -12,7 +12,6 @@ struct MenuBarLayoutPaletteTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing)

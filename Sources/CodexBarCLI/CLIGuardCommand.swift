@@ -235,7 +235,7 @@ extension CodexBarCLI {
         }
 
         // Resolve the configured token account the same way `usage` does, so token-only
-        // providers (e.g. Claude, z.ai, OpenAI) fetch their quota instead of returning unknown.
+        // providers (e.g. Claude, DeepSeek) fetch their quota instead of returning unknown.
         let account: ProviderTokenAccount?
         do {
             account = try tokenContext.resolvedAccounts(for: provider).first
@@ -244,7 +244,6 @@ extension CodexBarCLI {
         }
 
         let browserDetection = BrowserDetection()
-        let fetcher = UsageFetcher()
         let claudeFetcher = ClaudeUsageFetcher(browserDetection: browserDetection)
 
         let env = tokenContext.environment(
@@ -267,7 +266,6 @@ extension CodexBarCLI {
             verbose: verbose,
             env: env,
             settings: settings,
-            fetcher: tokenContext.fetcher(base: fetcher, provider: provider, env: env),
             claudeFetcher: claudeFetcher,
             browserDetection: browserDetection,
             // Guard is read-only: omit updater callbacks so refresh-dependent credentials fail unavailable.

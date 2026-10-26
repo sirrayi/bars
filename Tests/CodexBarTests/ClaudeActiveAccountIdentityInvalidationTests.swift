@@ -684,9 +684,8 @@ struct ClaudeActiveAccountIdentityInvalidationTests {
         let settings = testSettingsStore(
             suiteName: "ClaudeActiveAccountIdentityInvalidationTests",
             config: config,
-            prepareDefaults: { defaults in
+            prepareDefaults: { _ in
                 // An existing config otherwise opts this fresh fixture into OpenAI web access.
-                defaults.set(false, forKey: "openAIWebAccessEnabled")
             })
         settings.refreshFrequency = .manual
         settings.statusChecksEnabled = false
@@ -696,10 +695,8 @@ struct ClaudeActiveAccountIdentityInvalidationTests {
         #expect(settings.claudeUsageDataSource == source)
         #expect(settings.refreshFrequency == .manual)
         #expect(settings.statusChecksEnabled == false)
-        #expect(settings.openAIWebAccessEnabled == false)
 
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: environment),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -751,7 +748,6 @@ struct ClaudeActiveAccountIdentityInvalidationTests {
             result: .success(ProviderFetchResult(
                 usage: snapshot,
                 credits: nil,
-                dashboard: nil,
                 sourceLabel: sourceLabel,
                 strategyID: "test.cli-success",
                 strategyKind: strategyKind,

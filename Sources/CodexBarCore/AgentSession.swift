@@ -2,14 +2,7 @@ import Foundation
 
 public struct AgentSession: Codable, Equatable, Sendable, Identifiable {
     public enum Provider: String, Codable, Sendable {
-        case codex
         case claude
-        case pi
-    }
-
-    public enum Dialect: String, Codable, Sendable {
-        case pi
-        case omp
     }
 
     public enum Source: String, Codable, Sendable {
@@ -26,7 +19,6 @@ public struct AgentSession: Codable, Equatable, Sendable, Identifiable {
 
     public var id: String
     public var provider: Provider
-    public var dialect: Dialect?
     public var source: Source
     public var state: State
     public var pid: Int32?
@@ -41,7 +33,6 @@ public struct AgentSession: Codable, Equatable, Sendable, Identifiable {
     public init(
         id: String,
         provider: Provider,
-        dialect: Dialect? = nil,
         source: Source,
         state: State,
         pid: Int32?,
@@ -55,7 +46,6 @@ public struct AgentSession: Codable, Equatable, Sendable, Identifiable {
     {
         self.id = id
         self.provider = provider
-        self.dialect = dialect
         self.source = source
         self.state = state
         self.pid = pid
@@ -73,7 +63,6 @@ public struct SessionScanConfig: Equatable, Sendable {
     public var activeWindow: TimeInterval
     public var fileOnlyWindow: TimeInterval
     public var maxProcessCount: Int
-    public var maxCodexRolloutCount: Int
     public var maxClaudeTranscriptCountPerProject: Int
     public var maxDirectoryEntryCount: Int
     public var maxDirectoryDepth: Int
@@ -84,7 +73,6 @@ public struct SessionScanConfig: Equatable, Sendable {
         activeWindow: TimeInterval = 120,
         fileOnlyWindow: TimeInterval = 30 * 60,
         maxProcessCount: Int = 64,
-        maxCodexRolloutCount: Int = 128,
         maxClaudeTranscriptCountPerProject: Int = 64,
         maxDirectoryEntryCount: Int = 512,
         maxDirectoryDepth: Int = 1,
@@ -94,7 +82,6 @@ public struct SessionScanConfig: Equatable, Sendable {
         self.activeWindow = activeWindow
         self.fileOnlyWindow = fileOnlyWindow
         self.maxProcessCount = maxProcessCount
-        self.maxCodexRolloutCount = maxCodexRolloutCount
         self.maxClaudeTranscriptCountPerProject = maxClaudeTranscriptCountPerProject
         self.maxDirectoryEntryCount = maxDirectoryEntryCount
         self.maxDirectoryDepth = maxDirectoryDepth
@@ -226,29 +213,19 @@ public struct AgentProcessRecord: Equatable, Sendable {
     public let command: String
     /// Original argv when the platform exposes it. `command` remains the portable fallback.
     public let arguments: [String]?
-    /// Only Pi root selectors; nil means unavailable and an empty map means a known empty selection.
-    @ProcessEnvironment public private(set) var piSelectorEnvironment: [String: String]?
 
     public init(
         pid: Int32,
         ppid: Int32,
         startedAt: Date?,
         command: String,
-        arguments: [String]? = nil,
-        piSelectorEnvironment: [String: String]? = nil)
+        arguments: [String]? = nil)
     {
         self.pid = pid
         self.ppid = ppid
         self.startedAt = startedAt
         self.command = command
         self.arguments = arguments
-        self.piSelectorEnvironment = PiProcessEnvironment.filtered(piSelectorEnvironment)
-    }
-
-    func withPiSelectorEnvironment(_ environment: [String: String]?) -> Self {
-        var record = self
-        record.piSelectorEnvironment = PiProcessEnvironment.filtered(environment)
-        return record
     }
 
     public var executableBasename: String {
@@ -286,20 +263,10 @@ public enum AgentPSOutputParser {
 
     public static func agentProcesses(from records: [AgentProcessRecord]) -> [AgentProcessRecord] {
         // Prefer argv[0] for bundle checks; prompts may contain app paths. Keep the full command fallback
-        // because an unquoted executable path can contain spaces, such as "Codex Computer Use.app".
+        // because an unquoted executable path can contain spaces.
         let candidates = records.filter { record in
             let basename = record.executableBasename.lowercased()
-            if self.piDialect(for: record) != nil {
-                return !self.isObviousPiFamilyHelper(record.command)
-            }
             let executable = record.arguments?.first ?? record.command
-            if basename == AgentSession.Provider.codex.rawValue {
-                let arguments = self.arguments(record)
-                return self.isCodexAgentExecutable(executable) &&
-                    !arguments.contains("app-server") &&
-                    !arguments.contains("--help") &&
-                    !arguments.contains("--version")
-            }
             if basename == AgentSession.Provider.claude.rawValue {
                 return self.isClaudeAgentExecutable(executable) && !self.isObviousClaudeHelper(record.command)
             }
@@ -319,43 +286,13 @@ public enum AgentPSOutputParser {
 
     public static func provider(for record: AgentProcessRecord) -> AgentSession.Provider? {
         let basename = record.executableBasename.lowercased()
-        if let provider = AgentSession.Provider(rawValue: basename), provider != .pi {
+        if let provider = AgentSession.Provider(rawValue: basename) {
             return provider
         }
         if basename == "disclaimer" {
             return .claude
         }
-        if self.piDialect(for: record) != nil, !self.isObviousPiFamilyHelper(record.command) {
-            return .pi
-        }
         return nil
-    }
-
-    public static func piDialect(for record: AgentProcessRecord) -> AgentSession.Dialect? {
-        self.piDialect(executableBasename: record.executableBasename, arguments: self.arguments(record))
-    }
-
-    static func piDialect(arguments: [String]) -> AgentSession.Dialect? {
-        self.piDialect(
-            executableBasename: AgentProcessPath.basename(arguments.first ?? ""),
-            arguments: Array(arguments.dropFirst()))
-    }
-
-    static func piDialect(
-        executableBasename: String,
-        arguments: @autoclosure () -> [String]) -> AgentSession.Dialect?
-    {
-        let firstBasename = AgentProcessPath.basename(executableBasename).lowercased()
-        if firstBasename == AgentSession.Provider.pi.rawValue {
-            return .pi
-        }
-        if firstBasename == "omp" {
-            return .omp
-        }
-        guard firstBasename == "bun" else { return nil }
-        return arguments().contains {
-            AgentProcessPath.basename($0).lowercased() == "omp"
-        } ? .omp : nil
     }
 
     public static func source(for record: AgentProcessRecord) -> AgentSession.Source {
@@ -363,31 +300,6 @@ public enum AgentPSOutputParser {
         let command = record.executableBasename.lowercased() == "disclaimer"
             ? record.command : record.arguments?.first ?? record.command
         return command.contains("Application Support/Claude/claude-code") ? .desktopApp : .cli
-    }
-
-    public static func hasCodexAppServer(in records: [AgentProcessRecord]) -> Bool {
-        records.contains { record in
-            record.executableBasename.lowercased() == AgentSession.Provider.codex.rawValue &&
-                self.isCodexAgentExecutable(record.arguments?.first ?? record.command) &&
-                self.arguments(record).contains("app-server")
-        }
-    }
-
-    static let chatGPTCodexExecutablePaths: Set<String> = [
-        "/Applications/ChatGPT.app/Contents/Resources/codex",
-        "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
-    ]
-
-    static func hasTrustedChatGPTCodexAppServer(
-        in records: [AgentProcessRecord],
-        validator: (AgentProcessRecord) -> Bool) -> Bool
-    {
-        records.contains { record in
-            let executable = record.arguments?.first ?? record.command.split(whereSeparator: \ .isWhitespace)
-                .first.map(String.init) ?? ""
-            return self.chatGPTCodexExecutablePaths.contains(executable) &&
-                self.arguments(record).contains("app-server") && validator(record)
-        }
     }
 
     private static func arguments(_ record: AgentProcessRecord) -> [String] {
@@ -408,25 +320,9 @@ public enum AgentPSOutputParser {
             lowercased.contains("claude-code-acp")
     }
 
-    private static func isCodexAgentExecutable(_ command: String) -> Bool {
-        let lowercased = command.lowercased()
-        guard lowercased.contains(".app/") else { return true }
-        let executable = lowercased.split(whereSeparator: \ .isWhitespace).first.map(String.init)
-        return executable == "/applications/codex.app/contents/resources/codex" ||
-            executable == "/applications/chatgpt.app/contents/resources/codex"
-    }
-
     private static func isClaudeAgentExecutable(_ command: String) -> Bool {
         let lowercased = command.lowercased()
         return !lowercased.contains(".app/") || lowercased.contains("application support/claude/claude-code/claude")
-    }
-
-    private static func isObviousPiFamilyHelper(_ command: String) -> Bool {
-        let lowercased = command.lowercased()
-        return lowercased.contains("--help") ||
-            lowercased.contains("--version") ||
-            lowercased.contains("--smoke-test") ||
-            lowercased.contains("__omp_worker_")
     }
 }
 
@@ -612,222 +508,5 @@ public enum AgentSessionCorrelation {
         return Set(grouped.values.compactMap { records in
             records.count == 1 ? records[0].0 : nil
         })
-    }
-
-    public static func codexWorkingDirectoriesMatch(_ lhs: String?, _ rhs: String?) -> Bool {
-        guard let lhs, let rhs else { return false }
-        return URL(fileURLWithPath: lhs).standardizedFileURL.path ==
-            URL(fileURLWithPath: rhs).standardizedFileURL.path
-    }
-
-    public static func fileOnlyCodexSource(
-        metadataSource: AgentSession.Source,
-        appServerPresent: Bool) -> AgentSession.Source
-    {
-        metadataSource == .unknown && appServerPresent ? .desktopApp : metadataSource
-    }
-}
-
-public struct CodexRolloutMetadata: Equatable, Sendable {
-    public let sessionID: String
-    public let cwd: String?
-    public let originator: String?
-    public let source: String?
-    public let agentPath: String?
-    public let isGuardian: Bool
-
-    public init(
-        sessionID: String,
-        cwd: String?,
-        originator: String?,
-        source: String?,
-        agentPath: String? = nil,
-        isGuardian: Bool = false)
-    {
-        self.sessionID = sessionID
-        self.cwd = cwd
-        self.originator = originator
-        self.source = source
-        self.agentPath = agentPath
-        self.isGuardian = isGuardian
-    }
-
-    public var sessionSource: AgentSession.Source {
-        let value = [self.originator, self.source]
-            .compactMap { $0?.lowercased() }
-            .joined(separator: " ")
-        if value.contains("desktop") || value.contains("app-server") {
-            return .desktopApp
-        }
-        if value.contains("ide") || value.contains("vscode") || value.contains("cursor") || value.contains("zed") {
-            return .ide
-        }
-        if value.contains("codex_exec") || value.contains("exec") || value.contains("cli") {
-            return .cli
-        }
-        return .unknown
-    }
-
-    public func descriptiveName(threadMetadata: CodexThreadMetadata?) -> String? {
-        let taskName: String? = if self.isGuardian {
-            "Approval review"
-        } else if let agentPath = threadMetadata?.agentPath ?? self.agentPath {
-            AgentSessionNameFormatter.agentPath(agentPath)
-        } else {
-            nil
-        }
-        return AgentSessionNameFormatter.sessionName(
-            title: threadMetadata?.title,
-            taskName: taskName)
-    }
-}
-
-private enum AgentSessionNameFormatter {
-    private static let uppercaseWords: Set<String> = [
-        "ai", "api", "ci", "cli", "db", "pr", "qa", "seo", "sql", "ui", "ux",
-    ]
-
-    static func agentPath(_ path: String) -> String? {
-        guard let component = path.split(separator: "/").last else { return nil }
-        var normalized = ""
-        var previous: Character?
-        for character in component {
-            if character == "_" || character == "-" {
-                if !normalized.hasSuffix(" ") {
-                    normalized.append(" ")
-                }
-                previous = nil
-                continue
-            }
-            if let previous,
-               (character.isNumber && !previous.isNumber) ||
-               (character.isLetter && previous.isNumber) ||
-               (character.isUppercase && previous.isLowercase)
-            {
-                normalized.append(" ")
-            }
-            normalized.append(character)
-            previous = character
-        }
-
-        let words = normalized.split(whereSeparator: \ .isWhitespace).map(String.init)
-        guard !words.isEmpty else { return nil }
-        return words.enumerated().map { index, word in
-            let lowercase = word.lowercased()
-            if self.uppercaseWords.contains(lowercase) {
-                return lowercase.uppercased()
-            }
-            return index == 0 ? word.prefix(1).uppercased() + word.dropFirst() : lowercase
-        }.joined(separator: " ")
-    }
-
-    static func title(_ title: String, maximumLength: Int = 64) -> String? {
-        let lines = title
-            .split(whereSeparator: \ .isNewline)
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-        guard let line = lines.first(where: { !$0.hasPrefix("/") }) ?? lines.first else { return nil }
-        if line.hasPrefix("/"), let command = self.agentPath(String(line.dropFirst())) {
-            return command
-        }
-
-        let compact = line.split(whereSeparator: \ .isWhitespace).joined(separator: " ")
-        return self.truncated(compact, maximumLength: maximumLength)
-    }
-
-    static func sessionName(title: String?, taskName: String?, maximumLength: Int = 64) -> String? {
-        let chatName = title.flatMap { self.title($0, maximumLength: .max) }
-        guard let chatName else {
-            return taskName.map { self.truncated($0, maximumLength: maximumLength) }
-        }
-        guard let taskName,
-              chatName.caseInsensitiveCompare(taskName) != .orderedSame
-        else {
-            return self.truncated(chatName, maximumLength: maximumLength)
-        }
-
-        let separator = " · "
-        let combined = chatName + separator + taskName
-        guard combined.count > maximumLength else { return combined }
-
-        let initialTaskLength = min(taskName.count, maximumLength / 3)
-        var compactTaskName = self.truncated(taskName, maximumLength: initialTaskLength)
-        let chatLength = max(1, maximumLength - separator.count - compactTaskName.count)
-        let compactChatName = self.truncated(chatName, maximumLength: chatLength)
-        if compactChatName.count == chatName.count {
-            let taskLength = max(1, maximumLength - separator.count - compactChatName.count)
-            compactTaskName = self.truncated(taskName, maximumLength: taskLength)
-        }
-        return compactChatName + separator + compactTaskName
-    }
-
-    private static func truncated(_ value: String, maximumLength: Int) -> String {
-        guard value.count > maximumLength else { return value }
-        guard maximumLength > 1 else { return String(value.prefix(max(0, maximumLength))) }
-        return value.prefix(maximumLength - 1).trimmingCharacters(in: .whitespacesAndNewlines) + "…"
-    }
-}
-
-public enum CodexRolloutFirstLineParser {
-    public static func parse(_ line: String) -> CodexRolloutMetadata? {
-        guard let data = line.data(using: .utf8),
-              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              object["type"] as? String == "session_meta",
-              let payload = object["payload"] as? [String: Any],
-              let sessionID = (payload["session_id"] as? String) ?? (payload["id"] as? String)
-        else { return nil }
-        let sourceObject = payload["source"] as? [String: Any]
-        let subagent = sourceObject?["subagent"] as? [String: Any]
-        let threadSpawn = subagent?["thread_spawn"] as? [String: Any]
-        return CodexRolloutMetadata(
-            sessionID: sessionID,
-            cwd: payload["cwd"] as? String,
-            originator: payload["originator"] as? String,
-            source: payload["source"] as? String,
-            agentPath: (payload["agent_path"] as? String) ?? (threadSpawn?["agent_path"] as? String),
-            isGuardian: (subagent?["other"] as? String)?.lowercased() == "guardian")
-    }
-
-    public static func read(from url: URL) -> CodexRolloutMetadata? {
-        guard let handle = try? FileHandle(forReadingFrom: url) else { return nil }
-        defer { try? handle.close() }
-        var data = Data()
-        while data.count < 256 * 1024 {
-            guard let chunk = try? handle.read(upToCount: 4096), !chunk.isEmpty else { break }
-            if let newline = chunk.firstIndex(of: 0x0A) {
-                data.append(chunk.prefix(upTo: newline))
-                break
-            }
-            data.append(chunk)
-        }
-        guard let line = String(data: data, encoding: .utf8) else { return nil }
-        return self.parse(line)
-    }
-
-    public static func makeSession(
-        metadata: CodexRolloutMetadata,
-        transcriptURL: URL,
-        modifiedAt: Date,
-        pid: Int32? = nil,
-        startedAt: Date? = nil,
-        host: String,
-        config: SessionScanConfig = SessionScanConfig(),
-        now: Date = Date()) -> AgentSession?
-    {
-        guard pid != nil || now.timeIntervalSince(modifiedAt) <= config.fileOnlyWindow else { return nil }
-        let cwd = metadata.cwd
-        // Provider-specific by design: Codex rollout metadata constructs Codex-owned local agent sessions.
-        return AgentSession(
-            id: metadata.sessionID,
-            provider: .codex,
-            source: metadata.sessionSource,
-            state: config.state(lastActivityAt: modifiedAt, now: now, hasLiveProcess: pid != nil),
-            pid: pid,
-            cwd: cwd,
-            projectName: cwd.map { URL(fileURLWithPath: $0).lastPathComponent },
-            startedAt: startedAt,
-            lastActivityAt: modifiedAt,
-            transcriptPath: transcriptURL.path,
-            host: host)
     }
 }

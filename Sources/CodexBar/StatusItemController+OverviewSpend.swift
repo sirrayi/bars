@@ -19,7 +19,7 @@ struct OverviewSpendSummary: Equatable {
         knownTokenProviderCount: Int? = nil)
     {
         let includedProviders = model.groups.flatMap(\.providers)
-        let subscriptionProviders = includedProviders.filter { $0.sourceKind != .localHistory }
+        let subscriptionProviders = includedProviders
         let providerCount = max(max(0, providerCount), subscriptionProviders.count)
         let pricedProviderCount = subscriptionProviders.count { $0.totalCost != nil }
         let tokenProviderCount = subscriptionProviders.count { $0.totalTokens != nil }
@@ -218,13 +218,11 @@ extension StatusItemController {
                   settings: self.settings,
                   store: self.store)
         else {
-            // Provider-specific by design: Pi contributes local history, not subscription coverage.
-            return providerScope.count { $0 != .pi }
+            return providerScope.count
         }
         return publication.subscriptionCount(
             providerScope: providerScope,
-            hiddenSourceIDs: Set(self.settings.spendDashboardHiddenSourceIDs),
-            hideNativeCodexWhenOpenCodexPresent: self.settings.hideNativeCodexCostWhenOpenCodexPresent)
+            hiddenSourceIDs: Set(self.settings.spendDashboardHiddenSourceIDs))
     }
 
     func overviewSpendKnownSubscriptionCounts(
@@ -243,13 +241,11 @@ extension StatusItemController {
             publication.knownCostSubscriptionCount(
                 model: model,
                 providerScope: providerScope,
-                hiddenSourceIDs: hiddenSourceIDs,
-                hideNativeCodexWhenOpenCodexPresent: self.settings.hideNativeCodexCostWhenOpenCodexPresent),
+                hiddenSourceIDs: hiddenSourceIDs),
             publication.knownTokenSubscriptionCount(
                 model: model,
                 providerScope: providerScope,
-                hiddenSourceIDs: hiddenSourceIDs,
-                hideNativeCodexWhenOpenCodexPresent: self.settings.hideNativeCodexCostWhenOpenCodexPresent))
+                hiddenSourceIDs: hiddenSourceIDs))
     }
 
     func overviewSpendDashboardModel(
@@ -277,7 +273,6 @@ extension StatusItemController {
                 calendar: self.settings.costUsageBucketCalendar,
                 preferredCurrencyCode: self.settings.preferredCurrencyCode,
                 hiddenSourceIDs: Set(self.settings.spendDashboardHiddenSourceIDs),
-                hideNativeCodexWhenOpenCodexPresent: self.settings.hideNativeCodexCostWhenOpenCodexPresent,
                 providerScope: Set(providers))
         }
         let inputs = providers.compactMap { provider -> SpendDashboardModel.ProviderInput? in

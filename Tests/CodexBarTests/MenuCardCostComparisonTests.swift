@@ -64,7 +64,7 @@ struct MenuCardCostComparisonTests {
             updatedAt: Date())
 
         let section = try #require(UsageMenuCardView.Model.tokenUsageSection(
-            provider: .codex,
+            provider: .claude,
             enabled: true,
             isRefreshing: true,
             comparisonPeriodsEnabled: false,
@@ -91,10 +91,10 @@ struct MenuCardCostComparisonTests {
                 Self.entry(day: "2026-07-01", cost: 4, tokens: 400),
             ],
             updatedAt: now)
-        let metadata = try #require(ProviderDefaults.metadata[.codex])
+        let metadata = try #require(ProviderDefaults.metadata[.claude])
 
         let model = UsageMenuCardView.Model.make(.init(
-            provider: .codex,
+            provider: .claude,
             metadata: metadata,
             snapshot: nil,
             credits: nil,

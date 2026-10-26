@@ -114,12 +114,12 @@ final class SpendTrendChartRenderTests: XCTestCase {
         formatter.dateFormat = "yyyy-MM-dd"
         let accounts: [(String, UsageProvider, String)] = multipleProviders
             ? [
-                ("account-a", .codex, "Codex · #1"),
-                ("account-b", .codex, "Codex"),
+                ("account-a", .claude, "Codex · #1"),
+                ("account-b", .claude, "Codex"),
                 ("deepseek", .deepseek, "DeepSeek"),
                 ("opencode", .opencode, "OpenCode"),
             ]
-            : [("account-a", .codex, "Codex · #1"), ("account-b", .codex, "Codex")]
+            : [("account-a", .claude, "Codex · #1"), ("account-b", .claude, "Codex")]
         return try accounts.enumerated().map { source, account in
             var hourly: [CostUsageHourlyEntry] = []
             var daily: [CostUsageDailyReport.Entry] = []

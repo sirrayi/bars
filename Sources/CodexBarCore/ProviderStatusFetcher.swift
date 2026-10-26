@@ -3,9 +3,7 @@ import Foundation
 import FoundationNetworking
 #endif
 
-/// Shared, lock-guarded ISO8601 formatters for status feeds. Allocating a fresh
-/// `ISO8601DateFormatter` per decoded date field is a measurable share of decoding the
-/// Google Workspace incidents feed, which can run to hundreds of kilobytes (#1399).
+/// Shared, lock-guarded ISO8601 formatters for status feeds; allocating one per decoded date is wasteful.
 private final class StatusISO8601FormatterBox: @unchecked Sendable {
     let lock = NSLock()
     let withFractional: ISO8601DateFormatter = {
@@ -43,9 +41,7 @@ private enum StatusFeedDateParser {
 }
 
 package enum ProviderStatusFetcher {
-    /// Status feeds decode off the main actor: the Google Workspace incidents payload alone
-    /// can be hundreds of kilobytes and cost 150-340ms to decode (#1399), and these helpers
-    /// touch no store state.
+    /// Status feeds decode off the main actor; these helpers touch no store state.
     @concurrent
     package static func fetchStatus(
         from baseURL: URL,
@@ -61,41 +57,14 @@ package enum ProviderStatusFetcher {
         return try Self.parseStatuspageStatus(data: data)
     }
 
-    /// Resolves the provider's status and component list.
-    ///
-    /// OpenAI's status page is powered by incident.io, whose native feed groups components
-    /// (APIs / ChatGPT / Codex / FedRAMP) — so we try that first. Classic Atlassian
-    /// statuspage.io pages (Claude, Cursor, GitHub) expose a flat `api/v2` feed, which we fall
-    /// back to. `components.json` is used for the flat list because `summary.json` omits unlisted
-    /// components such as "FedRAMP".
+    /// Resolves the provider's status and component list from an Atlassian statuspage.io feed.
+    /// `components.json` is used for the flat list because `summary.json` omits unlisted components.
     @concurrent
     package static func fetchStatusSummary(
         from baseURL: URL,
         transport: any ProviderHTTPTransport = ProviderHTTPClient.shared)
         async throws -> (status: ProviderStatus, components: [ProviderStatusComponent]?)
     {
-        // incident.io native feed (grouped): https://<host>/proxy/<host>
-        if let host = baseURL.host,
-           let proxyURL = URL(string: "https://\(host)/proxy/\(host)")
-        {
-            var proxyRequest = URLRequest(url: proxyURL)
-            proxyRequest.timeoutInterval = 10
-            if let (data, _) = try? await transport.data(for: proxyRequest),
-               let parsed = try? Self.parseIncidentIOSummary(data: data)
-            {
-                // The proxy feed derives the indicator from component leaves but carries no
-                // top-level description or timestamp; fetch the summary endpoint so callers
-                // get the full status banner.
-                let overlay = try? await Self.fetchStatus(from: baseURL, transport: transport)
-                let status = ProviderStatus(
-                    indicator: parsed.status.indicator,
-                    description: overlay?.description,
-                    updatedAt: overlay?.updatedAt)
-                return (status, parsed.components)
-            }
-        }
-
-        // Classic statuspage.io fallback.
         var summaryRequest = URLRequest(url: baseURL.appendingPathComponent("api/v2/summary.json"))
         summaryRequest.timeoutInterval = 10
         var componentsRequest = URLRequest(url: baseURL.appendingPathComponent("api/v2/components.json"))
@@ -111,131 +80,6 @@ package enum ProviderStatusFetcher {
             nil
         }
         return (status, components)
-    }
-
-    /// Parses incident.io's native status-page summary (`/proxy/<host>`). Groups come from
-    /// `structure.items`; per-component statuses come from `affected_components` (anything not
-    /// listed there is operational). A group's status aggregates the worst of its children.
-    package static func parseIncidentIOSummary(
-        data: Data)
-        throws -> (status: ProviderStatus, components: [ProviderStatusComponent])
-    {
-        // The incident.io payload mirrors a deeply nested JSON shape; the response models follow it
-        // 1:1 for clarity, which exceeds the default type-nesting depth.
-        // swiftlint:disable nesting
-        struct Response: Decodable {
-            struct Summary: Decodable {
-                struct AffectedComponent: Decodable {
-                    let componentID: String
-                    let status: String?
-                    private enum CodingKeys: String, CodingKey {
-                        case componentID = "component_id"
-                        case status
-                    }
-                }
-
-                struct Structure: Decodable {
-                    struct Item: Decodable {
-                        struct Group: Decodable {
-                            struct Child: Decodable {
-                                let componentID: String
-                                let name: String?
-                                let hidden: Bool?
-                                private enum CodingKeys: String, CodingKey {
-                                    case componentID = "component_id"
-                                    case name, hidden
-                                }
-                            }
-
-                            let id: String
-                            let name: String?
-                            let hidden: Bool?
-                            let components: [Child]?
-                        }
-
-                        struct Component: Decodable {
-                            let componentID: String
-                            let name: String?
-                            let hidden: Bool?
-                            private enum CodingKeys: String, CodingKey {
-                                case componentID = "component_id"
-                                case name, hidden
-                            }
-                        }
-
-                        let group: Group?
-                        let component: Component?
-                    }
-
-                    let items: [Item]?
-                }
-
-                let affectedComponents: [AffectedComponent]?
-                let structure: Structure?
-                private enum CodingKeys: String, CodingKey {
-                    case affectedComponents = "affected_components"
-                    case structure
-                }
-            }
-
-            let summary: Summary?
-        }
-        // swiftlint:enable nesting
-
-        let response = try JSONDecoder().decode(Response.self, from: data)
-        guard let summary = response.summary,
-              let items = summary.structure?.items,
-              !items.isEmpty
-        else {
-            throw URLError(.cannotParseResponse)
-        }
-
-        var statusByID: [String: String] = [:]
-        for affected in summary.affectedComponents ?? [] {
-            statusByID[affected.componentID] = affected.status
-        }
-
-        func leaf(id: String, name: String) -> ProviderStatusComponent {
-            let raw = statusByID[id] ?? "operational"
-            return ProviderStatusComponent(
-                id: id,
-                name: name,
-                indicator: ProviderStatusComponent.indicator(forStatuspageStatus: raw),
-                status: raw)
-        }
-
-        var topLevel: [ProviderStatusComponent] = []
-        for item in items {
-            if let group = item.group, group.hidden != true {
-                let children = (group.components ?? [])
-                    .filter { $0.hidden != true }
-                    .compactMap { child -> ProviderStatusComponent? in
-                        guard let name = Self.normalizedStatusComponentName(child.name) else { return nil }
-                        return leaf(id: child.componentID, name: name)
-                    }
-                guard let groupName = Self.normalizedStatusComponentName(group.name) else { continue }
-                let worst = children.max { Self.indicatorRank($0.indicator) < Self.indicatorRank($1.indicator) }
-                topLevel.append(ProviderStatusComponent(
-                    id: group.id,
-                    name: groupName,
-                    indicator: worst?.indicator ?? .none,
-                    status: worst?.status ?? "operational",
-                    children: children))
-            } else if let component = item.component,
-                      component.hidden != true,
-                      let name = Self.normalizedStatusComponentName(component.name)
-            {
-                topLevel.append(leaf(id: component.componentID, name: name))
-            }
-        }
-
-        let leaves = topLevel.flatMap { $0.isGroup ? $0.children : [$0] }
-        let overall = leaves.max { Self.indicatorRank($0.indicator) < Self.indicatorRank($1.indicator) }
-        let status = ProviderStatus(
-            indicator: overall?.indicator ?? .none,
-            description: nil,
-            updatedAt: nil)
-        return (status, topLevel)
     }
 
     package static func parseStatuspageStatus(data: Data) throws -> ProviderStatus {
@@ -324,144 +168,5 @@ package enum ProviderStatusFetcher {
     private nonisolated static func normalizedStatusComponentName(_ name: String?) -> String? {
         guard let name = name?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else { return nil }
         return name
-    }
-
-    @concurrent
-    package static func fetchWorkspaceStatus(
-        productID: String,
-        transport: any ProviderHTTPTransport = ProviderHTTPClient.shared,
-        beforeDecoding: (@Sendable () -> Void)? = nil)
-        async throws -> ProviderStatus
-    {
-        guard let url = URL(string: "https://www.google.com/appsstatus/dashboard/incidents.json") else {
-            throw URLError(.badURL)
-        }
-        var request = URLRequest(url: url)
-        request.timeoutInterval = 10
-        let (data, _) = try await transport.data(for: request)
-        beforeDecoding?()
-        return try Self.parseGoogleWorkspaceStatus(data: data, productID: productID)
-    }
-
-    package static func parseGoogleWorkspaceStatus(data: Data, productID: String) throws -> ProviderStatus {
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-        decoder.dateDecodingStrategy = StatusFeedDateParser.decodingStrategy()
-
-        let incidents = try decoder.decode([GoogleWorkspaceIncident].self, from: data)
-        let active = incidents.filter { $0.isRelevant(productID: productID) && $0.isActive }
-        guard !active.isEmpty else {
-            return ProviderStatus(indicator: .none, description: nil, updatedAt: nil)
-        }
-
-        var best: (
-            indicator: ProviderStatusIndicator,
-            incident: GoogleWorkspaceIncident,
-            update: GoogleWorkspaceUpdate?)
-        best = (indicator: .none, incident: active[0], update: active[0].mostRecentUpdate ?? active[0].updates?.last)
-
-        for incident in active {
-            let update = incident.mostRecentUpdate ?? incident.updates?.last
-            let indicator = Self.workspaceIndicator(
-                status: update?.status ?? incident.statusImpact,
-                severity: incident.severity)
-            if Self.indicatorRank(indicator) <= Self.indicatorRank(best.indicator) { continue }
-            best = (indicator: indicator, incident: incident, update: update)
-        }
-
-        let description = Self.workspaceSummary(from: best.update?.text ?? best.incident.externalDesc)
-        let updatedAt = best.update?.when ?? best.incident.modified ?? best.incident.begin
-        return ProviderStatus(indicator: best.indicator, description: description, updatedAt: updatedAt)
-    }
-
-    private nonisolated static func indicatorRank(_ indicator: ProviderStatusIndicator) -> Int {
-        switch indicator {
-        case .none: 0
-        case .maintenance: 1
-        case .minor: 2
-        case .major: 3
-        case .critical: 4
-        case .unknown: 1
-        }
-    }
-
-    private nonisolated static func workspaceIndicator(status: String?, severity: String?) -> ProviderStatusIndicator {
-        switch status?.uppercased() {
-        case "AVAILABLE": return .none
-        case "SERVICE_INFORMATION": return .minor
-        case "SERVICE_DISRUPTION": return .major
-        case "SERVICE_OUTAGE": return .critical
-        case "SERVICE_MAINTENANCE", "SCHEDULED_MAINTENANCE": return .maintenance
-        default: break
-        }
-
-        switch severity?.lowercased() {
-        case "low": return .minor
-        case "medium": return .major
-        case "high": return .critical
-        default: return .minor
-        }
-    }
-
-    private nonisolated static func workspaceSummary(from text: String?) -> String? {
-        guard let text else { return nil }
-        let normalized = text
-            .replacingOccurrences(of: "\r\n", with: "\n")
-            .replacingOccurrences(of: "\r", with: "\n")
-        let lines = normalized.split(separator: "\n", omittingEmptySubsequences: true)
-        for rawLine in lines {
-            let trimmed = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)
-            if trimmed.isEmpty { continue }
-            let lower = trimmed.lowercased()
-            if lower.hasPrefix("**summary") || lower.hasPrefix("**description") || lower == "summary" {
-                continue
-            }
-            var cleaned = trimmed.replacingOccurrences(of: "**", with: "")
-            cleaned = cleaned.replacingOccurrences(
-                of: #"\[([^\]]+)\]\([^)]+\)"#,
-                with: "$1",
-                options: .regularExpression)
-            if cleaned.hasPrefix("- ") {
-                cleaned.removeFirst(2)
-            }
-            cleaned = cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !cleaned.isEmpty { return cleaned }
-        }
-        return nil
-    }
-
-    private struct GoogleWorkspaceIncident: Decodable {
-        let begin: Date?
-        let end: Date?
-        let modified: Date?
-        let externalDesc: String?
-        let statusImpact: String?
-        let severity: String?
-        let affectedProducts: [GoogleWorkspaceProduct]?
-        let currentlyAffectedProducts: [GoogleWorkspaceProduct]?
-        let mostRecentUpdate: GoogleWorkspaceUpdate?
-        let updates: [GoogleWorkspaceUpdate]?
-
-        var isActive: Bool {
-            self.end == nil
-        }
-
-        func isRelevant(productID: String) -> Bool {
-            if let current = currentlyAffectedProducts {
-                return current.contains(where: { $0.id == productID })
-            }
-            return self.affectedProducts?.contains(where: { $0.id == productID }) ?? false
-        }
-    }
-
-    private struct GoogleWorkspaceProduct: Decodable {
-        let title: String?
-        let id: String
-    }
-
-    private struct GoogleWorkspaceUpdate: Decodable {
-        let when: Date?
-        let status: String?
-        let text: String?
     }
 }

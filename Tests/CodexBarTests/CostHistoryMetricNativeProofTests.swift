@@ -15,7 +15,6 @@ final class CostHistoryMetricNativeProofTests: XCTestCase {
             throw XCTSkip("Set CODEXBAR_COST_METRIC_NATIVE_PROOF=1 to run the native menu proof.")
         }
         guard environment["CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS"] == "1",
-              environment[CodexCredentialFileAccess.isolationEnvironmentKey] == "1",
               environment["CODEXBAR_TEST_SESSION_FILE_ISOLATION"] == "1",
               environment["CODEXBAR_ALLOW_TEST_KEYCHAIN_ACCESS"] != "1"
         else {
@@ -157,7 +156,7 @@ private func makeCostMetricProofFixture() -> (
     }
     let metricChanges = MetricChangeRecorder()
     let chart = CostHistoryChartMenuView(
-        provider: .codex,
+        provider: .claude,
         daily: daily,
         totalCostUSD: daily.reduce(0) { $0 + ($1.costUSD ?? 0) },
         projects: projects,

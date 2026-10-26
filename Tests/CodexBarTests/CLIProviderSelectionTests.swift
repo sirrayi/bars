@@ -5,40 +5,6 @@ import Testing
 
 struct CLIProviderSelectionTests {
     @Test
-    func `help includes gemini and all`() {
-        let usage = CodexBarCLI.usageHelp(version: "0.0.0")
-        let root = CodexBarCLI.rootHelp(version: "0.0.0")
-        let expectedProviders = [
-            "--provider codex|",
-            "|claude|",
-            "|opencode|",
-            "|opencodego|",
-            "|devin|",
-            "|deepseek|",
-            "|pi|",
-            "|both|",
-            "|all]",
-        ]
-        for provider in expectedProviders {
-            #expect(usage.contains(provider))
-            #expect(root.contains(provider))
-        }
-        #expect(usage.contains("--json"))
-        #expect(root.contains("--json"))
-        #expect(usage.contains("--json-only"))
-        #expect(root.contains("--json-only"))
-        #expect(usage.contains("--json-output"))
-        #expect(root.contains("--json-output"))
-        #expect(usage.contains("--log-level"))
-        #expect(root.contains("--log-level"))
-        #expect(usage.contains("--verbose"))
-        #expect(root.contains("--verbose"))
-        #expect(usage.contains("codexbar usage --provider deepseek"))
-        #expect(usage.contains("codexbar usage --format json --provider all --pretty"))
-        #expect(root.contains("codexbar --provider deepseek"))
-    }
-
-    @Test
     func `help mentions source flag`() {
         let usage = CodexBarCLI.usageHelp(version: "0.0.0")
         let root = CodexBarCLI.rootHelp(version: "0.0.0")
@@ -71,8 +37,8 @@ struct CLIProviderSelectionTests {
 
     @Test
     func `provider selection uses both for codex and claude`() {
-        let selection = CodexBarCLI.providerSelection(rawOverride: nil, enabled: [.codex, .claude])
-        #expect(selection.asList == [.codex, .claude])
+        let selection = CodexBarCLI.providerSelection(rawOverride: nil, enabled: [.opencode, .claude])
+        #expect(selection.asList == [.opencode, .claude])
     }
 
     @Test

@@ -117,41 +117,4 @@ struct StatuspageSummaryTests {
         #expect(result.status.description == "Partial Outage")
         #expect(result.components == nil)
     }
-
-    @Test
-    func `fetchStatusSummary overlays description and updatedAt when incident io succeeds`() async throws {
-        let proxyJSON = Data(#"""
-        {
-          "summary": {
-            "affected_components": [{"component_id": "c-api", "status": "degraded_performance"}],
-            "structure": {"items": [
-              {"component": {"component_id": "c-api", "name": "API", "hidden": false}}
-            ]}
-          }
-        }
-        """#.utf8)
-
-        let statusJSON = Data(#"""
-        {
-          "page": {"updated_at": "2026-06-20T10:00:00Z"},
-          "status": {"indicator": "minor", "description": "Elevated error rates"}
-        }
-        """#.utf8)
-
-        let stub = ProviderHTTPTransportStub { request in
-            guard let url = request.url else { throw URLError(.badURL) }
-            let ok = HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!
-            if url.path.contains("/proxy/") { return (proxyJSON, ok) }
-            if url.path.hasSuffix("status.json") { return (statusJSON, ok) }
-            throw URLError(.notConnectedToInternet)
-        }
-
-        let baseURL = try #require(URL(string: "https://status.example.test"))
-        let result = try await ProviderStatusFetcher.fetchStatusSummary(from: baseURL, transport: stub)
-
-        #expect(result.status.indicator == .minor)
-        #expect(result.status.description == "Elevated error rates")
-        #expect(result.status.updatedAt != nil)
-        #expect(result.components?.map(\.name) == ["API"])
-    }
 }

@@ -19,13 +19,8 @@ struct ClaudeSwapRichUsageFixture {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
 
-        try await CodexCredentialFileAccess.withFixtureScope(.init()) {
-            try await OpenAIDashboardCacheStore.$cacheURLOverride
-                .withValue(root.appendingPathComponent("dashboard.json")) {
-                    try await CodexBarLocalizationOverride.$appLanguage.withValue("en") {
-                        try await body(Self.make(root: root, activeNeedsRepair: activeNeedsRepair))
-                    }
-                }
+        try await CodexBarLocalizationOverride.$appLanguage.withValue("en") {
+            try await body(Self.make(root: root, activeNeedsRepair: activeNeedsRepair))
         }
     }
 
@@ -80,14 +75,11 @@ struct ClaudeSwapRichUsageFixture {
         settings.showOptionalCreditsAndExtraUsage = true
         settings.hidePersonalInfo = false
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(
                 homeDirectory: root.path,
                 fileExists: { _ in false },
                 directoryContents: { _ in nil }),
             settings: settings,
-            historicalUsageHistoryStore: HistoricalUsageHistoryStore(fileURL: root
-                .appendingPathComponent("history.json")),
             planUtilizationHistoryStore: PlanUtilizationHistoryStore(directoryURL: root
                 .appendingPathComponent("plan-history")),
             startupBehavior: .testing,

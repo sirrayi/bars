@@ -12,9 +12,9 @@ struct CLIHooksTests {
         #expect(try allResult.get() == ProviderDescriptorRegistry.all.map(\.id))
 
         let bothResult = CodexBarCLI.decodeHooksWatchProviderNames(
-            from: ParsedValues(positional: [], options: ["provider": ["both", "codex", "codex"]], flags: []))
+            from: ParsedValues(positional: [], options: ["provider": ["both", "opencode", "opencode"]], flags: []))
         let both = try #require(try bothResult.get())
-        #expect(both == [.codex, .claude])
+        #expect(both == [.claude, .opencode])
 
         guard case .failure = CodexBarCLI.decodeHooksWatchProviderNames(
             from: ParsedValues(positional: [], options: ["provider": ["bogus"]], flags: []))
@@ -36,12 +36,12 @@ struct CLIHooksTests {
                 isSyntheticPlaceholder: true),
             updatedAt: Date())
             .withIdentity(ProviderIdentitySnapshot(
-                providerID: .codex,
+                providerID: .opencode,
                 accountEmail: "fixture@example.invalid",
                 accountOrganization: nil,
                 loginMethod: nil))
         let lanes = CodexBarCLI.hooksWatchLanes(
-            provider: .codex,
+            provider: .opencode,
             usage: usage,
             config: CodexBarConfig(providers: []),
             accountDiscriminator: "private-owner",
@@ -54,7 +54,7 @@ struct CLIHooksTests {
 
     @Test
     func `sample quota-low event matches maximum threshold`() {
-        let event = CodexBarCLI.sampleHookEvent(type: .quotaLow, provider: UsageProvider.codex.rawValue)
+        let event = CodexBarCLI.sampleHookEvent(type: .quotaLow, provider: UsageProvider.opencode.rawValue)
         let rule = HookRule(event: .quotaLow, threshold: 1, executable: "/bin/echo")
 
         #expect(event.usagePercent == 1)
@@ -63,14 +63,14 @@ struct CLIHooksTests {
 
     @Test
     func `sample refresh failure uses production status`() {
-        let event = CodexBarCLI.sampleHookEvent(type: .refreshFailed, provider: UsageProvider.codex.rawValue)
+        let event = CodexBarCLI.sampleHookEvent(type: .refreshFailed, provider: UsageProvider.opencode.rawValue)
 
         #expect(event.status == "error")
     }
 
     @Test
     func `sample usage update represents session and weekly windows`() {
-        let event = CodexBarCLI.sampleHookEvent(type: .usageUpdated, provider: UsageProvider.codex.rawValue)
+        let event = CodexBarCLI.sampleHookEvent(type: .usageUpdated, provider: UsageProvider.opencode.rawValue)
 
         #expect(event.usagePercent == 0.5)
         #expect(event.windowMinutes == 300)
@@ -86,7 +86,7 @@ struct CLIHooksTests {
         let secondaryReset = try #require(ISO8601DateFormatter().date(from: "2026-09-10T12:00:00Z"))
         let event = HookEvent(
             event: .usageUpdated,
-            provider: UsageProvider.codex.rawValue,
+            provider: UsageProvider.opencode.rawValue,
             window: "Session",
             usagePercent: 0.2,
             resetAt: primaryReset,
@@ -111,7 +111,7 @@ struct CLIHooksTests {
             ruleID: "fixture",
             executable: "/bin/echo",
             event: "quota_reached",
-            provider: "codex",
+            provider: "opencode",
             success: true,
             stdout: "ok",
             error: nil)

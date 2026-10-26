@@ -66,12 +66,8 @@ public enum SessionWindowFocuser {
             }
         }
 
-        let bundleIdentifier: String? = switch (session.provider, session.source) {
-        case (.claude, .desktopApp): "com.anthropic.claudefordesktop"
-        case (.codex, .desktopApp): "com.openai.codex"
-        default: nil
-        }
-        guard let bundleIdentifier else { return nil }
+        guard session.source == .desktopApp else { return nil }
+        let bundleIdentifier = "com.anthropic.claudefordesktop"
         return NSRunningApplication.runningApplications(withBundleIdentifier: bundleIdentifier).first
     }
 

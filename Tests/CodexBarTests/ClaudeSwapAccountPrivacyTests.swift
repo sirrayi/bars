@@ -66,7 +66,7 @@ struct ClaudeSwapAccountPrivacyTests {
     @Test
     func `other account sources retain whole value privacy redaction`() throws {
         for (provider, source) in [
-            (UsageProvider.codex, "codex-account"), (.claude, "token-account"), (.opencode, "token-account"),
+            (UsageProvider.devin, "codex-account"), (.claude, "token-account"), (.opencode, "token-account"),
         ] {
             let accounts = (1...4).map { slot in
                 self.account(
@@ -97,7 +97,7 @@ struct ClaudeSwapAccountPrivacyTests {
 
     @Test
     func `numeric identities from another provider do not grant a source ordinal`() {
-        let account = self.account(slot: "7", label: "Private alias", provider: .codex)
+        let account = self.account(slot: "7", label: "Private alias", provider: .devin)
         #expect(ClaudeSwapAccountMenuDisplay.privacyOrdinal(for: account) == nil)
     }
 

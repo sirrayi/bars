@@ -5,7 +5,7 @@ import Testing
 
 @MainActor
 final class ClaudeSwapReconciliationFixture {
-    let navigation: CodexWorkspacesNavigationFixture
+    let navigation: MenuNavigationFixture
     let executable: URL
     let ambientGate = ClaudeSwapReconciliationAmbientGate()
     let targetID = ProviderAccountIdentity(source: ClaudeSwapAccountProjection.sourceName, opaqueID: "2")
@@ -31,7 +31,7 @@ final class ClaudeSwapReconciliationFixture {
     }
 
     init(failure: ClaudeSwapReconciliationFailure) throws {
-        self.navigation = try CodexWorkspacesNavigationFixture(userDefaults: InMemoryUserDefaults())
+        self.navigation = try MenuNavigationFixture(userDefaults: InMemoryUserDefaults())
         self.executable = self.navigation.files.root.appendingPathComponent("cswap-reconciliation")
         self.executables = [self.executable]
         do {
@@ -49,7 +49,7 @@ final class ClaudeSwapReconciliationFixture {
             self.store.claudeSwapAccountSnapshots = try ClaudeSwapAccountProjection.accountSnapshots(
                 from: ClaudeSwapListParser.parse(Self.listData(activeSlot: 1)))
             self.store._test_providerRefreshOverride = nil
-            for provider in [UsageProvider.claude, .codex] {
+            for provider in [UsageProvider.claude, .opencode] {
                 let spec = try #require(self.store.providerSpecs[provider])
                 let base = spec.descriptor
                 let strategy = ClaudeSwapReconciliationAmbientStrategy(

@@ -63,8 +63,6 @@ final class SettingsWindowController: NSWindowController {
         cloudSyncState: CloudSyncState,
         updater: UpdaterProviding,
         selection: PreferencesSelection,
-        managedCodexAccountCoordinator: ManagedCodexAccountCoordinator,
-        codexAccountPromotionCoordinator: CodexAccountPromotionCoordinator,
         runProviderLoginFlow: @escaping @MainActor (UsageProvider) async -> Void)
     {
         self.init(selection: selection) {
@@ -74,8 +72,6 @@ final class SettingsWindowController: NSWindowController {
                 cloudSyncState: cloudSyncState,
                 updater: updater,
                 selection: selection,
-                managedCodexAccountCoordinator: managedCodexAccountCoordinator,
-                codexAccountPromotionCoordinator: codexAccountPromotionCoordinator,
                 runProviderLoginFlow: runProviderLoginFlow)
             let hostingController = NSHostingController(rootView: rootView)
             let window = NSWindow(

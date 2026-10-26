@@ -7,16 +7,15 @@ struct DebugPane: View {
     @Bindable var settings: SettingsStore
     @Bindable var store: UsageStore
     @AppStorage("debugFileLoggingEnabled") private var debugFileLoggingEnabled = false
-    // Provider-specific by design: debug probe, fetch, and error pickers historically start on Codex.
-    @State private var currentLogProvider: UsageProvider = .codex
-    @State private var currentFetchProvider: UsageProvider = .codex
+    @State private var currentLogProvider: UsageProvider = .claude
+    @State private var currentFetchProvider: UsageProvider = .claude
     @State private var isLoadingLog = false
     @State private var logText: String = ""
     @State private var isClearingCostCache = false
     @State private var costCacheStatus: String?
     @State private var cookieCacheStatus: String?
     #if DEBUG
-    @State private var currentErrorProvider: UsageProvider = .codex
+    @State private var currentErrorProvider: UsageProvider = .claude
     @State private var simulatedErrorText: String = """
     Simulated error for testing layout.
     Second line.
@@ -189,43 +188,12 @@ struct DebugPane: View {
                     .cornerRadius(6)
                 }
 
-                if !self.settings.debugDisableKeychainAccess {
-                    SettingsSection(
-                        title: L("section_openai_cookies"),
-                        caption: L("openai_cookies_caption"))
-                    {
-                        HStack(spacing: 12) {
-                            Button {
-                                self.copyToPasteboard(self.store.openAIDashboardCookieImportDebugLog ?? "")
-                            } label: {
-                                Label(L("copy"), systemImage: "doc.on.doc")
-                            }
-                            .disabled((self.store.openAIDashboardCookieImportDebugLog ?? "").isEmpty)
-                        }
-
-                        ScrollView {
-                            Text(
-                                self.store.openAIDashboardCookieImportDebugLog?.isEmpty == false
-                                    ? (self.store.openAIDashboardCookieImportDebugLog ?? "")
-                                    : L("no_log_yet"))
-                                .font(.system(.footnote, design: .monospaced))
-                                .textSelection(.enabled)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(8)
-                        }
-                        .frame(minHeight: 120, maxHeight: 180)
-                        .background(Color(NSColor.textBackgroundColor))
-                        .cornerRadius(6)
-                    }
-                }
-
                 SettingsSection(
                     title: L("section_caches"),
                     caption: L("caches_caption"))
                 {
-                    // Provider-specific by design: cache activity currently tracks the Codex/Claude scanners.
-                    let isTokenRefreshActive = self.store.isTokenRefreshInFlight(for: .codex)
-                        || self.store.isTokenRefreshInFlight(for: .claude)
+                    // Provider-specific by design: cache activity currently tracks the Claude scanner.
+                    let isTokenRefreshActive = self.store.isTokenRefreshInFlight(for: .claude)
 
                     HStack(spacing: 12) {
                         Button {
@@ -341,8 +309,8 @@ struct DebugPane: View {
                         .controlSize(.small)
                     }
 
-                    // Provider-specific by design: only Codex/Claude expose scanner-owned token errors here.
-                    let supportsTokenError = self.currentErrorProvider == .codex || self.currentErrorProvider == .claude
+                    // Provider-specific by design: only Claude exposes scanner-owned token errors here.
+                    let supportsTokenError = self.currentErrorProvider == .claude
                     HStack(spacing: 12) {
                         Button {
                             self.store._setTokenErrorForTesting(
@@ -369,8 +337,7 @@ struct DebugPane: View {
                     title: L("section_cli_paths"),
                     caption: L("cli_paths_caption"))
                 {
-                    // Provider-specific by design: PathDebugInfo only records the Codex and Claude binaries.
-                    self.binaryRow(title: L("codex_binary"), value: self.store.pathDebugInfo.codexBinary)
+                    // Provider-specific by design: PathDebugInfo only records the Claude binary.
                     self.binaryRow(title: L("claude_binary"), value: self.store.pathDebugInfo.claudeBinary)
 
                     VStack(alignment: .leading, spacing: 6) {

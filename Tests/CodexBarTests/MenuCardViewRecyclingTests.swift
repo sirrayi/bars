@@ -34,11 +34,11 @@ private struct CardActionProbeView: View {
 
 extension StatusMenuTests {
     private func makeRecyclingController(settings: SettingsStore) -> StatusItemController {
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
+        let store = self.makeOpenCodeStore(settings: settings)
         return StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -221,12 +221,12 @@ extension StatusMenuTests {
             ]),
         ]
 
-        let narrowWidth = controller.measuredMenuCardWidth(for: [(.codex, narrow)])
-        let stableWidth = controller.measuredMenuCardWidth(for: [(.codex, narrow), (.claude, wide)])
+        let narrowWidth = controller.measuredMenuCardWidth(for: [(.opencode, narrow)])
+        let stableWidth = controller.measuredMenuCardWidth(for: [(.opencode, narrow), (.claude, wide)])
 
         #expect(narrowWidth == StatusItemController.menuCardBaseWidth)
         #expect(stableWidth > narrowWidth)
-        #expect(controller.measuredMenuCardWidth(for: [(.claude, wide), (.codex, narrow)]) == stableWidth)
+        #expect(controller.measuredMenuCardWidth(for: [(.claude, wide), (.opencode, narrow)]) == stableWidth)
     }
 
     @Test
@@ -282,18 +282,18 @@ extension StatusMenuTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
-        enableTestProviders([.codex], settings: settings)
+        enableTestProviders([.opencode], settings: settings)
 
         let controller = self.makeRecyclingController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
 
         let menu = controller.makeMenu()
-        controller.populateMenu(menu, provider: .codex)
+        controller.populateMenu(menu, provider: .opencode)
         let firstPass = self.cardViewIdentities(in: menu)
         #expect(!firstPass.isEmpty)
 
         controller.invalidateMenus(allowStaleContentDuringDataRefresh: true)
-        controller.populateMenu(menu, provider: .codex)
+        controller.populateMenu(menu, provider: .opencode)
         let secondPass = self.cardViewIdentities(in: menu)
 
         #expect(secondPass.keys.sorted() == firstPass.keys.sorted())
@@ -315,26 +315,26 @@ extension StatusMenuTests {
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
         settings.mergedMenuLastSelectedWasOverview = false
-        enableTestProviders([.codex, .claude], settings: settings)
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
+        enableTestProviders([.opencode, .claude], settings: settings)
+        let store = self.makeOpenCodeStore(settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
 
-        controller.selectedMenuProvider = .codex
+        controller.selectedMenuProvider = .opencode
         let menu = controller.makeMenu()
-        controller.populateMenu(menu, provider: .codex)
+        controller.populateMenu(menu, provider: .opencode)
         let itemCountBefore = menu.items.count
         let cardViewsBefore = self.cardViewIdentities(in: menu)
         #expect(!cardViewsBefore.isEmpty)
 
         controller.invalidateMenus(allowStaleContentDuringDataRefresh: true)
-        controller.populateMenu(menu, provider: .codex)
+        controller.populateMenu(menu, provider: .opencode)
 
         #expect(menu.items.count == itemCountBefore, "data-only repopulate should keep row count stable")
         let cardViewsAfter = self.cardViewIdentities(in: menu)
@@ -695,24 +695,23 @@ extension StatusMenuTests {
         let entry = CachedMergedSwitcherMenuContent(
             requiredMenuContentVersion: 0,
             menuWidth: 300,
-            codexAccountDisplay: nil,
             tokenAccountDisplay: nil,
             localizationSignature: "",
             items: [])
         controller.mergedSwitcherContentCaches[ObjectIdentifier(menu)] = [
             .overview: entry,
-            .provider(.codex): entry,
+            .provider(.opencode): entry,
         ]
         controller.harvestRecyclableMenuCardViews(
             in: menu,
             fromIndex: 0,
-            displacedSelection: .provider(.codex))
+            displacedSelection: .provider(.opencode))
         defer { controller.clearMenuCardViewRecyclePool() }
 
         #expect(controller.menuCardViewRecyclePool.count == 1)
         #expect(item.view == nil)
         let remaining = controller.mergedSwitcherContentCaches[ObjectIdentifier(menu)]
-        #expect(remaining?[.provider(.codex)] == nil)
+        #expect(remaining?[.provider(.opencode)] == nil)
         #expect(remaining?[.overview] != nil)
     }
 
@@ -731,22 +730,21 @@ extension StatusMenuTests {
         let entry = CachedMergedSwitcherMenuContent(
             requiredMenuContentVersion: 0,
             menuWidth: 300,
-            codexAccountDisplay: nil,
             tokenAccountDisplay: nil,
             localizationSignature: "",
             items: [])
         controller.mergedSwitcherContentCaches[ObjectIdentifier(menu)] = [
             .overview: entry,
-            .provider(.codex): entry,
+            .provider(.opencode): entry,
         ]
 
         controller.harvestRecyclableMenuCardViews(
             in: menu,
             fromIndex: 0,
-            displacedSelection: .provider(.codex))
+            displacedSelection: .provider(.opencode))
 
         let remaining = controller.mergedSwitcherContentCaches[ObjectIdentifier(menu)]
-        #expect(remaining?[.provider(.codex)] == nil)
+        #expect(remaining?[.provider(.opencode)] == nil)
         #expect(remaining?[.overview] != nil)
     }
 

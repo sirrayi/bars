@@ -39,11 +39,11 @@ extension StatusMenuTests {
         settings.mergeIcons = false
         settings.agentSessionsEnabled = true
 
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
+        let store = self.makeOpenCodeStore(settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -80,11 +80,11 @@ extension StatusMenuTests {
         settings.mergeIcons = false
         settings.agentSessionsEnabled = true
 
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
+        let store = self.makeOpenCodeStore(settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())

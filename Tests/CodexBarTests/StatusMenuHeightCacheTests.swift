@@ -42,9 +42,9 @@ extension StatusMenuTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
-        enableTestProviders([.codex], settings: settings)
+        enableTestProviders([.opencode], settings: settings)
 
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
+        let store = self.makeOpenCodeStore(settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
@@ -55,12 +55,12 @@ extension StatusMenuTests {
         defer { controller.releaseStatusItemsForTesting() }
 
         let menu = controller.makeMenu()
-        controller.populateMenu(menu, provider: .codex)
+        controller.populateMenu(menu, provider: .opencode)
         let firstKeys = Set(controller.menuCardHeightCache.keys)
 
         #expect(!firstKeys.isEmpty)
 
-        controller.populateMenu(menu, provider: .codex)
+        controller.populateMenu(menu, provider: .opencode)
         #expect(Set(controller.menuCardHeightCache.keys) == firstKeys)
 
         controller.invalidateMenus()
@@ -73,7 +73,7 @@ extension StatusMenuTests {
         defer { controller.releaseStatusItemsForTesting() }
 
         let menu = controller.makeMenu()
-        controller.populateMenu(menu, provider: .codex)
+        controller.populateMenu(menu, provider: .opencode)
         let firstCache = controller.measuredStandardMenuWidthCache
 
         #expect(!firstCache.isEmpty)
@@ -81,7 +81,7 @@ extension StatusMenuTests {
             $0.contains("font=\(StatusItemController.menuCardHeightTextScaleToken())")
         })
 
-        controller.populateMenu(menu, provider: .codex)
+        controller.populateMenu(menu, provider: .opencode)
         #expect(controller.measuredStandardMenuWidthCache == firstCache)
     }
 
@@ -99,7 +99,7 @@ extension StatusMenuTests {
         let now = Date(timeIntervalSince1970: 1000)
         let shortSession = AgentSession(
             id: "session",
-            provider: .codex,
+            provider: .claude,
             source: .cli,
             state: .active,
             pid: 42,
@@ -111,7 +111,7 @@ extension StatusMenuTests {
             host: "local")
         let longSession = AgentSession(
             id: "session",
-            provider: .codex,
+            provider: .claude,
             source: .cli,
             state: .active,
             pid: 42,
@@ -163,7 +163,7 @@ extension StatusMenuTests {
         var measureCount = 0
         let first = controller.cachedMenuCardHeight(
             for: "menuCard",
-            scope: UsageProvider.codex.rawValue,
+            scope: UsageProvider.opencode.rawValue,
             width: 320,
             fingerprint: "content:stable")
         {
@@ -175,7 +175,7 @@ extension StatusMenuTests {
 
         let second = controller.cachedMenuCardHeight(
             for: "menuCard",
-            scope: UsageProvider.codex.rawValue,
+            scope: UsageProvider.opencode.rawValue,
             width: 320,
             fingerprint: "content:stable")
         {
@@ -196,7 +196,7 @@ extension StatusMenuTests {
         var measureCount = 0
         let first = controller.cachedMenuCardHeight(
             for: "menuCard",
-            scope: UsageProvider.codex.rawValue,
+            scope: UsageProvider.opencode.rawValue,
             width: 320,
             fingerprint: "content:a")
         {
@@ -205,7 +205,7 @@ extension StatusMenuTests {
         }
         let second = controller.cachedMenuCardHeight(
             for: "menuCard",
-            scope: UsageProvider.codex.rawValue,
+            scope: UsageProvider.opencode.rawValue,
             width: 320,
             fingerprint: "content:b")
         {
@@ -226,7 +226,7 @@ extension StatusMenuTests {
         var measureCount = 0
         let first = controller.cachedMenuCardHeight(
             for: "menuCard",
-            scope: UsageProvider.codex.rawValue,
+            scope: UsageProvider.opencode.rawValue,
             width: 320)
         {
             measureCount += 1
@@ -237,7 +237,7 @@ extension StatusMenuTests {
 
         let second = controller.cachedMenuCardHeight(
             for: "menuCard",
-            scope: UsageProvider.codex.rawValue,
+            scope: UsageProvider.opencode.rawValue,
             width: 320)
         {
             measureCount += 1
@@ -256,14 +256,14 @@ extension StatusMenuTests {
 
         _ = controller.cachedMenuCardHeight(
             for: "versioned",
-            scope: UsageProvider.codex.rawValue,
+            scope: UsageProvider.opencode.rawValue,
             width: 320)
         {
             42
         }
         _ = controller.cachedMenuCardHeight(
             for: "fingerprinted",
-            scope: UsageProvider.codex.rawValue,
+            scope: UsageProvider.opencode.rawValue,
             width: 320,
             fingerprint: "content:stable")
         {
@@ -288,9 +288,9 @@ extension StatusMenuTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
-        enableTestProviders([.codex, .claude], settings: settings)
+        enableTestProviders([.opencode, .claude], settings: settings)
 
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
+        let store = self.makeOpenCodeStore(settings: settings)
         store._setSnapshotForTesting(
             UsageSnapshot(
                 primary: RateWindow(
@@ -317,11 +317,11 @@ extension StatusMenuTests {
         defer { controller.releaseStatusItemsForTesting() }
 
         let menu = controller.makeMenu()
-        controller.populateMenu(menu, provider: .codex)
+        controller.populateMenu(menu, provider: .opencode)
         controller.populateMenu(menu, provider: .claude)
 
         let scopes = Set(controller.menuCardHeightCache.keys.map(\.scope))
-        #expect(scopes.contains(UsageProvider.codex.rawValue))
+        #expect(scopes.contains(UsageProvider.opencode.rawValue))
         #expect(scopes.contains(UsageProvider.claude.rawValue))
     }
 
@@ -330,7 +330,7 @@ extension StatusMenuTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
+        let store = self.makeOpenCodeStore(settings: settings)
         return StatusItemController(
             store: store,
             settings: settings,

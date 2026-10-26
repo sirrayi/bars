@@ -20,7 +20,7 @@ struct WidgetSnapshotTests {
                 daily: [],
                 modelBreakdowns: nil)],
             updatedAt: Date(timeIntervalSince1970: 0))
-        let summary = try #require(UsageStore.widgetTokenUsageSummary(from: snapshot, provider: .codex))
+        let summary = try #require(UsageStore.widgetTokenUsageSummary(from: snapshot, provider: .opencode))
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.withoutEscapingSlashes]
         let encoded = try #require(String(data: encoder.encode(summary), encoding: .utf8))
@@ -61,7 +61,7 @@ struct WidgetSnapshotTests {
     @Test
     func `widget snapshot round trip`() throws {
         let entry = WidgetSnapshot.ProviderEntry(
-            provider: .codex,
+            provider: .opencode,
             updatedAt: Date(),
             primary: RateWindow(usedPercent: 10, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
             secondary: RateWindow(usedPercent: 20, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
@@ -87,7 +87,7 @@ struct WidgetSnapshotTests {
 
         let snapshot = WidgetSnapshot(
             entries: [entry],
-            enabledProviders: [.codex, .claude],
+            enabledProviders: [.opencode, .claude],
             usageBarsShowUsed: true,
             generatedAt: Date())
 
@@ -100,14 +100,14 @@ struct WidgetSnapshotTests {
         let decoded = try decoder.decode(WidgetSnapshot.self, from: data)
 
         #expect(decoded.entries.count == 1)
-        #expect(decoded.entries.first?.provider == .codex)
+        #expect(decoded.entries.first?.provider == .opencode)
         #expect(decoded.entries.first?.tokenUsage?.sessionTokens == 1200)
         #expect(decoded.entries.first?.tokenUsage?.currencyCode == "EUR")
         #expect(decoded.entries.first?.tokenUsage?.sessionLabel == "Latest billing day")
         #expect(decoded.entries.first?.tokenUsage?.last30DaysLabel == "This month")
         #expect(decoded.entries.first?.usageRows?.map(\.id) == ["session", "weekly"])
         #expect(decoded.entries.first?.quotaOwnerKey == "claude-account-cache-key")
-        #expect(decoded.enabledProviders == [.codex, .claude])
+        #expect(decoded.enabledProviders == [.opencode, .claude])
         #expect(decoded.usageBarsShowUsed)
     }
 
@@ -117,7 +117,7 @@ struct WidgetSnapshotTests {
         {
           "entries": [
             {
-              "provider": "codex",
+              "provider": "opencode",
               "updatedAt": "2026-04-04T06:30:00Z",
               "primary": null,
               "secondary": {
@@ -133,7 +133,7 @@ struct WidgetSnapshotTests {
               "dailyUsage": []
             }
           ],
-          "enabledProviders": ["codex"],
+          "enabledProviders": ["opencode"],
           "generatedAt": "2026-04-04T06:30:00Z"
         }
         """
@@ -155,7 +155,7 @@ struct WidgetSnapshotTests {
         {
           "entries": [
             {
-              "provider": "codex",
+              "provider": "opencode",
               "updatedAt": "2026-04-04T06:30:00Z",
               "primary": null,
               "secondary": null,
@@ -182,7 +182,7 @@ struct WidgetSnapshotTests {
         #expect(decoded.entries.first?.tokenUsage?.currencyCode == "USD")
         #expect(decoded.entries.first?.tokenUsage?.sessionLabel == "Today")
         #expect(decoded.entries.first?.tokenUsage?.last30DaysLabel == "30d")
-        #expect(decoded.enabledProviders == [.codex])
+        #expect(decoded.enabledProviders == [.opencode])
     }
 
     @Test

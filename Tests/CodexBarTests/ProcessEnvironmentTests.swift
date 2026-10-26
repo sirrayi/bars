@@ -117,7 +117,6 @@ struct ProcessEnvironmentTests {
 
     private static func storingValues() -> [Any] {
         let environment = [Self.sentinelKey: Self.sentinel, "ORDINARY_NAME": Self.sentinel]
-        let fetcher = UsageFetcher(environment: environment)
         let browserDetection = BrowserDetection(homeDirectory: "/synthetic-home")
         let claudeFetcher = ClaudeUsageFetcher(browserDetection: browserDetection, environment: environment)
         let context = ProviderFetchContext(
@@ -129,22 +128,12 @@ struct ProcessEnvironmentTests {
             verbose: false,
             env: environment,
             settings: nil,
-            fetcher: fetcher,
             claudeFetcher: claudeFetcher,
             browserDetection: browserDetection)
         return [
-            fetcher, claudeFetcher, context,
-            CodexStatusProbe(environment: environment),
+            claudeFetcher, context,
             ClaudeStatusProbe(environment: environment),
             TTYCommandRunner.Options(baseEnvironment: environment),
-            CodexCLISession.CaptureOptions(
-                timeout: 1, rows: 1, cols: 1, environment: environment, extraArgs: [], workingDirectory: nil),
-            PiSessionCostScanner.Options(environment: environment),
-            PiSessionProcessContext(
-                command: "pi", workingDirectory: nil, selectorEnvironment: ["PI_PROFILE": Self.sentinel]),
-            AgentProcessRecord(
-                pid: 1, ppid: 0, startedAt: nil, command: "pi", piSelectorEnvironment: ["PI_PROFILE": Self.sentinel]),
-            DefaultCodexAccountReconciler(baseEnvironment: environment),
         ]
     }
 }

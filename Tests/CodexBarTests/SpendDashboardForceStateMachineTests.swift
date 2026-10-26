@@ -11,17 +11,16 @@ struct SpendDashboardForceStateMachineTests {
         let latest = Self.configuration(owner: "owner", revision: "L")
         let oldInputs = [
             Self.input(id: "claude", provider: .claude, cost: 3),
-            Self.input(id: "codex:a", provider: .codex, cost: 5),
+            Self.input(id: "opencode:a", provider: .opencode, cost: 5),
         ]
-        let failedIDs: Set = ["claude", "codex:a"]
+        let failedIDs: Set = ["claude", "opencode:a"]
         let builder = SpendDashboardBuildScript([
             .init(mode: .refreshMissing, request: Self.request(initial, mode: .refreshMissing)),
             .init(
                 mode: .forceRefresh,
                 request: Self.request(
                     initial,
-                    mode: .forceRefresh,
-                    codexAccount: true)),
+                    mode: .forceRefresh)),
             .init(
                 mode: .captureOnly,
                 request: Self.request(
@@ -29,7 +28,7 @@ struct SpendDashboardForceStateMachineTests {
                     mode: .captureOnly,
                     inputs: [
                         Self.input(id: "claude", provider: .claude, cost: 90),
-                        Self.input(id: "codex:a", provider: .codex, cost: 90),
+                        Self.input(id: "opencode:a", provider: .opencode, cost: 90),
                     ])),
         ])
         let loader = SpendDashboardStateLoaderGate()
@@ -52,44 +51,6 @@ struct SpendDashboardForceStateMachineTests {
         #expect(await loader.forces == [false, true])
         #expect(controller.failedSourceCount == 2)
         #expect(controller.model.groups.first?.totalCost == 8)
-    }
-
-    @Test
-    func `B capture drift wins for providers while forced Codex success carries`() async {
-        let initial = Self.configuration(owner: "owner", revision: "R")
-        let latest = Self.configuration(owner: "owner", revision: "L")
-        let builder = SpendDashboardBuildScript([
-            .init(
-                mode: .forceRefresh,
-                request: Self.request(
-                    initial,
-                    mode: .forceRefresh,
-                    confirmedEmptySourceIDs: ["claude"],
-                    codexAccount: true)),
-            .init(
-                mode: .captureOnly,
-                request: Self.request(
-                    latest,
-                    mode: .captureOnly,
-                    inputs: [Self.input(id: "claude", provider: .claude, cost: 7)])),
-        ])
-        let loader = SpendDashboardStateLoaderGate()
-        let controller = SpendDashboardController(
-            requestBuilder: { mode in await builder.next(mode) },
-            loader: { request in await loader.load(request) })
-
-        controller.update(configuration: initial, force: true)
-        await Self.waitForLoader(loader)
-        controller.update(configuration: latest)
-        await loader.resume(SpendDashboardLoadResult(
-            inputs: [Self.input(id: "codex:a", provider: .codex, cost: 5)],
-            failedSourceIDs: []))
-        await Self.waitUntil { !controller.isRefreshing }
-
-        #expect(builder.modes == [.forceRefresh, .captureOnly])
-        #expect(await loader.forces == [true])
-        #expect(controller.configuration == latest)
-        #expect(controller.model.groups.first?.totalCost == 12)
     }
 
     @Test
@@ -211,7 +172,7 @@ struct SpendDashboardForceStateMachineTests {
         let builder = SpendDashboardBuildScript([
             .init(
                 mode: .forceRefresh,
-                request: Self.request(firstOwner, mode: .forceRefresh, codexAccount: true)),
+                request: Self.request(firstOwner, mode: .forceRefresh)),
             .init(
                 mode: .captureOnly,
                 request: Self.request(
@@ -239,7 +200,7 @@ struct SpendDashboardForceStateMachineTests {
         controller.update(configuration: firstOwner, force: true)
         await Self.waitForLoader(loader)
         await loader.resume(SpendDashboardLoadResult(
-            inputs: [Self.input(id: "codex:a", provider: .codex, cost: 5)],
+            inputs: [Self.input(id: "opencode:a", provider: .opencode, cost: 5)],
             failedSourceIDs: []))
         await Self.waitForBuildGate(learnedEmptyGate)
         controller.update(configuration: firstOwnerLatest)
@@ -259,7 +220,7 @@ struct SpendDashboardForceStateMachineTests {
         #expect(await loader.forces == [true, true])
         #expect(controller.configuration == secondOwner)
         #expect(controller.model.groups.first?.totalCost == 8)
-        #expect(controller.model.groups.flatMap(\.providers).allSatisfy { $0.id != "codex:a" })
+        #expect(controller.model.groups.flatMap(\.providers).allSatisfy { $0.id != "opencode:a" })
     }
 
     @Test
@@ -300,46 +261,6 @@ struct SpendDashboardForceStateMachineTests {
     }
 
     @Test
-    func `G forced Codex invalidation suppresses stale capture and retained row`() async {
-        let configuration = Self.configuration(owner: "owner", revision: "R")
-        let codexInput = Self.input(id: "codex:a", provider: .codex, cost: 4)
-        let builder = SpendDashboardBuildScript([
-            .init(mode: .refreshMissing, request: Self.request(configuration, mode: .refreshMissing)),
-            .init(
-                mode: .forceRefresh,
-                request: Self.request(configuration, mode: .forceRefresh, codexAccount: true)),
-            .init(
-                mode: .captureOnly,
-                request: Self.request(
-                    configuration,
-                    mode: .captureOnly,
-                    inputs: [Self.input(id: "codex:a", provider: .codex, cost: 99)])),
-        ])
-        let loader = SpendDashboardStateLoaderGate()
-        let controller = SpendDashboardController(
-            requestBuilder: { mode in await builder.next(mode) },
-            loader: { request in await loader.load(request) })
-
-        controller.update(configuration: configuration)
-        await Self.waitForLoader(loader)
-        await loader.resume(SpendDashboardLoadResult(inputs: [codexInput], failedSourceIDs: []))
-        await Self.waitUntil { !controller.isRefreshing }
-
-        controller.refresh()
-        await Self.waitForLoader(loader)
-        await loader.resume(SpendDashboardLoadResult(
-            inputs: [],
-            failedSourceIDs: ["codex:a"],
-            invalidatedSourceIDs: ["codex:a"]))
-        await Self.waitUntil { !controller.isRefreshing }
-
-        #expect(builder.modes == [.refreshMissing, .forceRefresh, .captureOnly])
-        #expect(await loader.forces == [false, true])
-        #expect(controller.model.groups.isEmpty)
-        #expect(controller.failedSourceCount == 1)
-    }
-
-    @Test
     func `H ordinary update uses refresh missing and one loader without barrier`() async {
         let configuration = Self.configuration(owner: "owner", revision: "R")
         let input = Self.input(id: "claude", provider: .claude, cost: 3)
@@ -362,136 +283,6 @@ struct SpendDashboardForceStateMachineTests {
         #expect(await loader.forces == [false])
         #expect(controller.generation == 1)
         #expect(controller.model.groups.first?.totalCost == 3)
-    }
-
-    @Test
-    func `I empty provider published during Codex scan clears retained spend without later reload`() async {
-        let initial = Self.configuration(owner: "owner", revision: "R")
-        let confirmedEmpty = Self.configuration(owner: "owner", revision: "E")
-        let oldProviderInput = Self.input(id: "claude", provider: .claude, cost: 4)
-        let codexInput = Self.input(id: "codex:a", provider: .codex, cost: 2)
-        let builder = SpendDashboardBuildScript([
-            .init(
-                mode: .refreshMissing,
-                request: Self.request(initial, mode: .refreshMissing, inputs: [oldProviderInput])),
-            .init(
-                mode: .forceRefresh,
-                request: Self.request(
-                    initial,
-                    mode: .forceRefresh,
-                    unavailableSourceIDs: ["claude"],
-                    codexAccount: true)),
-            .init(
-                mode: .captureOnly,
-                request: Self.request(
-                    confirmedEmpty,
-                    mode: .captureOnly,
-                    confirmedEmptySourceIDs: ["claude"])),
-        ])
-        let codexGate = SpendDashboardStateCodexGate()
-        let loaderRecorder = SpendDashboardStateLoadRecorder()
-        let controller = SpendDashboardController(
-            requestBuilder: { mode in await builder.next(mode) },
-            loader: { request in
-                await loaderRecorder.record(request)
-                return await SpendDashboardSource.load(request, codexSnapshotLoader: { _ in
-                    await codexGate.load()
-                })
-            })
-
-        controller.update(configuration: initial)
-        await Self.waitUntil { !controller.isRefreshing }
-        #expect(controller.model.groups.first?.totalCost == 4)
-
-        controller.refresh()
-        await Self.waitForCodexGate(codexGate)
-        controller.update(configuration: confirmedEmpty)
-        await codexGate.resume(codexInput.snapshot)
-        await Self.waitUntil { !controller.isRefreshing }
-
-        let settledGeneration = controller.generation
-        let settledLoadCount = await loaderRecorder.count
-        controller.update(configuration: confirmedEmpty)
-        await Task.yield()
-
-        #expect(builder.modes == [.refreshMissing, .forceRefresh, .captureOnly])
-        #expect(settledLoadCount == 2)
-        #expect(await loaderRecorder.count == settledLoadCount)
-        #expect(controller.generation == settledGeneration)
-        #expect(controller.configuration == confirmedEmpty)
-        #expect(controller.failedSourceCount == 1)
-        #expect(controller.model.groups.first?.totalCost == 2)
-        #expect(controller.model.groups.flatMap(\.providers).map(\.id) == ["codex:a"])
-    }
-
-    @Test
-    func `J forced empty survives unavailable capture churn without restoring old spend`() async {
-        let initial = Self.configuration(owner: "owner", revision: "R")
-        let unavailable = Self.configuration(owner: "owner", revision: "U")
-        let latest = Self.configuration(owner: "owner", revision: "M")
-        let oldProviderInput = Self.input(id: "claude", provider: .claude, cost: 4)
-        let codexInput = Self.input(id: "codex:a", provider: .codex, cost: 2)
-        let captureGate = SpendDashboardStateBuildGate()
-        let builder = SpendDashboardBuildScript([
-            .init(
-                mode: .refreshMissing,
-                request: Self.request(initial, mode: .refreshMissing, inputs: [oldProviderInput])),
-            .init(
-                mode: .forceRefresh,
-                request: Self.request(
-                    initial,
-                    mode: .forceRefresh,
-                    confirmedEmptySourceIDs: ["claude"],
-                    codexAccount: true)),
-            .init(
-                mode: .captureOnly,
-                request: Self.request(
-                    unavailable,
-                    mode: .captureOnly,
-                    unavailableSourceIDs: ["claude"]),
-                gate: captureGate),
-            .init(
-                mode: .captureOnly,
-                request: Self.request(
-                    latest,
-                    mode: .captureOnly,
-                    unavailableSourceIDs: ["claude"])),
-        ])
-        let codexGate = SpendDashboardStateCodexGate()
-        let loaderRecorder = SpendDashboardStateLoadRecorder()
-        let controller = SpendDashboardController(
-            requestBuilder: { mode in await builder.next(mode) },
-            loader: { request in
-                await loaderRecorder.record(request)
-                return await SpendDashboardSource.load(request, codexSnapshotLoader: { _ in
-                    await codexGate.load()
-                })
-            })
-
-        controller.update(configuration: initial)
-        await Self.waitUntil { !controller.isRefreshing }
-        #expect(controller.model.groups.first?.totalCost == 4)
-
-        controller.refresh()
-        await Self.waitForCodexGate(codexGate)
-        controller.update(configuration: unavailable)
-        await codexGate.resume(codexInput.snapshot)
-        await Self.waitForBuildGate(captureGate)
-        controller.update(configuration: latest)
-        await captureGate.resume()
-        await Self.waitUntil { !controller.isRefreshing }
-
-        let settledGeneration = controller.generation
-        controller.update(configuration: latest)
-        await Task.yield()
-
-        #expect(builder.modes == [.refreshMissing, .forceRefresh, .captureOnly, .captureOnly])
-        #expect(await loaderRecorder.forces == [false, true])
-        #expect(controller.generation == settledGeneration)
-        #expect(controller.configuration == latest)
-        #expect(controller.failedSourceCount == 1)
-        #expect(controller.model.groups.first?.totalCost == 2)
-        #expect(controller.model.groups.flatMap(\.providers).map(\.id) == ["codex:a"])
     }
 
     @Test
@@ -666,8 +457,7 @@ struct SpendDashboardForceStateMachineTests {
     private static func configuration(owner: String, revision: String) -> SpendDashboardConfiguration {
         SpendDashboardConfiguration(
             costUsageEnabled: true,
-            providerIDs: [UsageProvider.codex.rawValue, UsageProvider.claude.rawValue],
-            codexAccountIdentities: ["a|\(owner)"],
+            providerIDs: [UsageProvider.opencode.rawValue, UsageProvider.claude.rawValue],
             sourceOwnershipFingerprints: ["claude:\(owner)"],
             sourceRevisions: [revision])
     }
@@ -677,28 +467,15 @@ struct SpendDashboardForceStateMachineTests {
         mode: SpendDashboardRequestBuildMode,
         inputs: [SpendDashboardModel.ProviderInput] = [],
         unavailableSourceIDs: Set<String> = [],
-        confirmedEmptySourceIDs: Set<String> = [],
-        codexAccount: Bool = false) -> SpendDashboardLoadRequest
+        confirmedEmptySourceIDs: Set<String> = []) -> SpendDashboardLoadRequest
     {
         SpendDashboardLoadRequest(
             configuration: configuration,
             capturedInputs: inputs,
             unavailableSourceIDs: unavailableSourceIDs,
             confirmedEmptySourceIDs: confirmedEmptySourceIDs,
-            codexRequests: codexAccount ? [self.codexRequest()] : [],
             now: Date(timeIntervalSince1970: 1_784_179_200),
             force: mode.forcesLoader)
-    }
-
-    private static func codexRequest() -> CodexSpendScanRequest {
-        CodexSpendScanRequest(
-            id: "a",
-            displayName: "Codex",
-            source: .profileHome(path: "/synthetic/codex-a"),
-            homePath: "/synthetic/codex-a",
-            authFingerprint: nil,
-            authFileWasReadable: false,
-            cacheIdentity: "synthetic-a")
     }
 
     private static func input(
@@ -725,7 +502,7 @@ struct SpendDashboardForceStateMachineTests {
             id: id,
             provider: provider,
             displayName: provider.rawValue,
-            modelProviderName: provider == .codex ? "Codex" : nil,
+            modelProviderName: nil,
             snapshot: snapshot)
     }
 
@@ -747,16 +524,6 @@ struct SpendDashboardForceStateMachineTests {
             await Task.yield()
         }
         Issue.record("Timed out waiting for dashboard build gate")
-    }
-
-    private static func waitForCodexGate(_ gate: SpendDashboardStateCodexGate) async {
-        for _ in 0..<1000 {
-            if await gate.isSuspended {
-                return
-            }
-            await Task.yield()
-        }
-        Issue.record("Timed out waiting for dashboard Codex gate")
     }
 
     private static func waitUntil(_ condition: @MainActor () -> Bool) async {
@@ -801,11 +568,9 @@ private final class SpendDashboardBuildScript {
             return SpendDashboardLoadRequest(
                 configuration: SpendDashboardConfiguration(
                     costUsageEnabled: false,
-                    providerIDs: [],
-                    codexAccountIdentities: []),
+                    providerIDs: []),
                 capturedInputs: [],
                 unavailableSourceIDs: [],
-                codexRequests: [],
                 now: Date(timeIntervalSince1970: 1_784_179_200),
                 force: mode.forcesLoader)
         }
@@ -855,25 +620,6 @@ private actor SpendDashboardStateLoaderGate {
 
     func resume(_ result: SpendDashboardLoadResult) {
         self.continuations.removeFirst().resume(returning: result)
-    }
-}
-
-private actor SpendDashboardStateCodexGate {
-    private var continuation: CheckedContinuation<CostUsageTokenSnapshot, Never>?
-
-    var isSuspended: Bool {
-        self.continuation != nil
-    }
-
-    func load() async -> CostUsageTokenSnapshot {
-        await withCheckedContinuation { continuation in
-            self.continuation = continuation
-        }
-    }
-
-    func resume(_ snapshot: CostUsageTokenSnapshot) {
-        self.continuation?.resume(returning: snapshot)
-        self.continuation = nil
     }
 }
 

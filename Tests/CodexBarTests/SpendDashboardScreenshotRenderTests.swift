@@ -19,7 +19,7 @@ final class SpendDashboardScreenshotRenderTests: XCTestCase {
         let now = try XCTUnwrap(Self.gmtCalendar.date(from: DateComponents(year: 2026, month: 7, day: 16)))
         for scenario in ["mixed", "unknown", "partial-cost"] {
             let counted = scenario == "mixed"
-            let inputs = [UsageProvider.claude, .codex].enumerated().map { index, provider in
+            let inputs = [UsageProvider.claude, .opencode].enumerated().map { index, provider in
                 let entry = CostUsageDailyReport.Entry(
                     date: "2026-07-16",
                     inputTokens: 10,
@@ -87,7 +87,7 @@ final class SpendDashboardScreenshotRenderTests: XCTestCase {
                 projects: projects,
                 updatedAt: now)
             let model = SpendDashboardModel.build(
-                inputs: [.init(provider: .codex, displayName: "Codex", snapshot: snapshot)],
+                inputs: [.init(provider: .opencode, displayName: "Codex", snapshot: snapshot)],
                 requestedDays: 7,
                 now: now,
                 calendar: Self.gmtCalendar)
@@ -132,13 +132,13 @@ final class SpendDashboardScreenshotRenderTests: XCTestCase {
             projects: [project],
             updatedAt: now)
         let model = SpendDashboardModel.build(
-            inputs: [.init(provider: .codex, displayName: "Codex", snapshot: snapshot)],
+            inputs: [.init(provider: .opencode, displayName: "Codex", snapshot: snapshot)],
             requestedDays: 30,
             now: now,
             calendar: Self.gmtCalendar)
         let group = try XCTUnwrap(model.groups.first)
         let menu = CostHistoryChartMenuView(
-            provider: .codex,
+            provider: .opencode,
             daily: daily,
             totalCostUSD: 12.5,
             projects: [project],
@@ -190,7 +190,7 @@ final class SpendDashboardScreenshotRenderTests: XCTestCase {
             daily: entries,
             updatedAt: now)
         let model = SpendDashboardModel.build(
-            inputs: [.init(provider: .codex, displayName: "Synthetic Codex", snapshot: snapshot)],
+            inputs: [.init(provider: .opencode, displayName: "Synthetic Codex", snapshot: snapshot)],
             requestedDays: 365,
             now: now,
             calendar: calendar)
@@ -230,7 +230,7 @@ final class SpendDashboardScreenshotRenderTests: XCTestCase {
         let previous = try XCTUnwrap(calendar.date(byAdding: .day, value: -1, to: now))
         for (name, selectedDay) in [("coverage", Date?.none), ("selected-day", Optional(previous))] {
             let model = SpendDashboardModel.build(
-                inputs: [.init(provider: .codex, displayName: "Synthetic Codex", snapshot: snapshot)],
+                inputs: [.init(provider: .opencode, displayName: "Synthetic Codex", snapshot: snapshot)],
                 requestedDays: 7,
                 now: now,
                 calendar: calendar,

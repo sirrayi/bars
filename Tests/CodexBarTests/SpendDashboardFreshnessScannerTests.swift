@@ -16,7 +16,7 @@ struct SpendDashboardFreshnessScannerTests {
         scanner.now = recentDay
         try scanner.append(day: oldDay, id: "old", input: 100)
         try scanner.append(day: recentDay, id: "recent", input: 20)
-        fixture.store._test_tokenUsageSnapshotLoaderOverride = { provider, _, _, _, days in
+        fixture.store._test_tokenUsageSnapshotLoaderOverride = { provider, _, _, days in
             #expect(provider == .claude)
             fixture.requests.append(days)
             // Count requests separately: changing between menu and dashboard windows can legitimately

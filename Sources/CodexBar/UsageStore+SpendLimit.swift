@@ -7,9 +7,7 @@ struct MenuBarSpendLimit {
     let cost: ProviderCostSnapshot
 
     /// The budget currency's own symbol, which prefixes the Spend percent whatever currency the amounts display in.
-    /// Credit-denominated caps have no symbol, so their percent renders unprefixed like the automatic one.
     var currencySymbol: String {
-        guard self.cost.isMonetary else { return "" }
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = self.cost.currencyCode
@@ -18,12 +16,10 @@ struct MenuBarSpendLimit {
     }
 
     func amountText(preferredCurrency: String) -> String? {
-        guard self.cost.isMonetary else { return nil }
-        return self.displayText(self.cost.used, preferredCurrency: preferredCurrency)
+        self.displayText(self.cost.used, preferredCurrency: preferredCurrency)
     }
 
     func budgetText(preferredCurrency: String) -> String? {
-        guard self.cost.isMonetary else { return nil }
         let used = self.displayText(self.cost.used, preferredCurrency: preferredCurrency)
         return "\(used) / \(self.displayText(self.cost.limit, preferredCurrency: preferredCurrency))"
     }
@@ -39,7 +35,6 @@ struct MenuBarSpendLimit {
     }
 
     private func usdAmount(_ value: Double) -> Double? {
-        guard self.cost.isMonetary else { return nil }
         let converted = UsageFormatter.convertedCost(
             value,
             preferredCurrency: "USD",
@@ -90,18 +85,7 @@ extension UsageStore {
         guard self.settings.showOptionalCreditsAndExtraUsage,
               ProviderDescriptorRegistry.descriptor(for: provider).menuBarMetrics.supports(.extraUsage)
         else { return nil }
-        // Codex keeps its spend behind the consumer projection; every other provider reports it on the snapshot.
-        let cost = if let projection = self.codexConsumerProjectionIfNeeded(
-            for: provider,
-            surface: .menuBar,
-            snapshotOverride: snapshot,
-            now: now)
-        {
-            projection.extraUsageCost
-        } else {
-            snapshot?.providerCost
-        }
-        guard let cost, cost.used >= 0 else { return nil }
+        guard let cost = snapshot?.providerCost, cost.used >= 0 else { return nil }
         let costSnapshot = snapshot?.with(providerCost: cost)
             ?? UsageSnapshot(primary: nil, secondary: nil, providerCost: cost, updatedAt: cost.updatedAt)
         guard let window = MenuBarMetricWindowResolver.rateWindow(

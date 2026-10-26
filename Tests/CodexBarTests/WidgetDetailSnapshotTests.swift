@@ -12,7 +12,6 @@ struct WidgetDetailSnapshotTests {
             suiteName: "WidgetDetailSnapshotTests",
             config: testConfigWithAllProvidersDisabled())
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(homeDirectory: root.path, fileExists: { _ in false }),
             settings: settings,
             startupBehavior: .testing,
@@ -33,7 +32,7 @@ struct WidgetDetailSnapshotTests {
             UsageSnapshot(primary: quota, secondary: quota, details: details, updatedAt: now),
             provider: .claude)
         store._setSnapshotForTesting(
-            UsageSnapshot(primary: quota, secondary: nil, updatedAt: now), provider: .codex)
+            UsageSnapshot(primary: quota, secondary: nil, updatedAt: now), provider: .opencode)
         var saved: WidgetSnapshot?
         store._test_widgetSnapshotSaveOverride = { saved = $0 }
         defer { store._test_widgetSnapshotSaveOverride = nil }
@@ -53,7 +52,7 @@ struct WidgetDetailSnapshotTests {
         #expect(decoded == details)
         #expect(snapshot.entries.first { $0.provider == .claude }?.usageRows?.map(\.id)
             == ["primary", "secondary"])
-        let codex = try #require(entries.first { $0["provider"] as? String == "codex" })
+        let codex = try #require(entries.first { $0["provider"] as? String == "opencode" })
         #expect(codex["details"] == nil)
     }
 }

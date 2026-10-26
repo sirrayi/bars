@@ -128,10 +128,6 @@ public struct CLIUsageCache: Codable, Sendable {
         guard config.shareUsageWithCLI, !hasGraphicSession() else { return nil }
         return { provider, lockedKeychainObserved, terminalError in
             guard lockedKeychainObserved, Self.isCredentialAccessFailure(terminalError) else { return nil }
-            // Provider-specific by design: managed/profile Codex homes do not own the app's live-system cache.
-            guard provider != .codex ||
-                (config.providerConfig(for: .codex)?.codexActiveSource ?? .liveSystem) == .liveSystem
-            else { return nil }
             return Self.load(from: url)?.hit(for: provider, now: now())
         }
     }

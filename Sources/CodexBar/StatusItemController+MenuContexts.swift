@@ -2,21 +2,17 @@ import AppKit
 import CodexBarCore
 
 extension StatusItemController {
-    struct OpenAIWebContext {
-        let hasUsageBreakdown: Bool
-        let hasCreditsHistory: Bool
+    struct MenuSubmenuContext {
         let hasCostHistory: Bool
-        let canShowBuyCredits: Bool
-        let hasOpenAIWebMenuItems: Bool
+        let hasSubmenuItems: Bool
     }
 
     struct MenuCardContext {
         let currentProvider: UsageProvider
         let selectedProvider: UsageProvider?
         let menuWidth: CGFloat
-        let codexAccountDisplay: CodexAccountMenuDisplay?
         let tokenAccountDisplay: TokenAccountMenuDisplay?
-        let openAIContext: OpenAIWebContext
+        let submenuContext: MenuSubmenuContext
     }
 
     struct MenuRebuildContext {
@@ -26,9 +22,8 @@ extension StatusItemController {
         let currentProvider: UsageProvider
         let selectedProvider: UsageProvider?
         let menuWidth: CGFloat
-        let codexAccountDisplay: CodexAccountMenuDisplay?
         let tokenAccountDisplay: TokenAccountMenuDisplay?
-        let openAIContext: OpenAIWebContext
+        let submenuContext: MenuSubmenuContext
         let descriptor: MenuDescriptor
     }
 }

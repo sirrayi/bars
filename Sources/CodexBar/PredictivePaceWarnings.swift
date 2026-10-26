@@ -109,7 +109,7 @@ extension UsageStore {
                 self.predictivePaceWarningNotifiedKeys.filter { $0.provider != provider })
             return
         }
-        guard provider == .codex || provider == .claude else { return }
+        guard provider == .claude else { return }
         guard !requiresKnownAccount || accountDiscriminatorOverride != nil else { return }
         guard let accountDiscriminator = self.predictivePaceWarningAccountDiscriminator(
             provider: provider,
@@ -154,20 +154,10 @@ extension UsageStore {
         provider: UsageProvider,
         snapshot: UsageSnapshot) -> [(window: QuotaWarningWindow, rateWindow: RateWindow, pace: UsagePace)]
     {
-        let windows: [(QuotaWarningWindow, RateWindow?)]
-        if provider == .codex {
-            let projection = self.codexConsumerProjection(
-                surface: .liveCard, snapshotOverride: snapshot, now: snapshot.updatedAt)
-            windows = [
-                (.session, projection.sourceRateWindow(for: .session)),
-                (.weekly, projection.sourceRateWindow(for: .weekly)),
-            ]
-        } else {
-            windows = [
-                (.session, self.sessionQuotaWindow(provider: provider, snapshot: snapshot)?.window),
-                (.weekly, snapshot.secondary),
-            ]
-        }
+        let windows: [(QuotaWarningWindow, RateWindow?)] = [
+            (.session, self.sessionQuotaWindow(provider: provider, snapshot: snapshot)?.window),
+            (.weekly, snapshot.secondary),
+        ]
         return windows.compactMap { window, rateWindow in
             guard let rateWindow else { return nil }
             let pace: UsagePace? = switch window {
@@ -190,13 +180,6 @@ extension UsageStore {
         snapshot: UsageSnapshot,
         accountDiscriminatorOverride: String? = nil) -> String?
     {
-        if provider == .codex {
-            return self.codexOwnershipContext(
-                preferredEmail: snapshot.accountEmail(for: .codex),
-                snapshot: snapshot)
-                .canonicalKey
-        }
-
         if let accountDiscriminatorOverride = accountDiscriminatorOverride?
             .trimmingCharacters(in: .whitespacesAndNewlines),
             !accountDiscriminatorOverride.isEmpty

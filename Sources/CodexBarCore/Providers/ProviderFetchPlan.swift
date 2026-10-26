@@ -37,7 +37,6 @@ public struct ProviderFetchContext: Sendable {
     public let verbose: Bool
     @ProcessEnvironment public private(set) var env: [String: String]
     public let settings: ProviderSettingsSnapshot?
-    public let fetcher: UsageFetcher
     public let claudeFetcher: any ClaudeUsageFetching
     public let browserDetection: BrowserDetection
     public let selectedTokenAccountID: UUID?
@@ -59,7 +58,6 @@ public struct ProviderFetchContext: Sendable {
     /// recover on the next refresh.
     public let persistentCLISessionIdleWindow: TimeInterval?
     /// Already-resolved CLI version from Settings (or the CLI's shared detector).
-    /// Codex PAT User-Agent consumes this instead of spawning `codex --version`.
     public let resolvedCLIVersion: String?
 
     public init(
@@ -74,7 +72,6 @@ public struct ProviderFetchContext: Sendable {
         verbose: Bool,
         env: [String: String],
         settings: ProviderSettingsSnapshot?,
-        fetcher: UsageFetcher,
         claudeFetcher: any ClaudeUsageFetching,
         browserDetection: BrowserDetection,
         selectedTokenAccountID: UUID? = nil,
@@ -98,7 +95,6 @@ public struct ProviderFetchContext: Sendable {
         self.verbose = verbose
         self.env = env
         self.settings = settings
-        self.fetcher = fetcher
         self.claudeFetcher = claudeFetcher
         self.browserDetection = browserDetection
         self.selectedTokenAccountID = selectedTokenAccountID
@@ -122,20 +118,11 @@ public enum ProviderSupplementalUsageUpdate: Sendable {}
 public struct ProviderFetchResult: Sendable {
     public let usage: UsageSnapshot
     public let credits: CreditsSnapshot?
-    public let dashboard: OpenAIDashboardSnapshot?
     public let sourceLabel: String
     public let strategyID: String
     public let strategyKind: ProviderFetchKind
     /// Optional provider data that may complete after the primary usage result is published.
     public let supplementalUsageTask: Task<ProviderSupplementalUsageUpdate, Never>?
-    /// True when the Codex OAuth strategy already attempted reset-credit enrichment with its
-    /// winning in-memory credential snapshot. Generic enrichment must not reload auth.json after
-    /// that attempt fails, or it could attach another account's credits to this usage result.
-    public let codexResetCreditsAttempted: Bool
-    /// True when Codex spend-controls monthly-limit enrichment was attempted and failed.
-    /// Callers should retain a matching prior `codexCreditLimit` instead of treating a missing
-    /// limit as confirmed absence.
-    public let codexMonthlyLimitEnrichmentFailed: Bool
     /// Optional live diagnostic retained alongside an otherwise usable snapshot.
     public let diagnostic: String?
     /// Transient account ownership evidence for plan-utilization history.
@@ -156,13 +143,10 @@ public struct ProviderFetchResult: Sendable {
     public init(
         usage: UsageSnapshot,
         credits: CreditsSnapshot?,
-        dashboard: OpenAIDashboardSnapshot?,
         sourceLabel: String,
         strategyID: String,
         strategyKind: ProviderFetchKind,
         supplementalUsageTask: Task<ProviderSupplementalUsageUpdate, Never>? = nil,
-        codexResetCreditsAttempted: Bool = false,
-        codexMonthlyLimitEnrichmentFailed: Bool = false,
         diagnostic: String? = nil,
         claudeOAuthKeychainPersistentRefHash: String? = nil,
         claudeOAuthHistoryOwnerIdentifier: String? = nil,
@@ -173,13 +157,10 @@ public struct ProviderFetchResult: Sendable {
     {
         self.usage = usage
         self.credits = credits
-        self.dashboard = dashboard
         self.sourceLabel = sourceLabel
         self.strategyID = strategyID
         self.strategyKind = strategyKind
         self.supplementalUsageTask = supplementalUsageTask
-        self.codexResetCreditsAttempted = codexResetCreditsAttempted
-        self.codexMonthlyLimitEnrichmentFailed = codexMonthlyLimitEnrichmentFailed
         self.diagnostic = diagnostic
         self.claudeOAuthKeychainPersistentRefHash = claudeOAuthKeychainPersistentRefHash
         self.claudeOAuthHistoryOwnerIdentifier = claudeOAuthHistoryOwnerIdentifier
@@ -189,39 +170,15 @@ public struct ProviderFetchResult: Sendable {
         self.claudeOAuthKeychainCredentialUnavailable = claudeOAuthKeychainCredentialUnavailable
     }
 
-    public func markingMonthlyLimitEnrichmentFailed() -> ProviderFetchResult {
-        guard !self.codexMonthlyLimitEnrichmentFailed else { return self }
-        return ProviderFetchResult(
-            usage: self.usage,
-            credits: self.credits,
-            dashboard: self.dashboard,
-            sourceLabel: self.sourceLabel,
-            strategyID: self.strategyID,
-            strategyKind: self.strategyKind,
-            supplementalUsageTask: self.supplementalUsageTask,
-            codexResetCreditsAttempted: self.codexResetCreditsAttempted,
-            codexMonthlyLimitEnrichmentFailed: true,
-            diagnostic: self.diagnostic,
-            claudeOAuthKeychainPersistentRefHash: self.claudeOAuthKeychainPersistentRefHash,
-            claudeOAuthHistoryOwnerIdentifier: self.claudeOAuthHistoryOwnerIdentifier,
-            claudeOAuthCredentialOwner: self.claudeOAuthCredentialOwner,
-            claudeOAuthKeychainCredentialMismatch: self.claudeOAuthKeychainCredentialMismatch,
-            claudeOAuthKeychainCredentialAbsent: self.claudeOAuthKeychainCredentialAbsent,
-            claudeOAuthKeychainCredentialUnavailable: self.claudeOAuthKeychainCredentialUnavailable)
-    }
-
     /// Returns a copy carrying `diagnostic`, preserving every other field.
     public func withDiagnostic(_ diagnostic: String) -> ProviderFetchResult {
         ProviderFetchResult(
             usage: self.usage,
             credits: self.credits,
-            dashboard: self.dashboard,
             sourceLabel: self.sourceLabel,
             strategyID: self.strategyID,
             strategyKind: self.strategyKind,
             supplementalUsageTask: self.supplementalUsageTask,
-            codexResetCreditsAttempted: self.codexResetCreditsAttempted,
-            codexMonthlyLimitEnrichmentFailed: self.codexMonthlyLimitEnrichmentFailed,
             diagnostic: diagnostic,
             claudeOAuthKeychainPersistentRefHash: self.claudeOAuthKeychainPersistentRefHash,
             claudeOAuthHistoryOwnerIdentifier: self.claudeOAuthHistoryOwnerIdentifier,
@@ -322,7 +279,6 @@ public enum ProviderFetchKind: Sendable {
     case oauth
     case apiToken
     case localProbe
-    case webDashboard
 }
 
 public protocol ProviderFetchStrategy: Sendable {
@@ -345,7 +301,6 @@ extension ProviderFetchStrategy {
     public func makeResult(
         usage: UsageSnapshot,
         credits: CreditsSnapshot? = nil,
-        dashboard: OpenAIDashboardSnapshot? = nil,
         sourceLabel: String,
         supplementalUsageTask: Task<ProviderSupplementalUsageUpdate, Never>? = nil,
         diagnostic: String? = nil) -> ProviderFetchResult
@@ -353,7 +308,6 @@ extension ProviderFetchStrategy {
         ProviderFetchResult(
             usage: usage,
             credits: credits,
-            dashboard: dashboard,
             sourceLabel: sourceLabel,
             strategyID: self.id,
             strategyKind: self.kind,

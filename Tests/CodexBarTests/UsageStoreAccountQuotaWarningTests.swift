@@ -40,7 +40,6 @@ struct UsageStoreAccountQuotaWarningTests {
 
         let notifier = NotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier,
@@ -95,7 +94,6 @@ struct UsageStoreAccountQuotaWarningTests {
         ]
         let notifier = NotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier,
@@ -135,7 +133,6 @@ struct UsageStoreAccountQuotaWarningTests {
                     secondary: nil,
                     updatedAt: updatedAt),
                 credits: nil,
-                dashboard: nil,
                 sourceLabel: "fixture",
                 strategyID: "fixture.api-token",
                 strategyKind: .apiToken)),

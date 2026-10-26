@@ -7,7 +7,7 @@ enum ProviderMetricInlinePresentation: Equatable {
 }
 
 @MainActor
-struct ProviderDetailView<SupplementaryContent: View>: View {
+struct ProviderDetailView: View {
     private struct ModelLimitsIdentity: Hashable {
         let id: String
         let scope: ProviderModelRateLimitScope?
@@ -18,9 +18,7 @@ struct ProviderDetailView<SupplementaryContent: View>: View {
     @Binding var isEnabled: Bool
     let subtitle: String
     let model: UsageMenuCardView.Model
-    let accountUsageOverview: ProviderAccountUsageOverview?
     let usageItems: [ProviderUsageItemDescriptor]
-    let openAIWebDiagnostic: String?
     let settingsPickers: [ProviderSettingsPickerDescriptor]
     let settingsToggles: [ProviderSettingsToggleDescriptor]
     let settingsFields: [ProviderSettingsFieldDescriptor]
@@ -33,8 +31,6 @@ struct ProviderDetailView<SupplementaryContent: View>: View {
     @Binding var isErrorExpanded: Bool
     let onCopyError: (String) -> Void
     let onRefresh: () -> Void
-    let supplementarySettingsContent: SupplementaryContent
-    let showsSupplementarySettingsContent: Bool
 
     init(
         provider: UsageProvider,
@@ -42,9 +38,7 @@ struct ProviderDetailView<SupplementaryContent: View>: View {
         isEnabled: Binding<Bool>,
         subtitle: String,
         model: UsageMenuCardView.Model,
-        accountUsageOverview: ProviderAccountUsageOverview? = nil,
         usageItems: [ProviderUsageItemDescriptor] = [],
-        openAIWebDiagnostic: String?,
         settingsPickers: [ProviderSettingsPickerDescriptor],
         settingsToggles: [ProviderSettingsToggleDescriptor],
         settingsFields: [ProviderSettingsFieldDescriptor],
@@ -56,18 +50,14 @@ struct ProviderDetailView<SupplementaryContent: View>: View {
         errorDisplay: ProviderErrorDisplay?,
         isErrorExpanded: Binding<Bool>,
         onCopyError: @escaping (String) -> Void,
-        onRefresh: @escaping () -> Void,
-        showsSupplementarySettingsContent: Bool = false,
-        @ViewBuilder supplementarySettingsContent: () -> SupplementaryContent)
+        onRefresh: @escaping () -> Void)
     {
         self.provider = provider
         self.store = store
         self._isEnabled = isEnabled
         self.subtitle = subtitle
         self.model = model
-        self.accountUsageOverview = accountUsageOverview
         self.usageItems = usageItems
-        self.openAIWebDiagnostic = openAIWebDiagnostic
         self.settingsPickers = settingsPickers
         self.settingsToggles = settingsToggles
         self.settingsFields = settingsFields
@@ -80,8 +70,6 @@ struct ProviderDetailView<SupplementaryContent: View>: View {
         self._isErrorExpanded = isErrorExpanded
         self.onCopyError = onCopyError
         self.onRefresh = onRefresh
-        self.showsSupplementarySettingsContent = showsSupplementarySettingsContent
-        self.supplementarySettingsContent = supplementarySettingsContent()
     }
 
     static func metricTitle(provider: UsageProvider, metric: UsageMenuCardView.Model.Metric) -> String {
@@ -148,43 +136,17 @@ struct ProviderDetailView<SupplementaryContent: View>: View {
                     isEnabled: self.isEnabled,
                     versionText: Self.versionText(provider: self.provider, store: self.store),
                     model: self.model,
-                    showsAccountInfo: self.accountUsageOverview == nil)
+                    showsAccountInfo: true)
             }
 
-            if let overview = self.accountUsageOverview {
-                ProviderAccountUsageOverviewView(
+            Section {
+                ProviderMetricsInlineView(
                     provider: self.provider,
-                    overview: overview,
-                    isEnabled: self.isEnabled)
-                if let tokenUsage = self.model.tokenUsage {
-                    Section {
-                        ProviderTokenUsageInlineView(provider: self.provider, tokenUsage: tokenUsage)
-                    } header: {
-                        Text(L(self.store.settings.codexLocalSessionCostLedgerEnabled ? "This Mac" : "Local usage"))
-                    } footer: {
-                        SettingsSectionFooter(L(self.store.settings.codexLocalSessionCostLedgerEnabled
-                                ? "Local usage is shared across accounts on this Mac."
-                                : "Local usage comes from the current Codex profile."))
-                    }
-                }
-                if let diagnostic = self.openAIWebDiagnostic {
-                    Section {
-                        Text(diagnostic).font(.footnote).foregroundStyle(.secondary)
-                    } header: {
-                        Text(L("OpenAI web extras"))
-                    }
-                }
-            } else {
-                Section {
-                    ProviderMetricsInlineView(
-                        provider: self.provider,
-                        model: self.model,
-                        openAIWebDiagnostic: self.openAIWebDiagnostic,
-                        isEnabled: self.isEnabled,
-                        isRefreshing: self.store.refreshingProviders.contains(self.provider.instanceID))
-                } header: {
-                    Text(L("Usage"))
-                }
+                    model: self.model,
+                    isEnabled: self.isEnabled,
+                    isRefreshing: self.store.refreshingProviders.contains(self.provider.instanceID))
+            } header: {
+                Text(L("Usage"))
             }
 
             if !self.usageItems.isEmpty {
@@ -194,7 +156,7 @@ struct ProviderDetailView<SupplementaryContent: View>: View {
                     items: self.usageItems)
             }
 
-            if self.accountUsageOverview == nil, let errorDisplay {
+            if let errorDisplay {
                 Section {
                     ProviderErrorView(
                         title: String(
@@ -255,10 +217,6 @@ struct ProviderDetailView<SupplementaryContent: View>: View {
 
             if let organizations = self.settingsOrganizations {
                 ProviderSettingsOrganizationsRowView(descriptor: organizations)
-            }
-
-            if self.showsSupplementarySettingsContent {
-                self.supplementarySettingsContent
             }
 
             ProviderAccentColorSettingsView(provider: self.provider, settings: self.store.settings)
@@ -424,7 +382,7 @@ struct ProviderDetailInfoRows: View {
             ProviderDetailInfoRow(label: L("Account"), value: self.model.email)
         }
 
-        if self.showsAccountInfo, let planRow = ProviderDetailView<EmptyView>.planRow(
+        if self.showsAccountInfo, let planRow = ProviderDetailView.planRow(
             provider: self.provider,
             planText: self.model.planText)
         {
@@ -465,14 +423,12 @@ private struct ProviderDetailInfoRow: View {
 struct ProviderMetricsInlineView: View {
     let provider: UsageProvider
     let model: UsageMenuCardView.Model
-    let openAIWebDiagnostic: String?
     let isEnabled: Bool
     let isRefreshing: Bool
 
     struct InfoRow: Identifiable, Equatable {
         enum ID: Hashable {
             case credits
-            case openAIWeb
         }
 
         let id: ID
@@ -513,22 +469,16 @@ struct ProviderMetricsInlineView: View {
         }
     }
 
-    static func infoRows(
-        for model: UsageMenuCardView.Model,
-        openAIWebDiagnostic: String?) -> [InfoRow]
-    {
+    static func infoRows(for model: UsageMenuCardView.Model) -> [InfoRow] {
         var rows: [InfoRow] = []
         if let credits = model.creditsText {
             rows.append(InfoRow(id: .credits, label: L("Credits"), value: credits))
-        }
-        if let diagnostic = openAIWebDiagnostic {
-            rows.append(InfoRow(id: .openAIWeb, label: L("OpenAI web extras"), value: diagnostic))
         }
         return rows
     }
 
     var body: some View {
-        let infoRows = Self.infoRows(for: self.model, openAIWebDiagnostic: self.openAIWebDiagnostic)
+        let infoRows = Self.infoRows(for: self.model)
         let contentState = ContentState(model: self.model, infoRows: infoRows)
 
         if contentState.showsPlaceholder {
@@ -539,7 +489,7 @@ struct ProviderMetricsInlineView: View {
             ForEach(self.model.metrics, id: \.id) { metric in
                 ProviderMetricInlineRow(
                     metric: metric,
-                    title: ProviderDetailView<EmptyView>.metricTitle(provider: self.provider, metric: metric),
+                    title: ProviderDetailView.metricTitle(provider: self.provider, metric: metric),
                     progressColor: self.model.progressColor)
             }
 
@@ -631,7 +581,7 @@ private struct ProviderMetricInlineRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            switch ProviderDetailView<EmptyView>.metricInlinePresentation(self.metric) {
+            switch ProviderDetailView.metricInlinePresentation(self.metric) {
             case let .status(statusText):
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(self.title)

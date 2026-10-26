@@ -16,8 +16,8 @@ struct CostUsageClaudeRebuildTests {
             cache: cache, range: Self.range, now: Self.now, modelsDevCacheRoot: env.cacheRoot)
         let digests = try [
             Self.digest(rows), Self.digest(cache.days), Self.digest(report),
-            Self.digest(report.hourly.map(CostUsageCodexPreviousReport.HourlyEntry.init)),
-            Self.digest(report.quotaSlices.map(CostUsageCodexPreviousReport.QuotaSlice.init)),
+            Self.digest(report.hourly.map(CostUsageCachedReport.HourlyEntry.init)),
+            Self.digest(report.quotaSlices.map(CostUsageCachedReport.QuotaSlice.init)),
         ]
         #expect(digests == [
             "6260cd7640a6e48831af1d67ca2d78ecbe606db0374f5a1f31d8bda3b509a6f5",

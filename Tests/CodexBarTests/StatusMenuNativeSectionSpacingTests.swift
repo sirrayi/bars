@@ -7,65 +7,6 @@ import Testing
 @Suite(.serialized)
 struct StatusMenuNativeSectionSpacingTests {
     @Test
-    func `buy credits stays available without an error only credits section`() {
-        let previousRendering = StatusItemController.menuCardRenderingEnabled
-        StatusItemController.menuCardRenderingEnabled = true
-        defer { StatusItemController.menuCardRenderingEnabled = previousRendering }
-
-        let settings = self.makeSettings()
-        settings.statusChecksEnabled = false
-        settings.refreshFrequency = .manual
-        settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
-        settings.showOptionalCreditsAndExtraUsage = true
-        self.enableOnly(.codex, settings: settings)
-
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        store.lastCreditsError = UsageError.noRateLimitsFound.errorDescription
-        store.lastOpenAIDashboardError =
-            "No matching OpenAI web session found. Sign in to chatgpt.com, then refresh OpenAI cookies."
-        let event = CreditEvent(date: Date(), service: "CLI", creditsUsed: 1)
-        let breakdown = OpenAIDashboardSnapshot.makeDailyBreakdown(from: [event], maxDays: 30)
-        store.openAIDashboard = OpenAIDashboardSnapshot(
-            signedInEmail: "user@example.com",
-            codeReviewRemainingPercent: 100,
-            creditEvents: [event],
-            dailyBreakdown: breakdown,
-            usageBreakdown: breakdown,
-            creditsPurchaseURL: nil,
-            updatedAt: Date())
-        store.openAIDashboardAttachmentAuthorized = true
-        store.openAIDashboardRequiresLogin = false
-
-        let controller = StatusItemController(
-            store: store,
-            settings: settings,
-            account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
-            statusBar: .system)
-        defer { controller.releaseStatusItemsForTesting() }
-
-        let menu = controller.makeMenu(for: .codex)
-        controller.menuWillOpen(menu)
-
-        #expect(menu.items.contains { ($0.representedObject as? String) == "menuCardCredits" } == false)
-        #expect(menu.items.contains { $0.title == "Buy Credits..." })
-        #expect(menu.items.contains { item in
-            item.submenu?.items.contains { ($0.representedObject as? String) == "creditsHistoryChart" } == true
-        })
-
-        settings.showOptionalCreditsAndExtraUsage = false
-        let hiddenMenu = controller.makeMenu(for: .codex)
-        controller.menuWillOpen(hiddenMenu)
-        #expect(hiddenMenu.items.contains { $0.title == "Buy Credits..." } == false)
-        #expect(hiddenMenu.items.contains { item in
-            item.submenu?.items.contains { ($0.representedObject as? String) == "creditsHistoryChart" } == true
-        } == false)
-    }
-
-    @Test
     func `usage history cost and storage stay together without adjacent separators`() throws {
         let previousRendering = StatusItemController.menuCardRenderingEnabled
         StatusItemController.menuCardRenderingEnabled = true
@@ -75,34 +16,22 @@ struct StatusMenuNativeSectionSpacingTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .claude
         settings.costUsageEnabled = true
         settings.costSummaryDisplayStyle = .both
         settings.providerStorageFootprintsEnabled = true
-        self.enableOnly(.codex, settings: settings)
+        self.enableOnly(.claude, settings: settings)
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let storageRoot = "/Users/test/.codex"
-        store.providerStorageFootprints[.codex] = ProviderStorageFootprint(
-            provider: .codex,
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let storageRoot = "/Users/test/.claude"
+        store.providerStorageFootprints[.claude] = ProviderStorageFootprint(
+            provider: .claude,
             totalBytes: 1024,
             paths: [storageRoot],
             missingPaths: [],
             unreadablePaths: [],
             components: [.init(path: storageRoot, totalBytes: 1024)],
             updatedAt: Date())
-        store.credits = CreditsSnapshot(remaining: 100, events: [], updatedAt: Date())
-        store.openAIDashboard = OpenAIDashboardSnapshot(
-            signedInEmail: "user@example.com",
-            codeReviewRemainingPercent: 100,
-            creditEvents: [],
-            dailyBreakdown: [],
-            usageBreakdown: [],
-            creditsPurchaseURL: nil,
-            updatedAt: Date())
-        store.openAIDashboardAttachmentAuthorized = true
-        store.openAIDashboardRequiresLogin = false
         store._setTokenSnapshotForTesting(CostUsageTokenSnapshot(
             sessionTokens: 123,
             sessionCostUSD: 0.12,
@@ -118,18 +47,18 @@ struct StatusMenuNativeSectionSpacingTests {
                     modelsUsed: nil,
                     modelBreakdowns: nil),
             ],
-            updatedAt: Date()), provider: .codex)
+            updatedAt: Date()), provider: .claude)
 
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
         defer { controller.releaseStatusItemsForTesting() }
 
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .claude)
         controller.menuWillOpen(menu)
         let usageHistoryIndex = try #require(menu.items.firstIndex {
             ($0.representedObject as? String) == "usageHistorySubmenu"
@@ -137,13 +66,9 @@ struct StatusMenuNativeSectionSpacingTests {
         let storageIndex = try #require(menu.items.firstIndex {
             ($0.representedObject as? String) == "menuCardStorage"
         })
-        let creditsIndex = try #require(menu.items.firstIndex {
-            ($0.representedObject as? String) == "menuCardCredits"
-        })
         let costIndex = try #require(menu.items.firstIndex {
             ($0.representedObject as? String) == "menuCardCost"
         })
-        #expect(creditsIndex < usageHistoryIndex)
         #expect(usageHistoryIndex < costIndex)
         #expect(costIndex < storageIndex)
         #expect(menu.items[usageHistoryIndex].title == "Plan Usage")
@@ -171,8 +96,7 @@ struct StatusMenuNativeSectionSpacingTests {
         settings.costSummaryDisplayStyle = .both
         self.enableOnlyOpenCodeGo(settings)
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let opencodegoSnapshot = OpenCodeGoUsageSnapshot(
             hasMonthlyUsage: true,
             rollingUsagePercent: 12,
@@ -204,7 +128,7 @@ struct StatusMenuNativeSectionSpacingTests {
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -247,8 +171,7 @@ struct StatusMenuNativeSectionSpacingTests {
         settings.costSummaryDisplayStyle = .both
         self.enableOnly(.claude, settings: settings)
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         store._setTokenSnapshotForTesting(CostUsageTokenSnapshot(
             sessionTokens: 123,
             sessionCostUSD: 0.12,
@@ -269,7 +192,7 @@ struct StatusMenuNativeSectionSpacingTests {
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -284,75 +207,6 @@ struct StatusMenuNativeSectionSpacingTests {
         #expect(usageItem.submenu?.items.contains {
             ($0.representedObject as? String) == "costHistoryChart"
         } == true)
-    }
-
-    @Test
-    func `codex top card keeps usage breakdown over cost history`() throws {
-        let previousRendering = StatusItemController.menuCardRenderingEnabled
-        StatusItemController.menuCardRenderingEnabled = true
-        defer { StatusItemController.menuCardRenderingEnabled = previousRendering }
-
-        let settings = self.makeSettings()
-        settings.statusChecksEnabled = false
-        settings.refreshFrequency = .manual
-        settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
-        settings.costUsageEnabled = true
-        settings.costSummaryDisplayStyle = .both
-        self.enableOnly(.codex, settings: settings)
-
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let event = CreditEvent(date: Date(), service: "CLI", creditsUsed: 1)
-        let breakdown = OpenAIDashboardSnapshot.makeDailyBreakdown(from: [event], maxDays: 30)
-        store.openAIDashboard = OpenAIDashboardSnapshot(
-            signedInEmail: "user@example.com",
-            codeReviewRemainingPercent: 100,
-            creditEvents: [event],
-            dailyBreakdown: breakdown,
-            usageBreakdown: breakdown,
-            creditsPurchaseURL: nil,
-            updatedAt: Date())
-        store.openAIDashboardAttachmentAuthorized = true
-        store.openAIDashboardRequiresLogin = false
-        store._setTokenSnapshotForTesting(CostUsageTokenSnapshot(
-            sessionTokens: 123,
-            sessionCostUSD: 0.12,
-            last30DaysTokens: 123,
-            last30DaysCostUSD: 1.23,
-            daily: [
-                CostUsageDailyReport.Entry(
-                    date: "2025-12-23",
-                    inputTokens: nil,
-                    outputTokens: nil,
-                    totalTokens: 123,
-                    costUSD: 1.23,
-                    modelsUsed: nil,
-                    modelBreakdowns: nil),
-            ],
-            updatedAt: Date()), provider: .codex)
-
-        let controller = StatusItemController(
-            store: store,
-            settings: settings,
-            account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
-            statusBar: .system)
-        defer { controller.releaseStatusItemsForTesting() }
-
-        let menu = controller.makeMenu(for: .codex)
-        controller.menuWillOpen(menu)
-        let usageItem = try #require(menu.items.first {
-            ($0.representedObject as? String) == "menuCardUsage"
-        })
-
-        #expect(usageItem.submenu?.items.contains {
-            ($0.representedObject as? String) == "usageBreakdownChart"
-        } == true)
-        #expect(usageItem.submenu?.items.contains {
-            ($0.representedObject as? String) == "costHistoryChart"
-        } == false)
     }
 
     private func makeSettings() -> SettingsStore {

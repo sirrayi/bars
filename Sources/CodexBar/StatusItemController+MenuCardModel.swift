@@ -17,7 +17,7 @@ extension StatusItemController {
         context: UsageMenuCardContext = .menu) -> UsageMenuCardView.Model?
     {
         // Provider-specific by design: Codex is the historical fallback when no provider is enabled.
-        let target = provider ?? self.store.enabledFirstPartyProvidersForDisplay().first ?? .codex
+        let target = provider ?? self.store.enabledFirstPartyProvidersForDisplay().first ?? .claude
         return self.store.menuCardModel(for: target, context: context)
     }
 }

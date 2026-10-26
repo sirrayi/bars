@@ -83,7 +83,7 @@ struct WidgetSnapshotTestIsolationTests {
         defer { try? FileManager.default.removeItem(at: snapshotURL) }
         let snapshot = WidgetSnapshot(
             entries: [],
-            enabledProviders: [.codex],
+            enabledProviders: [.claude],
             usageBarsShowUsed: true,
             generatedAt: Date(timeIntervalSince1970: 1_700_000_000))
         var reloadCount = 0
@@ -119,7 +119,6 @@ struct WidgetSnapshotTestIsolationTests {
         let settings = testSettingsStore(suiteName: "WidgetSnapshotTestIsolationTests-\(suite)")
         settings.providerDetectionCompleted = true
         return UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,

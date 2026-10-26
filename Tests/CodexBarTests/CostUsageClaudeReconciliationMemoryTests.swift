@@ -37,8 +37,8 @@ struct CostUsageClaudeReconciliationMemoryTests {
         encoder.outputFormatting = [.sortedKeys]
         let bytes = try [
             encoder.encode(rows), encoder.encode(cache.days), encoder.encode(report),
-            encoder.encode(report.hourly.map(CostUsageCodexPreviousReport.HourlyEntry.init)),
-            encoder.encode(report.quotaSlices.map(CostUsageCodexPreviousReport.QuotaSlice.init)),
+            encoder.encode(report.hourly.map(CostUsageCachedReport.HourlyEntry.init)),
+            encoder.encode(report.quotaSlices.map(CostUsageCachedReport.QuotaSlice.init)),
         ]
         let digest = try SHA256.hash(data: encoder.encode(bytes)).map { String(format: "%02x", $0) }.joined()
         let expected = [

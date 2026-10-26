@@ -21,12 +21,12 @@ struct MenuBarLayoutEditorTests {
     @Test
     func `time palette lists the compact run out token with a clear label`() {
         #expect(MenuBarLayoutPaletteTokens.time.contains(.runsOutCompact))
-        #expect(MenuBarLayoutToken.runsOutCompact.editorLabel(provider: .codex) == "Runs out (compact)")
+        #expect(MenuBarLayoutToken.runsOutCompact.editorLabel(provider: .claude) == "Runs out (compact)")
     }
 
     @Test
     func `cost window token is named after the history window`() {
-        for provider in [nil, UsageProvider.codex] {
+        for provider in [nil, UsageProvider.claude] {
             #expect(MenuBarLayoutToken.costWindow.editorLabel(provider: provider) == "Cost (History window)")
             #expect(MenuBarLayoutToken.costWindow.editorAccessibilityLabel(provider: provider)
                 == "Cost (History window)")
@@ -57,7 +57,7 @@ struct MenuBarLayoutEditorTests {
             .windowResetCountdown(window: .spend), .windowResetAbsolute(window: .spend),
         ]
         let spendMoney: [MenuBarLayoutToken] = [.spendAmount, .spendBudget]
-        #expect(spendUsage.allSatisfy(MenuBarLayoutPaletteTokens.usage(provider: .codex, snapshot: nil).contains))
+        #expect(spendUsage.allSatisfy(MenuBarLayoutPaletteTokens.usage(provider: .claude, snapshot: nil).contains))
         #expect(spendTime.allSatisfy(MenuBarLayoutPaletteTokens.time.contains))
         let branch = MenuBarLayoutPaletteTokens.conditionalBranch
         #expect((spendUsage + spendTime + spendMoney).allSatisfy(branch.contains))
@@ -91,16 +91,16 @@ struct MenuBarLayoutEditorTests {
             let countdownLabel = L("%@: %@", title, L("menu_bar_layout_token_resets_in"))
             let absoluteLabel = L("%@: %@", title, L("menu_bar_layout_token_reset_at"))
 
-            #expect(countdown.editorLabel(provider: .codex) == countdownLabel)
-            #expect(countdown.editorAccessibilityLabel(provider: .codex) == countdownLabel)
+            #expect(countdown.editorLabel(provider: .claude) == countdownLabel)
+            #expect(countdown.editorAccessibilityLabel(provider: .claude) == countdownLabel)
             #expect(countdown.editorSystemImage == "timer")
-            #expect(absolute.editorLabel(provider: .codex) == absoluteLabel)
-            #expect(absolute.editorAccessibilityLabel(provider: .codex) == absoluteLabel)
+            #expect(absolute.editorLabel(provider: .claude) == absoluteLabel)
+            #expect(absolute.editorAccessibilityLabel(provider: .claude) == absoluteLabel)
             #expect(absolute.editorSystemImage == "clock")
         }
-        #expect(MenuBarLayoutToken.resetCountdown.editorLabel(provider: .codex)
+        #expect(MenuBarLayoutToken.resetCountdown.editorLabel(provider: .claude)
             == L("menu_bar_layout_token_resets_in"))
-        #expect(MenuBarLayoutToken.resetAbsolute.editorLabel(provider: .codex)
+        #expect(MenuBarLayoutToken.resetAbsolute.editorLabel(provider: .claude)
             == L("menu_bar_layout_token_reset_at"))
     }
 

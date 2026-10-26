@@ -3,13 +3,11 @@
 // First-party spellings keep call sites concise while their values remain validated instance IDs.
 // swiftformat:disable sortDeclarations
 extension ProviderInstanceID {
-    public static let codex = UsageProvider.codex.instanceID
     public static let claude = UsageProvider.claude.instanceID
     public static let opencode = UsageProvider.opencode.instanceID
     public static let opencodego = UsageProvider.opencodego.instanceID
     public static let devin = UsageProvider.devin.instanceID
     public static let deepseek = UsageProvider.deepseek.instanceID
-    public static let pi = UsageProvider.pi.instanceID
 }
 
 // swiftformat:enable sortDeclarations

@@ -39,11 +39,7 @@ extension SpendDashboardModel {
             for windowEntry in summary.entries {
                 let entry = windowEntry.entry
                 let breakdowns = entry.modelBreakdowns ?? []
-                // Provider-specific by design: Codex model costs can be subtotals of priced requests, so they can
-                // add up to the day's known cost while the day still has unpriced requests.
-                if !Self.hasCompleteModelCostCoverage(entry)
-                    || (input.provider == .codex && (entry.unpricedRequestCount ?? 0) > 0)
-                {
+                if !Self.hasCompleteModelCostCoverage(entry) {
                     completeness = .incomplete
                 }
                 for breakdown in breakdowns {
@@ -134,15 +130,6 @@ extension SpendDashboardModel {
         return ModelSummary(rows: rows, completeness: completeness)
     }
 
-    static func canRetainPartialCodexModelHistory(_ summary: InputSummary) -> Bool {
-        guard summary.input.provider == .codex else { return false }
-        return summary.entries.allSatisfy { windowEntry in
-            let entry = windowEntry.entry
-            return Self.hasCompleteModelCostCoverage(entry) ||
-                Self.hasRetainablePartialCodexModelCostCoverage(entry)
-        }
-    }
-
     /// Unpriced named models still belong in the breakdown list. Malformed costs and model-less
     /// gaps stay fail-closed so the list cannot present a lower bound as if it were complete.
     static func canRetainUnpricedModelHistory(_ summary: InputSummary) -> Bool {
@@ -182,69 +169,6 @@ extension SpendDashboardModel {
             sawNamedUnpriced = true
         }
         return sawNamedUnpriced
-    }
-
-    private static func hasRetainablePartialCodexModelCostCoverage(
-        _ entry: CostUsageDailyReport.Entry) -> Bool
-    {
-        // A model-less day can still have a trustworthy aggregate cost. There is no model row
-        // to retain, but allowing it preserves priced rows from other days in the same source.
-        guard entry.modelBreakdowns?.isEmpty == false else {
-            return self.validCost(entry.costUSD) != nil
-        }
-
-        guard let entryCost = validCost(entry.costUSD) else {
-            return self.hasExplicitlyUnpriceableCodexCost(entry)
-        }
-        var pricedCost = 0.0
-        var sawPricedBreakdown = false
-        for breakdown in entry.modelBreakdowns ?? [] {
-            let name = breakdown.modelName.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !name.isEmpty else {
-                guard Self.hasProvenZeroCost(breakdown) else { return false }
-                continue
-            }
-            if let cost = Self.validCost(breakdown.costUSD) {
-                pricedCost += cost
-                guard pricedCost.isFinite else { return false }
-                sawPricedBreakdown = true
-            } else {
-                // Only an absent cost is an unpriced routing row. A present but malformed
-                // cost must fail closed instead of being silently treated as unpriced.
-                guard breakdown.costUSD == nil,
-                      Self.nonnegative(breakdown.totalTokens) != nil
-                else {
-                    return false
-                }
-            }
-        }
-        return sawPricedBreakdown && Self.costsMatch(entryCost, pricedCost)
-    }
-
-    static func hasExplicitlyUnpriceableCodexCost(_ entry: CostUsageDailyReport.Entry) -> Bool {
-        guard entry.costUSD == nil,
-              let breakdowns = entry.modelBreakdowns,
-              !breakdowns.isEmpty
-        else { return false }
-
-        return breakdowns.allSatisfy { breakdown in
-            !breakdown.modelName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                && breakdown.costUSD == nil
-                && Self.nonnegative(breakdown.totalTokens) != nil
-        }
-    }
-
-    /// Provider-specific by design: Cursor usage events can omit totalCents without voiding priced rows.
-    static func hasExplicitlyUnpriceableLedgerCost(
-        _ provider: UsageProvider,
-        _ entry: CostUsageDailyReport.Entry) -> Bool
-    {
-        switch provider {
-        case .codex:
-            self.hasExplicitlyUnpriceableCodexCost(entry)
-        default:
-            false
-        }
     }
 
     private static func hasCompleteModelCostCoverage(_ entry: CostUsageDailyReport.Entry) -> Bool {

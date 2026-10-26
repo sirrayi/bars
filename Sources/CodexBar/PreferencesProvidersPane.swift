@@ -18,56 +18,32 @@ struct ProvidersPane: View {
     let provider: UsageProvider
     @Bindable var settings: SettingsStore
     @Bindable var store: UsageStore
-    let managedCodexAccountCoordinator: ManagedCodexAccountCoordinator
-    let codexAccountPromotionCoordinator: CodexAccountPromotionCoordinator
-    let codexAmbientLoginRunner: any CodexAmbientLoginRunning
     let runProviderLoginFlow: @MainActor (UsageProvider) async -> Void
     @State private var expandedErrors: Set<UsageProvider> = []
     @State private var settingsStatusTextByID: [String: String] = [:]
     @State private var settingsLastAppActiveRunAtByID: [String: Date] = [:]
     @State private var activeConfirmation: ProviderSettingsConfirmationState?
-    @State private var codexAccountsNotice: CodexAccountsSectionNotice?
-    @State private var isAuthenticatingLiveCodexAccount = false
 
     init(
-        // Provider-specific by design: Codex is the historical settings selection when no provider is supplied.
-        provider: UsageProvider = .codex,
+        provider: UsageProvider = .claude,
         settings: SettingsStore,
         store: UsageStore,
-        managedCodexAccountCoordinator: ManagedCodexAccountCoordinator = ManagedCodexAccountCoordinator(),
-        codexAccountPromotionCoordinator: CodexAccountPromotionCoordinator? = nil,
-        codexAmbientLoginRunner: any CodexAmbientLoginRunning = DefaultCodexAmbientLoginRunner(),
         runProviderLoginFlow: @escaping @MainActor (UsageProvider) async -> Void = { _ in })
     {
         self.provider = provider
         self.settings = settings
         self.store = store
-        self.managedCodexAccountCoordinator = managedCodexAccountCoordinator
-        self.codexAccountPromotionCoordinator = codexAccountPromotionCoordinator
-            ?? CodexAccountPromotionCoordinator(
-                settingsStore: settings,
-                usageStore: store,
-                managedAccountCoordinator: managedCodexAccountCoordinator)
-        self.codexAmbientLoginRunner = codexAmbientLoginRunner
         self.runProviderLoginFlow = runProviderLoginFlow
     }
 
     var body: some View {
         let unfilteredModel = UsageMenuCardView.Model.make(self.store.menuCardInput(
             for: self.provider, context: .settings))
-        // Provider-specific by design: only Codex has managed OAuth account snapshots for this shared settings view.
-        let overview = self.provider == .codex ? self.store.codexAccountUsageOverview { accountIDs in
-            Task { @MainActor in
-                await ProviderSettingsRefreshInteraction.perform {
-                    await self.store.refreshCodexAccountsForSettings(accountIDs)
-                }
-            }
-        } : nil
         let visibilityModel = UsageMenuCardView.Model.make(self.store.menuCardInput(
             for: self.provider, context: .settings, optionalUsageOverride: true))
-        let usageItems = ((overview?.usageItems ?? []) + visibilityModel.usageItemDescriptors(
+        let usageItems = visibilityModel.usageItemDescriptors(
             includingHidden: self.settings.hiddenUsageItemIDs(for: self.provider),
-            hidePersonalInfo: self.settings.hidePersonalInfo))
+            hidePersonalInfo: self.settings.hidePersonalInfo)
             .reduce(into: [ProviderUsageItemDescriptor]()) { items, item in
                 if !items.contains(where: { $0.id == item.id }) { items.append(item) }
             }
@@ -75,13 +51,10 @@ struct ProvidersPane: View {
             provider: self.provider,
             store: self.store,
             isEnabled: self.binding(for: self.provider),
-            subtitle: overview.map { L("%@ accounts", String($0.rows.count)) }
-                ?? self.providerSubtitle(self.provider),
+            subtitle: self.providerSubtitle(self.provider),
             model: unfilteredModel.applyingUsageItemVisibility(
                 hiddenItemIDs: self.settings.hiddenUsageItemIDs(for: self.provider)),
-            accountUsageOverview: overview,
             usageItems: usageItems,
-            openAIWebDiagnostic: self.openAIWebDiagnostic(for: self.provider),
             settingsPickers: self.extraSettingsPickers(for: self.provider),
             settingsToggles: self.extraSettingsToggles(for: self.provider),
             settingsFields: self.extraSettingsFields(for: self.provider),
@@ -95,36 +68,6 @@ struct ProvidersPane: View {
             onCopyError: { text in self.copyToPasteboard(text) },
             onRefresh: {
                 self.triggerRefresh(for: self.provider)
-            },
-            showsSupplementarySettingsContent: self.codexAccountsSectionState(for: self.provider) != nil,
-            supplementarySettingsContent: {
-                if let state = self.codexAccountsSectionState(for: self.provider) {
-                    CodexAccountsSectionView(
-                        state: state,
-                        setActiveVisibleAccount: { visibleAccountID in
-                            Task { @MainActor in
-                                await self.selectCodexVisibleAccount(id: visibleAccountID)
-                            }
-                        },
-                        reauthenticateAccount: { account in
-                            Task { @MainActor in
-                                await self.reauthenticateCodexAccount(account)
-                            }
-                        },
-                        removeAccount: { account in
-                            self.requestManagedCodexAccountRemoval(account)
-                        },
-                        requestSystemVisibleAccount: { visibleAccountID in
-                            Task { @MainActor in
-                                await self.requestCodexSystemVisibleAccount(id: visibleAccountID)
-                            }
-                        },
-                        addAccount: {
-                            Task { @MainActor in
-                                await self.addManagedCodexAccount()
-                            }
-                        })
-                }
             })
             .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
                 self.runSettingsDidBecomeActiveHooks()
@@ -185,12 +128,7 @@ struct ProvidersPane: View {
     private func triggerRefresh(for provider: UsageProvider) {
         Task { @MainActor in
             await ProviderSettingsRefreshInteraction.perform {
-                // Provider-specific by design: Codex account reconciliation must refresh managed profile state too.
-                if provider == .codex {
-                    await self.store.refreshCodexAccountScopedState(allowDisabled: true)
-                } else {
-                    await self.store.refreshProvider(provider, allowDisabled: true)
-                }
+                await self.store.refreshProvider(provider, allowDisabled: true)
             }
         }
     }
@@ -242,132 +180,6 @@ struct ProvidersPane: View {
         }
 
         return "\(detailLine)\n\(self.providerUsageText(provider))"
-    }
-
-    func codexAccountsSectionState(for provider: UsageProvider) -> CodexAccountsSectionState? {
-        // Provider-specific by design: managed Codex profiles own app-only account promotion and reauthentication
-        // state.
-        guard provider == .codex else { return nil }
-        let projection = self.settings.codexVisibleAccountProjection
-        let degradedNotice: CodexAccountsSectionNotice? = if projection.hasUnreadableAddedAccountStore {
-            CodexAccountsSectionNotice(
-                text: L("managed_account_storage_unreadable"),
-                tone: .warning)
-        } else {
-            nil
-        }
-
-        return CodexAccountsSectionState(
-            visibleAccounts: projection.visibleAccounts,
-            activeVisibleAccountID: projection.activeVisibleAccountID,
-            liveVisibleAccountID: projection.liveVisibleAccountID,
-            hasUnreadableManagedAccountStore: projection.hasUnreadableAddedAccountStore,
-            isAuthenticatingManagedAccount: self.managedCodexAccountCoordinator.isAuthenticatingManagedAccount,
-            authenticatingManagedAccountID: self.managedCodexAccountCoordinator.authenticatingManagedAccountID,
-            isRemovingManagedAccount: self.managedCodexAccountCoordinator.isRemovingManagedAccount,
-            isAuthenticatingLiveAccount: self.isAuthenticatingLiveCodexAccount,
-            isPromotingSystemAccount: self.codexAccountPromotionCoordinator.isPromotingSystemAccount,
-            notice: self.codexAccountsNotice ?? degradedNotice)
-    }
-
-    func selectCodexVisibleAccount(id: String) async {
-        self.codexAccountsNotice = nil
-        guard self.settings.selectCodexVisibleAccount(id: id) else { return }
-        await self.refreshCodexProvider()
-    }
-
-    func requestCodexSystemVisibleAccount(id: String) async {
-        self.codexAccountsNotice = nil
-        guard let account = self.settings.codexVisibleAccountProjection.visibleAccounts.first(where: { $0.id == id }),
-              let managedAccountID = account.storedAccountID
-        else {
-            return
-        }
-
-        let result = await self.codexAccountPromotionCoordinator.promote(managedAccountID: managedAccountID)
-        switch result {
-        case let .failure(error):
-            self.codexAccountsNotice = CodexAccountsSectionNotice(text: error.message, tone: .warning)
-        case let .success(promotion):
-            self.codexAccountsNotice = promotion.daemonRestartNote.map { .init(text: $0, tone: .warning) }
-        }
-    }
-
-    func addManagedCodexAccount() async {
-        self.codexAccountsNotice = nil
-        guard let state = self.codexAccountsSectionState(for: .codex), state.canAddAccount else {
-            return
-        }
-
-        do {
-            let account = try await self.managedCodexAccountCoordinator.authenticateManagedAccount()
-            self.selectCodexVisibleAccountForAuthenticatedManagedAccount(account)
-            await self.refreshCodexProvider()
-        } catch {
-            self.codexAccountsNotice = self.codexAccountsNotice(for: error)
-        }
-    }
-
-    func reauthenticateCodexAccount(_ account: CodexVisibleAccount) async {
-        self.codexAccountsNotice = nil
-        self.settings.invalidateCodexAccountReconciliationSnapshotCache()
-        guard let state = self.codexAccountsSectionState(for: .codex),
-              let current = state.visibleAccounts.first(where: { $0.id == account.id }),
-              current.selectionSource == account.selectionSource,
-              current.storedAccountID == account.storedAccountID,
-              current.workspaceAccountID == account.workspaceAccountID,
-              state.canReauthenticate(current)
-        else { return }
-        if case let .managedAccount(accountID) = current.selectionSource {
-            do {
-                _ = try await self.managedCodexAccountCoordinator
-                    .authenticateManagedAccount(existingAccountID: accountID)
-                await self.refreshCodexProvider()
-            } catch {
-                self.codexAccountsNotice = self.codexAccountsNotice(for: error)
-            }
-            return
-        }
-
-        guard current.selectionSource == .liveSystem else { return }
-
-        self.isAuthenticatingLiveCodexAccount = true
-        self.codexAccountPromotionCoordinator.setLiveReauthenticationInProgress(true)
-        defer {
-            self.isAuthenticatingLiveCodexAccount = false
-            self.codexAccountPromotionCoordinator.setLiveReauthenticationInProgress(false)
-        }
-
-        let result = await self.codexAmbientLoginRunner.run(timeout: 120)
-        if let info = CodexLoginAlertPresentation.alertInfo(for: result) {
-            self.presentLoginAlert(title: info.title, message: info.message)
-            return
-        }
-
-        await self.refreshCodexProvider()
-    }
-
-    func removeManagedCodexAccount(id: UUID) async {
-        self.codexAccountsNotice = nil
-        do {
-            try await self.managedCodexAccountCoordinator.removeManagedAccount(id: id)
-            await self.refreshCodexProvider()
-        } catch {
-            self.codexAccountsNotice = self.codexAccountsNotice(for: error)
-        }
-    }
-
-    func requestManagedCodexAccountRemoval(_ account: CodexVisibleAccount) {
-        guard let accountID = account.storedAccountID else { return }
-        self.activeConfirmation = ProviderSettingsConfirmationState(
-            title: L("remove_codex_account_title"),
-            message: String(format: L("remove_account_message"), account.email),
-            confirmTitle: L("remove"),
-            onConfirm: {
-                Task { @MainActor in
-                    await self.removeManagedCodexAccount(id: accountID)
-                }
-            })
     }
 
     func providerErrorDisplay(_ provider: UsageProvider) -> ProviderErrorDisplay? {
@@ -569,51 +381,6 @@ struct ProvidersPane: View {
             runLoginFlow: {
                 await self.runProviderLoginFlow(provider)
             })
-    }
-
-    func openAIWebDiagnostic(for provider: UsageProvider) -> String? {
-        // Provider-specific by design: the OpenAI dashboard diagnostic comes from Codex's app-only web session.
-        guard provider == .codex else { return nil }
-        let diagnostic = self.store.codexConsumerProjectionIfNeeded(
-            for: provider,
-            surface: .liveCard)?.userFacingErrors.dashboard
-        return PersonalInfoRedactor.redactEmails(in: diagnostic, isEnabled: self.settings.hidePersonalInfo)
-    }
-
-    private func refreshCodexProvider() async {
-        await ProviderInteractionContext.$current.withValue(.userInitiated) {
-            await self.store.refreshCodexAccountScopedState(allowDisabled: true)
-        }
-    }
-
-    private func selectCodexVisibleAccountForAuthenticatedManagedAccount(_ account: ManagedCodexAccount) {
-        self.settings.selectAuthenticatedManagedCodexAccount(account)
-    }
-
-    private func codexAccountsNotice(for error: Error) -> CodexAccountsSectionNotice {
-        if let error = error as? ManagedCodexAccountCoordinatorError,
-           error == .authenticationInProgress
-        {
-            return CodexAccountsSectionNotice(
-                text: L("managed_login_already_running"),
-                tone: .warning)
-        }
-
-        if let error = error as? ManagedCodexAccountServiceError {
-            return CodexAccountsSectionNotice(text: error.userFacingMessage, tone: .warning)
-        }
-
-        return CodexAccountsSectionNotice(
-            text: error.localizedDescription,
-            tone: .warning)
-    }
-
-    private func presentLoginAlert(title: String, message: String) {
-        let alert = NSAlert()
-        alert.messageText = L(title)
-        alert.informativeText = L(message)
-        alert.alertStyle = .warning
-        alert.runModal()
     }
 
     private func runSettingsDidBecomeActiveHooks() {

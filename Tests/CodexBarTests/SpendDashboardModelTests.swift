@@ -27,44 +27,6 @@ struct SpendDashboardModelTests {
     }
 
     @Test
-    func `Codex account indices use app locale numerals`() throws {
-        let home = FileManager.default.temporaryDirectory
-            .appendingPathComponent("SpendDashboardModelTests-index-locale-\(UUID().uuidString)", isDirectory: true)
-        try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: home) }
-        let account = CodexVisibleAccount(
-            id: "locale-account",
-            email: "locale@example.com",
-            authFingerprint: nil,
-            storedAccountID: nil,
-            selectionSource: .profileHome(path: home.path),
-            isActive: true,
-            isLive: true,
-            canReauthenticate: true,
-            canRemove: true)
-
-        let persian = CodexBarLocalizationOverride.$appLanguage.withValue("fa") {
-            SpendDashboardSource.codexSource(
-                account: account,
-                homePath: home.path,
-                providerName: "Codex",
-                index: 1,
-                count: 2).displayName
-        }
-        let arabic = CodexBarLocalizationOverride.$appLanguage.withValue("ar") {
-            SpendDashboardSource.codexSource(
-                account: account,
-                homePath: home.path,
-                providerName: "Codex",
-                index: 1,
-                count: 2).displayName
-        }
-
-        #expect(persian == "Codex · #۲")
-        #expect(arabic == "Codex · #٢")
-    }
-
-    @Test
     func `windows anchor to injected now and report covered days honestly`() throws {
         let snapshot = Self.snapshot(
             currency: "USD",
@@ -166,7 +128,7 @@ struct SpendDashboardModelTests {
                 updatedAt: #require(Self.calendar.date(byAdding: .day, value: -7, to: Self.now))))
         let later = SpendDashboardModel.ProviderInput(
             id: "later",
-            provider: .codex,
+            provider: .opencode,
             displayName: "Later",
             snapshot: Self.snapshot(
                 currency: "USD",
@@ -195,7 +157,7 @@ struct SpendDashboardModelTests {
                 updatedAt: #require(Self.calendar.date(byAdding: .day, value: -4, to: Self.now))))
         let later = SpendDashboardModel.ProviderInput(
             id: "later",
-            provider: .codex,
+            provider: .opencode,
             displayName: "Later",
             snapshot: Self.snapshot(
                 currency: "USD",
@@ -214,7 +176,7 @@ struct SpendDashboardModelTests {
         let covered = Self.input(id: "covered", provider: .claude, currency: "USD", cost: 4)
         let uncovered = SpendDashboardModel.ProviderInput(
             id: "uncovered",
-            provider: .codex,
+            provider: .opencode,
             displayName: "Uncovered",
             snapshot: Self.snapshot(
                 currency: "USD",
@@ -266,7 +228,7 @@ struct SpendDashboardModelTests {
         let covered = Self.input(id: "covered", provider: .claude, currency: "USD", cost: 4)
         let uncovered = SpendDashboardModel.ProviderInput(
             id: "uncovered",
-            provider: .codex,
+            provider: .opencode,
             displayName: "Uncovered",
             snapshot: Self.snapshot(
                 currency: "EUR",
@@ -324,7 +286,7 @@ struct SpendDashboardModelTests {
             ]))
         let second = SpendDashboardModel.ProviderInput(
             id: "b",
-            provider: .codex,
+            provider: .opencode,
             displayName: "Codex",
             snapshot: Self.snapshot(currency: "USD", entries: [Self.entry(day: "2026-07-16", cost: 4)]))
         let group = try #require(Self.model(
@@ -526,7 +488,7 @@ struct SpendDashboardModelTests {
             snapshot: Self.snapshot(currency: "USD", entries: [
                 Self.entry(day: "2026-07-16", cost: 0, tokens: 0, model: nil),
             ]))
-        let active = Self.input(id: "active", provider: .codex, currency: "USD", cost: 10)
+        let active = Self.input(id: "active", provider: .opencode, currency: "USD", cost: 10)
         let group = try #require(Self.model(
             inputs: [inactive, active],
             requestedDays: 7).groups.first)
@@ -558,145 +520,13 @@ struct SpendDashboardModelTests {
         #expect(group.models.map(\.modelName) == ["test-model"])
         #expect(group.models.map(\.totalCost) == [nil])
     }
-
-    @Test(CodexCredentialFixtures())
-    func `Codex requests freeze source home auth and cache identity`() throws {
-        let id = try #require(UUID(uuidString: "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE"))
-        let home = CodexCredentialFixtures.root
-            .appendingPathComponent("SpendDashboardModelTests-\(UUID().uuidString)", isDirectory: true)
-        try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: home) }
-        let account = CodexVisibleAccount(
-            id: "account",
-            email: "test@example.com",
-            authFingerprint: "ABC123",
-            storedAccountID: id,
-            selectionSource: .managedAccount(id: id),
-            isActive: true,
-            isLive: false,
-            canReauthenticate: true,
-            canRemove: true)
-        let request = try #require(SpendDashboardSource.codexSource(
-            account: account,
-            homePath: home.path,
-            providerName: "Codex",
-            index: 1,
-            count: 2).request)
-
-        #expect(request.source == .managedAccount(id: id))
-        #expect(request.homePath == home.path)
-        #expect(request.authFingerprint == "abc123")
-        #expect(!request.authFileWasReadable)
-        #expect(request.displayName == "Codex · #2")
-        #expect(request.cacheIdentity.count == 64)
-        #expect(SpendDashboardSource.scanDays > SpendDashboardSource.activityDays)
-        #expect(SpendDashboardSource.activityDays == 365)
-        #expect(SpendDashboardSource.codexSource(
-            account: account,
-            homePath: "relative/path",
-            providerName: "Codex",
-            index: 0,
-            count: 1).request == nil)
-        #expect(SpendDashboardSource.codexSource(
-            account: account,
-            homePath: home.appendingPathComponent("missing", isDirectory: true).path,
-            providerName: "Codex",
-            index: 0,
-            count: 1).request == nil)
-
-        let changed = CodexVisibleAccount(
-            id: account.id,
-            email: account.email,
-            authFingerprint: "different",
-            storedAccountID: id,
-            selectionSource: account.selectionSource,
-            isActive: account.isActive,
-            isLive: account.isLive,
-            canReauthenticate: account.canReauthenticate,
-            canRemove: account.canRemove)
-        let changedRequest = try #require(SpendDashboardSource.codexSource(
-            account: changed,
-            homePath: request.homePath,
-            providerName: "Codex",
-            index: 1,
-            count: 2).request)
-        #expect(changedRequest.cacheIdentity != request.cacheIdentity)
-        let rebucketedRequest = try #require(SpendDashboardSource.codexSource(
-            account: account,
-            homePath: request.homePath,
-            providerName: "Codex",
-            index: 1,
-            count: 2,
-            bucketTimeZoneIdentifier: "Pacific/Kiritimati").request)
-        #expect(rebucketedRequest.cacheIdentity != request.cacheIdentity)
-
-        let authData = Data("{\"tokens\":\"synthetic\"}".utf8)
-        try authData.write(to: CodexAuthFingerprint.authFileURL(homePath: home.path))
-        let exact = try #require(SpendDashboardSource.codexSource(
-            account: account,
-            homePath: home.path,
-            providerName: "Codex",
-            index: 0,
-            count: 1).request)
-        #expect(exact.authFingerprint == CodexAuthFingerprint.fingerprint(data: authData))
-        #expect(exact.authFileWasReadable)
-        #expect(exact.cacheIdentity != request.cacheIdentity)
-    }
 }
 
 extension SpendDashboardModelTests {
     @Test
-    func `partially attributed Codex history retains its priced model rows`() throws {
-        let codex = SpendDashboardModel.ProviderInput(
-            provider: .codex,
-            displayName: "Codex",
-            snapshot: Self.snapshot(
-                currency: "USD",
-                entries: [
-                    Self.entry(day: "2026-07-15", cost: 2, model: "gpt-5.2-codex"),
-                    Self.entry(day: "2026-07-16", cost: 3, model: nil),
-                ]))
-        let group = try #require(Self.model(
-            inputs: [codex],
-            requestedDays: 7).groups.first)
-
-        #expect(group.totalCost == 5)
-        #expect(group.modelHistoryCompleteness == .incomplete)
-        #expect(group.models.map(\.modelName) == ["gpt-5.2-codex"])
-        #expect(group.models.map(\.totalCost) == [2])
-    }
-
-    @Test
-    func `unpriced Codex routing row retains priced model rows as partial`() throws {
-        let codex = SpendDashboardModel.ProviderInput(
-            provider: .codex,
-            displayName: "Codex",
-            snapshot: Self.snapshot(
-                currency: "USD",
-                entries: [
-                    Self.entryWithBreakdowns(
-                        day: "2026-07-15",
-                        totalCost: 2,
-                        totalTokens: 100,
-                        breakdowns: [
-                            .init(modelName: "example-priced-codex-model", costUSD: 2, totalTokens: 40),
-                            .init(modelName: "codex-auto-review", costUSD: nil, totalTokens: 60),
-                        ]),
-                ]))
-        let group = try #require(Self.model(
-            inputs: [codex],
-            requestedDays: 7).groups.first)
-
-        #expect(group.totalCost == 2)
-        #expect(group.modelHistoryCompleteness == .incomplete)
-        #expect(group.models.first(where: { $0.modelName == "example-priced-codex-model" })?.totalCost == 2)
-        #expect(group.models.first(where: { $0.modelName == "codex-auto-review" })?.totalCost == nil)
-    }
-
-    @Test
     func `Codex history with only unpriced routing rows stays unavailable`() throws {
         let codex = SpendDashboardModel.ProviderInput(
-            provider: .codex,
+            provider: .opencode,
             displayName: "Codex",
             snapshot: Self.snapshot(
                 currency: "USD",
@@ -721,7 +551,7 @@ extension SpendDashboardModelTests {
     @Test
     func `partial Codex model history rejects a malformed named cost`() throws {
         let codex = SpendDashboardModel.ProviderInput(
-            provider: .codex,
+            provider: .opencode,
             displayName: "Codex",
             snapshot: Self.snapshot(
                 currency: "USD",
@@ -816,7 +646,7 @@ extension SpendDashboardModelTests {
         calendar.timeZone = try #require(TimeZone(secondsFromGMT: 0))
         let input = SpendDashboardModel.ProviderInput(
             id: "codex",
-            provider: .codex,
+            provider: .opencode,
             displayName: "Codex",
             snapshot: CostUsageTokenSnapshot(
                 sessionTokens: nil,
@@ -874,7 +704,7 @@ extension SpendDashboardModelTests {
         let now = Date(timeIntervalSince1970: 1_784_222_400) // 2026-07-16 12:00:00 UTC
         let input = SpendDashboardModel.ProviderInput(
             id: "codex",
-            provider: .codex,
+            provider: .opencode,
             displayName: "Codex",
             snapshot: Self.snapshot(
                 currency: "USD",
@@ -906,54 +736,16 @@ extension SpendDashboardModelTests {
     }
 
     @Test
-    func `openCodex stays on a separate ledger from native Codex`() {
-        let now = Date(timeIntervalSince1970: 1_784_179_200)
-        let native = SpendDashboardModel.ProviderInput(
-            id: "codex:main",
-            provider: .codex,
-            displayName: "Codex",
-            snapshot: Self.snapshot(currency: "USD", entries: [Self.entry(day: "2026-07-16", cost: 4)]),
-            sourceKind: .native)
-        let openCodex = SpendDashboardModel.ProviderInput(
-            id: SpendDashboardModel.openCodexSourceID,
-            provider: .codex,
-            displayName: "OpenCodex",
-            snapshot: Self.snapshot(currency: "USD", entries: [Self.entry(day: "2026-07-16", cost: 9)]),
-            sourceKind: .openCodex)
-        let sideBySide = SpendDashboardModel.build(
-            inputs: [native, openCodex],
-            requestedDays: 7,
-            now: now)
-        #expect(Set(sideBySide.groups[0].providers.map(\.id)) == ["opencodex", "codex:main"])
-        #expect(sideBySide.groups[0].providers.count == 2)
-
-        let hiddenNative = SpendDashboardModel.build(
-            inputs: [native, openCodex],
-            requestedDays: 7,
-            now: now,
-            hideNativeCodexWhenOpenCodexPresent: true)
-        #expect(hiddenNative.groups[0].providers.map(\.id) == [SpendDashboardModel.openCodexSourceID])
-
-        let filtered = SpendDashboardModel.build(
-            inputs: [native, openCodex],
-            requestedDays: 7,
-            now: now,
-            hiddenSourceIDs: [SpendDashboardModel.openCodexSourceID])
-        #expect(filtered.groups[0].providers.map(\.id) == ["codex:main"])
-        #expect(Set(filtered.availableSources.map(\.id)) == ["codex:main", SpendDashboardModel.openCodexSourceID])
-    }
-
-    @Test
     func `hourly points come from request buckets instead of session last activity`() {
         let now = Date(timeIntervalSince1970: 1_784_179_200)
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .gmt
         let firstHour = calendar.dateInterval(of: .hour, for: now)?.start ?? now
         let secondHour = calendar.date(byAdding: .hour, value: 1, to: firstHour) ?? firstHour
-        let openCodex = SpendDashboardModel.ProviderInput(
-            id: SpendDashboardModel.openCodexSourceID,
-            provider: .codex,
-            displayName: "OpenCodex",
+        let hourlySource = SpendDashboardModel.ProviderInput(
+            id: "hourly-source",
+            provider: .opencode,
+            displayName: "Hourly",
             snapshot: CostUsageTokenSnapshot(
                 sessionTokens: 17,
                 sessionCostUSD: 2,
@@ -978,12 +770,11 @@ extension SpendDashboardModelTests {
                     CostUsageHourlyEntry(hour: firstHour, totalTokens: 12, costUSD: 1.2),
                     CostUsageHourlyEntry(hour: secondHour, totalTokens: 5, costUSD: 0.8),
                 ],
-                updatedAt: now),
-            sourceKind: .openCodex)
-        let native = SpendDashboardModel.ProviderInput(
-            id: "codex",
-            provider: .codex,
-            displayName: "Codex",
+                updatedAt: now))
+        let sessionOnly = SpendDashboardModel.ProviderInput(
+            id: "session-source",
+            provider: .opencode,
+            displayName: "Sessions",
             snapshot: CostUsageTokenSnapshot(
                 sessionTokens: 40,
                 sessionCostUSD: 3,
@@ -1006,16 +797,16 @@ extension SpendDashboardModelTests {
                 ],
                 updatedAt: now))
         let combined = SpendDashboardModel.build(
-            inputs: [openCodex, native],
+            inputs: [hourlySource, sessionOnly],
             requestedDays: 7,
             now: now,
             calendar: calendar)
         #expect(combined.groups[0].hourlyPoints.map(\.hour) == [firstHour, secondHour])
         #expect(combined.groups[0].hourlyPoints.map(\.cost) == [1.2, 0.8])
-        #expect(Set(combined.groups[0].hourlyPoints.map(\.sourceID)) == [SpendDashboardModel.openCodexSourceID])
+        #expect(Set(combined.groups[0].hourlyPoints.map(\.sourceID)) == ["hourly-source"])
 
         let selected = SpendDashboardModel.build(
-            inputs: [openCodex],
+            inputs: [hourlySource],
             requestedDays: 7,
             now: now,
             calendar: calendar,
@@ -1034,7 +825,7 @@ extension SpendDashboardModelTests {
             inputs: [
                 SpendDashboardModel.ProviderInput(
                     id: "codex-a",
-                    provider: .codex,
+                    provider: .opencode,
                     displayName: "Codex",
                     snapshot: Self.snapshot(
                         currency: "USD",
@@ -1084,7 +875,7 @@ extension SpendDashboardModelTests {
         ]
         let input = SpendDashboardModel.ProviderInput(
             id: "codex-a",
-            provider: .codex,
+            provider: .opencode,
             displayName: "Codex",
             snapshot: Self.snapshot(
                 currency: "USD",
@@ -1106,7 +897,7 @@ extension SpendDashboardModelTests {
 
         let renamed = SpendDashboardModel.ProjectRow(
             rank: 1,
-            provider: .codex,
+            provider: .opencode,
             providerName: "Codex",
             sourceID: "codex-a",
             projectName: "New name",
@@ -1122,7 +913,7 @@ extension SpendDashboardModelTests {
             inputs: [
                 SpendDashboardModel.ProviderInput(
                     id: "codex-a",
-                    provider: .codex,
+                    provider: .opencode,
                     displayName: "Codex",
                     snapshot: Self.snapshot(
                         currency: "USD",
@@ -1148,7 +939,7 @@ extension SpendDashboardModelTests {
             inputs: [
                 SpendDashboardModel.ProviderInput(
                     id: "codex-a",
-                    provider: .codex,
+                    provider: .opencode,
                     displayName: "Codex · #1",
                     snapshot: Self.snapshot(
                         currency: "USD",
@@ -1156,7 +947,7 @@ extension SpendDashboardModelTests {
                         projects: [Self.project(name: "shared", days: [("2026-07-15", 5)])])),
                 SpendDashboardModel.ProviderInput(
                     id: "codex-b",
-                    provider: .codex,
+                    provider: .opencode,
                     displayName: "Codex · #2",
                     snapshot: Self.snapshot(
                         currency: "USD",
@@ -1177,7 +968,7 @@ extension SpendDashboardModelTests {
             inputs: [
                 SpendDashboardModel.ProviderInput(
                     id: "codex-a",
-                    provider: .codex,
+                    provider: .opencode,
                     displayName: "Codex",
                     snapshot: Self.snapshot(
                         currency: "USD",
@@ -1197,7 +988,7 @@ extension SpendDashboardModelTests {
             inputs: [
                 SpendDashboardModel.ProviderInput(
                     id: "codex-a",
-                    provider: .codex,
+                    provider: .opencode,
                     displayName: "Codex",
                     snapshot: Self.snapshot(
                         currency: "USD",

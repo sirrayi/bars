@@ -10,7 +10,7 @@ struct ProviderAccentRefreshRevisionTests {
     @Test
     func `changing the accent color leaves the provider refresh revision untouched`() {
         let settings = testSettingsStore(suiteName: "ProviderAccentRefreshRevisionTests-accent")
-        let provider = UsageProvider.codex
+        let provider = UsageProvider.claude
         let before = settings.providerConfigRevision(for: provider)
 
         settings.setAccentColorOverride(ProviderColor(hex: 0xA56CC1), for: provider)
@@ -22,7 +22,7 @@ struct ProviderAccentRefreshRevisionTests {
     @Test
     func `resetting the accent color leaves the provider refresh revision untouched`() {
         let settings = testSettingsStore(suiteName: "ProviderAccentRefreshRevisionTests-reset")
-        let provider = UsageProvider.codex
+        let provider = UsageProvider.claude
         settings.setAccentColorOverride(ProviderColor(hex: 0xA56CC1), for: provider)
         let before = settings.providerConfigRevision(for: provider)
 
@@ -37,7 +37,7 @@ struct ProviderAccentRefreshRevisionTests {
     @Test
     func `changing a fetch relevant field still bumps the provider refresh revision`() {
         let settings = testSettingsStore(suiteName: "ProviderAccentRefreshRevisionTests-control")
-        let provider = UsageProvider.codex
+        let provider = UsageProvider.claude
         let before = settings.providerConfigRevision(for: provider)
 
         settings.updateProviderConfig(provider: provider) { $0.region = "us-east-1" }

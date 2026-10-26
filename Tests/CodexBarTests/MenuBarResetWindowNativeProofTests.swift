@@ -27,11 +27,9 @@ final class MenuBarResetWindowNativeProofTests: XCTestCase {
         settings.setMenuBarLayout(MenuBarLayout(lines: [[.icon, .percent(window: .automatic)]]), for: nil)
         let isolated = ["HOME": output.path, "CODEX_HOME": output.appendingPathComponent("codex").path]
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: isolated),
             browserDetection: BrowserDetection(homeDirectory: output.path, cacheTTL: 0),
             costUsageFetcher: CostUsageFetcher(cacheRoot: output.appendingPathComponent("cost")),
             settings: settings,
-            historicalUsageHistoryStore: HistoricalUsageHistoryStore(fileURL: output.appendingPathComponent("history")),
             planUtilizationHistoryStore: PlanUtilizationHistoryStore(directoryURL: nil),
             startupBehavior: .testing,
             environmentBase: isolated,
@@ -139,7 +137,6 @@ final class MenuBarResetWindowNativeProofTests: XCTestCase {
         }
         guard SettingsStore.isRunningTests,
               environment["CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS"] == "1",
-              environment[CodexCredentialFileAccess.isolationEnvironmentKey] == "1",
               environment["CODEXBAR_TEST_SESSION_FILE_ISOLATION"] == "1",
               environment["CODEXBAR_ALLOW_TEST_KEYCHAIN_ACCESS"] != "1"
         else { return XCTFail("Native proof requires test-host, credential, Keychain and session isolation") }
@@ -181,14 +178,13 @@ final class MenuBarResetWindowNativeProofTests: XCTestCase {
             }
             let config = CodexBarConfigStore(fileURL: output.appendingPathComponent("\(phase)-config.json"))
             try config.save(CodexBarConfig(providers: UsageProvider.allCases.map {
-                ProviderConfig(id: $0.instanceID, enabled: $0 == .codex)
+                ProviderConfig(id: $0.instanceID, enabled: $0 == .opencode)
             }))
             let settings = self.settings(defaults: defaults, config: config)
             if phase == "upgrade-v2" {
                 XCTAssertEqual(settings.menuBarLayout.lines, [[.resetCountdown, .resetAbsolute]])
             }
             let store = UsageStore(
-                fetcher: UsageFetcher(),
                 browserDetection: BrowserDetection(cacheTTL: 0),
                 settings: settings,
                 startupBehavior: .testing)
@@ -205,7 +201,7 @@ final class MenuBarResetWindowNativeProofTests: XCTestCase {
                     windowMinutes: 10080,
                     resetsAt: reset,
                     resetDescription: nil),
-                updatedAt: now), provider: .codex)
+                updatedAt: now), provider: .opencode)
             window.contentView = NSHostingView(rootView: ScrollView {
                 MenuBarLayoutEditor(settings: settings, store: store).padding(20)
             }.preferredColorScheme(.light))
@@ -267,7 +263,6 @@ final class MenuBarResetWindowNativeProofTests: XCTestCase {
         let settings = SettingsStore(
             userDefaults: defaults,
             configStore: config,
-            codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
             opencodeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore(),

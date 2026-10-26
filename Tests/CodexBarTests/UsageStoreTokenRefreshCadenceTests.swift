@@ -59,26 +59,25 @@ struct UsageStoreTokenRefreshCadenceTests {
         settings.refreshFrequency = frequency
         settings.costUsageEnabled = true
         settings.providerDetectionCompleted = true
-        let metadata = try #require(ProviderRegistry.shared.metadata[.codex])
-        settings.setProviderEnabled(provider: .codex, metadata: metadata, enabled: true)
+        let metadata = try #require(ProviderRegistry.shared.metadata[.claude])
+        settings.setProviderEnabled(provider: .claude, metadata: metadata, enabled: true)
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
             environmentBase: [:])
         let now = Date()
-        store._setTokenSnapshotForTesting(Self.tokenSnapshot(updatedAt: now), provider: .codex)
-        store.lastTokenFetchScope[.codex] = store.tokenSnapshotScopeSignature(for: .codex)
+        store._setTokenSnapshotForTesting(Self.tokenSnapshot(updatedAt: now), provider: .claude)
+        store.lastTokenFetchScope[.claude] = store.tokenSnapshotScopeSignature(for: .claude)
         var scanCount = 0
         store._test_tokenUsageRefreshOverride = { _, _ in scanCount += 1 }
 
-        store.lastTokenFetchAt[.codex] = now.addingTimeInterval(-14 * 60)
-        await store.refreshTokenUsage(.codex, force: false)
+        store.lastTokenFetchAt[.claude] = now.addingTimeInterval(-14 * 60)
+        await store.refreshTokenUsage(.claude, force: false)
         #expect(scanCount == 0)
 
-        store.lastTokenFetchAt[.codex] = now.addingTimeInterval(-15 * 60 - 1)
-        await store.refreshTokenUsage(.codex, force: false)
+        store.lastTokenFetchAt[.claude] = now.addingTimeInterval(-15 * 60 - 1)
+        await store.refreshTokenUsage(.claude, force: false)
         #expect(scanCount == 1)
     }
 

@@ -148,7 +148,6 @@ extension CodexBarCLI {
         }
 
         let browserDetection = BrowserDetection()
-        let fetcher = UsageFetcher()
         let claudeFetcher = ClaudeUsageFetcher(browserDetection: browserDetection)
         let env = tokenContext.environment(
             base: ProcessInfo.processInfo.environment,
@@ -169,7 +168,6 @@ extension CodexBarCLI {
             verbose: verbose,
             env: env,
             settings: settings,
-            fetcher: tokenContext.fetcher(base: fetcher, provider: provider, env: env),
             claudeFetcher: claudeFetcher,
             browserDetection: browserDetection,
             // Watch is read-only, like `guard`: no updater callbacks, so refresh-dependent

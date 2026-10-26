@@ -14,12 +14,11 @@ struct StatusMenuHostedSubmenuRefreshTests {
             provider: .claude,
             metadata: ProviderDescriptorRegistry.descriptor(for: .claude).metadata,
             enabled: true)
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -39,12 +38,11 @@ struct StatusMenuHostedSubmenuRefreshTests {
             provider: .claude,
             metadata: ProviderDescriptorRegistry.descriptor(for: .claude).metadata,
             enabled: true)
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -66,21 +64,22 @@ struct StatusMenuHostedSubmenuRefreshTests {
     func `project source changes open menu readiness`() {
         let settings = Self.makeSettings()
         settings.costUsageEnabled = true
-        Self.enableOnly(settings, provider: .codex)
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        store._setTokenSnapshotForTesting(Self.makeTokenSnapshot(projectSourcePath: "/tmp/main"), provider: .codex)
+        Self.enableOnly(settings, provider: .opencode)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        store._setTokenSnapshotForTesting(Self.makeTokenSnapshot(projectSourcePath: "/tmp/main"), provider: .opencode)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
         defer { controller.releaseStatusItemsForTesting() }
 
         let before = controller.menuAdjunctReadinessSignature()
-        store._setTokenSnapshotForTesting(Self.makeTokenSnapshot(projectSourcePath: "/tmp/worktree"), provider: .codex)
+        store._setTokenSnapshotForTesting(
+            Self.makeTokenSnapshot(projectSourcePath: "/tmp/worktree"),
+            provider: .opencode)
 
         #expect(controller.menuAdjunctReadinessSignature() != before)
     }
@@ -89,12 +88,11 @@ struct StatusMenuHostedSubmenuRefreshTests {
     func `status submenu link stays scoped to its provider`() throws {
         let settings = Self.makeSettings()
         settings.statusChecksEnabled = true
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -117,14 +115,13 @@ struct StatusMenuHostedSubmenuRefreshTests {
     func `storage native row preserves its plain menu title`() throws {
         let settings = Self.makeSettings()
         settings.providerStorageFootprintsEnabled = true
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         Self.seedStorageFootprint(in: store)
 
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -160,14 +157,13 @@ struct StatusMenuHostedSubmenuRefreshTests {
         settings.costSummaryDisplayStyle = .both
         Self.enableOnlyClaude(settings)
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         Self.seedClaudeSnapshots(in: store)
 
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -242,12 +238,11 @@ struct StatusMenuHostedSubmenuRefreshTests {
         settings.costUsageEnabled = true
         Self.enableOnlyClaude(settings)
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -329,8 +324,7 @@ struct StatusMenuHostedSubmenuRefreshTests {
         let bobKey = try #require(
             UsageStore._planUtilizationTokenAccountKeyForTesting(provider: .claude, account: bob))
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         Self.seedClaudeSnapshots(in: store)
         store.planUtilizationHistory[.claude] = PlanUtilizationHistoryBuckets(accounts: [
             aliceKey: [Self.makePlanHistory(usedPercent: 20)],
@@ -341,7 +335,7 @@ struct StatusMenuHostedSubmenuRefreshTests {
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -370,8 +364,7 @@ struct StatusMenuHostedSubmenuRefreshTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         Self.enableOnlyClaude(settings)
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         Self.seedClaudeSnapshots(in: store)
         let now = Date()
         store.planUtilizationHistory[.claude] = PlanUtilizationHistoryBuckets(unscoped: [
@@ -386,7 +379,7 @@ struct StatusMenuHostedSubmenuRefreshTests {
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -427,14 +420,13 @@ struct StatusMenuHostedSubmenuRefreshTests {
         settings.providerStorageFootprintsEnabled = true
         Self.enableOnly(settings, provider: provider)
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         seed(store)
 
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -475,14 +467,13 @@ struct StatusMenuHostedSubmenuRefreshTests {
         settings.providerStorageFootprintsEnabled = true
         Self.enableOnly(settings, provider: provider)
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         seed(store)
 
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)

@@ -258,7 +258,7 @@ enum TTYCommandRunnerDrainReadResult {
 }
 
 /// Executes an interactive CLI inside a pseudo-terminal and returns all captured text.
-/// Keeps it minimal so we can reuse for Codex and Claude without tmux.
+/// Keeps it minimal so we can drive the Claude CLI without tmux.
 public struct TTYCommandRunner {
     private static let log = CodexBarLog.logger(LogCategories.ttyRunner)
     private static let postExitDrainTimeout: TimeInterval = 1
@@ -285,7 +285,7 @@ public struct TTYCommandRunner {
         public var rows: UInt16 = 50
         public var cols: UInt16 = 160
         public var timeout: TimeInterval = 20.0
-        /// Stop early once output has been idle for this long (only for non-Codex flows).
+        /// Stop early once output has been idle for this long.
         /// Useful for interactive TUIs that render once and then wait for input indefinitely.
         public var idleTimeout: TimeInterval?
         public var workingDirectory: URL?
@@ -297,7 +297,6 @@ public struct TTYCommandRunner {
         public var stopOnURL: Bool
         public var stopOnSubstrings: [String]
         public var settleAfterStop: TimeInterval
-        public var forceCodexStatusMode: Bool
         public var useProviderProbeWorkingDirectory: Bool
         public var returnOnEmptyProcessExit: Bool
         public var cancellationCheck: @Sendable () -> Bool
@@ -316,7 +315,6 @@ public struct TTYCommandRunner {
             stopOnURL: Bool = false,
             stopOnSubstrings: [String] = [],
             settleAfterStop: TimeInterval = 0.25,
-            forceCodexStatusMode: Bool = false,
             useProviderProbeWorkingDirectory: Bool = false,
             returnOnEmptyProcessExit: Bool = false,
             cancellationCheck: @escaping @Sendable () -> Bool = { Task<Never, Never>.isCancelled })
@@ -334,7 +332,6 @@ public struct TTYCommandRunner {
             self.stopOnURL = stopOnURL
             self.stopOnSubstrings = stopOnSubstrings
             self.settleAfterStop = settleAfterStop
-            self.forceCodexStatusMode = forceCodexStatusMode
             self.useProviderProbeWorkingDirectory = useProviderProbeWorkingDirectory
             self.returnOnEmptyProcessExit = returnOnEmptyProcessExit
             self.cancellationCheck = cancellationCheck
@@ -633,10 +630,6 @@ public struct TTYCommandRunner {
 
         let deadline = Date().addingTimeInterval(options.timeout)
         let trimmed = script.trimmingCharacters(in: .whitespacesAndNewlines)
-        let ttyStatusCommand = ProviderDescriptorRegistry.all
-            .first { $0.cli.name == binaryName }?.cli.ttyStatusCommand
-        let isCodex = ttyStatusCommand != nil || options.forceCodexStatusMode
-        let isCodexStatus = isCodex && trimmed == (ttyStatusCommand ?? "/status")
 
         let outputLimitBytes = TTYCommandRunnerTestingOverrides.outputLimitBytes ?? BoundedOutputBuffer.defaultMaxBytes
         var buffer = BoundedOutputBuffer(maxBytes: outputLimitBytes)
@@ -707,345 +700,197 @@ public struct TTYCommandRunner {
         try Self.beforeInitialReadForTesting?(process)
         try checkCancellation()
 
-        // Generic path for non-Codex (e.g. Claude /login)
-        if !isCodex {
-            if !trimmed.isEmpty {
-                try send(trimmed)
-                try send("\r")
-            }
-
-            let stopNeedles = options.stopOnSubstrings.map { Data($0.utf8) }
-            let sendNeedles = options.sendOnSubstrings.map { (
-                needle: Data($0.key.utf8),
-                needleString: $0.key,
-                keys: Data($0.value.utf8)) }
-            let urlNeedles = [Data("https://".utf8), Data("http://".utf8)]
-            let needleLengths =
-                stopNeedles.map(\.count) +
-                sendNeedles.map(\.needle.count) +
-                urlNeedles.map(\.count) +
-                [cursorQuery.count]
-            let maxNeedle = needleLengths.max() ?? cursorQuery.count
-            var scanBuffer = StreamScanBuffer(maxNeedle: maxNeedle)
-            var nextCursorCheckAt = Date(timeIntervalSince1970: 0)
-            var lastEnter = Date()
-            var stoppedEarly = false
-            var urlSeen = false
-            var triggeredSends = Set<Data>()
-            var recentText = ""
-            var lastOutputAt = Date()
-            var terminatedForIdle = false
-
-            func processNonCodexChunk(_ newData: Data, allowSends: Bool, allowStop: Bool) -> Bool {
-                guard !newData.isEmpty else { return false }
-
-                lastOutputAt = Date()
-                if let chunkText = String(bytes: newData, encoding: .utf8) {
-                    recentText += chunkText
-                    if recentText.count > 8192 {
-                        recentText.removeFirst(recentText.count - 8192)
-                    }
-                }
-
-                let scanData = scanBuffer.append(newData)
-                if Date() >= nextCursorCheckAt,
-                   scanData.range(of: cursorQuery) != nil
-                {
-                    try? send("\u{1b}[1;1R")
-                    nextCursorCheckAt = Date().addingTimeInterval(1.0)
-                }
-
-                if allowSends, !sendNeedles.isEmpty {
-                    let recentTextCollapsed = recentText.replacingOccurrences(of: "\r", with: "")
-                    for item in sendNeedles where !triggeredSends.contains(item.needle) {
-                        let matched = scanData.range(of: item.needle) != nil ||
-                            recentText.contains(item.needleString) ||
-                            recentTextCollapsed.contains(item.needleString)
-                        if matched {
-                            if let keysString = String(data: item.keys, encoding: .utf8) {
-                                try? send(keysString)
-                            } else {
-                                try? writeAllToPrimary(item.keys)
-                            }
-                            triggeredSends.insert(item.needle)
-                        }
-                    }
-                }
-
-                if urlNeedles.contains(where: { scanData.range(of: $0) != nil }) {
-                    if !urlSeen {
-                        urlSeen = true
-                        onURLDetected?()
-                    }
-                    if allowStop, options.stopOnURL {
-                        return true
-                    }
-                }
-
-                if allowStop, !stopNeedles.isEmpty, stopNeedles.contains(where: { scanData.range(of: $0) != nil }) {
-                    return true
-                }
-
-                return false
-            }
-
-            while Date() < deadline {
-                try checkCancellation()
-                let newData: Data = switch readDrainChunk() {
-                case let .data(data):
-                    data
-                case .wouldBlock, .closed:
-                    Data()
-                }
-                try checkOutputLimit()
-                if processNonCodexChunk(newData, allowSends: true, allowStop: true) {
-                    stoppedEarly = true
-                    break
-                }
-                if let idleTimeout = options.idleTimeout,
-                   !buffer.isEmpty,
-                   Date().timeIntervalSince(lastOutputAt) >= idleTimeout
-                {
-                    stoppedEarly = true
-                    terminatedForIdle = true
-                    break
-                }
-
-                if !urlSeen, let every = options.sendEnterEvery, Date().timeIntervalSince(lastEnter) >= every {
-                    try? send("\r")
-                    lastEnter = Date()
-                }
-
-                if !process.isRunning {
-                    break
-                }
-                usleep(60000)
-            }
-
-            let exitedBeforeDeadline = !stoppedEarly
-                && process.exitObservationDate.map { $0 <= deadline } == true
-            let exitStatusBeforeDrain = exitedBeforeDeadline ? process.terminateSynchronously() : nil
-            didTerminateSynchronously = exitedBeforeDeadline
-
-            func drainNonCodexOutput(for duration: TimeInterval) throws -> Bool {
-                let drainFor = max(0, duration)
-                guard drainFor > 0 else { return false }
-                let closed = Self.drainRemainingOutput(
-                    until: Date().addingTimeInterval(drainFor),
-                    readChunk: readDrainChunk,
-                    processChunk: { _ = processNonCodexChunk($0, allowSends: false, allowStop: false) },
-                    shouldContinue: { !options.cancellationCheck() })
-                try checkCancellation()
-                return closed
-            }
-
-            if stoppedEarly {
-                let settle = max(0, min(options.settleAfterStop, deadline.timeIntervalSinceNow))
-                if let settleForTesting = TTYCommandRunnerTestingOverrides.earlyStopSettle {
-                    try settleForTesting(process)
-                } else if settle > 0 {
-                    let settleDeadline = Date().addingTimeInterval(settle)
-                    while Date() < settleDeadline {
-                        try checkCancellation()
-                        let newData = readChunk()
-                        try checkOutputLimit()
-                        let scanData = scanBuffer.append(newData)
-                        if Date() >= nextCursorCheckAt,
-                           !scanData.isEmpty,
-                           scanData.range(of: cursorQuery) != nil
-                        {
-                            try? send("\u{1b}[1;1R")
-                            nextCursorCheckAt = Date().addingTimeInterval(1.0)
-                        }
-                        usleep(50000)
-                    }
-                }
-            } else if exitedBeforeDeadline {
-                // Darwin can discard unread output when the last slave closes. Harvest it before closing
-                // our copy, then drain through EOF/EIO before classifying an empty result.
-                _ = processNonCodexChunk(readChunk(), allowSends: false, allowStop: false)
-                try? secondaryHandle.close()
-                guard try drainNonCodexOutput(for: Self.postExitDrainTimeout) else {
-                    Self.log.warning("PTY did not close after process exit", metadata: ["binary": binaryName])
-                    throw Error.timedOut
-                }
-            } else {
-                // PTY-backed scripts can exit before their final echo becomes readable on the parent side.
-                // Give the kernel a brief non-blocking drain window so we don't lose the last line of output.
-                let defaultDrainDuration = min(0.5, max(0.2, options.settleAfterStop))
-                let drainDuration = TTYCommandRunnerTestingOverrides.postDeadlineDrainDuration ?? defaultDrainDuration
-                _ = try drainNonCodexOutput(for: drainDuration)
-            }
-
-            try checkOutputLimit()
-            let text = String(data: buffer.data, encoding: .utf8) ?? ""
-            let exitStatus: Int32? = if stoppedEarly {
-                !process.isRunning ? process.finishSynchronously() : nil
-            } else {
-                exitStatusBeforeDrain
-            }
-            let completion: Result.Completion = if let exitStatus {
-                .processExited(status: exitStatus)
-            } else if terminatedForIdle {
-                .idleTimeout
-            } else if stoppedEarly {
-                .outputCondition
-            } else {
-                .deadlineExceeded
-            }
-            if text.isEmpty {
-                guard options.returnOnEmptyProcessExit,
-                      case .processExited = completion
-                else {
-                    throw Error.timedOut
-                }
-            }
-            return Result(text: text, completion: completion)
+        // Claude and other interactive CLIs share one generic PTY loop.
+        if !trimmed.isEmpty {
+            try send(trimmed)
+            try send("\r")
         }
 
-        // Codex-specific behavior (/status and update handling)
-        let delayInitialSend = isCodexStatus
-        if !delayInitialSend {
-            try send(script)
-            try send("\r")
-            usleep(150_000)
-            try send("\r")
-            try send("\u{1b}")
-        }
-
-        var skippedCodexUpdate = false
-        var sentScript = !delayInitialSend
-        var updateSkipAttempts = 0
-        var lastEnter = Date(timeIntervalSince1970: 0)
-        var scriptSentAt: Date? = sentScript ? Date() : nil
-        var resendStatusRetries = 0
-        var enterRetries = 0
-        var sawCodexStatus = false
-        var sawCodexUpdatePrompt = false
-        var statusScanBuffer = StreamScanBuffer(maxNeedle: max(cursorQuery.count, CodexStatusMarkers.longestStatus))
-        var updateScanBuffer = StreamScanBuffer(maxNeedle: CodexStatusMarkers.longestUpdatePrompt)
+        let stopNeedles = options.stopOnSubstrings.map { Data($0.utf8) }
+        let sendNeedles = options.sendOnSubstrings.map { (
+            needle: Data($0.key.utf8),
+            needleString: $0.key,
+            keys: Data($0.value.utf8)) }
+        let urlNeedles = [Data("https://".utf8), Data("http://".utf8)]
+        let needleLengths =
+            stopNeedles.map(\.count) +
+            sendNeedles.map(\.needle.count) +
+            urlNeedles.map(\.count) +
+            [cursorQuery.count]
+        let maxNeedle = needleLengths.max() ?? cursorQuery.count
+        var scanBuffer = StreamScanBuffer(maxNeedle: maxNeedle)
         var nextCursorCheckAt = Date(timeIntervalSince1970: 0)
+        var lastEnter = Date()
+        var stoppedEarly = false
+        var urlSeen = false
+        var triggeredSends = Set<Data>()
+        var recentText = ""
+        var lastOutputAt = Date()
+        var terminatedForIdle = false
 
-        while Date() < deadline {
-            try checkCancellation()
-            let newData = readChunk()
-            try checkOutputLimit()
-            let scanData = statusScanBuffer.append(newData)
+        func processChunk(_ newData: Data, allowSends: Bool, allowStop: Bool) -> Bool {
+            guard !newData.isEmpty else { return false }
+
+            lastOutputAt = Date()
+            if let chunkText = String(bytes: newData, encoding: .utf8) {
+                recentText += chunkText
+                if recentText.count > 8192 {
+                    recentText.removeFirst(recentText.count - 8192)
+                }
+            }
+
+            let scanData = scanBuffer.append(newData)
             if Date() >= nextCursorCheckAt,
-               !scanData.isEmpty,
                scanData.range(of: cursorQuery) != nil
             {
                 try? send("\u{1b}[1;1R")
                 nextCursorCheckAt = Date().addingTimeInterval(1.0)
             }
-            if !scanData.isEmpty, !sawCodexStatus {
-                if CodexStatusMarkers.status.contains(where: { scanData.range(of: $0) != nil }) {
-                    sawCodexStatus = true
-                }
-            }
 
-            if !skippedCodexUpdate, !sawCodexUpdatePrompt, !newData.isEmpty {
-                let lowerData = StreamScanBuffer.lowercasedASCII(newData)
-                let lowerScan = updateScanBuffer.append(lowerData)
-                if !sawCodexUpdatePrompt {
-                    if CodexStatusMarkers.updatePrompt.contains(where: { lowerScan.range(of: $0) != nil }) {
-                        sawCodexUpdatePrompt = true
+            if allowSends, !sendNeedles.isEmpty {
+                let recentTextCollapsed = recentText.replacingOccurrences(of: "\r", with: "")
+                for item in sendNeedles where !triggeredSends.contains(item.needle) {
+                    let matched = scanData.range(of: item.needle) != nil ||
+                        recentText.contains(item.needleString) ||
+                        recentTextCollapsed.contains(item.needleString)
+                    if matched {
+                        if let keysString = String(data: item.keys, encoding: .utf8) {
+                            try? send(keysString)
+                        } else {
+                            try? writeAllToPrimary(item.keys)
+                        }
+                        triggeredSends.insert(item.needle)
                     }
                 }
             }
 
-            if !skippedCodexUpdate, sawCodexUpdatePrompt {
-                // Prompt shows options: 1) Update now, 2) Skip, 3) Skip until next version.
-                // Users report one Down + Enter is enough; follow with an extra Enter for safety, then re-run
-                // /status.
-                try? send("\u{1b}[B") // highlight option 2 (Skip)
-                usleep(120_000)
-                try? send("\r")
-                usleep(150_000)
-                try? send("\r") // if still focused on prompt, confirm again
-                try? send("/status")
-                try? send("\r")
-                updateSkipAttempts += 1
-                if updateSkipAttempts >= 1 {
-                    skippedCodexUpdate = true
-                    sentScript = false // re-send /status after dismissing
-                    scriptSentAt = nil
-                    buffer.removeAll()
-                    statusScanBuffer.reset()
-                    updateScanBuffer.reset()
-                    sawCodexStatus = false
+            if urlNeedles.contains(where: { scanData.range(of: $0) != nil }) {
+                if !urlSeen {
+                    urlSeen = true
+                    onURLDetected?()
                 }
-                usleep(300_000)
-            }
-            if !sentScript, !sawCodexUpdatePrompt || skippedCodexUpdate {
-                try? send(script)
-                try? send("\r")
-                sentScript = true
-                scriptSentAt = Date()
-                lastEnter = Date()
-                usleep(200_000)
-                continue
-            }
-            if sentScript, !sawCodexStatus {
-                if Date().timeIntervalSince(lastEnter) >= 1.2, enterRetries < 6 {
-                    try? send("\r")
-                    enterRetries += 1
-                    lastEnter = Date()
-                    usleep(120_000)
-                    continue
-                }
-                if let sentAt = scriptSentAt,
-                   Date().timeIntervalSince(sentAt) >= 3.0,
-                   resendStatusRetries < 2
-                {
-                    try? send("/status")
-                    try? send("\r")
-                    resendStatusRetries += 1
-                    buffer.removeAll()
-                    statusScanBuffer.reset()
-                    updateScanBuffer.reset()
-                    sawCodexStatus = false
-                    scriptSentAt = Date()
-                    lastEnter = Date()
-                    usleep(220_000)
-                    continue
+                if allowStop, options.stopOnURL {
+                    return true
                 }
             }
-            if sawCodexStatus {
-                break
+
+            if allowStop, !stopNeedles.isEmpty, stopNeedles.contains(where: { scanData.range(of: $0) != nil }) {
+                return true
             }
-            usleep(120_000)
+
+            return false
         }
 
-        if sawCodexStatus {
-            let settleDeadline = Date().addingTimeInterval(2.0)
-            while Date() < settleDeadline {
-                try checkCancellation()
-                let newData = readChunk()
-                try checkOutputLimit()
-                let scanData = statusScanBuffer.append(newData)
-                if Date() >= nextCursorCheckAt,
-                   !scanData.isEmpty,
-                   scanData.range(of: cursorQuery) != nil
-                {
-                    try? send("\u{1b}[1;1R")
-                    nextCursorCheckAt = Date().addingTimeInterval(1.0)
-                }
-                usleep(100_000)
+        while Date() < deadline {
+            try checkCancellation()
+            let newData: Data = switch readDrainChunk() {
+            case let .data(data):
+                data
+            case .wouldBlock, .closed:
+                Data()
             }
+            try checkOutputLimit()
+            if processChunk(newData, allowSends: true, allowStop: true) {
+                stoppedEarly = true
+                break
+            }
+            if let idleTimeout = options.idleTimeout,
+               !buffer.isEmpty,
+               Date().timeIntervalSince(lastOutputAt) >= idleTimeout
+            {
+                stoppedEarly = true
+                terminatedForIdle = true
+                break
+            }
+
+            if !urlSeen, let every = options.sendEnterEvery, Date().timeIntervalSince(lastEnter) >= every {
+                try? send("\r")
+                lastEnter = Date()
+            }
+
+            if !process.isRunning {
+                break
+            }
+            usleep(60000)
+        }
+
+        let exitedBeforeDeadline = !stoppedEarly
+            && process.exitObservationDate.map { $0 <= deadline } == true
+        let exitStatusBeforeDrain = exitedBeforeDeadline ? process.terminateSynchronously() : nil
+        didTerminateSynchronously = exitedBeforeDeadline
+
+        func drainOutput(for duration: TimeInterval) throws -> Bool {
+            let drainFor = max(0, duration)
+            guard drainFor > 0 else { return false }
+            let closed = Self.drainRemainingOutput(
+                until: Date().addingTimeInterval(drainFor),
+                readChunk: readDrainChunk,
+                processChunk: { _ = processChunk($0, allowSends: false, allowStop: false) },
+                shouldContinue: { !options.cancellationCheck() })
+            try checkCancellation()
+            return closed
+        }
+
+        if stoppedEarly {
+            let settle = max(0, min(options.settleAfterStop, deadline.timeIntervalSinceNow))
+            if let settleForTesting = TTYCommandRunnerTestingOverrides.earlyStopSettle {
+                try settleForTesting(process)
+            } else if settle > 0 {
+                let settleDeadline = Date().addingTimeInterval(settle)
+                while Date() < settleDeadline {
+                    try checkCancellation()
+                    let newData = readChunk()
+                    try checkOutputLimit()
+                    let scanData = scanBuffer.append(newData)
+                    if Date() >= nextCursorCheckAt,
+                       !scanData.isEmpty,
+                       scanData.range(of: cursorQuery) != nil
+                    {
+                        try? send("\u{1b}[1;1R")
+                        nextCursorCheckAt = Date().addingTimeInterval(1.0)
+                    }
+                    usleep(50000)
+                }
+            }
+        } else if exitedBeforeDeadline {
+            // Darwin can discard unread output when the last slave closes. Harvest it before closing
+            // our copy, then drain through EOF/EIO before classifying an empty result.
+            _ = processChunk(readChunk(), allowSends: false, allowStop: false)
+            try? secondaryHandle.close()
+            guard try drainOutput(for: Self.postExitDrainTimeout) else {
+                Self.log.warning("PTY did not close after process exit", metadata: ["binary": binaryName])
+                throw Error.timedOut
+            }
+        } else {
+            // PTY-backed scripts can exit before their final echo becomes readable on the parent side.
+            // Give the kernel a brief non-blocking drain window so we don't lose the last line of output.
+            let defaultDrainDuration = min(0.5, max(0.2, options.settleAfterStop))
+            let drainDuration = TTYCommandRunnerTestingOverrides.postDeadlineDrainDuration ?? defaultDrainDuration
+            _ = try drainOutput(for: drainDuration)
         }
 
         try checkOutputLimit()
-        guard let text = String(data: buffer.data, encoding: .utf8), !text.isEmpty else {
-            throw Error.timedOut
+        let text = String(data: buffer.data, encoding: .utf8) ?? ""
+        let exitStatus: Int32? = if stoppedEarly {
+            !process.isRunning ? process.finishSynchronously() : nil
+        } else {
+            exitStatusBeforeDrain
         }
-
-        let completion: Result.Completion = if !process.isRunning {
-            .processExited(status: process.finishSynchronously() ?? 1)
-        } else if sawCodexStatus {
+        let completion: Result.Completion = if let exitStatus {
+            .processExited(status: exitStatus)
+        } else if terminatedForIdle {
+            .idleTimeout
+        } else if stoppedEarly {
             .outputCondition
         } else {
             .deadlineExceeded
+        }
+        if text.isEmpty {
+            guard options.returnOnEmptyProcessExit,
+                  case .processExited = completion
+            else {
+                throw Error.timedOut
+            }
         }
         return Result(text: text, completion: completion)
     }

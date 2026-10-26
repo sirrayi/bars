@@ -76,7 +76,6 @@ struct SpendDashboardTokenProvenanceTests {
             result: .success(ProviderFetchResult(
                 usage: UsageSnapshot(primary: nil, secondary: nil, updatedAt: Date()),
                 credits: nil,
-                dashboard: nil,
                 sourceLabel: "fixture",
                 strategyID: "fixture",
                 strategyKind: .apiToken)),
@@ -101,7 +100,6 @@ struct SpendDashboardTokenProvenanceTests {
             settings.setProviderEnabled(provider: candidate, metadata: metadata, enabled: candidate == provider)
         }
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,

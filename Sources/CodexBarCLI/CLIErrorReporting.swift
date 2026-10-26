@@ -35,7 +35,6 @@ extension CodexBarCLI {
             status: nil,
             usage: nil,
             credits: nil,
-            openaiDashboard: nil,
             error: ProviderErrorPayload(code: code.rawValue, message: message, kind: kind))
     }
 
@@ -67,7 +66,6 @@ extension CodexBarCLI {
             status: status,
             usage: nil,
             credits: nil,
-            openaiDashboard: nil,
             error: self.makeErrorPayload(error, kind: kind))
     }
 

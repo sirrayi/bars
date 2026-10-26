@@ -21,7 +21,6 @@ struct OpenCodeGoCLIAuthorityTests {
             status: nil,
             usage: snapshot,
             credits: nil,
-            openaiDashboard: nil,
             error: nil)
 
         let data = try JSONEncoder().encode([payload])

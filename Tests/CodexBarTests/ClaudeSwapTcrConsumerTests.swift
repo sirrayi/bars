@@ -219,7 +219,6 @@ struct ClaudeSwapTcrConsumerTests {
         enableTestProviders([.claude], settings: settings)
         settings.claudeSwapEnabled = true
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(homeDirectory: "/synthetic", fileExists: { _ in false }),
             settings: settings,
             startupBehavior: .testing,

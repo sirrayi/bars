@@ -633,7 +633,7 @@ struct DashboardClaudeSwapSnapshotTests {
             costPayloads: [],
             config: CodexBarConfig(providers: [
                 ProviderConfig(id: .claude, enabled: true),
-                ProviderConfig(id: .codex, enabled: true),
+                ProviderConfig(id: .opencode, enabled: true),
             ]),
             identityMode: identityMode,
             generatedAt: self.generatedAt,
@@ -717,20 +717,18 @@ struct DashboardClaudeSwapSnapshotTests {
                     accountOrganization: nil,
                     loginMethod: "pro")),
             credits: nil,
-            openaiDashboard: nil,
             error: nil)
     }
 
     private func codexPayload() -> ProviderPayload {
         ProviderPayload(
-            provider: .codex,
+            provider: .opencode,
             account: nil,
             version: nil,
             source: "oauth",
             status: nil,
             usage: nil,
             credits: nil,
-            openaiDashboard: nil,
             error: nil)
     }
 

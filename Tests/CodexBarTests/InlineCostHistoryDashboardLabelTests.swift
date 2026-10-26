@@ -313,7 +313,7 @@ struct InlineCostHistoryDashboardLabelTests {
     @Test
     func `costHistoryInlineDashboard sets currencyCode from snapshot`() throws {
         let now = Date(timeIntervalSince1970: 1_700_179_200)
-        let metadata = try #require(ProviderDefaults.metadata[.codex])
+        let metadata = try #require(ProviderDefaults.metadata[.claude])
         let tokenSnapshot = CostUsageTokenSnapshot(
             sessionTokens: 275,
             sessionCostUSD: 0.25,
@@ -338,7 +338,7 @@ struct InlineCostHistoryDashboardLabelTests {
             updatedAt: now)
 
         let model = UsageMenuCardView.Model.make(.init(
-            provider: .codex,
+            provider: .claude,
             metadata: metadata,
             snapshot: UsageSnapshot(
                 primary: nil,
@@ -361,22 +361,23 @@ struct InlineCostHistoryDashboardLabelTests {
 
         let dashboard = try #require(model.inlineUsageDashboard)
         #expect(dashboard.currencyCode == "USD")
-        #expect(dashboard.accessibilityLabel == "Codex: 30d cost")
+        #expect(dashboard.accessibilityLabel == "Claude: 30d cost")
         #expect(dashboard.kpis.map(\.title) == [
             "Today",
-            "30d",
+            "30d cost",
             "Latest tokens",
             "30d tokens",
         ])
         #expect(dashboard.detailLines == [
             "Top model: test-model",
-            "Estimated from token usage · not a subscription bill",
+            "Estimated from local Claude logs at API rates; token totals include cache read/write tokens "
+                + "and may differ from Claude Code /status.",
         ])
 
         let japaneseAccessibilityLabels = CodexBarLocalizationOverride.$appLanguage.withValue("ja") {
             [7, 30].map { historyDays in
                 UsageMenuCardView.Model.make(.init(
-                    provider: .codex,
+                    provider: .claude,
                     metadata: metadata,
                     snapshot: UsageSnapshot(primary: nil, secondary: nil, updatedAt: now),
                     credits: nil,
@@ -402,193 +403,11 @@ struct InlineCostHistoryDashboardLabelTests {
                     now: now)).inlineUsageDashboard?.accessibilityLabel
             }
         }
-        #expect(japaneseAccessibilityLabels == ["Codex: 過去7日間のコスト", "Codex: 過去30日間のコスト"])
-    }
-
-    @Test
-    func `Codex inline cost history preserves zero value calendar days`() throws {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = .current
-        let now = try #require(calendar.date(from: DateComponents(
-            year: 2026,
-            month: 8,
-            day: 24,
-            hour: 12)))
-        let metadata = try #require(ProviderDefaults.metadata[.codex])
-        let tokenSnapshot = CostUsageTokenSnapshot(
-            sessionTokens: 400,
-            sessionCostUSD: 4,
-            last30DaysTokens: 700,
-            last30DaysCostUSD: 7,
-            historyDays: 4,
-            daily: [
-                CostUsageDailyReport.Entry(
-                    date: "2026-08-21",
-                    inputTokens: 250,
-                    outputTokens: 50,
-                    totalTokens: 300,
-                    costUSD: 3,
-                    modelsUsed: ["test-model"],
-                    modelBreakdowns: nil),
-                CostUsageDailyReport.Entry(
-                    date: "2026-08-24",
-                    inputTokens: 350,
-                    outputTokens: 50,
-                    totalTokens: 400,
-                    costUSD: 4,
-                    modelsUsed: ["test-model"],
-                    modelBreakdowns: nil),
-            ],
-            updatedAt: now)
-
-        let model = UsageMenuCardView.Model.make(.init(
-            provider: .codex,
-            metadata: metadata,
-            snapshot: UsageSnapshot(primary: nil, secondary: nil, updatedAt: now),
-            credits: nil,
-            creditsError: nil,
-            dashboardError: nil,
-            tokenSnapshot: tokenSnapshot,
-            tokenError: nil,
-            account: AccountInfo(email: nil, plan: nil),
-            isRefreshing: false,
-            lastError: nil,
-            usageBarsShowUsed: false,
-            resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: true,
-            showOptionalCreditsAndExtraUsage: true,
-            hidePersonalInfo: false,
-            now: now))
-
-        let points = try #require(model.inlineUsageDashboard?.points)
-        #expect(points.map(\.id) == ["2026-08-21", "2026-08-22", "2026-08-23", "2026-08-24"])
-        #expect(points.map(\.value) == [3, 0, 0, 4])
-        #expect(points.map(\.accessibilityValue) == [
-            "Aug 21, 2026: $3.00 · 300 tokens",
-            "Aug 22, 2026: $0.00 · 0 tokens",
-            "Aug 23, 2026: $0.00 · 0 tokens",
-            "Aug 24, 2026: $4.00 · 400 tokens",
-        ])
-        let hoverDetails: [InlineUsageDashboardModel.HoverDetail?] = [
-            .init(dateLabel: "Aug 21, 2026", cost: 3, tokenCount: 300, currencyCode: "USD"),
-            .init(dateLabel: "Aug 22, 2026", cost: 0, tokenCount: 0, currencyCode: "USD"),
-            .init(dateLabel: "Aug 23, 2026", cost: 0, tokenCount: 0, currencyCode: "USD"),
-            .init(dateLabel: "Aug 24, 2026", cost: 4, tokenCount: 400, currencyCode: "USD"),
-        ]
-        #expect(points.map(\.hoverDetail) == hoverDetails)
+        #expect(japaneseAccessibilityLabels == ["Claude: 過去7日間のコスト", "Claude: 過去30日間のコスト"])
     }
 }
 
 extension InlineCostHistoryDashboardLabelTests {
-    @Test
-    func `codex and claude show current-window KPIs and previous-window history`() throws {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = try #require(TimeZone(secondsFromGMT: 0))
-        let now = try #require(calendar.date(from: DateComponents(
-            timeZone: calendar.timeZone,
-            year: 2026,
-            month: 7,
-            day: 15,
-            hour: 12)))
-        let resetAt = try #require(calendar.date(from: DateComponents(
-            timeZone: calendar.timeZone,
-            year: 2026,
-            month: 7,
-            day: 18,
-            hour: 15)))
-        let metadata = try #require(ProviderDefaults.metadata[.codex])
-        let tokenSnapshot = CostUsageTokenSnapshot(
-            sessionTokens: 1000,
-            sessionCostUSD: 10,
-            last30DaysTokens: 1400,
-            last30DaysCostUSD: 14,
-            historyDays: 30,
-            daily: [
-                CostUsageDailyReport.Entry(
-                    date: "2026-07-08",
-                    inputTokens: 300,
-                    outputTokens: 100,
-                    totalTokens: 400,
-                    costUSD: 4,
-                    modelsUsed: ["gpt-5.4"],
-                    modelBreakdowns: [
-                        CostUsageDailyReport.ModelBreakdown(
-                            modelName: "gpt-5.4",
-                            costUSD: 4,
-                            totalTokens: 400),
-                    ]),
-                CostUsageDailyReport.Entry(
-                    date: "2026-07-13",
-                    inputTokens: 800,
-                    outputTokens: 200,
-                    totalTokens: 1000,
-                    costUSD: 10,
-                    modelsUsed: ["gpt-5.4"],
-                    modelBreakdowns: [
-                        CostUsageDailyReport.ModelBreakdown(
-                            modelName: "gpt-5.4",
-                            costUSD: 10,
-                            totalTokens: 1000),
-                    ]),
-            ],
-            updatedAt: now)
-
-        let model = UsageMenuCardView.Model.make(.init(
-            provider: .codex,
-            metadata: metadata,
-            snapshot: UsageSnapshot(
-                primary: RateWindow(
-                    usedPercent: 20,
-                    windowMinutes: 5 * 60,
-                    resetsAt: now.addingTimeInterval(4 * 3600),
-                    resetDescription: nil),
-                secondary: RateWindow(
-                    usedPercent: 50,
-                    windowMinutes: CostUsageTokenSnapshot.quotaWeekMinutes,
-                    resetsAt: resetAt,
-                    resetDescription: nil),
-                updatedAt: now),
-            credits: nil,
-            creditsError: nil,
-            dashboardError: nil,
-            tokenSnapshot: tokenSnapshot,
-            tokenError: nil,
-            account: AccountInfo(email: nil, plan: nil),
-            isRefreshing: false,
-            lastError: nil,
-            usageBarsShowUsed: false,
-            resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: true,
-            showOptionalCreditsAndExtraUsage: true,
-            hidePersonalInfo: false,
-            costUsageBucketCalendar: calendar,
-            now: now))
-
-        let dashboard = try #require(model.inlineUsageDashboard)
-        #expect(dashboard.kpis.map(\.title) == [
-            "Today",
-            "Est. Current window",
-            "Latest tokens",
-            "Est. Current window tokens",
-            "30d",
-            "30d tokens",
-        ])
-        #expect(dashboard.kpis.map(\.value) == [
-            "$10.00",
-            "$10.00",
-            "1K",
-            "1K",
-            "$14.00",
-            "1.4K",
-        ])
-        #expect(dashboard.detailLines.contains { $0.contains("Previous window") } == false)
-        #expect(dashboard.quotaWindows.map(\.title) == ["Current window", "Previous window"])
-        #expect(dashboard.quotaWindows.map(\.value) == ["$10.00 · 1K", "$4.00 · 400"])
-        let currentRange = try #require(dashboard.quotaWindows.first?.range)
-        #expect(currentRange.contains("11"))
-        #expect(currentRange.contains("18"))
-    }
-
     @Test
     func `claude weekly primary still aligns quota-window cost to the live reset`() throws {
         var calendar = Calendar(identifier: .gregorian)
@@ -717,117 +536,6 @@ extension InlineCostHistoryDashboardLabelTests {
         #expect(sameDayRange.contains("Jul 11"))
         #expect(sameDayRange.contains("6:00") || sameDayRange.contains("18:00"))
         #expect(sameDayRange.contains("Jul 18") == false)
-    }
-
-    @Test
-    func `codex recent windows lists a short previous window after a banked reset`() throws {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = try #require(TimeZone(secondsFromGMT: 0))
-        let now = try #require(calendar.date(from: DateComponents(
-            timeZone: calendar.timeZone,
-            year: 2026,
-            month: 7,
-            day: 17,
-            hour: 12)))
-        let official = try #require(calendar.date(from: DateComponents(
-            timeZone: calendar.timeZone,
-            year: 2026,
-            month: 7,
-            day: 16,
-            hour: 15)))
-        let liveNext = try #require(calendar.date(from: DateComponents(
-            timeZone: calendar.timeZone,
-            year: 2026,
-            month: 7,
-            day: 23,
-            hour: 18)))
-        let metadata = try #require(ProviderDefaults.metadata[.codex])
-        let hour14 = try #require(calendar.date(from: DateComponents(
-            timeZone: calendar.timeZone,
-            year: 2026,
-            month: 7,
-            day: 16,
-            hour: 14)))
-        let hour16 = try #require(calendar.date(from: DateComponents(
-            timeZone: calendar.timeZone,
-            year: 2026,
-            month: 7,
-            day: 16,
-            hour: 16)))
-        let hour19 = try #require(calendar.date(from: DateComponents(
-            timeZone: calendar.timeZone,
-            year: 2026,
-            month: 7,
-            day: 16,
-            hour: 19)))
-        let tokenSnapshot = CostUsageTokenSnapshot(
-            sessionTokens: 300,
-            sessionCostUSD: 3,
-            last30DaysTokens: 600,
-            last30DaysCostUSD: 6,
-            historyDays: 30,
-            daily: [
-                CostUsageDailyReport.Entry(
-                    date: "2026-07-16",
-                    inputTokens: 500,
-                    outputTokens: 100,
-                    totalTokens: 600,
-                    costUSD: 6,
-                    modelsUsed: ["gpt-5.4"],
-                    modelBreakdowns: [
-                        CostUsageDailyReport.ModelBreakdown(
-                            modelName: "gpt-5.4",
-                            costUSD: 6,
-                            totalTokens: 600),
-                    ]),
-            ],
-            hourly: [
-                CostUsageHourlyEntry(hour: hour14, totalTokens: 100, costUSD: 1),
-                CostUsageHourlyEntry(hour: hour16, totalTokens: 200, costUSD: 2),
-                CostUsageHourlyEntry(hour: hour19, totalTokens: 300, costUSD: 3),
-            ],
-            updatedAt: now)
-
-        let model = UsageMenuCardView.Model.make(.init(
-            provider: .codex,
-            metadata: metadata,
-            snapshot: UsageSnapshot(
-                primary: nil,
-                secondary: RateWindow(
-                    usedPercent: 40,
-                    windowMinutes: CostUsageTokenSnapshot.quotaWeekMinutes,
-                    resetsAt: liveNext,
-                    resetDescription: nil),
-                updatedAt: now),
-            credits: nil,
-            creditsError: nil,
-            dashboardError: nil,
-            tokenSnapshot: tokenSnapshot,
-            tokenError: nil,
-            account: AccountInfo(email: nil, plan: nil),
-            isRefreshing: false,
-            lastError: nil,
-            usageBarsShowUsed: false,
-            resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: true,
-            showOptionalCreditsAndExtraUsage: true,
-            hidePersonalInfo: false,
-            costUsageBucketCalendar: calendar,
-            now: now,
-            observedWeeklyResets: [.init(capturedAt: official.addingTimeInterval(-3600), resetsAt: official)]))
-
-        let dashboard = try #require(model.inlineUsageDashboard)
-        #expect(dashboard.quotaWindows.map(\.title) == [
-            "Current window",
-            "Previous window",
-            "2 windows ago",
-        ])
-        #expect(dashboard.quotaWindows.map(\.value) == [
-            "$3.00 · 300",
-            "$2.00 · 200",
-            "$1.00 · 100",
-        ])
-        #expect(dashboard.detailLines.contains { $0.contains("Previous window") } == false)
     }
 
     private static func normalizedDateText(_ value: String) -> String {

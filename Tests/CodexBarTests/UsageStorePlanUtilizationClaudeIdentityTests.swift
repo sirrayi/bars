@@ -891,7 +891,6 @@ struct UsageStorePlanUtilizationClaudeIdentityTests {
         settings.addTokenAccount(provider: .claude, label: "Unrelated", token: "unrelated-token")
         settings.setActiveTokenAccountIndex(0, for: .claude)
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             planUtilizationHistoryStore: historyStore,

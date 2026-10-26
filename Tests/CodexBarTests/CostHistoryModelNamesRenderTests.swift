@@ -35,7 +35,7 @@ final class CostHistoryModelNamesRenderTests: XCTestCase {
             modelBreakdowns: nil)]
         for hidden in [false, true] {
             let view = try CostHistoryChartMenuView(
-                provider: .codex,
+                provider: .claude,
                 daily: daily,
                 totalCostUSD: 1.05,
                 sessions: sessions,

@@ -466,8 +466,6 @@ public enum UsageFormatter {
     public static func modelDisplayName(_ raw: String) -> String {
         var cleaned = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleaned.isEmpty else { return raw }
-        if cleaned == "codex-auto-review" { return "Codex Auto Review" }
-        if CostUsagePricing.isCodexUnattributedModel(cleaned) { return "Unknown model" }
 
         let patterns = [
             #"(?:-|\s)\d{8}$"#,
@@ -495,13 +493,7 @@ public enum UsageFormatter {
         totalTokens: Int? = nil,
         currencyCode: String = "USD") -> String?
     {
-        let costDetail: String? = if let label = CostUsagePricing.codexDisplayLabel(model: model) {
-            label
-        } else if let costUSD {
-            self.currencyString(costUSD, currencyCode: currencyCode)
-        } else {
-            nil
-        }
+        let costDetail = costUSD.map { self.currencyString($0, currencyCode: currencyCode) }
 
         let tokenDetail = totalTokens.map(self.tokenCountString)
         let parts = [costDetail, tokenDetail].compactMap(\.self)

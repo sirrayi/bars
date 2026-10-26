@@ -7,13 +7,13 @@ import WidgetKit
 
 @Suite("Widget provider pager")
 struct WidgetProviderPagerTests {
-    private let providers: [UsageProvider] = [.codex, .claude, .opencode, .devin, .pi]
+    private let providers: [UsageProvider] = [.opencodego, .claude, .opencode, .devin, .deepseek]
 
     // MARK: - Paging
 
     @Test
     func `a single provider is not pageable`() {
-        let pager = ProviderPager.make(providers: [.codex], selected: .codex)
+        let pager = ProviderPager.make(providers: [.opencodego], selected: .opencodego)
 
         #expect(pager?.isPageable == false)
         #expect(pager?.positionText == "1/1")
@@ -21,15 +21,15 @@ struct WidgetProviderPagerTests {
 
     @Test
     func `an unknown selection falls back to the first provider`() {
-        let pager = ProviderPager.make(providers: self.providers, selected: .deepseek)
+        let pager = ProviderPager.make(providers: [.opencodego, .claude], selected: .deepseek)
 
-        #expect(pager?.selected == .codex)
+        #expect(pager?.selected == .opencodego)
         #expect(pager?.position == 1)
     }
 
     @Test
     func `an empty provider list has no pager`() {
-        #expect(ProviderPager.make(providers: [], selected: .codex) == nil)
+        #expect(ProviderPager.make(providers: [], selected: .opencodego) == nil)
     }
 
     @Test
@@ -100,7 +100,7 @@ struct WidgetProviderPagerTests {
         #expect(CompactMetricFormatter.unavailableDetail(
             value: "1,243.4",
             entry: WidgetSnapshot.ProviderEntry(
-                provider: .codex,
+                provider: .opencodego,
                 updatedAt: Date(timeIntervalSince1970: 1_700_000_000),
                 primary: nil,
                 secondary: nil,

@@ -91,7 +91,6 @@ struct CostUsageScannerClaudeRegressionTests {
             relativePath: "project-a/proxy-session.jsonl",
             contents: env.jsonl([chunk(output: 7), chunk(output: 19), chunk(output: 19)]))
         var options = CostUsageScanner.Options(
-            codexSessionsRoot: nil,
             claudeProjectsRoots: [env.claudeProjectsRoot],
             cacheRoot: env.cacheRoot)
         options.refreshMinIntervalSeconds = 0
@@ -345,7 +344,6 @@ struct CostUsageScannerClaudeRegressionTests {
             contents: env.jsonl([chunk1, chunk2, chunk3]))
 
         var options = CostUsageScanner.Options(
-            codexSessionsRoot: nil,
             claudeProjectsRoots: [env.claudeProjectsRoot],
             cacheRoot: env.cacheRoot)
         options.refreshMinIntervalSeconds = 0
@@ -459,7 +457,6 @@ struct CostUsageScannerClaudeRegressionTests {
             contents: env.jsonl([nonCompactOverlap, uniqueSidechain]))
 
         var options = CostUsageScanner.Options(
-            codexSessionsRoot: nil,
             claudeProjectsRoots: [env.claudeProjectsRoot],
             cacheRoot: env.cacheRoot)
         options.refreshMinIntervalSeconds = 0
@@ -555,7 +552,6 @@ struct CostUsageScannerClaudeRegressionTests {
             contents: env.jsonl([copiedHistoryInFork, forkContinuation]))
 
         var options = CostUsageScanner.Options(
-            codexSessionsRoot: nil,
             claudeProjectsRoots: [env.claudeProjectsRoot],
             cacheRoot: env.cacheRoot)
         options.refreshMinIntervalSeconds = 0
@@ -630,7 +626,6 @@ struct CostUsageScannerClaudeRegressionTests {
             contents: env.jsonl([secondSidechain]))
 
         var options = CostUsageScanner.Options(
-            codexSessionsRoot: nil,
             claudeProjectsRoots: [env.claudeProjectsRoot],
             cacheRoot: env.cacheRoot)
         options.refreshMinIntervalSeconds = 0
@@ -701,7 +696,6 @@ struct CostUsageScannerClaudeRegressionTests {
             contents: env.jsonl([sessionScoped]))
 
         var options = CostUsageScanner.Options(
-            codexSessionsRoot: nil,
             claudeProjectsRoots: [env.claudeProjectsRoot],
             cacheRoot: env.cacheRoot)
         options.refreshMinIntervalSeconds = 0
@@ -771,7 +765,6 @@ struct CostUsageScannerClaudeRegressionTests {
             contents: env.jsonl([sidechainOverlap, uniqueSidechain]))
 
         var options = CostUsageScanner.Options(
-            codexSessionsRoot: nil,
             claudeProjectsRoots: [env.claudeProjectsRoot],
             cacheRoot: env.cacheRoot)
         options.refreshMinIntervalSeconds = 0

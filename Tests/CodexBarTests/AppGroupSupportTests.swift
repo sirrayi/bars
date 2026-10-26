@@ -72,7 +72,7 @@ struct AppGroupSupportTests {
         let fixture = try MigrationFixture()
         defer { fixture.cleanUp() }
         fixture.currentDefaults.set(false, forKey: "debugDisableKeychainAccess")
-        fixture.currentDefaults.set(UsageProvider.codex.rawValue, forKey: "widgetSelectedProvider")
+        fixture.currentDefaults.set(UsageProvider.opencode.rawValue, forKey: "widgetSelectedProvider")
         fixture.legacyDefaults.set(true, forKey: "debugDisableKeychainAccess")
         fixture.legacyDefaults.set(UsageProvider.claude.rawValue, forKey: "widgetSelectedProvider")
 
@@ -82,7 +82,7 @@ struct AppGroupSupportTests {
         #expect(!result.copiedSnapshot)
         #expect(result.copiedDefaults == 0)
         #expect(!fixture.currentDefaults.bool(forKey: "debugDisableKeychainAccess"))
-        #expect(fixture.currentDefaults.string(forKey: "widgetSelectedProvider") == UsageProvider.codex.rawValue)
+        #expect(fixture.currentDefaults.string(forKey: "widgetSelectedProvider") == UsageProvider.opencode.rawValue)
         #expect(!FileManager.default.fileExists(atPath: fixture.currentSnapshotURL.path))
         #expect(fixture.fileManager.operations == [
             .exists(fixture.currentSnapshotURL.path),

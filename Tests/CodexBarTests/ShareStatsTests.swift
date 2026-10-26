@@ -21,7 +21,7 @@ struct ShareStatsTests {
             }
         }
 
-        #expect(fingerprint == 4_944_374_054_222_308_607)
+        #expect(fingerprint == 15_834_743_629_597_930_199)
     }
 
     @Test
@@ -43,12 +43,12 @@ struct ShareStatsTests {
     @Test
     func `subscription label uses first plan bearing snapshot`() {
         let unidentified = UsageSnapshot(primary: nil, secondary: nil, updatedAt: Self.date)
-        let fallback = Self.snapshot(provider: .codex, rawName: "pro")
+        let fallback = Self.snapshot(provider: .claude, rawName: "max 20x")
 
         let name = ShareStatsSubscriptionName.first(
             from: [unidentified, fallback],
-            provider: .codex)
-        #expect(name?.displayName == "Pro 20x")
+            provider: .claude)
+        #expect(name?.displayName == "Max 20x")
     }
 
     @Test
@@ -58,13 +58,12 @@ struct ShareStatsTests {
             suiteName: "ShareStatsTests-scoped-plan",
             userDefaults: InMemoryUserDefaults())
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
             environmentBase: [:])
         defer { store.stopSharedSpendDashboardPublication() }
-        store._setSnapshotForTesting(Self.snapshot(provider: .codex, rawName: "pro"), provider: .codex)
+        store._setSnapshotForTesting(Self.snapshot(provider: .opencode, rawName: "pro"), provider: .opencode)
 
         let payload = try #require(ShareStatsPayloadFactory.make(model: Self.dashboard, store: store))
 
@@ -129,21 +128,21 @@ struct ShareStatsTests {
         let rows = [
             SpendDashboardModel.ModelRow(
                 rank: 1,
-                provider: .codex,
+                provider: .opencode,
                 providerName: "Codex",
                 modelName: "gpt-5.4",
                 totalTokens: Int.max,
                 totalCost: Double.greatestFiniteMagnitude),
             SpendDashboardModel.ModelRow(
                 rank: 2,
-                provider: .codex,
+                provider: .opencode,
                 providerName: "Codex",
                 modelName: "gpt-5.4-mini",
                 totalTokens: 1,
                 totalCost: Double.greatestFiniteMagnitude),
             SpendDashboardModel.ModelRow(
                 rank: 3,
-                provider: .codex,
+                provider: .opencode,
                 providerName: "Codex",
                 modelName: "gpt-5.4-nano",
                 totalTokens: 5,
@@ -155,7 +154,7 @@ struct ShareStatsTests {
                 SpendDashboardModel.ProviderRow(
                     id: "codex",
                     rank: 1,
-                    provider: .codex,
+                    provider: .opencode,
                     displayName: "Codex",
                     totalTokens: 1,
                     totalCost: nil,
@@ -189,7 +188,7 @@ struct ShareStatsTests {
                     SpendDashboardModel.ProviderRow(
                         id: "codex",
                         rank: 1,
-                        provider: .codex,
+                        provider: .opencode,
                         displayName: "Codex",
                         totalTokens: 10,
                         totalCost: .nan,
@@ -198,21 +197,21 @@ struct ShareStatsTests {
                 models: [
                     SpendDashboardModel.ModelRow(
                         rank: 1,
-                        provider: .codex,
+                        provider: .opencode,
                         providerName: "Codex",
                         modelName: "gpt-5.4",
                         totalTokens: 10,
                         totalCost: .infinity),
                     SpendDashboardModel.ModelRow(
                         rank: 2,
-                        provider: .codex,
+                        provider: .opencode,
                         providerName: "Codex",
                         modelName: "gpt-5.4-mini",
                         totalTokens: nil,
                         totalCost: 2),
                     SpendDashboardModel.ModelRow(
                         rank: 3,
-                        provider: .codex,
+                        provider: .opencode,
                         providerName: "Codex",
                         modelName: "gpt-5.4-nano",
                         totalTokens: nil,
@@ -245,7 +244,7 @@ struct ShareStatsTests {
                 SpendDashboardModel.ProviderRow(
                     id: "codex",
                     rank: 1,
-                    provider: .codex,
+                    provider: .opencode,
                     displayName: "Codex",
                     totalTokens: 10,
                     totalCost: 2,
@@ -254,7 +253,7 @@ struct ShareStatsTests {
             models: [
                 SpendDashboardModel.ModelRow(
                     rank: 1,
-                    provider: .codex,
+                    provider: .opencode,
                     providerName: "Codex",
                     modelName: "gpt-5.4",
                     totalTokens: 10,
@@ -267,7 +266,7 @@ struct ShareStatsTests {
             coveredDayCount: 7,
             chartDomain: Self.date...Self.date,
             modelHistoryCompleteness: .incomplete,
-            incompleteModelProviders: [.codex])
+            incompleteModelProviders: [.opencode])
         let payload = try #require(ShareStatsBuilder.make(
             model: SpendDashboardModel(requestedDays: 7, groups: [group])))
 
@@ -358,7 +357,7 @@ struct ShareStatsTests {
     @Test @MainActor
     func `model colors use provider identity instead of decorated account name`() throws {
         let payload = try #require(ShareStatsBuilder.make(model: Self.dashboard))
-        let codexModel = try #require(payload.topModels.first { $0.provider == .codex })
+        let codexModel = try #require(payload.topModels.first { $0.provider == .opencode })
 
         #expect(ShareStatsCardView.providerPaletteIndex(for: codexModel, providers: payload.providers) == 1)
     }
@@ -446,7 +445,7 @@ struct ShareStatsTests {
                     SpendDashboardModel.ProviderRow(
                         id: "codex:one",
                         rank: 1,
-                        provider: .codex,
+                        provider: .opencode,
                         displayName: "Codex · #1",
                         totalTokens: 200,
                         totalCost: 4,
@@ -463,7 +462,7 @@ struct ShareStatsTests {
                 models: models.enumerated().map { index, name in
                     SpendDashboardModel.ModelRow(
                         rank: index + 1,
-                        provider: .codex,
+                        provider: .opencode,
                         providerName: "Codex",
                         modelName: name,
                         totalTokens: 200,

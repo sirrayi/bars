@@ -233,7 +233,6 @@ extension CodexBarCLI {
                 verbose: false,
                 env: environment,
                 settings: tokenContext.settingsSnapshot(for: provider, account: nil),
-                fetcher: tokenContext.fetcher(base: UsageFetcher(), provider: provider, env: environment),
                 claudeFetcher: ClaudeUsageFetcher(browserDetection: browserDetection),
                 browserDetection: browserDetection)
             let outcome = await descriptor.fetchOutcome(context: context)

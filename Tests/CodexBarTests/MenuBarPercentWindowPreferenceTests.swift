@@ -145,19 +145,19 @@ struct MenuBarPercentWindowPreferenceTests {
         defer { settings.configFileWatcher?.stop() }
         settings.menuBarIconStyle = .iconAndPercent
         settings.menuBarLayoutConditionals = [rule]
-        settings.setMenuBarLayout(layout, for: .codex)
+        settings.setMenuBarLayout(layout, for: .opencode)
         settings.setMenuBarLayout(other, for: .claude)
 
-        let picker = ProviderMenuBarPercentWindowSettingsView(provider: .codex, settings: settings)
+        let picker = ProviderMenuBarPercentWindowSettingsView(provider: .opencode, settings: settings)
         picker.layoutBinding.wrappedValue = MenuBarPercentWindowPreference.weekly.applied(to: layout)
         let expected = MenuBarLayout(lines: [[
             .icon, .percent(window: .weekly), .windowResetCountdown(window: .weekly),
             .windowResetAbsolute(window: .session), .conditional(id: rule.id), .lanePercent(lane: .tertiary),
         ]])
-        #expect(settings.menuBarLayoutResolution(for: .codex).layout == expected)
+        #expect(settings.menuBarLayoutResolution(for: .opencode).layout == expected)
         let reloaded = MenuBarPercentWindowNativeProofTests.settings(defaults: defaults, config: config)
         defer { reloaded.configFileWatcher?.stop() }
-        #expect(reloaded.menuBarLayoutResolution(for: .codex).layout == expected)
+        #expect(reloaded.menuBarLayoutResolution(for: .opencode).layout == expected)
         #expect(reloaded.menuBarLayoutResolution(for: .claude).layout == other)
         #expect(reloaded.menuBarLayoutConditionals == [rule])
         #expect(reloaded.menuBarIconStyle == .iconAndPercent)
@@ -165,7 +165,7 @@ struct MenuBarPercentWindowPreferenceTests {
         #expect(!MenuBarPercentWindowPreference.isVisible(
             iconStyle: .iconAndPercent,
             layout: MenuBarLayout(lines: [[.conditional(id: rule.id)]]),
-            provider: .codex))
+            provider: .opencode))
     }
 
     @Test

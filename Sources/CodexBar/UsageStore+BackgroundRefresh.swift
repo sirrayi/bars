@@ -9,8 +9,7 @@ extension UsageStore {
     }
 
     /// Invalidates in-flight provider work and clears its transient runtime/UI state.
-    /// Settings, token-account configuration, historical datasets, credits/dashboard caches,
-    /// and disk-backed Codex account snapshots intentionally remain owned by their existing lifetimes.
+    /// Settings and token-account configuration intentionally remain owned by their existing lifetimes.
     func clearProviderState(_ provider: UsageProvider) {
         self.invalidateProviderRefreshRequests(provider)
         self.clearProviderRuntimeState(provider)
@@ -44,10 +43,6 @@ extension UsageStore {
             self.widgetAccountSnapshotStore?.save(self.widgetVerifiedTokenSnapshots)
         }
         self.tokenAccountLiveStateProviders.remove(provider.instanceID)
-        if provider == .codex {
-            self.codexAccountSnapshots = []
-            self.lastCodexUsagePublicationGuard = nil
-        }
         if provider == .claude {
             self.widgetUsagePreservationBlockedProviders.insert(provider.instanceID)
             self.clearClaudeSwapAccountState()

@@ -121,7 +121,7 @@ struct SpendProviderBreakdownRows: View {
     private func showsSubscriptionChildren(_ breakdown: SpendProviderBreakdown) -> Bool {
         breakdown.subscriptions.count > 1
             || breakdown.subscriptions.contains {
-                $0.displayName != breakdown.displayName || $0.sourceKind != .native
+                $0.displayName != breakdown.displayName
             }
     }
 
@@ -151,8 +151,7 @@ struct SpendProviderBreakdownRows: View {
             .padding(.vertical, 5)
 
             if self.showsSubscriptionChildren(breakdown) {
-                self.subsectionLabel(breakdown.subscriptions.contains { $0.sourceKind != .native }
-                    ? L("Sources") : L("Accounts"))
+                self.subsectionLabel(L("Accounts"))
                 ForEach(Array(breakdown.subscriptions.enumerated()), id: \.element.id) { index, row in
                     if index > 0 {
                         self.childDivider
@@ -160,7 +159,6 @@ struct SpendProviderBreakdownRows: View {
                     HStack(spacing: 9) {
                         SpendProviderIcon(
                             provider: row.provider,
-                            sourceKind: row.sourceKind,
                             style: .monochrome)
                             .opacity(0.76)
                         Text(row.displayName)
@@ -278,23 +276,19 @@ struct SpendProviderBreakdownRows: View {
 
 struct SpendProviderIcon: View {
     let provider: UsageProvider
-    var sourceKind: SpendDashboardModel.SourceKind = .native
     var style: ProviderBrandIcon.Style = .brand
     var size: CGFloat = 20
 
     var body: some View {
         Group {
-            if self.sourceKind == .openCodex {
-                Image(systemName: "arrow.triangle.branch")
-                    .resizable().scaledToFit()
-            } else if let icon = ProviderBrandIcon.image(for: self.provider, style: self.style) {
+            if let icon = ProviderBrandIcon.image(for: self.provider, style: self.style) {
                 Image(nsImage: icon)
                     .resizable()
                     .renderingMode(icon.isTemplate ? .template : .original)
                     .scaledToFit()
                     .frame(
-                        width: self.size * self.artworkScale(for: icon),
-                        height: self.size * self.artworkScale(for: icon))
+                        width: self.size,
+                        height: self.size)
             } else {
                 Image(systemName: "circle.dotted")
                     .resizable().scaledToFit()
@@ -303,13 +297,5 @@ struct SpendProviderIcon: View {
         .foregroundStyle(.primary)
         .frame(width: self.size, height: self.size)
         .accessibilityHidden(true)
-    }
-
-    private func artworkScale(for icon: NSImage) -> CGFloat {
-        // Provider-specific by design: normalize each bundled mark's transparent padding in the shared icon slot.
-        switch self.provider {
-        case .codex: icon.isTemplate ? 1.24 : 1.17
-        default: 1
-        }
     }
 }

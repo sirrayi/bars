@@ -31,24 +31,23 @@ struct StatusMenuSwitcherClickTests {
         let registry = ProviderRegistry.shared
         for provider in UsageProvider.allCases {
             guard let metadata = registry.metadata[provider] else { continue }
-            let shouldEnable = provider == .codex || provider == .claude
+            let shouldEnable = provider == .claude || provider == .opencode
             settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: shouldEnable)
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
 
         let menu = StatusItemMenu()
         let switcher = ProviderSwitcherView(
-            providers: [.codex, .claude],
-            selected: .provider(.codex),
+            providers: [.claude, .opencode],
+            selected: .provider(.claude),
             includesOverview: true,
             width: 320,
             showsIcons: false,
@@ -81,21 +80,20 @@ struct StatusMenuSwitcherClickTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = .claude
+        settings.selectedMenuProvider = .opencode
         settings.mergedMenuLastSelectedWasOverview = false
 
         let registry = ProviderRegistry.shared
         for provider in UsageProvider.allCases {
             guard let metadata = registry.metadata[provider] else { continue }
-            let shouldEnable = provider == .codex || provider == .claude
+            let shouldEnable = provider == .claude || provider == .opencode
             settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: shouldEnable)
         }
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -109,11 +107,11 @@ struct StatusMenuSwitcherClickTests {
         #expect(settings.mergedMenuLastSelectedWasOverview == true)
 
         // Step 2: Overview → provider via the runtime click path. Tag 2 is the second provider
-        // (claude) since tag 0 is Overview and tag 1 is the first provider.
+        // (opencode) since tag 0 is Overview and tag 1 is the first provider.
         let switcher2 = try #require(menu.items.first?.view as? ProviderSwitcherView)
         #expect(switcher2._test_simulateRuntimeClick(buttonTag: 2))
         #expect(settings.mergedMenuLastSelectedWasOverview == false)
-        #expect(settings.selectedMenuProvider == .claude)
+        #expect(settings.selectedMenuProvider == .opencode)
 
         // Step 3: provider → Overview again.
         let switcher3 = try #require(menu.items.first?.view as? ProviderSwitcherView)
@@ -124,15 +122,15 @@ struct StatusMenuSwitcherClickTests {
         let switcher4 = try #require(menu.items.first?.view as? ProviderSwitcherView)
         #expect(switcher4._test_simulateRuntimeClick(buttonTag: 1))
         #expect(settings.mergedMenuLastSelectedWasOverview == false)
-        #expect(settings.selectedMenuProvider == .codex)
+        #expect(settings.selectedMenuProvider == .claude)
     }
 
     @Test
     func `merged switcher commits selection on matching mouse up`() throws {
         var selections: [ProviderSwitcherSelection] = []
         let switcher = ProviderSwitcherView(
-            providers: [.codex, .claude],
-            selected: .provider(.codex),
+            providers: [.claude, .opencode],
+            selected: .provider(.claude),
             includesOverview: true,
             width: 320,
             showsIcons: false,
@@ -151,8 +149,8 @@ struct StatusMenuSwitcherClickTests {
     func `menu tracking routes switcher pointer sequence before AppKit menu dispatch`() throws {
         var selected: ProviderSwitcherSelection?
         let switcher = ProviderSwitcherView(
-            providers: [.codex, .claude],
-            selected: .provider(.codex),
+            providers: [.claude, .opencode],
+            selected: .provider(.claude),
             includesOverview: true,
             width: 320,
             showsIcons: false,
@@ -168,14 +166,12 @@ struct StatusMenuSwitcherClickTests {
         let settings = self.makeSettings()
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
-        let fetcher = UsageFetcher()
         let controller = StatusItemController(
             store: UsageStore(
-                fetcher: fetcher,
                 browserDetection: BrowserDetection(cacheTTL: 0),
                 settings: settings),
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -204,29 +200,28 @@ struct StatusMenuSwitcherClickTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .claude
         settings.mergedMenuLastSelectedWasOverview = false
 
         let registry = ProviderRegistry.shared
         for provider in UsageProvider.allCases {
             guard let metadata = registry.metadata[provider] else { continue }
-            let shouldEnable = provider == .codex || provider == .claude
+            let shouldEnable = provider == .claude || provider == .opencode
             settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: shouldEnable)
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
 
         controller.applyIcon(phase: nil)
-        #expect(controller.lastAppliedMergedIconRenderSignature?.contains("provider=codex") == true)
+        #expect(controller.lastAppliedMergedIconRenderSignature?.contains("provider=claude") == true)
 
         let menu = controller.makeMenu()
         controller.menuWillOpen(menu)
@@ -234,10 +229,10 @@ struct StatusMenuSwitcherClickTests {
         let switcher = try #require(menu.items.first?.view as? ProviderSwitcherView)
         #expect(switcher._test_simulateRuntimeClick(buttonTag: 2))
 
-        #expect(settings.selectedMenuProvider == .claude)
-        #expect(controller.lastAppliedMergedIconRenderSignature?.contains("provider=codex") == true)
-        await controller.providerSelectionUIRefreshTask?.value
+        #expect(settings.selectedMenuProvider == .opencode)
         #expect(controller.lastAppliedMergedIconRenderSignature?.contains("provider=claude") == true)
+        await controller.providerSelectionUIRefreshTask?.value
+        #expect(controller.lastAppliedMergedIconRenderSignature?.contains("provider=opencode") == true)
     }
 
     @Test
@@ -255,22 +250,21 @@ struct StatusMenuSwitcherClickTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .claude
         settings.mergedMenuLastSelectedWasOverview = false
 
         let registry = ProviderRegistry.shared
         for provider in UsageProvider.allCases {
             guard let metadata = registry.metadata[provider] else { continue }
-            let shouldEnable = provider == .codex || provider == .claude
+            let shouldEnable = provider == .claude || provider == .opencode
             settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: shouldEnable)
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -288,7 +282,7 @@ struct StatusMenuSwitcherClickTests {
         let switcher = try #require(menu.items.first?.view as? ProviderSwitcherView)
         #expect(switcher._test_simulateRuntimeClick(buttonTag: 2))
 
-        #expect(settings.selectedMenuProvider == .claude)
+        #expect(settings.selectedMenuProvider == .opencode)
         #expect(controller.menuContentVersion != openedVersion)
         #expect(controller.menuVersions[key] != controller.menuContentVersion)
 
@@ -312,28 +306,27 @@ struct StatusMenuSwitcherClickTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .claude
         settings.mergedMenuLastSelectedWasOverview = false
 
         let registry = ProviderRegistry.shared
         for provider in UsageProvider.allCases {
             guard let metadata = registry.metadata[provider] else { continue }
-            let shouldEnable = provider == .codex || provider == .claude
+            let shouldEnable = provider == .claude || provider == .opencode
             settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: shouldEnable)
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         store._setSnapshotForTesting(
             UsageSnapshot(
                 primary: RateWindow(usedPercent: 25, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 secondary: nil,
                 updatedAt: Date()),
-            provider: .codex)
+            provider: .claude)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -348,18 +341,18 @@ struct StatusMenuSwitcherClickTests {
 
         let switcher = try #require(menu.items.first?.view as? ProviderSwitcherView)
         #expect(switcher._test_simulateRuntimeClick(buttonTag: 2))
-        #expect(settings.selectedMenuProvider == .claude)
+        #expect(settings.selectedMenuProvider == .opencode)
         await controller.providerSelectionUIRefreshTask?.value
         #expect(controller.needsMenuBarIconAnimation() == true)
         #expect(controller.animationDriver != nil)
-        #expect(controller.lastAppliedMergedIconRenderSignature?.contains("provider=claude") == true)
+        #expect(controller.lastAppliedMergedIconRenderSignature?.contains("provider=opencode") == true)
 
         #expect(switcher._test_simulateRuntimeClick(buttonTag: 1))
-        #expect(settings.selectedMenuProvider == .codex)
+        #expect(settings.selectedMenuProvider == .claude)
         await controller.providerSelectionUIRefreshTask?.value
         #expect(controller.needsMenuBarIconAnimation() == false)
         #expect(controller.animationDriver == nil)
-        #expect(controller.lastAppliedMergedIconRenderSignature?.contains("provider=codex") == true)
+        #expect(controller.lastAppliedMergedIconRenderSignature?.contains("provider=claude") == true)
     }
 
     @Test
@@ -377,30 +370,29 @@ struct StatusMenuSwitcherClickTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .claude
         settings.mergedMenuLastSelectedWasOverview = false
 
         let registry = ProviderRegistry.shared
         for provider in UsageProvider.allCases {
             guard let metadata = registry.metadata[provider] else { continue }
-            let shouldEnable = provider == .codex || provider == .claude
+            let shouldEnable = provider == .claude || provider == .opencode
             settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: shouldEnable)
         }
         settings.setMergedOverviewProviderSelection(
-            provider: .codex,
-            isSelected: false,
-            activeProviders: [.codex, .claude])
-        settings.setMergedOverviewProviderSelection(
             provider: .claude,
             isSelected: false,
-            activeProviders: [.codex, .claude])
+            activeProviders: [.claude, .opencode])
+        settings.setMergedOverviewProviderSelection(
+            provider: .opencode,
+            isSelected: false,
+            activeProviders: [.claude, .opencode])
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -410,8 +402,8 @@ struct StatusMenuSwitcherClickTests {
         let menu = try #require(controller.makeMenu() as? StatusItemMenu)
         controller.menuWillOpen(menu)
         #expect(menu.items.first?.view is ProviderSwitcherView)
-        store.tokenRefreshInFlight.insert(.codex)
-        defer { store.tokenRefreshInFlight.remove(.codex) }
+        store.tokenRefreshInFlight.insert(.claude)
+        defer { store.tokenRefreshInFlight.remove(.claude) }
         var rebuildCount = 0
         controller._test_openMenuRebuildObserver = { _ in
             rebuildCount += 1
@@ -424,7 +416,7 @@ struct StatusMenuSwitcherClickTests {
             try? await Task.sleep(for: .milliseconds(5))
         }
         #expect(settings.mergedMenuLastSelectedWasOverview == false)
-        #expect(settings.selectedMenuProvider == .claude)
+        #expect(settings.selectedMenuProvider == .opencode)
         #expect(rebuildCount == 1)
 
         #expect(try menu.performKeyEquivalent(with: Self.arrowKeyEvent(keyCode: 123)) == true)
@@ -433,7 +425,7 @@ struct StatusMenuSwitcherClickTests {
             try? await Task.sleep(for: .milliseconds(5))
         }
         #expect(settings.mergedMenuLastSelectedWasOverview == false)
-        #expect(settings.selectedMenuProvider == .codex)
+        #expect(settings.selectedMenuProvider == .claude)
         #expect(rebuildCount == 2)
     }
 

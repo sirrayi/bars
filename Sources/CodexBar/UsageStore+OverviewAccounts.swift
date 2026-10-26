@@ -68,22 +68,6 @@ extension UsageStore {
                     model: model)
             }
         }
-        // Provider-specific by design: managed Codex accounts use the cached visible-account inventory.
-        if provider == .codex,
-           let projection = self.settings.codexVisibleAccountProjectionForMenuDisplay,
-           projection.visibleAccounts.count > 1
-        {
-            let labels = CodexAccountSwitcherLabeling.labels(
-                for: projection.visibleAccounts, hidePersonalInfo: self.settings.hidePersonalInfo)
-            return projection.visibleAccounts.map { account in
-                let record = self.codexAccountSnapshots.first {
-                    $0.id == account.id && Self.codexPriorSnapshotAccountMatches($0.account, account: account)
-                }
-                var model = self.codexAccountMenuCardModel(for: account, accountSnapshot: record)
-                if let label = labels[account.id] { model?.email = label }
-                return MergedOverviewRow(provider: provider.instanceID, accountID: account.id, model: model)
-            }
-        }
         let accounts = self.settings.tokenAccounts(for: provider)
         guard accounts.count > 1, self.settings.effectiveSelectedTokenAccount(for: provider) != nil else { return [] }
         let cached = self.validTokenAccountSnapshots(provider: provider, accounts: accounts)

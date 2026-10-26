@@ -57,7 +57,7 @@ struct ClaudeSwapMenuProgressSchedulingTests {
             case .configuration:
                 fixture.store.clearClaudeSwapAccountState()
             case .provider:
-                fixture.controller.selectedMenuProvider = .codex
+                fixture.controller.selectedMenuProvider = .opencode
             case .interaction:
                 fixture.controller.advanceMenuInteraction(for: fixture.menu)
             case .inspection:
@@ -123,7 +123,7 @@ struct ClaudeSwapMenuProgressSchedulingTests {
 
 @MainActor
 private final class ClaudeSwapMenuProgressFixture {
-    let navigation: CodexWorkspacesNavigationFixture
+    let navigation: MenuNavigationFixture
     let controller: StatusItemController
     let menu: NSMenu
     let executable: URL
@@ -145,7 +145,7 @@ private final class ClaudeSwapMenuProgressFixture {
     }
 
     init() throws {
-        let navigation = try CodexWorkspacesNavigationFixture(userDefaults: InMemoryUserDefaults())
+        let navigation = try MenuNavigationFixture(userDefaults: InMemoryUserDefaults())
         self.navigation = navigation
         let executable = navigation.files.root.appendingPathComponent("cswap-menu-progress")
         self.executable = executable
@@ -183,6 +183,10 @@ private final class ClaudeSwapMenuProgressFixture {
         settings.setProviderEnabled(
             provider: .claude,
             metadata: ProviderDescriptorRegistry.descriptor(for: .claude).metadata,
+            enabled: true)
+        settings.setProviderEnabled(
+            provider: .opencode,
+            metadata: ProviderDescriptorRegistry.descriptor(for: .opencode).metadata,
             enabled: true)
         navigation.store.claudeSwapAccountSnapshots = [active, target]
         navigation.store._test_providerRefreshOverride = { provider in

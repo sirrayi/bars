@@ -44,7 +44,6 @@ struct ClaudeTokenAccountRoutingTests {
             verbose: false,
             env: env,
             settings: settings,
-            fetcher: UsageFetcher(environment: env),
             claudeFetcher: ClaudeUsageFetcher(browserDetection: browserDetection),
             browserDetection: browserDetection,
             selectedTokenAccountID: account.id)
@@ -115,7 +114,6 @@ struct ClaudeTokenAccountRoutingTests {
             verbose: false,
             env: env,
             settings: snapshot,
-            fetcher: UsageFetcher(environment: env),
             claudeFetcher: ClaudeUsageFetcher(browserDetection: browserDetection),
             browserDetection: browserDetection,
             selectedTokenAccountID: account.id)
@@ -160,7 +158,6 @@ struct ClaudeTokenAccountRoutingTests {
             verbose: false,
             env: env,
             settings: snapshot,
-            fetcher: UsageFetcher(environment: env),
             claudeFetcher: ClaudeUsageFetcher(browserDetection: browserDetection),
             browserDetection: browserDetection,
             selectedTokenAccountID: account.id)

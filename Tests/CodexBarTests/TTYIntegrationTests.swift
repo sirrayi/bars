@@ -55,26 +55,6 @@ struct TTYIntegrationTests {
     }
 
     @Test
-    func `codex RPC usage live`() async throws {
-        guard ProcessInfo.processInfo.environment["LIVE_CODEX_TTY"] == "1" else {
-            return
-        }
-        let fetcher = UsageFetcher()
-        do {
-            let snapshot = try await fetcher.loadLatestUsage()
-            guard let primary = snapshot.primary else {
-                return
-            }
-            let hasData = primary.usedPercent >= 0 && (snapshot.secondary?.usedPercent ?? 0) >= 0
-            #expect(hasData)
-        } catch UsageError.noRateLimitsFound {
-            return
-        } catch {
-            return
-        }
-    }
-
-    @Test
     func `claude TTY usage probe live`() async throws {
         guard ProcessInfo.processInfo.environment["LIVE_CLAUDE_TTY"] == "1" else {
             return

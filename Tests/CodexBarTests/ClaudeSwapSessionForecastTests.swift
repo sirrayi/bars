@@ -7,7 +7,7 @@ import Testing
 struct ClaudeSwapSessionForecastTests {
     @Test
     func `fresh measurements record history under each account fingerprint`() async throws {
-        let fixture = try CodexWorkspacesNavigationFixture(userDefaults: InMemoryUserDefaults())
+        let fixture = try MenuNavigationFixture(userDefaults: InMemoryUserDefaults())
         defer { fixture.cleanup() }
         let store = fixture.store
         let accounts = Self.accounts([
@@ -30,7 +30,7 @@ struct ClaudeSwapSessionForecastTests {
 
     @Test
     func `tcr history requires email and organization and uses the shared account key`() async throws {
-        let fixture = try CodexWorkspacesNavigationFixture(userDefaults: InMemoryUserDefaults())
+        let fixture = try MenuNavigationFixture(userDefaults: InMemoryUserDefaults())
         defer { fixture.cleanup() }
         let rows = [
             Self.row(number: 1, email: " One@Example.com ", organizationUuid: "ORG-A", sessionUsed: 30),
@@ -54,7 +54,7 @@ struct ClaudeSwapSessionForecastTests {
 
     @Test
     func `last known and unavailable rows record nothing`() async throws {
-        let fixture = try CodexWorkspacesNavigationFixture(userDefaults: InMemoryUserDefaults())
+        let fixture = try MenuNavigationFixture(userDefaults: InMemoryUserDefaults())
         defer { fixture.cleanup() }
         let store = fixture.store
         let lastGood = ClaudeSwapLastGoodUsage(
@@ -74,7 +74,7 @@ struct ClaudeSwapSessionForecastTests {
 
     @Test
     func `recording swap history fires no limit reset detection`() async throws {
-        let fixture = try CodexWorkspacesNavigationFixture(userDefaults: InMemoryUserDefaults())
+        let fixture = try MenuNavigationFixture(userDefaults: InMemoryUserDefaults())
         defer { fixture.cleanup() }
         let store = fixture.store
         let beforeReset = Self.accounts([Self.row(number: 1, email: "one@example.com", sessionUsed: 100)])
@@ -96,7 +96,7 @@ struct ClaudeSwapSessionForecastTests {
 
     @Test(arguments: ClaudeSwapAccountSource.allCases)
     func `account card shows the session forecast from its own history`(source: ClaudeSwapAccountSource) throws {
-        let fixture = try CodexWorkspacesNavigationFixture(userDefaults: InMemoryUserDefaults())
+        let fixture = try MenuNavigationFixture(userDefaults: InMemoryUserDefaults())
         defer { fixture.cleanup() }
         let store = fixture.store
         let history = SessionEquivalentForecastTests.historyFixture(burns: [4, 8, 6])
@@ -136,7 +136,7 @@ struct ClaudeSwapSessionForecastTests {
 
     @Test
     func `ambient history never falls back to a swap bucket`() async throws {
-        let fixture = try CodexWorkspacesNavigationFixture(userDefaults: InMemoryUserDefaults())
+        let fixture = try MenuNavigationFixture(userDefaults: InMemoryUserDefaults())
         defer { fixture.cleanup() }
         let store = fixture.store
         await store.recordClaudeSwapPlanUtilizationHistory(
@@ -148,7 +148,7 @@ struct ClaudeSwapSessionForecastTests {
 
     @Test
     func `workspace history stays separate and follows an account to a new slot`() async throws {
-        let fixture = try CodexWorkspacesNavigationFixture(userDefaults: InMemoryUserDefaults())
+        let fixture = try MenuNavigationFixture(userDefaults: InMemoryUserDefaults())
         defer { fixture.cleanup() }
         let store = fixture.store
         let accounts = Self.accounts([
@@ -181,7 +181,7 @@ struct ClaudeSwapSessionForecastTests {
 
     @Test
     func `swap history preserves ambient history and the shared sample cap`() async throws {
-        let fixture = try CodexWorkspacesNavigationFixture(userDefaults: InMemoryUserDefaults())
+        let fixture = try MenuNavigationFixture(userDefaults: InMemoryUserDefaults())
         defer { fixture.cleanup() }
         let store = fixture.store
         let account = try #require(Self.accounts([

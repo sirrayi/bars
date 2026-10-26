@@ -383,7 +383,7 @@ extension StatusItemController {
             showUsed: showUsed)
         var primary = resolved?.primary
         var weekly = resolved?.secondary
-        var credits = self.menuBarCreditsRemainingForIcon(provider: provider, snapshot: snapshot)
+        var credits: Double?
         var stale = self.menuBarIsStale(for: provider)
         var morphProgress: Double?
 
@@ -536,25 +536,6 @@ extension StatusItemController {
             provider: provider,
             snapshot: snapshot,
             supportsAverage: self.settings.menuBarMetricSupportsAverage(for: provider))
-    }
-
-    func menuBarCreditsRemainingForIcon(
-        provider: UsageProvider,
-        snapshot: UsageSnapshot?,
-        now: Date = Date()) -> Double?
-    {
-        // Derive the menu-bar credits fallback from the same Codex projection path the rendered
-        // icon and menu use (`codexConsumerProjection` -> `menuBarFallback`), instead of a
-        // hand-rolled rate-window predicate. The projection is pure value composition over
-        // already-loaded snapshot/credits state (no IO), so this stays cheap while keeping the
-        // icon render, this signature input, and the menu-bar fallback semantics on a single
-        // source of truth — a hand-rolled approximation can silently drift from the projection
-        // as its fallback logic evolves.
-        // Provider-specific by design: only Codex projects credits into the menu-bar icon fallback.
-        guard provider == .codex, !self.menuBarUsageSource(for: provider).isFleet else { return nil }
-        return self.store.codexMenuBarCreditsRemaining(
-            snapshotOverride: snapshot,
-            now: now)
     }
 
     func quotaWarningFlashActive(provider: UsageProvider, now: Date = Date()) -> Bool {
@@ -736,28 +717,17 @@ extension StatusItemController {
 
         let percentWindow = self.menuBarMetricWindow(for: provider, snapshot: snapshot, now: now)
         let isFleet = self.menuBarUsageSource(for: provider).isFleet
-        let codexProjection = isFleet ? nil : self.store.codexConsumerProjectionIfNeeded(
-            for: provider,
-            surface: .menuBar,
-            snapshotOverride: snapshot,
-            now: now)
 
-        // The combined "Session + Weekly" metric (Codex and Claude) shows both lanes in percent mode
+        // The combined "Session + Weekly" metric (Claude) shows both lanes in percent mode
         // ("5h 12% · W 45%") and, in pace/both modes, pairs the session usage with the weekly pace.
-        let combinedLanes = self.combinedSessionWeeklyLanes(
-            for: provider, snapshot: snapshot, projection: codexProjection)
+        let combinedLanes = self.combinedSessionWeeklyLanes(for: provider, snapshot: snapshot)
 
         let pace: UsagePace?
         switch mode {
         case .percent:
             pace = nil
         case .pace, .both:
-            let paceWindow = self.menuBarPaceWindow(
-                for: provider,
-                snapshot: snapshot,
-                projection: codexProjection,
-                combinedLanes: combinedLanes,
-                percentWindow: percentWindow)
+            let paceWindow = combinedLanes.map(\.weekly) ?? percentWindow
             pace = isFleet ? nil : paceWindow.flatMap { window in
                 self.store.weeklyPace(
                     provider: provider,
@@ -773,17 +743,6 @@ extension StatusItemController {
                 estimated: snapshot?.dataConfidence == .estimated,
                 resetTimeDisplayStyle: self.settings.resetTimeDisplayStyle,
                 now: now)
-        }
-        if mode == .percent,
-           !self.settings.usageBarsShowUsed,
-           codexProjection?.menuBarFallback == .creditsBalance,
-           let creditsRemaining = codexProjection?.credits?.remaining,
-           creditsRemaining > 0
-        {
-            return
-                UsageFormatter
-                    .creditsString(from: creditsRemaining)
-                    .replacingOccurrences(of: " left", with: "")
         }
         if let combinedLanes, mode == .percent {
             if let combinedText = MenuBarDisplayText.combinedSessionWeeklyPercentText(
@@ -832,10 +791,7 @@ extension StatusItemController {
     nonisolated static func extraUsageSpendDisplayText(snapshot: UsageSnapshot?) -> String? {
         guard let cost = snapshot?.providerCost,
               cost.limit > 0,
-              cost.used >= 0,
-              // Codex extra usage is denominated in credits, not money: currency formatting would emit
-              // the bare amount ("2000.6633599996567") instead of a spend value, so it keeps the percent text.
-              cost.isMonetary
+              cost.used >= 0
         else {
             return nil
         }
@@ -945,33 +901,27 @@ extension StatusItemController {
     }
 
     /// Resolves the session (5h) and weekly (7d) lanes for the combined "Session + Weekly" menu-bar
-    /// metric, or nil when that metric is not active for `provider`. Codex resolves its lanes through the
-    /// consumer projection; Claude has none, so it classifies by window cadence — a 7-day window the OAuth
-    /// mapper parked in `primary` (the five_hour fallback) must not be mislabeled as a 5-hour session lane.
+    /// metric, or nil when that metric is not active for `provider`. Lanes are classified by window cadence —
+    /// a 7-day window the OAuth mapper parked in `primary` (the five_hour fallback) must not be mislabeled as
+    /// a 5-hour session lane.
     private func combinedSessionWeeklyLanes(
         for provider: UsageProvider,
-        snapshot: UsageSnapshot?,
-        projection: CodexConsumerProjection?) -> (session: RateWindow?, weekly: RateWindow?)?
+        snapshot: UsageSnapshot?) -> (session: RateWindow?, weekly: RateWindow?)?
     {
-        // Provider-specific by design: only Codex and Claude expose the combined session-and-weekly menu metric.
-        guard provider == .codex || provider == .claude,
+        // Provider-specific by design: only Claude exposes the combined session-and-weekly menu metric.
+        guard provider == .claude,
               self.settings.menuBarMetricPreference(for: provider, snapshot: snapshot) == .primaryAndSecondary
         else { return nil }
         // A Claude account that only exposes an enterprise/extra-usage spend limit has no real
         // session/weekly lanes; defer to the resolver's spend-limit routing instead of rendering an
         // empty or 0% placeholder lane under the combined metric.
-        if provider == .claude,
-           let snapshot,
+        if let snapshot,
            MenuBarMetricWindowResolver.claudeSpendLimitWindow(snapshot: snapshot) != nil
         {
             return nil
         }
-        let session = Self.combinedSessionLane(snapshot: snapshot, projection: projection)
-        let weekly: RateWindow? = if let projection {
-            projection.menuBarSelectableRateWindow(for: .weekly)
-        } else {
-            Self.rateWindow(in: snapshot, matchingCadenceMinutes: Self.weeklyWindowMinutes)
-        }
+        let session = Self.combinedSessionLane(snapshot: snapshot)
+        let weekly = Self.rateWindow(in: snapshot, matchingCadenceMinutes: Self.weeklyWindowMinutes)
         return (session, weekly)
     }
 
@@ -990,15 +940,8 @@ extension StatusItemController {
         }
         let mode = self.settings.menuBarDisplayMode
 
-        let projection = self.menuBarUsageSource(for: provider).isFleet
-            ? nil : self.store.codexConsumerProjectionIfNeeded(
-                for: provider,
-                surface: .menuBar,
-                snapshotOverride: snapshot,
-                now: now)
-        if let lanes = self.combinedSessionWeeklyLanes(
-            for: provider, snapshot: snapshot, projection: projection),
-            lanes.session != nil || lanes.weekly != nil
+        if let lanes = self.combinedSessionWeeklyLanes(for: provider, snapshot: snapshot),
+           lanes.session != nil || lanes.weekly != nil
         {
             switch mode {
             case .percent:
@@ -1029,44 +972,18 @@ extension StatusItemController {
         return window.resetsAt.map { [$0] } ?? []
     }
 
-    /// The combined metric's session (5h) lane. Codex resolves it through the consumer projection; other
-    /// providers classify by window cadence. A 5-hour lane the provider only synthesized to stand in for an
+    /// The combined metric's session (5h) lane, classified by window cadence. A 5-hour lane the provider only
+    /// synthesized to stand in for an
     /// absent session — Claude web's null `five_hour` placeholder, flagged at the boundary — is dropped so a
     /// weekly-only account falls back to its weekly lane instead of rendering a phantom `5h 0%`/`5h 100%`
     /// session. A genuine session (even one freshly reset to 0%) is not flagged, so it is kept.
-    private static func combinedSessionLane(
-        snapshot: UsageSnapshot?,
-        projection: CodexConsumerProjection?) -> RateWindow?
-    {
-        if let projection {
-            return projection.menuBarSelectableRateWindow(for: .session)
-        }
-        guard let session = Self.rateWindow(in: snapshot, matchingCadenceMinutes: Self.sessionWindowMinutes)
+    private static func combinedSessionLane(snapshot: UsageSnapshot?) -> RateWindow? {
+        guard let session = rateWindow(in: snapshot, matchingCadenceMinutes: sessionWindowMinutes)
         else { return nil }
         if session.isSyntheticPlaceholder {
             return nil
         }
         return session
-    }
-
-    /// The window the weekly pace is computed on in pace/both modes. Codex paces on its projected weekly
-    /// lane; the combined Session + Weekly metric paces on the weekly lane too (matching Codex); Abacus
-    /// has no secondary window so it paces on the primary monthly credits; everything else paces on the
-    /// selected percent window.
-    private func menuBarPaceWindow(
-        for provider: UsageProvider,
-        snapshot: UsageSnapshot?,
-        projection: CodexConsumerProjection?,
-        combinedLanes: (session: RateWindow?, weekly: RateWindow?)?,
-        percentWindow: RateWindow?) -> RateWindow?
-    {
-        if let projection {
-            return projection.menuBarSelectableRateWindow(for: .weekly)
-        }
-        if let combinedLanes {
-            return combinedLanes.weekly
-        }
-        return percentWindow
     }
 
     /// The usage window shown for the combined metric in pace/both modes. It pairs the SESSION usage with
@@ -1089,8 +1006,8 @@ extension StatusItemController {
     private static let weeklyWindowMinutes = 7 * 24 * 60
 
     /// Returns the first session/weekly snapshot lane whose window cadence matches `minutes`.
-    /// Used by the combined Session + Weekly metric for providers without a Codex consumer
-    /// projection so a fallback weekly window parked in `primary` is not mislabeled as a session lane.
+    /// Used by the combined Session + Weekly metric so a fallback weekly window parked in `primary` is not mislabeled
+    /// as a session lane.
     private static func rateWindow(in snapshot: UsageSnapshot?, matchingCadenceMinutes minutes: Int) -> RateWindow? {
         [snapshot?.primary, snapshot?.secondary]
             .compactMap(\.self)
@@ -1144,11 +1061,11 @@ extension StatusItemController {
         {
             return selected
         }
-        // Provider-specific by design: Codex remains the placeholder when no provider is available.
+        // Provider-specific by design: Claude remains the placeholder when no provider is available.
         return enabled.first(where: {
             self.store.menuBarSnapshot(for: $0) != nil
                 || $0.firstPartyProvider.map { self.menuBarUsageSource(for: $0).isFleet } == true
-        }) ?? enabled.first ?? .codex
+        }) ?? enabled.first ?? .claude
     }
 
     @objc func handleDebugBlinkNotification() {

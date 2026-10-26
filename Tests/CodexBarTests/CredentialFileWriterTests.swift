@@ -3,11 +3,11 @@ import Testing
 @testable import CodexBar
 @testable import CodexBarCore
 
-@Suite(CodexCredentialFixtures())
 struct CredentialFileWriterTests {
     @Test(arguments: [false, true])
     func `staging is private before writing and replacement preserves open readers`(existing: Bool) throws {
-        let root = CodexCredentialFixtures.root.appendingPathComponent(UUID().uuidString)
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: root.path)
         let url = root.appendingPathComponent("auth.json")
@@ -43,7 +43,8 @@ struct CredentialFileWriterTests {
 
     @Test(arguments: [false, true])
     func `failed write or publication preserves destination and cleans staging`(beforeWrite: Bool) throws {
-        let root = CodexCredentialFixtures.root.appendingPathComponent(UUID().uuidString)
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         let url = root.appendingPathComponent("auth.json")
         let original = Data("original-synthetic".utf8)

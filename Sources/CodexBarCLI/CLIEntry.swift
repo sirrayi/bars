@@ -51,8 +51,6 @@ enum CodexBarCLI {
             switch invocation.path {
             case ["cards"], ["usage"]:
                 await self.runUsageDisplay(path: invocation.path, values: invocation.parsedValues)
-            case let path where path.first == "codex-accounts":
-                await self.runCodexAccounts(path: path, values: invocation.parsedValues)
             case ["cost"]:
                 await self.runCost(invocation.parsedValues)
             case ["sessions", "list"]:
@@ -176,7 +174,6 @@ enum CodexBarCLI {
         let guardSignature = CommandSignature.describe(GuardOptions()).flattened()
 
         return [
-            Self.codexAccountsCommandDescriptor(),
             CommandDescriptor(
                 name: "cards",
                 abstract: "Print usage as a terminal card grid",
@@ -199,13 +196,13 @@ enum CodexBarCLI {
                 signature: costSignature),
             CommandDescriptor(
                 name: "sessions",
-                abstract: "List live Codex, Claude Code, pi, and OMP sessions",
+                abstract: "List live Claude Code sessions",
                 discussion: nil,
                 signature: CommandSignature(),
                 subcommands: [
                     CommandDescriptor(
                         name: "list",
-                        abstract: "List live Codex, Claude Code, pi, and OMP sessions",
+                        abstract: "List live Claude Code sessions",
                         discussion: nil,
                         signature: sessionsSignature),
                     CommandDescriptor(

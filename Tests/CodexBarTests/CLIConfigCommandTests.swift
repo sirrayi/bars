@@ -22,14 +22,10 @@ struct CLIConfigCommandTests {
     }
 
     @Test
-    func `config set api key for codex provider hints openai provider`() {
-        #expect(ProviderConfigEnvironment.supportsAPIKeyOverride(for: .codex) == false)
-        let codexMsg = CodexBarCLI.unsupportedAPIKeyErrorMessage(for: .codex, rawProvider: "codex")
-        #expect(codexMsg ==
-            "codex does not support config API keys. For OpenAI Platform API keys, use '--provider openai'.")
-
-        let claudeMsg = CodexBarCLI.unsupportedAPIKeyErrorMessage(for: .claude, rawProvider: "claude")
-        #expect(claudeMsg == "claude does not support config API keys.")
+    func `config set api key for an unsupported provider explains the limitation`() {
+        #expect(ProviderConfigEnvironment.supportsAPIKeyOverride(for: .devin) == false)
+        let devinMsg = CodexBarCLI.unsupportedAPIKeyErrorMessage(rawProvider: "devin")
+        #expect(devinMsg == "devin does not support config API keys.")
     }
 
     @Test
@@ -81,7 +77,7 @@ struct CLIConfigCommandTests {
             CodexBarConfigStore.pathEnvironmentKey: configURL.path,
             "HOME": configURL.deletingLastPathComponent().path,
             "CFFIXED_USER_HOME": configURL.deletingLastPathComponent().path,
-            "CODEX_HOME": configURL.deletingLastPathComponent().appendingPathComponent(".codex").path,
+            "CODEX_HOME": configURL.deletingLastPathComponent().appendingPathComponent(".opencode").path,
             // Spawned CLI binaries match no test-process name pattern; make the
             // keychain suppression explicit instead of relying on env inheritance.
             "CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS": "1",

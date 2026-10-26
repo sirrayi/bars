@@ -137,9 +137,6 @@ struct CLIArgumentParsingTests {
         #expect(CodexBarCLI.shouldDetectVersion(
             provider: .claude,
             result: self.makeResult(kind: .cli)))
-        #expect(CodexBarCLI.shouldDetectVersion(
-            provider: .codex,
-            result: self.makeResult(kind: .oauth)))
     }
 
     private func makeResult(kind: ProviderFetchKind) -> ProviderFetchResult {
@@ -149,7 +146,6 @@ struct CLIArgumentParsingTests {
                 secondary: nil,
                 updatedAt: Date(timeIntervalSince1970: 0)),
             credits: nil,
-            dashboard: nil,
             sourceLabel: "test",
             strategyID: "test",
             strategyKind: kind)

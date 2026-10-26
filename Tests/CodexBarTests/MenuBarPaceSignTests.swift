@@ -245,6 +245,6 @@ struct MenuBarPaceSignTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         return (settings, UsageStore(
-            fetcher: UsageFetcher(), browserDetection: BrowserDetection(cacheTTL: 0), settings: settings))
+            browserDetection: BrowserDetection(cacheTTL: 0), settings: settings))
     }
 }

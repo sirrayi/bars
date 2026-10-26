@@ -35,7 +35,6 @@ struct ClaudeOAuthDirectKeychainReadConsentTests {
             verbose: false,
             env: [:],
             settings: nil,
-            fetcher: UsageFetcher(environment: [:]),
             claudeFetcher: StubClaudeFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0))
     }

@@ -192,21 +192,8 @@ enum CompactMetricFormatter {
         return W("Not reported by %@", String(describing: name))
     }
 
-    static func costMetricLabel(_ label: String, provider: ProviderInstanceID) -> String {
-        // Provider-specific by design: old Codex widget timelines lack the API-estimate billing disclaimer.
-        guard provider == .codex else { return W("%@ cost", self.localizedPeriod(label)) }
-        // Snapshots written by older app versions contain the English estimate suffix.
-        // Keep its meaning while translating the period and billing disclaimer together.
-        let suffix = " API est. · not billed"
-        if label.hasSuffix(suffix) {
-            return W("%@ API est. · not billed", self.localizedPeriod(String(label.dropLast(suffix.count))))
-        }
-        let shortSuffix = " API est."
-        if label.hasSuffix(shortSuffix) {
-            return W("%@ %@", self.localizedPeriod(String(label.dropLast(shortSuffix.count))), W("API est."))
-        }
-        guard !label.contains(W("API est.")) else { return label }
-        return W("%@ API est. · not billed", self.localizedPeriod(label))
+    static func costMetricLabel(_ label: String, provider _: ProviderInstanceID) -> String {
+        W("%@ cost", self.localizedPeriod(label))
     }
 
     private static func localizedPeriod(_ label: String) -> String {
@@ -364,30 +351,16 @@ struct WidgetUsageRow: Identifiable, Equatable {
     static func rows(
         for entry: WidgetSnapshot.ProviderEntry,
         limit: Int? = nil,
-        applyBindingCap: Bool = true,
         now: Date = Date()) -> [WidgetUsageRow]
     {
         // Provider-specific by design: DeepSeek exposes no quota denominator, so a 100% bar would be misleading.
         guard entry.provider != .deepseek else { return [] }
         let rows: [WidgetUsageRow]
         if let usageRows = entry.usageRows {
-            let resolvedSnapshots = usageRows.map { row in
-                guard row.window == nil,
-                      let window = self.legacyCodexRateWindow(for: row.id, entry: entry)
-                else {
-                    return row
-                }
-                return WidgetSnapshot.WidgetUsageRowSnapshot(
-                    id: row.id,
-                    title: row.title,
-                    percentLeft: row.percentLeft,
-                    window: window)
-            }
-            let sourceRows = resolvedSnapshots.map { row in
+            rows = usageRows.map { row in
                 // The generic snapshot writer stores only a percentage for the primary/secondary/
                 // tertiary slots and leaves their reset on the entry's own windows, so recover it
-                // here. Without this the reset caption is present for Codex and absent for every
-                // other provider. Resolved reset only — the row keeps its own percentage.
+                // here. Resolved reset only — the row keeps its own percentage.
                 let reset = row.window ?? self.slotWindow(for: row.id, entry: entry)
                 return WidgetUsageRow(
                     id: row.id,
@@ -396,11 +369,6 @@ struct WidgetUsageRow: Identifiable, Equatable {
                     resetsAt: reset?.resetsAt,
                     resetDescription: reset?.resetDescription)
             }
-            rows = applyBindingCap ? self.applyingCodexWeeklyCap(
-                sourceRows,
-                snapshots: resolvedSnapshots,
-                provider: entry.provider,
-                now: now) : sourceRows
         } else {
             let metadata = entry.provider.firstPartyProvider.flatMap { ProviderDefaults.metadata[$0] }
             var defaultRows = [
@@ -431,31 +399,6 @@ struct WidgetUsageRow: Identifiable, Equatable {
         return Array(rows.prefix(max(0, limit)))
     }
 
-    private static func applyingCodexWeeklyCap(
-        _ rows: [WidgetUsageRow],
-        snapshots: [WidgetSnapshot.WidgetUsageRowSnapshot],
-        provider: ProviderInstanceID,
-        now: Date) -> [WidgetUsageRow]
-    {
-        // Provider-specific by design: Codex weekly exhaustion suppresses its paired legacy session widget row.
-        guard provider == .codex,
-              let weekly = snapshots.first(where: { $0.id == "weekly" })?.window,
-              weekly.remainingPercent <= 0,
-              weekly.resetsAt.map({ $0 > now }) ?? true
-        else {
-            return rows
-        }
-        return rows.map { row in
-            guard row.id == "session" else { return row }
-            return WidgetUsageRow(
-                id: row.id,
-                title: row.title,
-                percentLeft: 0,
-                resetsAt: weekly.resetsAt,
-                resetDescription: weekly.resetDescription)
-        }
-    }
-
     /// Reset metadata for the slot IDs the generic snapshot writer emits. Deliberately narrow:
     /// provider-specific row IDs carry their own window when the writer has one.
     static func slotWindow(for rowID: String, entry: WidgetSnapshot.ProviderEntry) -> RateWindow? {
@@ -465,27 +408,6 @@ struct WidgetUsageRow: Identifiable, Equatable {
         case "tertiary": entry.tertiary
         default: nil
         }
-    }
-
-    private static func legacyCodexRateWindow(
-        for rowID: String,
-        entry: WidgetSnapshot.ProviderEntry) -> RateWindow?
-    {
-        // Provider-specific by design: old Codex timelines reconstruct session/weekly windows by duration.
-        guard entry.provider == .codex else { return nil }
-        let candidates = [(entry.primary, "session"), (entry.secondary, "weekly")]
-        for (window, fallbackID) in candidates {
-            guard let window else { continue }
-            let classifiedID = switch window.windowMinutes {
-            case 300: "session"
-            case 10080: "weekly"
-            default: fallbackID
-            }
-            if classifiedID == rowID {
-                return window
-            }
-        }
-        return nil
     }
 
     static func compactTokenUsage(

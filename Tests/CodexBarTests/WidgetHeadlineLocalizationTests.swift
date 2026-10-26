@@ -13,7 +13,7 @@ struct WidgetHeadlineLocalizationTests {
     func `inline quota title keeps its localized name percentage and direction`(hasSecondaryLane: Bool) throws {
         try WidgetLocalizationOverride.$language.withValue("de") {
             let entry = WidgetSnapshot.ProviderEntry(
-                provider: .codex,
+                provider: .claude,
                 updatedAt: Date(),
                 primary: hasSecondaryLane ? RateWindow(
                     usedPercent: 1, windowMinutes: 300, resetsAt: nil, resetDescription: nil) : nil,

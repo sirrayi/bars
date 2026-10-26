@@ -13,7 +13,6 @@ final class StackedIconNativeProofTests: XCTestCase {
         }
         guard SettingsStore.isRunningTests,
               env["CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS"] == "1",
-              env[CodexCredentialFileAccess.isolationEnvironmentKey] == "1",
               env["CODEXBAR_TEST_SESSION_FILE_ISOLATION"] == "1",
               env["CODEXBAR_ALLOW_TEST_KEYCHAIN_ACCESS"] != "1"
         else { return XCTFail("Use an isolated test host") }
@@ -29,15 +28,14 @@ final class StackedIconNativeProofTests: XCTestCase {
         settings.refreshFrequency = .manual
         settings.statusChecksEnabled = false
         settings.randomBlinkEnabled = false
-        enableTestProviders([.codex, .claude], settings: settings)
+        enableTestProviders([.opencode, .claude], settings: settings)
         settings.setMenuBarLayout(MenuBarLayout(lines: [[.icon, .percent(window: .automatic)]]), for: nil)
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
             environmentBase: [:])
-        store._setSnapshotForTesting(Self.snapshot(provider: .codex, used: 25), provider: .codex)
+        store._setSnapshotForTesting(Self.snapshot(provider: .opencode, used: 25), provider: .opencode)
         store._setSnapshotForTesting(Self.snapshot(provider: .claude, used: 60), provider: .claude)
         let controller = StatusItemController(
             store: store,

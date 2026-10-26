@@ -38,7 +38,7 @@ struct UsagePaceTextTests {
             resetDescription: nil)
         let pace = try #require(UsagePace.weekly(window: window, now: now))
 
-        let detail = UsagePaceText.weeklyDetail(provider: .codex, pace: pace, now: now)
+        let detail = UsagePaceText.weeklyDetail(provider: .opencode, pace: pace, now: now)
 
         #expect(detail.leftLabel == "7% in deficit")
         #expect(detail.rightLabel == "Runs out in 3d")
@@ -55,7 +55,7 @@ struct UsagePaceTextTests {
             etaSeconds: nil,
             willLastToReset: true)
 
-        let detail = UsagePaceText.weeklyDetail(provider: .codex, pace: pace, now: now)
+        let detail = UsagePaceText.weeklyDetail(provider: .opencode, pace: pace, now: now)
 
         #expect(detail.leftLabel == "On pace")
     }
@@ -70,10 +70,10 @@ struct UsagePaceTextTests {
             resetDescription: nil)
         let pace = try #require(UsagePace.weekly(window: window, now: now))
 
-        let detail = UsagePaceText.weeklyDetail(provider: .codex, pace: pace, now: now)
+        let detail = UsagePaceText.weeklyDetail(provider: .opencode, pace: pace, now: now)
 
         #expect(detail.leftLabel == "33% in reserve")
-        #expect(detail.rightLabel == "Lasts until reset · 1.5× headroom")
+        #expect(detail.rightLabel == "Lasts until reset")
     }
 
     @Test
@@ -86,7 +86,7 @@ struct UsagePaceTextTests {
             resetDescription: nil)
         let pace = try #require(UsagePace.weekly(window: window, now: now))
 
-        let summary = UsagePaceText.weeklySummary(provider: .codex, pace: pace, now: now)
+        let summary = UsagePaceText.weeklySummary(provider: .opencode, pace: pace, now: now)
 
         #expect(summary == "Pace: 7% in deficit · Runs out in 3d")
     }
@@ -101,10 +101,10 @@ struct UsagePaceTextTests {
             resetDescription: nil)
         let pace = try #require(UsagePace.weekly(window: window, now: now))
 
-        let detail = UsagePaceText.weeklyDetail(provider: .codex, pace: pace, now: now)
+        let detail = UsagePaceText.weeklyDetail(provider: .opencode, pace: pace, now: now)
 
         #expect(detail.leftLabel == "37% in reserve")
-        #expect(detail.rightLabel == "Lasts until reset · 1.5× headroom")
+        #expect(detail.rightLabel == "Lasts until reset")
     }
 
     @Test
@@ -132,10 +132,10 @@ struct UsagePaceTextTests {
             resetDescription: nil)
         let pace = try #require(UsagePace.weekly(window: window, now: now))
 
-        let detail = UsagePaceText.weeklyDetail(provider: .codex, pace: pace, now: now)
+        let detail = UsagePaceText.weeklyDetail(provider: .opencode, pace: pace, now: now)
 
         #expect(detail.leftLabel == "20% in reserve")
-        #expect(detail.rightLabel == "Lasts until reset · 1.5× headroom")
+        #expect(detail.rightLabel == "Lasts until reset")
     }
 
     @Test
@@ -148,7 +148,7 @@ struct UsagePaceTextTests {
             resetDescription: nil)
         let pace = try #require(UsagePace.weekly(window: window, now: now, workDays: nil))
 
-        let detail = UsagePaceText.weeklyDetail(provider: .codex, pace: pace, now: now)
+        let detail = UsagePaceText.weeklyDetail(provider: .opencode, pace: pace, now: now)
 
         #expect(detail.leftLabel == "28% in deficit")
         #expect(detail.rightLabel == "Runs out in 13h 47m")
@@ -167,7 +167,7 @@ struct UsagePaceTextTests {
             willLastToReset: false,
             runOutProbability: 0.683)
 
-        let detail = UsagePaceText.weeklyDetail(provider: .codex, pace: pace, now: now)
+        let detail = UsagePaceText.weeklyDetail(provider: .opencode, pace: pace, now: now)
 
         #expect(detail.rightLabel == "Runs out in 2d (70% risk)")
     }
@@ -184,7 +184,7 @@ struct UsagePaceTextTests {
             willLastToReset: true,
             runOutProbability: 0.45)
 
-        let detail = UsagePaceText.weeklyDetail(provider: .codex, pace: pace, now: now)
+        let detail = UsagePaceText.weeklyDetail(provider: .opencode, pace: pace, now: now)
 
         #expect(detail.leftLabel == "9% in reserve")
         #expect(detail.rightLabel == "Lasts until reset (45% risk)")
@@ -203,9 +203,9 @@ struct UsagePaceTextTests {
             runOutProbability: 0.02,
             speedMultiplierToReset: 4)
 
-        let detail = UsagePaceText.weeklyDetail(provider: .codex, pace: pace, now: now)
+        let detail = UsagePaceText.weeklyDetail(provider: .opencode, pace: pace, now: now)
 
-        #expect(detail.rightLabel == "Lasts until reset · 1.5× headroom (0% risk)")
+        #expect(detail.rightLabel == "Lasts until reset (0% risk)")
     }
 
     @Test
@@ -220,7 +220,7 @@ struct UsagePaceTextTests {
             willLastToReset: true,
             runOutProbability: 0.03)
 
-        let detail = UsagePaceText.weeklyDetail(provider: .codex, pace: pace, now: now)
+        let detail = UsagePaceText.weeklyDetail(provider: .opencode, pace: pace, now: now)
 
         #expect(detail.rightLabel == "Lasts until reset (5% risk)")
     }
@@ -262,39 +262,6 @@ struct UsagePaceTextTests {
         #expect(detail != nil)
         #expect(detail?.leftLabel == "50% in reserve")
         #expect(detail?.rightLabel == "Lasts until reset")
-    }
-
-    @Test
-    func `Codex session pace shows conservative headroom`() {
-        let now = Date(timeIntervalSince1970: 0)
-        let window = RateWindow(
-            usedPercent: 10,
-            windowMinutes: 300,
-            resetsAt: now.addingTimeInterval(2 * 3600),
-            resetDescription: nil)
-
-        let detail = UsagePaceText.sessionDetail(provider: .codex, window: window, now: now)
-
-        #expect(detail?.rightLabel == "Lasts until reset · 1.5× headroom")
-    }
-
-    @Test
-    func `Codex session pace suppressed for weekly and monthly durations but kept for fallback shapes`() {
-        let now = Date(timeIntervalSince1970: 0)
-        func window(minutes: Int?) -> RateWindow {
-            RateWindow(
-                usedPercent: 50,
-                windowMinutes: minutes,
-                resetsAt: now.addingTimeInterval(2 * 3600),
-                resetDescription: nil)
-        }
-
-        #expect(UsagePaceText.sessionPace(provider: .codex, window: window(minutes: 10080), now: now) == nil)
-        #expect(UsagePaceText.sessionPace(provider: .codex, window: window(minutes: 43200), now: now) == nil)
-        // Unknown durations fall back to the session lane and must keep their pre-existing pace.
-        #expect(UsagePaceText.sessionPace(provider: .codex, window: window(minutes: 540), now: now) != nil)
-        #expect(UsagePaceText.sessionPace(provider: .codex, window: window(minutes: nil), now: now) != nil)
-        #expect(UsagePaceText.sessionPace(provider: .codex, window: window(minutes: 300), now: now) != nil)
     }
 
     @Test

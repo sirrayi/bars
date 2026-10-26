@@ -210,7 +210,7 @@ struct CLIServeRawHTTPTests {
         })
         let config = CodexBarConfig(providers: [
             ProviderConfig(id: .claude, enabled: true),
-            ProviderConfig(id: .codex, enabled: false),
+            ProviderConfig(id: .opencode, enabled: false),
         ])
         try await Self.withServeRuntime(
             token: "secret",
@@ -238,12 +238,12 @@ struct CLIServeRawHTTPTests {
     func `snapshot shell supports provider filter and rejects invalid query values`() async throws {
         let config = CodexBarConfig(providers: [
             ProviderConfig(id: .claude, enabled: true),
-            ProviderConfig(id: .codex, enabled: true),
+            ProviderConfig(id: .opencode, enabled: true),
         ])
         try await Self.withServeRuntime(token: "secret", config: config, body: { port in
             let filtered = try await Self.rawExchange(
                 port: port,
-                request: "GET /dashboard/v1/snapshot?detail=shell&provider=codex HTTP/1.1\r\n"
+                request: "GET /dashboard/v1/snapshot?detail=shell&provider=opencode HTTP/1.1\r\n"
                     + "Host: 127.0.0.1\r\nAuthorization: Bearer secret\r\n\r\n")
             let invalidProvider = try await Self.rawExchange(
                 port: port,
@@ -258,7 +258,7 @@ struct CLIServeRawHTTPTests {
                 JSONSerialization.jsonObject(with: Data(filtered.body.utf8)) as? [String: Any])
             let providers = try #require(object["providers"] as? [[String: Any]])
             #expect(filtered.statusLine == "HTTP/1.1 200 OK")
-            #expect(providers.compactMap { $0["id"] as? String } == ["codex"])
+            #expect(providers.compactMap { $0["id"] as? String } == ["opencode"])
             #expect(invalidProvider.statusLine == "HTTP/1.1 400 Bad Request")
             #expect(invalidProvider.body == #"{"error":"Unknown provider 'missing'."}"#)
             #expect(invalidDetail.statusLine == "HTTP/1.1 400 Bad Request")

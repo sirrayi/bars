@@ -348,7 +348,7 @@ struct CloudSyncSettingsTests {
 
         let recordNames = CloudSyncDirtyState.configurationRecordNamesToQueue(
             envelope: envelope,
-            configuredProviders: [.claude, .codex])
+            configuredProviders: [.claude, .opencode])
 
         #expect(recordNames.isEmpty)
     }
@@ -477,10 +477,10 @@ struct CloudSyncSettingsTests {
         var envelope = CloudSyncPersistence.Envelope(stateSerialization: nil, encodedSystemFields: [:])
 
         CloudSyncDirtyState.markBootstrapDirtyIfNeeded(
-            configuredProviders: [.claude, .codex],
+            configuredProviders: [.claude, .opencode],
             envelope: &envelope)
 
-        #expect(envelope.dirtyProviders == [UsageProvider.claude.rawValue, UsageProvider.codex.rawValue])
+        #expect(envelope.dirtyProviders == [UsageProvider.claude.rawValue, UsageProvider.opencode.rawValue])
         #expect(envelope.preferencesDirty)
     }
 
@@ -489,16 +489,16 @@ struct CloudSyncSettingsTests {
         var envelope = CloudSyncPersistence.Envelope(
             stateSerialization: nil,
             encodedSystemFields: [:],
-            dirtyProviders: [UsageProvider.claude.rawValue, UsageProvider.codex.rawValue],
+            dirtyProviders: [UsageProvider.claude.rawValue, UsageProvider.opencode.rawValue],
             preferencesDirty: true)
 
         CloudSyncDirtyState.clearSavedRecords(
             [ProviderIntentPayload.recordName(for: .claude), PreferencesSyncPayload.recordName],
             envelope: &envelope)
 
-        #expect(envelope.dirtyProviders == [UsageProvider.codex.rawValue])
+        #expect(envelope.dirtyProviders == [UsageProvider.opencode.rawValue])
         #expect(!envelope.preferencesDirty)
-        #expect(envelope.dirtyProviders.contains(UsageProvider.codex.rawValue))
+        #expect(envelope.dirtyProviders.contains(UsageProvider.opencode.rawValue))
     }
 
     @Test

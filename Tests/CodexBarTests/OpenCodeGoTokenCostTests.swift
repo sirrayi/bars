@@ -8,8 +8,7 @@ struct OpenCodeGoTokenCostTests {
     @Test
     func `token snapshot projection is nil when local daily history is empty`() {
         let settings = Self.makeSettings()
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
 
         // Web-only source mode and machines without a readable local database leave
         // `opencodegoUsage` present but `daily` empty. A dataless projection here would
@@ -33,8 +32,7 @@ struct OpenCodeGoTokenCostTests {
     @Test
     func `token snapshot projection is populated when local daily history exists`() {
         let settings = Self.makeSettings()
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
 
         let populatedSnapshot = OpenCodeGoUsageSnapshot(
             hasMonthlyUsage: true,
@@ -67,8 +65,7 @@ struct OpenCodeGoTokenCostTests {
     @Test
     func `zero cost local history projects known zero instead of unavailable`() {
         let settings = Self.makeSettings()
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
 
         let zeroCostSnapshot = OpenCodeGoUsageSnapshot(
             hasMonthlyUsage: true,

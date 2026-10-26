@@ -21,21 +21,13 @@ struct CLIServeAccountIdentityPayload: Encodable, Equatable {
 
 enum CLIServeAccountDiscovery {
     private static let schemaVersion = 1
-    private static let managedCodexSource = "codex-managed"
     private static let tokenAccountSource = "token-account"
-    /// Provider-specific by design: only Codex has a managed-home metadata store.
-    private static let managedCodexProvider = UsageProvider.codex
 
     static func makePayload(
         config: CodexBarConfig,
-        managedCodexAccounts: [ManagedCodexAccount],
         identityMode: DashboardIdentityMode) -> CLIServeAccountsPayload
     {
         var accounts = self.tokenAccounts(config: config, identityMode: identityMode)
-        accounts.append(contentsOf: self.managedCodexAccounts(
-            config: config,
-            accounts: managedCodexAccounts,
-            identityMode: identityMode))
         accounts.sort {
             if $0.provider != $1.provider { return $0.provider < $1.provider }
             if $0.source != $1.source { return $0.source < $1.source }
@@ -79,30 +71,6 @@ enum CLIServeAccountDiscovery {
         }
     }
 
-    /// Provider-specific by design: managed-home accounts currently exist only for Codex.
-    private static func managedCodexAccounts(
-        config: CodexBarConfig,
-        accounts: [ManagedCodexAccount],
-        identityMode: DashboardIdentityMode) -> [CLIServeAccountPayload]
-    {
-        let activeSource = config.providerConfig(for: self.managedCodexProvider.instanceID)?
-            .codexActiveSource ?? .liveSystem
-        return accounts.map { account in
-            let identity = ProviderAccountIdentity(
-                source: self.managedCodexSource,
-                opaqueID: account.id.uuidString.lowercased())
-            let email = DashboardSnapshotBuilder.dashboardEmail(account.email, mode: identityMode)
-            let rawLabel = account.workspaceLabel ?? account.email
-            return CLIServeAccountPayload(
-                id: "\(identity.source):\(identity.opaqueID)",
-                provider: self.managedCodexProvider.rawValue,
-                source: identity.source,
-                label: self.presentedLabel(rawLabel, accountID: identity.opaqueID, mode: identityMode),
-                active: activeSource == .managedAccount(id: account.id),
-                identity: identityMode == .none ? nil : CLIServeAccountIdentityPayload(accountEmail: email))
-        }
-    }
-
     private static func presentedLabel(
         _ raw: String,
         accountID: String,
@@ -128,10 +96,8 @@ extension CodexBarCLI {
             return self.serveUnauthorizedResponse()
         }
         let config: CodexBarConfig
-        let managedAccounts: [ManagedCodexAccount]
         do {
             config = try runtime.configStore.load() ?? CodexBarConfig.makeDefault()
-            managedAccounts = try FileManagedCodexAccountStore().loadAccountMetadata().accounts
         } catch {
             return self.addingNoStore(self.serveError(
                 status: .internalServerError,
@@ -142,7 +108,6 @@ extension CodexBarCLI {
             hidesPersonalInfo: self.hidePersonalInfoFromDefaults())
         let payload = CLIServeAccountDiscovery.makePayload(
             config: config,
-            managedCodexAccounts: managedAccounts,
             identityMode: identityMode)
         return self.addingNoStore(CLIServeAccountDiscovery.response(
             payload: payload,

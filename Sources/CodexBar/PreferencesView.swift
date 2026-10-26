@@ -53,8 +53,6 @@ struct PreferencesView: View {
     @Bindable var cloudSyncState: CloudSyncState
     let updater: UpdaterProviding
     @Bindable var selection: PreferencesSelection
-    let managedCodexAccountCoordinator: ManagedCodexAccountCoordinator
-    let codexAccountPromotionCoordinator: CodexAccountPromotionCoordinator
     let runProviderLoginFlow: @MainActor (UsageProvider) async -> Void
     @Environment(\.colorScheme) private var colorScheme
     @AppStorage(SettingsPane.sidebarWidthDefaultsKey) private var sidebarWidth: Double = SettingsPane.sidebarWidth
@@ -75,8 +73,6 @@ struct PreferencesView: View {
         cloudSyncState: CloudSyncState = CloudSyncState(),
         updater: UpdaterProviding,
         selection: PreferencesSelection,
-        managedCodexAccountCoordinator: ManagedCodexAccountCoordinator = ManagedCodexAccountCoordinator(),
-        codexAccountPromotionCoordinator: CodexAccountPromotionCoordinator? = nil,
         runProviderLoginFlow: @escaping @MainActor (UsageProvider) async -> Void = { _ in })
     {
         self.settings = settings
@@ -84,12 +80,6 @@ struct PreferencesView: View {
         self.cloudSyncState = cloudSyncState
         self.updater = updater
         self.selection = selection
-        self.managedCodexAccountCoordinator = managedCodexAccountCoordinator
-        self.codexAccountPromotionCoordinator = codexAccountPromotionCoordinator
-            ?? CodexAccountPromotionCoordinator(
-                settingsStore: settings,
-                usageStore: store,
-                managedAccountCoordinator: managedCodexAccountCoordinator)
         self.runProviderLoginFlow = runProviderLoginFlow
     }
 
@@ -265,8 +255,6 @@ struct PreferencesView: View {
                     provider: provider,
                     settings: self.settings,
                     store: self.store,
-                    managedCodexAccountCoordinator: self.managedCodexAccountCoordinator,
-                    codexAccountPromotionCoordinator: self.codexAccountPromotionCoordinator,
                     runProviderLoginFlow: self.runProviderLoginFlow)
                     .id(instanceID)
             }

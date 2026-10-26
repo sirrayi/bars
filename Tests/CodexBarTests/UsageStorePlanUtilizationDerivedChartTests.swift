@@ -22,7 +22,7 @@ struct UsageStorePlanUtilizationDerivedChartTests {
         let model = PlanUtilizationHistoryChartMenuView._modelSnapshotForTesting(
             selectedSeriesRawValue: "weekly:10080",
             histories: histories,
-            provider: .codex,
+            provider: .opencode,
             referenceDate: secondBoundary)
 
         #expect(model.selectedSeries == "weekly:10080")

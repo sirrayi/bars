@@ -158,9 +158,7 @@ final class MenuLayoutScreenshotRenderTests: XCTestCase {
         }
         let layout = MenuBarLayout(lines: [[.resetCountdown, .separatorDot, .resetAbsolute]])
         settings.setMenuBarLayout(layout, for: nil)
-        let fetcher = UsageFetcher()
         let store = UsageStore(
-            fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         let controller = StatusItemController(
@@ -273,7 +271,7 @@ final class MenuLayoutScreenshotRenderTests: XCTestCase {
         tokenUsage: UsageMenuCardView.Model.TokenUsageSection) -> UsageMenuCardView.Model
     {
         UsageMenuCardView.Model(
-            provider: .codex,
+            provider: .opencode,
             providerName: "Codex",
             email: "",
             subtitleText: "Updated now",
@@ -596,7 +594,7 @@ extension MenuLayoutScreenshotRenderTests {
         let directory = URL(fileURLWithPath: dir, isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
 
-        for provider in [UsageProvider.codex, .claude] {
+        for provider in [UsageProvider.opencode, .claude] {
             let metadata = try XCTUnwrap(ProviderDefaults.metadata[provider])
             let model = UsageMenuCardView.Model.make(.init(
                 provider: provider,
@@ -675,22 +673,11 @@ extension MenuLayoutScreenshotRenderTests {
                 resetDescription: nil),
             updatedAt: Self.now,
             identity: ProviderIdentitySnapshot(
-                providerID: .codex, accountEmail: nil, accountOrganization: nil, loginMethod: "Pro"))
-        let projection = CodexConsumerProjection.make(surface: .liveCard, context: .init(
-            snapshot: snapshot,
-            rawUsageError: nil,
-            liveCredits: nil,
-            rawCreditsError: nil,
-            liveDashboard: nil,
-            rawDashboardError: nil,
-            dashboardAttachmentAuthorized: false,
-            dashboardRequiresLogin: false,
-            now: Self.now))
+                providerID: .opencode, accountEmail: nil, accountOrganization: nil, loginMethod: "Pro"))
         let model = try UsageMenuCardView.Model.make(.init(
-            provider: .codex,
-            metadata: XCTUnwrap(ProviderDefaults.metadata[.codex]),
+            provider: .opencode,
+            metadata: XCTUnwrap(ProviderDefaults.metadata[.opencode]),
             snapshot: snapshot,
-            codexProjection: projection,
             credits: nil,
             creditsError: nil,
             dashboardError: nil,

@@ -51,8 +51,7 @@ struct SpendDashboardClockRolloverTests {
         // Pin the bucket timezone so "same day" does not depend on the host machine's zone.
         let configuration = SpendDashboardConfiguration(
             costUsageEnabled: true,
-            providerIDs: [UsageProvider.codex.rawValue],
-            codexAccountIdentities: ["rollover"],
+            providerIDs: [UsageProvider.claude.rawValue],
             bucketTimeZoneIdentifier: "UTC")
         let input = Self.input(day: "2026-07-15", cost: 4, updatedAt: loadedAt)
         let defaults = try Self.isolatedDefaults(suiteName: "SpendDashboardClockRolloverTests-same-day")
@@ -83,8 +82,7 @@ struct SpendDashboardClockRolloverTests {
         let clock = LockIsolated(loadedAt)
         let configuration = SpendDashboardConfiguration(
             costUsageEnabled: true,
-            providerIDs: [UsageProvider.codex.rawValue],
-            codexAccountIdentities: ["rollover"],
+            providerIDs: [UsageProvider.claude.rawValue],
             bucketTimeZoneIdentifier: "UTC")
         let recoveredInput = Self.input(day: "2026-07-15", cost: 4, updatedAt: laterSameDay)
         let defaults = try Self.isolatedDefaults(suiteName: "SpendDashboardClockRolloverTests-failed-retry")
@@ -93,7 +91,7 @@ struct SpendDashboardClockRolloverTests {
             let count = loadCount.value + 1
             loadCount.setValue(count)
             if count == 1 {
-                return SpendDashboardLoadResult(inputs: [], failedSourceIDs: ["codex:rollover"])
+                return SpendDashboardLoadResult(inputs: [], failedSourceIDs: ["opencode:rollover"])
             } else {
                 return SpendDashboardLoadResult(inputs: [recoveredInput], failedSourceIDs: [])
             }
@@ -156,8 +154,7 @@ struct SpendDashboardClockRolloverTests {
         let clock = LockIsolated(loadedAt)
         let configuration = SpendDashboardConfiguration(
             costUsageEnabled: true,
-            providerIDs: [UsageProvider.codex.rawValue],
-            codexAccountIdentities: ["rollover"],
+            providerIDs: [UsageProvider.claude.rawValue],
             bucketTimeZoneIdentifier: "UTC")
         let input = Self.input(day: "2026-07-15", cost: 4, updatedAt: loadedAt)
         let defaults = try Self.isolatedDefaults(suiteName: "SpendDashboardClockRolloverTests-stale-skip")
@@ -191,8 +188,7 @@ struct SpendDashboardClockRolloverTests {
         let gate = SpendDashboardRolloverGate()
         let configuration = SpendDashboardConfiguration(
             costUsageEnabled: true,
-            providerIDs: [UsageProvider.codex.rawValue],
-            codexAccountIdentities: ["rollover"],
+            providerIDs: [UsageProvider.claude.rawValue],
             bucketTimeZoneIdentifier: "UTC")
         let initialInput = Self.input(day: "2026-07-15", cost: 4, updatedAt: loadedAt)
         let refreshedInput = Self.input(day: "2026-07-15", cost: 9, updatedAt: atTTL)
@@ -246,8 +242,7 @@ struct SpendDashboardClockRolloverTests {
         let loadCount = LockIsolated(0)
         let configuration = SpendDashboardConfiguration(
             costUsageEnabled: true,
-            providerIDs: [UsageProvider.codex.rawValue],
-            codexAccountIdentities: ["rollover"],
+            providerIDs: [UsageProvider.claude.rawValue],
             bucketTimeZoneIdentifier: "UTC")
         let defaults = try Self.isolatedDefaults(suiteName: "SpendDashboardClockRolloverTests-reopen")
         defer { defaults.removePersistentDomain(forName: "SpendDashboardClockRolloverTests-reopen") }
@@ -281,7 +276,6 @@ struct SpendDashboardClockRolloverTests {
                     configuration: configuration,
                     capturedInputs: [],
                     unavailableSourceIDs: [],
-                    codexRequests: [],
                     now: clock.value,
                     force: mode.forcesLoader)
             },
@@ -291,8 +285,7 @@ struct SpendDashboardClockRolloverTests {
 
     private static let configuration = SpendDashboardConfiguration(
         costUsageEnabled: true,
-        providerIDs: [UsageProvider.codex.rawValue],
-        codexAccountIdentities: ["rollover"])
+        providerIDs: [UsageProvider.claude.rawValue])
 
     private static func isolatedDefaults(suiteName: String) throws -> UserDefaults {
         let defaults = try #require(UserDefaults(suiteName: suiteName))
@@ -317,8 +310,8 @@ struct SpendDashboardClockRolloverTests {
             daily: [entry],
             updatedAt: updatedAt)
         return SpendDashboardModel.ProviderInput(
-            provider: .codex,
-            displayName: "Codex",
+            provider: .claude,
+            displayName: "OpenCode",
             snapshot: snapshot)
     }
 

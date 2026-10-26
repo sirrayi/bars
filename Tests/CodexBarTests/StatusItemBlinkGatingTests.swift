@@ -47,12 +47,12 @@ struct StatusItemBlinkGatingTests {
         harness.settings.menuBarShowsBrandIconWithPercent = true
         controller.updateIcons()
         #expect(controller.blinkTask == nil)
-        #expect(controller.renderedMenuBarLayoutResolution(for: .codex).usesLegacyRendering)
+        #expect(controller.renderedMenuBarLayoutResolution(for: .opencode).usesLegacyRendering)
 
         controller.brandIcon = { _ in nil }
         controller.updateIcons()
         let task = try #require(controller.blinkTask)
-        controller.blinkStates[.codex] = StatusItemController.BlinkState(
+        controller.blinkStates[.opencode] = StatusItemController.BlinkState(
             nextBlink: harness.clock.now,
             blinkStart: harness.clock.now)
         await harness.clock.waitForSleep()
@@ -60,7 +60,7 @@ struct StatusItemBlinkGatingTests {
         harness.clock.now.addTimeInterval(0.1)
         harness.clock.wake()
         await harness.clock.waitForSleep()
-        #expect((controller.blinkAmounts[.codex] ?? 0) > 0)
+        #expect((controller.blinkAmounts[.opencode] ?? 0) > 0)
 
         controller.brandIcon = { [image = harness.image] _ in image }
         controller.updateIcons()
@@ -79,7 +79,7 @@ struct StatusItemBlinkGatingTests {
         harness.settings.menuBarLayout = MenuBarLayout(lines: [[.icon, .providerName]])
         controller.brandIcon = { _ in nil }
         controller.updateIcons()
-        #expect(!controller.renderedMenuBarLayoutResolution(for: .codex).usesLegacyRendering)
+        #expect(!controller.renderedMenuBarLayoutResolution(for: .opencode).usesLegacyRendering)
         #expect(controller.blinkTask == nil)
     }
 
@@ -132,7 +132,7 @@ struct StatusItemBlinkGatingTests {
             self.settings.refreshFrequency = .manual
             self.settings.mergeIcons = merged
             self.settings.mergeIconsStacked = false
-            self.settings.selectedMenuProvider = .codex
+            self.settings.selectedMenuProvider = .opencode
             self.settings.randomBlinkEnabled = false
             self.settings.menuBarShowsBrandIconWithPercent = false
             for provider in UsageProvider.allCases {
@@ -140,17 +140,15 @@ struct StatusItemBlinkGatingTests {
                     self.settings.setProviderEnabled(
                         provider: provider,
                         metadata: metadata,
-                        enabled: provider == .codex || (merged && provider == .deepseek))
+                        enabled: provider == .opencode || (merged && provider == .deepseek))
                 }
             }
-            let fetcher = UsageFetcher(environment: [:])
             self.store = UsageStore(
-                fetcher: fetcher,
                 browserDetection: BrowserDetection(cacheTTL: 0),
                 settings: self.settings,
                 startupBehavior: .testing,
                 environmentBase: [:])
-            self.store._setSnapshotForTesting(self.snapshot, provider: .codex)
+            self.store._setSnapshotForTesting(self.snapshot, provider: .opencode)
             self.store._setSnapshotForTesting(self.snapshot, provider: .claude)
             self.controller = StatusItemController(
                 store: self.store,

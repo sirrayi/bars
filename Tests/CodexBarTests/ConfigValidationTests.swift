@@ -14,7 +14,7 @@ struct ConfigValidationTests {
                 timeoutSeconds: 301),
         ]
         let config = CodexBarConfig(
-            providers: [ProviderConfig(id: .codex)],
+            providers: [ProviderConfig(id: .claude)],
             hooks: HooksConfig(enabled: true, events: invalidRules))
         let codes = Set(CodexBarConfigValidator.validate(config).map(\.code))
 
@@ -38,19 +38,6 @@ struct ConfigValidationTests {
 
         #expect(codes.contains("too_many_hook_rules"))
         #expect(codes.contains("invalid_hook_command_size"))
-    }
-
-    @Test
-    func `allows Codex API source without config apiKey`() {
-        var config = CodexBarConfig.makeDefault()
-        config.setProviderConfig(ProviderConfig(id: .codex, source: .api))
-        let issues = CodexBarConfigValidator.validate(config)
-        #expect(!issues.contains(where: {
-            $0.provider == .codex && $0.code == "unsupported_source"
-        }))
-        #expect(!issues.contains(where: {
-            $0.provider == .codex && $0.code == "api_key_missing"
-        }))
     }
 
     @Test

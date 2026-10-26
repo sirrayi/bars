@@ -160,7 +160,7 @@ struct SpendDashboardTrendPanel: View {
                         .frame(width: 8, height: 8)
                         .accessibilityHidden(true)
                     SpendProviderIcon(
-                        provider: provider.provider, sourceKind: provider.sourceKind, style: .brand)
+                        provider: provider.provider, style: .brand)
                     Text(SpendChartPalette.label(provider, providers: self.group.providers))
                         .font(.callout)
                         .fixedSize()
@@ -437,7 +437,6 @@ struct SpendTrendChart: View {
                     .accessibilityHidden(true)
                 SpendProviderIcon(
                     provider: segment.provider,
-                    sourceKind: self.group.providers.first { $0.id == segment.sourceID }?.sourceKind ?? .native,
                     style: .brand)
                 Text(self.sourceText(segment))
                 Text(self.costText(segment.cost, sourceID: segment.sourceID)).monospacedDigit()

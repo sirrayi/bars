@@ -17,7 +17,6 @@ struct ProviderUsageItemID: Hashable, Sendable {
     }
 
     static let credits = Self(rawValue: "section:credits")
-    static let codexResetCredits = Self(rawValue: "section:codex-reset-credits")
     static let claudeResetCredits = Self(rawValue: "section:claude-reset-credits")
     static let claudeExtraUsage = Self(rawValue: "section:claude-extra-usage")
     static let subscription = Self(rawValue: "section:subscription")
@@ -41,17 +40,12 @@ struct ProviderUsageItemDescriptor: Identifiable, Equatable, Sendable {
 extension ProviderUsageItemID {
     @MainActor
     func requiresOptionalUsage(for provider: UsageProvider) -> Bool {
-        // Provider-specific by design: Codex extra limits and Claude Extra usage/Routines follow global gates.
+        // Provider-specific by design: Claude Extra usage/Routines follow global gates.
         if self == .credits || (provider == .claude && self == .claudeExtraUsage) {
             return true
         }
         if let metricID = self.metricID {
-            // CodexAdditionalRateLimitMapper assigns the codex- prefix to optional extra limits.
-            // A Codex "monthly" metric can be a real 30-day quota (always visible) or the synthetic
-            // credit-limit lane (globally gated); usageItemDescriptors resolves that from the window.
-            // The ID-level rule stays conservative for hidden placeholders, which lack window data.
-            return (provider == .codex && (metricID.hasPrefix("codex-") || metricID == "monthly"))
-                || (provider == .claude && metricID == "claude-routines")
+            return provider == .claude && metricID == "claude-routines"
         }
         guard let rawTitle = self.detailSectionTitle else { return false }
         let policy = ProviderDescriptorRegistry.descriptor(for: provider).presentation.optionalDetails
@@ -63,7 +57,7 @@ extension ProviderUsageItemID {
     func unreportedTitle(for provider: UsageProvider) -> String {
         switch self {
         case .credits: return L("Credits")
-        case .codexResetCredits, .claudeResetCredits: return L("Limit Reset Credits")
+        case .claudeResetCredits: return L("Limit Reset Credits")
         case .claudeExtraUsage: return L("Extra usage")
         case .subscription: return L("Plan renewal / expiry")
         default:
@@ -91,8 +85,8 @@ extension ProviderUsageItemID {
 
 extension UsageMenuCardView.Model {
     var quotaSubscriptionNotes: [String] {
-        // Provider-specific by design: Codex and Claude place their plan dates beside quota windows.
-        self.provider == .codex || self.provider == .claude ? self.subscriptionNotes : []
+        // Provider-specific by design: Claude places its plan dates beside quota windows.
+        self.provider == .claude ? self.subscriptionNotes : []
     }
 
     var supplementalUsageNotes: [String] {
@@ -103,24 +97,13 @@ extension UsageMenuCardView.Model {
     var usageItemDescriptors: [ProviderUsageItemDescriptor] {
         var descriptors = self.metrics.map { metric in
             let itemID = ProviderUsageItemID.metric(metric.id)
-            // Provider-specific by design: the synthetic Codex credit lane is globally gated, while a
-            // real 30-day quota window keeps showing while the global switch is off.
-            let requiresOptionalUsage = self.provider == .codex && metric.id == "monthly"
-                ? metric.isSyntheticCreditLane
-                : itemID.requiresOptionalUsage(for: self.provider)
             return ProviderUsageItemDescriptor(
                 id: itemID,
                 title: UsageMenuCardView.popupMetricTitle(provider: self.provider, metric: metric),
-                requiresOptionalUsage: requiresOptionalUsage)
+                requiresOptionalUsage: itemID.requiresOptionalUsage(for: self.provider))
         }
         if !self.quotaSubscriptionNotes.isEmpty {
             descriptors.append(.init(id: .subscription, title: L("Plan renewal / expiry")))
-        }
-        // Provider-specific by design: Codex reset credits are a non-metric section with their own visibility choice.
-        if self.provider == .codex, self.limitResetCredits != nil {
-            descriptors.append(ProviderUsageItemDescriptor(
-                id: .codexResetCredits,
-                title: L("Limit Reset Credits")))
         }
         if self.provider == .claude, self.limitResetCredits != nil {
             descriptors.append(.init(id: .claudeResetCredits, title: L("Limit Reset Credits")))
@@ -207,9 +190,7 @@ extension UsageMenuCardView.Model {
             projected.usageNotes.removeAll { self.subscriptionNotes.contains($0) }
             projected.subscriptionNotes = []
         }
-        if (self.provider == .codex && hiddenItemIDs.contains(.codexResetCredits)) ||
-            (self.provider == .claude && hiddenItemIDs.contains(.claudeResetCredits))
-        {
+        if self.provider == .claude, hiddenItemIDs.contains(.claudeResetCredits) {
             projected.limitResetCredits = nil
         }
         let hiddenTitles = Set(hiddenItemIDs.compactMap(\.detailSectionTitle))
@@ -238,11 +219,7 @@ extension SettingsStore {
         }
 
         var hiddenIDs = Self.defaultHiddenUsageItemIDs(for: provider)
-        // Provider-specific by design: migrate the legacy Codex Spark and Claude Daily Routines visibility toggles.
-        if provider == .codex, !self.codexSparkUsageVisible {
-            hiddenIDs.insert(.metric("codex-spark"))
-            hiddenIDs.insert(.metric("codex-spark-weekly"))
-        }
+        // Provider-specific by design: migrate the legacy Claude Daily Routines visibility toggle.
         if provider == .claude, !self.claudeDailyRoutinesUsageVisible {
             hiddenIDs.insert(.metric("claude-routines"))
         }
@@ -304,13 +281,6 @@ extension SettingsStore {
         hiddenItemIDs: Set<ProviderUsageItemID>)
     {
         // Provider-specific by design: keep legacy toggles synchronized so downgrades preserve the closest behavior.
-        if provider == .codex {
-            let sparkIDs: Set<ProviderUsageItemID> = [
-                .metric("codex-spark"),
-                .metric("codex-spark-weekly"),
-            ]
-            self.codexSparkUsageVisible = !sparkIDs.isSubset(of: hiddenItemIDs)
-        }
         if provider == .claude {
             self.claudeDailyRoutinesUsageVisible = !hiddenItemIDs.contains(.metric("claude-routines"))
         }

@@ -29,18 +29,13 @@ extension UsageStore {
         self.versions[provider.instanceID]
     }
 
-    var codexSnapshot: UsageSnapshot? {
-        // Provider-specific by design: dedicated Codex consumers require the reconciled primary-account snapshot.
-        self.snapshots[.codex]
-    }
-
     var claudeSnapshot: UsageSnapshot? {
         // Provider-specific by design: Claude swap/account consumers require the active Claude snapshot directly.
         self.snapshots[.claude]
     }
 
     func presentationSnapshot(for provider: UsageProvider) -> UsageSnapshot? {
-        // Provider-specific by design: DeepSeek profile transitions and Codex dashboard attachment overlay live state.
+        // Provider-specific by design: DeepSeek profile transitions overlay live state.
         if provider == .deepseek,
            let transition = self.deepseekProfileTransition,
            transition.accountID == self.settings.selectedTokenAccount(for: .deepseek)?.id
@@ -48,28 +43,6 @@ extension UsageStore {
             return transition.snapshot
         }
         if let snapshot = self.snapshot(for: provider.instanceID) {
-            if provider == .codex {
-                if self.openAIDashboardAttachmentAuthorized,
-                   let dashboard = self.openAIDashboard,
-                   dashboard.subscriptionRenewsAt != nil || dashboard.subscriptionExpiresAt != nil
-                {
-                    return snapshot.withSubscriptionMetadata(
-                        expiresAt: dashboard.subscriptionExpiresAt,
-                        renewsAt: dashboard.subscriptionRenewsAt)
-                }
-
-                if let cache = OpenAIDashboardCacheStore.load(),
-                   cache.snapshot.subscriptionRenewsAt != nil || cache.snapshot.subscriptionExpiresAt != nil,
-                   let cacheEmail = CodexIdentityResolver.normalizeEmail(cache.accountEmail),
-                   let accountEmail = CodexIdentityResolver.normalizeEmail(
-                       snapshot.accountEmail(for: .codex) ?? self.accountInfo(for: .codex).email),
-                   cacheEmail == accountEmail
-                {
-                    return snapshot.withSubscriptionMetadata(
-                        expiresAt: cache.snapshot.subscriptionExpiresAt,
-                        renewsAt: cache.snapshot.subscriptionRenewsAt)
-                }
-            }
             return snapshot
         }
         guard provider == .deepseek, self.refreshingProviders.contains(provider.instanceID) else { return nil }
@@ -118,23 +91,6 @@ extension UsageStore {
         self.deepseekProfileTransition?.snapshot
     }
 
-    var lastCodexError: String? {
-        // Provider-specific by design: Codex dashboard and credits surfaces expose separate app-owned error lanes.
-        self.errors[.codex]
-    }
-
-    var userFacingLastCodexError: String? {
-        self.userFacingError(for: .codex)
-    }
-
-    var userFacingLastCreditsError: String? {
-        CodexUIErrorMapper.userFacingMessage(self.lastCreditsError)
-    }
-
-    var userFacingLastOpenAIDashboardError: String? {
-        CodexUIErrorMapper.userFacingMessage(self.lastOpenAIDashboardError)
-    }
-
     var lastClaudeError: String? {
         // Provider-specific by design: Claude swap/account surfaces consume the active Claude error lane directly.
         self.errors[.claude]
@@ -159,8 +115,6 @@ extension UsageStore {
     {
         if let raw = self.errors[provider.instanceID] {
             switch provider {
-            case .codex:
-                return CodexUIErrorMapper.userFacingMessage(raw).map { ($0, nil) }
             case .claude:
                 return ClaudeUIErrorMapper.userFacingMessage(
                     raw,
@@ -210,32 +164,9 @@ extension UsageStore {
         return self.statusComponents[provider.instanceID] ?? []
     }
 
-    func accountInfo(for provider: UsageProvider) -> AccountInfo {
-        let now = Date()
-        let configRevision = self.settings.configRevision
-        if let cached = self.accountInfoCache[provider.instanceID],
-           cached.isValid(now: now, configRevision: configRevision)
-        {
-            return cached.account
-        }
-
-        let account: AccountInfo
-        // Provider-specific by design: Codex account info must be loaded through its selected filesystem scope.
-        if provider == .codex {
-            let env = ProviderRegistry.makeEnvironment(
-                base: self.environmentBase,
-                provider: .codex,
-                settings: self.settings,
-                tokenOverride: nil)
-            let fetcher = ProviderRegistry.makeFetcher(base: self.codexFetcher, provider: .codex, env: env)
-            account = fetcher.loadAccountInfo()
-        } else {
-            account = self.codexFetcher.loadAccountInfo()
-        }
-        self.accountInfoCache[provider.instanceID] = AccountInfoCacheEntry(
-            account: account,
-            configRevision: configRevision,
-            expiresAt: now.addingTimeInterval(self.accountInfoCacheTTL))
-        return account
+    /// Fallback identity for providers without snapshot identity. Retained providers carry their own
+    /// identity in snapshots, so the fallback never borrows another provider's account.
+    func accountInfo(for _: UsageProvider) -> AccountInfo {
+        AccountInfo(email: nil, plan: nil)
     }
 }

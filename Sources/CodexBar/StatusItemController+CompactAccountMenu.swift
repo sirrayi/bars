@@ -63,41 +63,6 @@ extension StatusItemController {
     /// Renders the Codex account list with the compact plan when it applies.
     /// Workspace-grouped lists keep their sectioned stacked layout; the flat
     /// compact plan would lose the grouping headers.
-    func addCompactCodexAccountMenuIfPlanned(
-        display: CodexAccountMenuDisplay,
-        to menu: NSMenu,
-        captureMenu: NSMenu,
-        context: MenuCardContext) -> Bool
-    {
-        guard !display.showsWorkspaceGroups else { return false }
-        let projected = Self.projectedCodexAccounts(
-            display: display,
-            includeOptionalCredits: self.settings.showOptionalCreditsAndExtraUsage)
-        let plan = self.compactAccountPlan(for: .codex, accounts: projected)
-        guard plan.usesCompactLayout else { return false }
-        let snapshotsByAccountID = Dictionary(
-            uniqueKeysWithValues: display.snapshots.map { ($0.account.id, $0) })
-        let accountsByID = Dictionary(
-            uniqueKeysWithValues: display.accounts.map { ($0.id, $0) })
-        self.addCompactAccountMenuRows(
-            CompactAccountMenuRendering(
-                plan: plan,
-                accounts: projected,
-                idPrefix: "codexAccount",
-                cardModel: { [weak self] projectedAccount in
-                    guard let self,
-                          let account = accountsByID[projectedAccount.id.opaqueID] else { return nil }
-                    return self.store.codexAccountMenuCardModel(
-                        for: account,
-                        accountSnapshot: snapshotsByAccountID[account.id])
-                },
-                planAction: nil),
-            to: menu,
-            captureMenu: captureMenu,
-            context: context)
-        return true
-    }
-
     func addCompactAccountMenuRows(
         _ rendering: CompactAccountMenuRendering,
         to menu: NSMenu,
@@ -245,65 +210,6 @@ extension StatusItemController {
                 sourceLabel: accountSnapshot.sourceLabel)
         }
     }
-
-    static func projectedCodexAccounts(
-        display: CodexAccountMenuDisplay,
-        includeOptionalCredits: Bool = true) -> [ProviderAccountUsageSnapshot]
-    {
-        let snapshotsByAccountID = Dictionary(uniqueKeysWithValues: display.snapshots.map { ($0.account.id, $0) })
-        return display.accounts.map { account in
-            let accountSnapshot = snapshotsByAccountID[account.id]
-            let health = CodexAccountHealth.status(for: account, error: accountSnapshot?.error)
-            let isActive = account.id == display.activeVisibleAccountID || account.isActive
-            let credits = includeOptionalCredits ? accountSnapshot?.credits : nil
-            return ProviderAccountUsageSnapshot(
-                id: ProviderAccountIdentity(source: "codex-account", opaqueID: account.id),
-                provider: .codex,
-                displayLabel: account.menuDisplayName,
-                isActive: isActive,
-                canActivate: !isActive,
-                snapshot: Self.snapshotIncludingMonthlyCredit(
-                    snapshot: accountSnapshot?.snapshot,
-                    credits: credits),
-                error: health.label,
-                sourceLabel: accountSnapshot?.sourceLabel)
-        }
-    }
-
-    static func snapshotIncludingMonthlyCredit(
-        snapshot: UsageSnapshot?,
-        credits: CreditsSnapshot?) -> UsageSnapshot?
-    {
-        guard let limit = credits?.codexCreditLimit else {
-            return snapshot.map { CodexExtraUsageCost.attaching(to: $0, credits: credits) } ?? snapshot
-        }
-        let monthly = RateWindow(
-            usedPercent: limit.usedPercent,
-            windowMinutes: nil,
-            resetsAt: limit.resetsAt,
-            resetDescription: nil)
-        guard let snapshot else {
-            return CodexExtraUsageCost.attaching(
-                to: UsageSnapshot(
-                    primary: nil,
-                    secondary: nil,
-                    tertiary: monthly,
-                    updatedAt: limit.updatedAt),
-                credits: credits)
-        }
-        if snapshot.tertiary == nil {
-            return CodexExtraUsageCost.attaching(to: snapshot.with(tertiary: monthly), credits: credits)
-        }
-        let extras = (snapshot.extraRateWindows ?? []) + [
-            NamedRateWindow(
-                id: "codex-monthly-credit",
-                title: limit.title,
-                window: monthly),
-        ]
-        return CodexExtraUsageCost.attaching(to: snapshot.with(extraRateWindows: extras), credits: credits)
-    }
-
-    // MARK: - Expansion state
 
     private func toggleCompactAccountExpansion(_ accountID: ProviderAccountIdentity, menu: NSMenu?) {
         self.advanceMenuInteraction(for: menu)

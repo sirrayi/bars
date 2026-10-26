@@ -49,8 +49,6 @@ struct CLIUsageFetchSetup {
             resetStyle: CodexBarCLI.resetTimeDisplayStyleFromDefaults(),
             weeklyWorkDays: CodexBarCLI.weeklyProgressWorkDaysFromDefaults(),
             jsonOnly: output.jsonOnly,
-            includeAllCodexAccounts: selection.allAccounts && providers == [.codex],
-            fetcher: UsageFetcher(),
             claudeFetcher: ClaudeUsageFetcher(browserDetection: browserDetection),
             browserDetection: browserDetection,
             providerRuntime: appAutoVerifier ? .app : .cli,

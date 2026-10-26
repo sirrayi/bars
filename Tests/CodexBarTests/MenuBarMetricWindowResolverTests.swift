@@ -13,7 +13,7 @@ struct MenuBarMetricWindowResolverTests {
 
         let window = MenuBarMetricWindowResolver.rateWindow(
             preference: .primaryAndSecondary,
-            provider: .codex,
+            provider: .devin,
             snapshot: snapshot,
             supportsAverage: false)
 

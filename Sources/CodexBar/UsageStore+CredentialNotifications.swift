@@ -30,22 +30,6 @@ extension UsageStore {
         return scope
     }
 
-    func handleCodexCredentialOutcome(
-        _ outcome: ProviderFetchOutcome,
-        account: CodexVisibleAccount,
-        snapshot: UsageSnapshot?,
-        projection: CodexVisibleAccountProjection)
-    {
-        guard self.shouldApplySelectedCodexVisibleAccountOutcome(outcome, snapshot: snapshot),
-              Self.currentCodexVisibleAccount(
-                  matching: account,
-                  projection: projection,
-                  allowProviderAccountAuthFingerprintMismatch: snapshot != nil) != nil else { return }
-        let owner = Self.codexSessionQuotaOwnerKey(for: Self.codexScopedRefreshGuard(for: account))
-        // Provider-specific by design: this helper validates Codex visible-account ownership before publication.
-        self.handleCredentialOutcome(provider: .codex, account: owner?.rawValue ?? account.id, result: outcome.result)
-    }
-
     /// Only accepted, fresh fetch outcomes can end an episode; cached/fallback usage cannot prove recovery.
     func handleCredentialOutcome(
         provider: UsageProvider,

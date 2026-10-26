@@ -14,31 +14,30 @@ struct StatusItemLayoutStyleSwitchTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = merged
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .opencode
         settings.menuBarIconStyle = .bars
-        enableTestProviders([.codex, .claude], settings: settings)
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        enableTestProviders([.opencode, .claude], settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         store._setSnapshotForTesting(
             UsageSnapshot(
                 primary: RateWindow(usedPercent: 25, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
                 secondary: nil,
                 updatedAt: Date()),
-            provider: .codex)
+            provider: .opencode)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
         defer { controller.releaseStatusItemsForTesting() }
 
         func render() -> Bool {
-            merged ? controller.applyIcon(phase: nil) : controller.applyIcon(for: .codex, phase: nil)
+            merged ? controller.applyIcon(phase: nil) : controller.applyIcon(for: .opencode, phase: nil)
         }
         _ = render()
-        let button = try #require(merged ? controller.statusItem.button : controller.statusItems[.codex]?.button)
+        let button = try #require(merged ? controller.statusItem.button : controller.statusItems[.opencode]?.button)
         let meter = try #require(button.image)
         #expect(render())
 
@@ -47,7 +46,7 @@ struct StatusItemLayoutStyleSwitchTests {
         _ = render()
         #expect(button.image !== meter)
         #expect(controller.lastAppliedMergedIconRenderSignature == nil)
-        #expect(controller.lastAppliedProviderIconRenderSignatures[.codex] == nil)
+        #expect(controller.lastAppliedProviderIconRenderSignatures[.opencode] == nil)
 
         settings.menuBarIconStyle = .bars
         #expect(!render())

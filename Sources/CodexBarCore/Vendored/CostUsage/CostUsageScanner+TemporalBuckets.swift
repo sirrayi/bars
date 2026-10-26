@@ -49,48 +49,4 @@ extension CostUsageScanner {
         buckets.hourly[hour] = hourly
         buckets.quotaSlices[timestamp] = timed
     }
-
-    static func addCodexHourly(
-        rows: [CodexUsageRow],
-        pricing: CodexReportDayPricingContext,
-        allowIncluded: Bool,
-        calendar: Calendar,
-        into buckets: inout TemporalBuckets,
-        onPricedRow: ((CodexUsageRow, Double?, Bool) -> Void)? = nil)
-    {
-        for row in rows {
-            let timestamp = self.date(fromUnixMs: row.timestampUnixMs)
-            guard timestamp != nil || onPricedRow != nil else { continue }
-            let group = CodexDayModelKey(day: row.day, model: row.model)
-            let hasUnpricedTokens = (row.unpricedTokens ?? 0) > 0
-                || (row.isIncludedInPlan == true && !allowIncluded)
-            let hasStablePricing = timestamp != nil && !hasUnpricedTokens
-                && !pricing.modeOwnershipMismatchGroups.contains(group)
-                && (row.eventIndex != nil || (row.input == 0 && row.output == 0))
-            // An authoritative amount (including zero) survives incomplete request evidence.
-            // Estimated prices require a stable request boundary and unambiguous ownership.
-            let cost = row.knownCostNanos != nil || hasStablePricing
-                ? self.codexResolvedCostUSD(
-                    for: row,
-                    priorityTurns: pricing.priorityTurns,
-                    modelsDevCatalog: pricing.modelsDevCatalog,
-                    modelsDevCacheRoot: pricing.modelsDevCacheRoot,
-                    customPricing: pricing.customPricing,
-                    pricingResolver: pricing.pricingResolver)
-                : nil
-            onPricedRow?(row, cost, !hasUnpricedTokens)
-            guard let timestamp else { continue }
-            let hour = self.hourStart(for: timestamp, calendar: calendar)
-            var hourly = buckets.hourly[hour] ?? HourlyBucket()
-            var timed = buckets.quotaSlices[timestamp] ?? HourlyBucket()
-            for tokens in [row.input, row.output] {
-                hourly.addTokens(tokens)
-                timed.addTokens(tokens)
-            }
-            hourly.addCost(cost, isComplete: !hasUnpricedTokens)
-            timed.addCost(cost, isComplete: !hasUnpricedTokens)
-            buckets.hourly[hour] = hourly
-            buckets.quotaSlices[timestamp] = timed
-        }
-    }
 }

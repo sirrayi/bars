@@ -13,7 +13,7 @@ struct WidgetHeadlineRenderTests {
         let dimensions = CGSize(width: size == .small ? 155 : 329, height: size == .large ? 345 : 155)
         let now = Date()
         let entry = WidgetSnapshot.ProviderEntry(
-            provider: .codex,
+            provider: .claude,
             updatedAt: now.addingTimeInterval(-310),
             primary: RateWindow(
                 usedPercent: 1,

@@ -32,7 +32,7 @@ struct CLIDiagnoseCommandTests {
     @Test
     func `generic diagnose auth summary does not assume ambient credentials`() {
         let summary = CodexBarCLI._diagnosticAuthSummaryForTesting(
-            provider: .codex,
+            provider: .claude,
             account: nil,
             config: nil,
             environment: [:],

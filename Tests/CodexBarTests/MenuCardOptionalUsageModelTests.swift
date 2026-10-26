@@ -8,7 +8,7 @@ struct MenuCardOptionalUsageModelTests {
     func `hides codex credits when disabled`() throws {
         let now = Date()
         let identity = ProviderIdentitySnapshot(
-            providerID: .codex,
+            providerID: .opencode,
             accountEmail: "codex@example.com",
             accountOrganization: nil,
             loginMethod: nil)
@@ -18,26 +18,13 @@ struct MenuCardOptionalUsageModelTests {
             tertiary: nil,
             updatedAt: now,
             identity: identity)
-        let metadata = try #require(ProviderDefaults.metadata[.codex])
+        let metadata = try #require(ProviderDefaults.metadata[.opencode])
         let credits = CreditsSnapshot(remaining: 12, events: [], updatedAt: now)
-        let codexProjection = CodexConsumerProjection.make(
-            surface: .liveCard,
-            context: CodexConsumerProjection.Context(
-                snapshot: snapshot,
-                rawUsageError: nil,
-                liveCredits: credits,
-                rawCreditsError: nil,
-                liveDashboard: nil,
-                rawDashboardError: nil,
-                dashboardAttachmentAuthorized: true,
-                dashboardRequiresLogin: false,
-                now: now))
 
         let model = UsageMenuCardView.Model.make(.init(
-            provider: .codex,
+            provider: .opencode,
             metadata: metadata,
             snapshot: snapshot,
-            codexProjection: codexProjection,
             credits: credits,
             creditsError: nil,
             dashboardError: nil,

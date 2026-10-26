@@ -204,25 +204,6 @@ enum CostSummaryDisplayStyle: String, CaseIterable, Identifiable {
     }
 }
 
-struct CachedCodexAccountReconciliationSnapshot {
-    let activeSource: CodexActiveSource
-    let loadedAt: Date
-    let snapshot: CodexAccountReconciliationSnapshot
-}
-
-struct CachedCodexAccountMenuProjection: Equatable {
-    let activeSource: CodexActiveSource
-    let loadedAt: Date
-    let projection: CodexVisibleAccountProjection
-}
-
-enum CodexAccountMenuProjectionRevalidationResult: Equatable {
-    case skipped
-    case discarded
-    case unchanged
-    case updated
-}
-
 @MainActor
 struct SettingsStoreKeychainAccessPolicy {
     let setDisabled: (Bool) -> Void
@@ -246,12 +227,7 @@ struct SettingsStoreKeychainAccessPolicy {
 final class SettingsStore {
     static let sharedDefaults = SettingsStore.resolveSharedDefaults()
     static let mergedOverviewProviderLimit = 6
-    static let productionCodexAccountReconciliationSnapshotCacheInterval: TimeInterval = 2
     static let isRunningTests = TestProcessSafety.isRunning
-
-    #if DEBUG
-    static var codexAccountReconciliationSnapshotCacheIntervalOverrideForTesting: TimeInterval?
-    #endif
 
     @ObservationIgnored let userDefaults: UserDefaults
     @ObservationIgnored lazy var httpServer = HTTPServerController(
@@ -266,14 +242,8 @@ final class SettingsStore {
     @ObservationIgnored let configPersistenceCoordinator = SettingsConfigPersistenceCoordinator()
     @ObservationIgnored var configNeedsReload = false
 
-    @ObservationIgnored var cachedCodexAccountReconciliationSnapshot:
-        CachedCodexAccountReconciliationSnapshot?
-    @ObservationIgnored var cachedCodexAccountMenuProjection: CachedCodexAccountMenuProjection?
-    @ObservationIgnored var codexAccountReconciliationGeneration: UInt = 0
     #if DEBUG
     @ObservationIgnored var _test_configPersistenceUsesDebounce = false
-    @ObservationIgnored var _test_codexAccountSnapshotLoader:
-        (@Sendable (CodexActiveSource) -> CodexAccountReconciliationSnapshot)?
     #endif
     @ObservationIgnored var mergedMenuLastSelectedWasOverviewStorage = false
     @ObservationIgnored var selectedMenuProviderRawStorage: String?
@@ -307,9 +277,6 @@ final class SettingsStore {
     init(
         userDefaults: UserDefaults = .standard,
         configStore: CodexBarConfigStore = CodexBarConfigStore(),
-        codexCookieStore: any CookieHeaderStoring = KeychainCookieHeaderStore(
-            account: "codex-cookie",
-            promptKind: .codexCookie),
         claudeCookieStore: any CookieHeaderStoring = KeychainCookieHeaderStore(
             account: "claude-cookie",
             promptKind: .claudeCookie),
@@ -342,13 +309,7 @@ final class SettingsStore {
                 ])
         }
 
-        if userDefaults.object(forKey: "openAIWebAccessEnabled") == nil,
-           let legacyOpenAIWebAccess = userDefaults.object(forKey: "openAIWebAccess") as? Bool
-        {
-            userDefaults.set(legacyOpenAIWebAccess, forKey: "openAIWebAccessEnabled")
-        }
         let legacyStores = CodexBarConfigMigrator.LegacyStores(
-            codexCookieStore: codexCookieStore,
             claudeCookieStore: claudeCookieStore,
             opencodeCookieStore: opencodeCookieStore,
             tokenAccountStore: tokenAccountStore)
@@ -366,8 +327,6 @@ final class SettingsStore {
                 "Config load failed; preserving the file until it can be reloaded",
                 metadata: ["error": "\(error)"])
         }
-        _ = Self.initializeOpenAIWebAccessPreference(
-            userDefaults: userDefaults, config: config, hadExistingConfig: hadExistingConfig)
         self.userDefaults = userDefaults
         self.configStore = configStore
         self.keychainAccessPolicy = keychainAccessPolicy
@@ -398,10 +357,6 @@ final class SettingsStore {
             } else {
                 self.defaultsState.claudeWebExtrasEnabledRaw = false
             }
-        }
-        // Provider-specific by design: the legacy OpenAI web denial also governs Codex's CLI cookie source.
-        if !self.openAIWebAccessEnabled, self.providerConfig(for: .codex)?.cookieSource == nil {
-            self.codexCookieSource = .off
         }
         self.keychainAccessPolicy.setDisabled(self.debugDisableKeychainAccess)
         self.startConfigFileWatcher()
@@ -454,33 +409,6 @@ extension SettingsStore {
         }
     }
 
-    static func initializeOpenAIWebAccessPreference(
-        userDefaults: UserDefaults,
-        config: CodexBarConfig,
-        hadExistingConfig: Bool) -> Bool
-    {
-        if let stored = userDefaults.object(forKey: "openAIWebAccessEnabled") { return stored as? Bool ?? false }
-        let enabled = self.inferredInitialOpenAIWebAccessEnabled(config: config, hadExistingConfig: hadExistingConfig)
-        // Freeze the startup decision before a later launch can infer consent from a generated config.
-        userDefaults.set(enabled, forKey: "openAIWebAccessEnabled")
-        return enabled
-    }
-
-    private static func inferredInitialOpenAIWebAccessEnabled(
-        config: CodexBarConfig,
-        hadExistingConfig: Bool) -> Bool
-    {
-        // Provider-specific by design: the legacy OpenAI web-access flag was inferred from Codex's cookie config.
-        guard let codex = config.providerConfig(for: .codex) else { return false }
-        if let cookieSource = codex.cookieSource {
-            return cookieSource.isEnabled
-        }
-        if codex.sanitizedCookieHeader != nil {
-            return true
-        }
-        return hadExistingConfig
-    }
-
     // swiftlint:disable:next function_body_length
     private static func loadDefaultsState(
         userDefaults: UserDefaults,
@@ -520,9 +448,6 @@ extension SettingsStore {
             costUsageEnabled: costUsageEnabled)
         let confettiOnReset = Self.loadConfettiOnResetDefaults(userDefaults: userDefaults)
         let claudeOAuthKeychainReadStrategyRaw = Self.loadClaudeOAuthKeychainReadStrategyRaw(userDefaults: userDefaults)
-        if Self.isRunningTests, userDefaults.object(forKey: "codexExternalOAuthSourcesAllowed") == nil {
-            userDefaults.set(false, forKey: "codexExternalOAuthSourcesAllowed")
-        }
         let backgroundWorkLowPowerModePreference = Self.loadLowPowerModePreference(userDefaults: userDefaults)
         let iCloudSyncDeviceID = userDefaults.string(forKey: "iCloudSyncDeviceID") ?? UUID().uuidString.lowercased()
         if userDefaults.string(forKey: "iCloudSyncDeviceID") == nil {
@@ -604,13 +529,8 @@ extension SettingsStore {
                 ?? MenuBarLayoutGap.regular.rawValue,
             menuBarLayoutVerticalAdjustment: menuBarLayoutVerticalAdjustment,
             costUsageEnabled: costUsageEnabled,
-            codexLocalSessionCostLedgerEnabled: userDefaults.object(
-                forKey: "codexLocalSessionCostLedgerEnabled") as? Bool ?? false,
             costReportingPeriod: costReportingPeriod,
             costUsageBucketTimeZoneIdentifier: costUsageBucketTimeZoneIdentifier,
-            openCodexUsageLogsEnabled: userDefaults.object(forKey: "openCodexUsageLogsEnabled") as? Bool ?? false,
-            hideNativeCodexCostWhenOpenCodexPresent: userDefaults.object(
-                forKey: "hideNativeCodexCostWhenOpenCodexPresent") as? Bool ?? false,
             spendDashboardHiddenSourceIDs: userDefaults.stringArray(forKey: "spendDashboardHiddenSourceIDs") ?? [],
             costComparisonPeriodsEnabled: userDefaults.object(
                 forKey: "costComparisonPeriodsEnabled") as? Bool ?? false,
@@ -638,14 +558,6 @@ extension SettingsStore {
             // Model-scoped weekly rows are opt-in: a fresh install keeps widgets on the standard quota lanes.
             claudeModelScopedWeeklyUsageVisible: userDefaults.object(
                 forKey: "claudeModelScopedWeeklyUsageVisible") as? Bool ?? false,
-            codexSparkUsageVisible: Self.loadBoolDefault("codexSparkUsageVisible", fallback: true, from: userDefaults),
-            codexExternalOAuthSourcesAllowed: userDefaults.object(
-                forKey: "codexExternalOAuthSourcesAllowed") as? Bool ?? false,
-            openAIWebAccessEnabled: userDefaults.object(forKey: "openAIWebAccessEnabled") as? Bool ?? false,
-            openAIWebBatterySaverEnabled: Self.loadBoolDefault(
-                "openAIWebBatterySaverEnabled",
-                fallback: false,
-                from: userDefaults),
             backgroundWorkLowPowerModePreference: backgroundWorkLowPowerModePreference,
             providerStorageFootprintsEnabled: Self.loadBoolDefault(
                 "providerStorageFootprintsEnabled",

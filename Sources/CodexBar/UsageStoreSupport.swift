@@ -28,11 +28,6 @@ struct TokenAccountFetchResult {
     let outcome: ProviderFetchOutcome
 }
 
-struct CodexManagedVisibleAccountRuntimeState {
-    let authFingerprint: String?
-    let workspaceAccountID: String?
-}
-
 extension ProviderStatusComponent {
     var statusLabel: String {
         Self.label(forStatuspageStatus: self.status)
@@ -105,12 +100,6 @@ extension UsageStore {
         provider: UsageProvider)
     {
         self.knownLimitsAvailabilityByProvider[provider.instanceID] = availability
-    }
-
-    func _setCodexHistoricalDatasetForTesting(_ dataset: CodexHistoricalDataset?, accountKey: String? = nil) {
-        self.codexHistoricalDataset = dataset
-        self.codexHistoricalDatasetAccountKey = accountKey
-        self.historicalPaceRevision += 1
     }
 
     /// Cancels the one-shot persisted plan-utilization load and treats the

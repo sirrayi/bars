@@ -163,7 +163,6 @@ struct ClaudeOAuthRateLimitResilienceTests {
         let metadata = try #require(ProviderRegistry.shared.metadata[.claude])
         settings.setProviderEnabled(provider: .claude, metadata: metadata, enabled: true)
         return UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,

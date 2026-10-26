@@ -476,7 +476,6 @@ struct LimitResetNotificationTests {
         settings.sessionQuotaNotificationsEnabled = false
         settings.hidePersonalInfo = false
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             planUtilizationHistoryStore: testPlanUtilizationHistoryStore(suiteName: suiteName),

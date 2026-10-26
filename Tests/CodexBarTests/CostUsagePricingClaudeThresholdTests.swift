@@ -34,18 +34,10 @@ struct CostUsagePricingClaudeThresholdTests {
             cacheCreationInputTokens: cacheWrite,
             outputTokens: 13,
             modelsDevCatalog: catalog))
-        let codex = try #require(CostUsagePricing.codexCostUSD(
-            model: "gpt-5.6-sol",
-            inputTokens: totalInput,
-            cachedInputTokens: cacheRead,
-            outputTokens: 13,
-            cacheWriteInputTokens: cacheWrite,
-            modelsDevCatalog: catalog))
         let expected = totalInput > 272_000
             ? Double(input) * 7e-6 + Double(cacheRead) * 0.5e-6 + Double(cacheWrite) * 9e-6 + 13 * 11e-6
             : Double(input) * 2e-6 + Double(cacheRead) * 0.25e-6 + Double(cacheWrite) * 3e-6 + 13 * 4e-6
         #expect(abs(claude - expected) < 1e-10)
-        #expect(abs(claude - codex) < 1e-10)
     }
 
     @Test(arguments: ["anthropic", "openai"])

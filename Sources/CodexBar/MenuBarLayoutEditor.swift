@@ -939,7 +939,7 @@ struct MenuBarLayoutPreview: View {
     private let renderer = MenuBarLayoutRenderer()
 
     var body: some View {
-        let provider = self.provider ?? .codex
+        let provider = self.provider ?? .claude
         let snapshot = self.store.snapshot(for: provider.instanceID)
         let data = snapshot.map { self.liveData(provider: provider, snapshot: $0) }
             ?? self.representativeData(provider: provider)

@@ -101,11 +101,10 @@ enum WidgetLayout {
 /// mid-word on large and truncated to a single ambiguous glyph on small — so the switcher renders
 /// a fixed-width monogram that can never wrap or truncate.
 enum ProviderMonogram {
-    /// Provider-specific by design: the widget-selectable providers get curated marks because a
-    /// mechanical abbreviation collides (Codex/Copilot/Cursor/Claude all start with "C").
+    /// Provider-specific by design: the widget-selectable providers get curated marks so similar
+    /// names (OpenCode/OpenCode Go) stay distinguishable.
     private static let curated: [UsageProvider: String] = [
         .claude: "CL",
-        .codex: "CX",
         .devin: "DV",
         .opencode: "OC",
         .opencodego: "OG",

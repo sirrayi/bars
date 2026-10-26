@@ -10,7 +10,7 @@ struct UsageStoreDisabledProviderCleanupTests {
         let settings = Self.makeSettingsStore(suite: "UsageStoreDisabledProviderCleanupTests-status-success")
         settings.refreshFrequency = .manual
         settings.statusChecksEnabled = true
-        try Self.setOnlyProvider(.codex, enabled: true, settings: settings)
+        try Self.setOnlyProvider(.opencode, enabled: true, settings: settings)
         let store = Self.makeUsageStore(settings: settings)
         let gate = CleanupAsyncGate()
         store._test_providerStatusFetchOverride = { _ in
@@ -18,20 +18,20 @@ struct UsageStoreDisabledProviderCleanupTests {
             return ProviderStatus(indicator: .major, description: "stale", updatedAt: Date())
         }
 
-        let staleTask = Task { await store.refreshProviderStatus(.codex) }
+        let staleTask = Task { await store.refreshProviderStatus(.opencode) }
         await gate.waitUntilStarted()
-        try Self.setProvider(.codex, enabled: false, settings: settings)
-        try Self.setProvider(.codex, enabled: true, settings: settings)
+        try Self.setProvider(.opencode, enabled: false, settings: settings)
+        try Self.setProvider(.opencode, enabled: true, settings: settings)
         await gate.resume()
         await staleTask.value
 
-        #expect(store.statuses[.codex] == nil)
+        #expect(store.statuses[.opencode] == nil)
 
         store._test_providerStatusFetchOverride = { _ in
             ProviderStatus(indicator: .none, description: "fresh", updatedAt: Date())
         }
-        await store.refreshProviderStatus(.codex)
-        #expect(store.statuses[.codex]?.description == "fresh")
+        await store.refreshProviderStatus(.opencode)
+        #expect(store.statuses[.opencode]?.description == "fresh")
     }
 
     @Test
@@ -39,7 +39,7 @@ struct UsageStoreDisabledProviderCleanupTests {
         let settings = Self.makeSettingsStore(suite: "UsageStoreDisabledProviderCleanupTests-status-failure")
         settings.refreshFrequency = .manual
         settings.statusChecksEnabled = true
-        try Self.setOnlyProvider(.codex, enabled: true, settings: settings)
+        try Self.setOnlyProvider(.opencode, enabled: true, settings: settings)
         let store = Self.makeUsageStore(settings: settings)
         let gate = CleanupAsyncGate()
         store._test_providerStatusFetchOverride = { _ in
@@ -47,15 +47,15 @@ struct UsageStoreDisabledProviderCleanupTests {
             throw CleanupTestError.failed
         }
 
-        let staleTask = Task { await store.refreshProviderStatus(.codex) }
+        let staleTask = Task { await store.refreshProviderStatus(.opencode) }
         await gate.waitUntilStarted()
-        try Self.setProvider(.codex, enabled: false, settings: settings)
+        try Self.setProvider(.opencode, enabled: false, settings: settings)
         store.clearDisabledProviderState(enabledProviders: [])
-        try Self.setProvider(.codex, enabled: true, settings: settings)
+        try Self.setProvider(.opencode, enabled: true, settings: settings)
         await gate.resume()
         await staleTask.value
 
-        #expect(store.statuses[.codex] == nil)
+        #expect(store.statuses[.opencode] == nil)
     }
 
     @Test
@@ -64,11 +64,11 @@ struct UsageStoreDisabledProviderCleanupTests {
         settings.refreshFrequency = .manual
         settings.statusChecksEnabled = false
         settings.costUsageEnabled = true
-        try Self.setOnlyProvider(.codex, enabled: true, settings: settings)
+        try Self.setOnlyProvider(.claude, enabled: true, settings: settings)
         let store = Self.makeUsageStore(settings: settings)
         let gate = CleanupAsyncGate()
         var loadCount = 0
-        store._test_tokenUsageSnapshotLoaderOverride = { _, _, _, _, historyDays in
+        store._test_tokenUsageSnapshotLoaderOverride = { _, _, _, historyDays in
             loadCount += 1
             if loadCount == 1 {
                 await gate.suspend()
@@ -77,18 +77,18 @@ struct UsageStoreDisabledProviderCleanupTests {
             return Self.tokenSnapshot(tokens: 190, historyDays: historyDays)
         }
 
-        let staleTask = Task { await store.refreshTokenUsage(.codex, force: true) }
+        let staleTask = Task { await store.refreshTokenUsage(.claude, force: true) }
         await gate.waitUntilStarted()
-        try Self.setProvider(.codex, enabled: false, settings: settings)
+        try Self.setProvider(.claude, enabled: false, settings: settings)
         store.clearDisabledProviderState(enabledProviders: [])
-        try Self.setProvider(.codex, enabled: true, settings: settings)
+        try Self.setProvider(.claude, enabled: true, settings: settings)
         await gate.resume()
         await staleTask.value
-        for _ in 0..<100 where store.tokenSnapshot(for: .codex) == nil {
+        for _ in 0..<100 where store.tokenSnapshot(for: .claude) == nil {
             try await Task.sleep(for: .milliseconds(10))
         }
 
-        #expect(store.tokenSnapshot(for: .codex)?.sessionTokens == 190)
+        #expect(store.tokenSnapshot(for: .claude)?.sessionTokens == 190)
         #expect(loadCount == 2)
     }
 
@@ -98,11 +98,11 @@ struct UsageStoreDisabledProviderCleanupTests {
         settings.refreshFrequency = .manual
         settings.statusChecksEnabled = false
         settings.costUsageEnabled = true
-        try Self.setOnlyProvider(.codex, enabled: true, settings: settings)
+        try Self.setOnlyProvider(.claude, enabled: true, settings: settings)
         let store = Self.makeUsageStore(settings: settings)
         let gate = CleanupAsyncGate()
         var loadCount = 0
-        store._test_tokenUsageSnapshotLoaderOverride = { _, _, _, _, historyDays in
+        store._test_tokenUsageSnapshotLoaderOverride = { _, _, _, historyDays in
             loadCount += 1
             if loadCount == 1 {
                 await gate.suspend()
@@ -111,19 +111,19 @@ struct UsageStoreDisabledProviderCleanupTests {
             return Self.tokenSnapshot(tokens: 190, historyDays: historyDays)
         }
 
-        let staleTask = Task { await store.refreshTokenUsage(.codex, force: true) }
+        let staleTask = Task { await store.refreshTokenUsage(.claude, force: true) }
         await gate.waitUntilStarted()
-        try Self.setProvider(.codex, enabled: false, settings: settings)
+        try Self.setProvider(.claude, enabled: false, settings: settings)
         store.clearDisabledProviderState(enabledProviders: [])
-        try Self.setProvider(.codex, enabled: true, settings: settings)
+        try Self.setProvider(.claude, enabled: true, settings: settings)
         await gate.resume()
         await staleTask.value
-        for _ in 0..<100 where store.tokenSnapshot(for: .codex) == nil {
+        for _ in 0..<100 where store.tokenSnapshot(for: .claude) == nil {
             try await Task.sleep(for: .milliseconds(10))
         }
 
-        #expect(store.tokenSnapshot(for: .codex)?.sessionTokens == 190)
-        #expect(store.tokenError(for: .codex) == nil)
+        #expect(store.tokenSnapshot(for: .claude)?.sessionTokens == 190)
+        #expect(store.tokenError(for: .claude) == nil)
         #expect(loadCount == 2)
     }
 
@@ -133,26 +133,26 @@ struct UsageStoreDisabledProviderCleanupTests {
         settings.refreshFrequency = .manual
         settings.statusChecksEnabled = false
         settings.costUsageEnabled = true
-        try Self.setOnlyProvider(.codex, enabled: true, settings: settings)
-        try Self.setProvider(.claude, enabled: true, settings: settings)
+        try Self.setOnlyProvider(.claude, enabled: true, settings: settings)
+        try Self.setProvider(.devin, enabled: true, settings: settings)
         let store = Self.makeUsageStore(settings: settings)
-        let codexGate = CleanupAsyncGate()
         let claudeGate = CleanupAsyncGate()
-        var codexLoads = 0
+        let devinGate = CleanupAsyncGate()
         var claudeLoads = 0
-        store._test_tokenUsageSnapshotLoaderOverride = { provider, _, _, _, historyDays in
+        var devinLoads = 0
+        store._test_tokenUsageSnapshotLoaderOverride = { provider, _, _, historyDays in
             switch provider {
-            case .codex:
-                codexLoads += 1
-                if codexLoads == 1 {
-                    await codexGate.suspend()
-                    return Self.tokenSnapshot(tokens: 710, historyDays: historyDays)
-                }
-                return Self.tokenSnapshot(tokens: 190, historyDays: historyDays)
             case .claude:
                 claudeLoads += 1
                 if claudeLoads == 1 {
                     await claudeGate.suspend()
+                    return Self.tokenSnapshot(tokens: 710, historyDays: historyDays)
+                }
+                return Self.tokenSnapshot(tokens: 190, historyDays: historyDays)
+            case .devin:
+                devinLoads += 1
+                if devinLoads == 1 {
+                    await devinGate.suspend()
                 }
                 return Self.tokenSnapshot(tokens: 50, historyDays: historyDays)
             default:
@@ -162,21 +162,21 @@ struct UsageStoreDisabledProviderCleanupTests {
 
         store.scheduleTokenRefreshForTesting()
         let originalSequence = try #require(store.tokenRefreshSequenceTask)
-        await codexGate.waitUntilStarted()
-        try Self.setProvider(.codex, enabled: false, settings: settings)
-        store.clearDisabledProviderState(enabledProviders: [.claude])
-        await codexGate.resume()
-
         await claudeGate.waitUntilStarted()
-        try Self.setProvider(.codex, enabled: true, settings: settings)
-        store.scheduleTokenRefreshForTesting()
+        try Self.setProvider(.claude, enabled: false, settings: settings)
+        store.clearDisabledProviderState(enabledProviders: [.devin])
         await claudeGate.resume()
+
+        await devinGate.waitUntilStarted()
+        try Self.setProvider(.claude, enabled: true, settings: settings)
+        store.scheduleTokenRefreshForTesting()
+        await devinGate.resume()
         await originalSequence.value
         await store.tokenRefreshSequenceTask?.value
 
-        #expect(store.tokenSnapshot(for: .codex)?.sessionTokens == 190)
-        #expect(codexLoads == 2)
-        #expect(claudeLoads == 1)
+        #expect(store.tokenSnapshot(for: .claude)?.sessionTokens == 190)
+        #expect(claudeLoads == 2)
+        #expect(devinLoads == 1)
         #expect(store.tokenRefreshSequenceTask == nil)
     }
 
@@ -187,11 +187,11 @@ struct UsageStoreDisabledProviderCleanupTests {
         settings.statusChecksEnabled = false
         settings.costUsageEnabled = true
         settings.costUsageHistoryDays = 30
-        try Self.setOnlyProvider(.codex, enabled: true, settings: settings)
+        try Self.setOnlyProvider(.claude, enabled: true, settings: settings)
         let store = Self.makeUsageStore(settings: settings)
         let gate = CleanupAsyncGate()
         var loadCount = 0
-        store._test_tokenUsageSnapshotLoaderOverride = { _, _, _, _, historyDays in
+        store._test_tokenUsageSnapshotLoaderOverride = { _, _, _, historyDays in
             loadCount += 1
             if loadCount == 1 {
                 await gate.suspend()
@@ -200,97 +200,17 @@ struct UsageStoreDisabledProviderCleanupTests {
             return Self.tokenSnapshot(tokens: 190, historyDays: historyDays)
         }
 
-        let staleTask = Task { await store.refreshTokenUsage(.codex, force: true) }
+        let staleTask = Task { await store.refreshTokenUsage(.claude, force: true) }
         await gate.waitUntilStarted()
         settings.costUsageHistoryDays = 7
         await gate.resume()
         await staleTask.value
-        for _ in 0..<100 where store.tokenSnapshot(for: .codex) == nil {
+        for _ in 0..<100 where store.tokenSnapshot(for: .claude) == nil {
             try await Task.sleep(for: .milliseconds(10))
         }
 
-        #expect(store.tokenSnapshot(for: .codex)?.sessionTokens == 190)
+        #expect(store.tokenSnapshot(for: .claude)?.sessionTokens == 190)
         #expect(loadCount == 2)
-    }
-
-    @Test
-    func `cached token hydration rejects disable re-enable completion`() async throws {
-        let settings = Self.makeSettingsStore(suite: "UsageStoreDisabledProviderCleanupTests-token-cache")
-        settings.refreshFrequency = .manual
-        settings.statusChecksEnabled = false
-        settings.costUsageEnabled = true
-        try Self.setOnlyProvider(.codex, enabled: true, settings: settings)
-        let store = Self.makeUsageStore(settings: settings)
-        let gate = CleanupAsyncGate()
-        store._test_cachedCodexTokenSnapshotLoaderOverride = { now, _, historyDays in
-            await gate.suspend()
-            return (
-                snapshot: Self.tokenSnapshot(tokens: 710, historyDays: historyDays, updatedAt: now),
-                lastRefreshAt: now,
-                staleSnapshotUpdatedAt: nil)
-        }
-
-        store.hydrateCachedTokenSnapshots()
-        await gate.waitUntilStarted()
-        try Self.setProvider(.codex, enabled: false, settings: settings)
-        try Self.setProvider(.codex, enabled: true, settings: settings)
-        await gate.resume()
-        for _ in 0..<10 {
-            await Task.yield()
-        }
-
-        #expect(store.tokenSnapshot(for: .codex) == nil)
-        #expect(store.tokenLastAttemptAt(for: .codex) == nil)
-    }
-
-    @Test
-    func `disabled Codex cleanup clears account snapshots and publication guard`() throws {
-        let settings = Self.makeSettingsStore(suite: "UsageStoreDisabledProviderCleanupTests-codex")
-        settings.refreshFrequency = .manual
-        settings.statusChecksEnabled = false
-
-        let metadata = ProviderRegistry.shared.metadata
-        for provider in UsageProvider.allCases {
-            try settings.setProviderEnabled(
-                provider: provider,
-                metadata: #require(metadata[provider]),
-                enabled: false)
-        }
-        try settings.setProviderEnabled(provider: .claude, metadata: #require(metadata[.claude]), enabled: true)
-
-        let store = Self.makeUsageStore(settings: settings)
-        let account = CodexVisibleAccount(
-            id: "stale@example.com",
-            email: "stale@example.com",
-            storedAccountID: nil,
-            selectionSource: .liveSystem,
-            isActive: true,
-            isLive: true,
-            canReauthenticate: true,
-            canRemove: true)
-        let snapshot = UsageSnapshot(
-            primary: RateWindow(usedPercent: 33, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
-            secondary: nil,
-            updatedAt: Date())
-        store._setSnapshotForTesting(snapshot, provider: .codex)
-        store.lastKnownResetSnapshots[.codex] = snapshot
-        store.codexAccountSnapshots = [
-            CodexAccountUsageSnapshot(account: account, snapshot: snapshot, error: nil, sourceLabel: "stale"),
-        ]
-        store.lastCodexUsagePublicationGuard = CodexAccountScopedRefreshGuard(
-            source: .liveSystem,
-            identity: .emailOnly(normalizedEmail: "stale@example.com"),
-            accountKey: "stale@example.com",
-            authFingerprint: "stale-fingerprint")
-        store.lastCodexAccountScopedRefreshGuard = store.lastCodexUsagePublicationGuard
-
-        store.clearDisabledProviderState(enabledProviders: Set(store.enabledProvidersForDisplay()))
-
-        #expect(store.snapshot(for: .codex) == nil)
-        #expect(store.lastKnownResetSnapshots[.codex] == nil)
-        #expect(store.codexAccountSnapshots.isEmpty)
-        #expect(store.lastCodexUsagePublicationGuard == nil)
-        #expect(store.lastCodexAccountScopedRefreshGuard != nil)
     }
 
     @Test
@@ -308,7 +228,7 @@ struct UsageStoreDisabledProviderCleanupTests {
                 metadata: #require(metadata[provider]),
                 enabled: false)
         }
-        try settings.setProviderEnabled(provider: .codex, metadata: #require(metadata[.codex]), enabled: true)
+        try settings.setProviderEnabled(provider: .opencode, metadata: #require(metadata[.opencode]), enabled: true)
 
         let store = Self.makeUsageStore(settings: settings)
         store.claudeSwapAccountSnapshots = [
@@ -339,7 +259,6 @@ struct UsageStoreDisabledProviderCleanupTests {
         let settings = SettingsStore(
             userDefaults: defaults,
             configStore: testConfigStore(suiteName: suite),
-            codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
             opencodeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore())
@@ -348,16 +267,11 @@ struct UsageStoreDisabledProviderCleanupTests {
     }
 
     private static func makeUsageStore(settings: SettingsStore) -> UsageStore {
-        let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
+        UsageStore(
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
             environmentBase: [:])
-        store._test_codexCostCatchUpStatusOverride = { _ in
-            CostUsageFetcher.CodexScanCatchUpStatus(pending: false, progressKey: "isolated-complete")
-        }
-        return store
     }
 
     private static func setOnlyProvider(
@@ -401,7 +315,6 @@ struct UsageStoreDisabledProviderCleanupTests {
             result: .success(ProviderFetchResult(
                 usage: snapshot,
                 credits: nil,
-                dashboard: nil,
                 sourceLabel: "fixture",
                 strategyID: "fixture",
                 strategyKind: .cli)),

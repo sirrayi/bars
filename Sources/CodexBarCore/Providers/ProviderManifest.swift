@@ -5,12 +5,10 @@ import Foundation
 /// `ProviderDescriptorRegistry.register(_:)`.
 public enum ProviderManifest {
     public static let allDescriptors: [ProviderDescriptor] = [
-        CodexProviderDescriptor.descriptor,
         ClaudeProviderDescriptor.descriptor,
         OpenCodeProviderDescriptor.descriptor,
         OpenCodeGoProviderDescriptor.descriptor,
         DevinProviderDescriptor.descriptor,
         DeepSeekProviderDescriptor.descriptor,
-        PiProviderDescriptor.descriptor,
     ]
 }

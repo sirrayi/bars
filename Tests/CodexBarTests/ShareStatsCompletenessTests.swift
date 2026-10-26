@@ -10,8 +10,8 @@ struct ShareStatsCompletenessTests {
         calendar.timeZone = .gmt
         let model = SpendDashboardModel.build(
             inputs: [
-                Self.input(provider: .codex, name: "Codex A", model: "gpt-4o", tokens: 300, cost: 3),
-                Self.input(provider: .codex, name: "Codex B", model: "gpt-4o", tokens: 100, cost: 1, incomplete: 1),
+                Self.input(provider: .devin, name: "Codex A", model: "gpt-4o", tokens: 300, cost: 3),
+                Self.input(provider: .devin, name: "Codex B", model: "gpt-4o", tokens: 100, cost: 1, incomplete: 1),
                 Self.input(provider: .claude, name: "Claude", model: "claude-sonnet-4", tokens: 200, cost: 2),
             ],
             requestedDays: 7,
@@ -59,21 +59,21 @@ struct ShareStatsCompletenessTests {
         let models: [SpendDashboardModel.ModelRow] = [
             .init(
                 rank: 1,
-                provider: .codex,
+                provider: .devin,
                 providerName: "Codex",
                 modelName: "gpt-4o",
                 totalTokens: tokenOverflow ? Int.max : 10,
                 totalCost: costOverflow ? Double.greatestFiniteMagnitude : 1),
             .init(
                 rank: 2,
-                provider: .codex,
+                provider: .devin,
                 providerName: "Codex",
                 modelName: "gpt-4o-mini",
                 totalTokens: 20,
                 totalCost: scenario == "missing-cost" ? nil : costOverflow ? Double.greatestFiniteMagnitude : 2),
             .init(
                 rank: 3,
-                provider: .codex,
+                provider: .devin,
                 providerName: "Codex",
                 modelName: "gpt-fixture",
                 totalTokens: 1,
@@ -140,7 +140,7 @@ struct ShareStatsCompletenessTests {
         return SpendDashboardModel.build(
             inputs: [
                 Self.input(
-                    provider: .codex,
+                    provider: .devin,
                     name: "Codex",
                     model: "gpt-4o",
                     tokens: zeroBaseline ? 0 : 300,

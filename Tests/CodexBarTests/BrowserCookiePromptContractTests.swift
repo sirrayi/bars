@@ -8,7 +8,7 @@ import Testing
 @testable import CodexBarCore
 @testable import SweetCookieKit
 
-@Suite(.serialized, CodexCredentialFixtures())
+@Suite(.serialized)
 struct BrowserCookiePromptContractTests {
     private final class FakeKeychain: @unchecked Sendable {
         private let lock = NSLock()
@@ -400,12 +400,26 @@ struct BrowserCookiePromptContractTests {
 
     @Test @MainActor
     func `settings observation refresh does not inherit interactive permission`() async throws {
-        let fixture = CodexBackgroundRefreshCoalescingTests()
-        let settings = try fixture.makeSettingsStore(suite: "BrowserCookiePromptContractTests-observation")
+        let settings = testSettingsStore(
+            suiteName: "BrowserCookiePromptContractTests-observation",
+            userDefaults: InMemoryUserDefaults())
+        let claudeMetadata = try #require(ProviderDescriptorRegistry.metadata[.claude])
+        settings.setProviderEnabled(provider: .claude, metadata: claudeMetadata, enabled: true)
+        settings.providerDetectionCompleted = true
         settings.statusChecksEnabled = false
         settings.costUsageEnabled = false
-        settings.openAIWebAccessEnabled = false
-        let store = fixture.makeStore(settings: settings)
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("codexbar-tests", isDirectory: true)
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let environment = [
+            "HOME": root.path,
+            "XDG_CONFIG_HOME": root.appendingPathComponent(".config", isDirectory: true).path,
+        ]
+        let store = UsageStore(
+            browserDetection: BrowserDetection(cacheTTL: 0),
+            settings: settings,
+            startupBehavior: .testing,
+            environmentBase: environment)
         var observed: [ProviderInteraction] = []
         store._test_providerRefreshOverride = { _ in observed.append(ProviderInteractionContext.current) }
         defer { store._test_providerRefreshOverride = nil }

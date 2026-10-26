@@ -65,7 +65,7 @@ struct ProcessOwnershipReaper: Sendable {
         #else
         guard let attributes = try? FileManager.default.attributesOfItem(atPath: "/proc/\(pid)"),
               (attributes[.ownerAccountID] as? NSNumber)?.uint32Value == getuid() else { return false }
-        let environment = PiProcessEnvironment.readLinuxEnvironment(pid: pid, names: [Self.environmentKey])
+        let environment = ProcessEnvironmentReader.readLinuxEnvironment(pid: pid, names: [Self.environmentKey])
         #endif
         return environment?[Self.environmentKey] == self.marker
     }

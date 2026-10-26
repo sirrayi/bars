@@ -8,7 +8,7 @@ struct ProviderChangelogLinkTests {
     @Test
     func `provider menu hides changelog action until enabled`() {
         let codexDescriptor = self.makeDescriptor(
-            provider: .codex,
+            provider: .claude,
             suite: "ProviderChangelogLinkTests-codex-default")
         #expect(!self.actionTitles(from: codexDescriptor).contains("Changelog"))
     }
@@ -26,9 +26,7 @@ struct ProviderChangelogLinkTests {
         settings.statusChecksEnabled = false
         settings.providerChangelogLinksEnabled = changelogLinksEnabled
 
-        let fetcher = UsageFetcher(environment: [:])
         let store = UsageStore(
-            fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing)
@@ -37,7 +35,7 @@ struct ProviderChangelogLinkTests {
             provider: provider,
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updateReady: false,
             includeContextualActions: true)
     }

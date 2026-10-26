@@ -78,14 +78,6 @@ struct ProviderSettingsDescriptorTests {
     }
 
     @Test
-    func `codex reauthentication remains account scoped`() throws {
-        let fixture = try self.makeSettingsFixture(suite: "ProviderSettingsDescriptorTests-codex-login-scope")
-        let context = fixture.settingsContext(provider: .codex)
-
-        #expect(CodexProviderImplementation().settingsActions(context: context).isEmpty)
-    }
-
-    @Test
     func `open code cookie refresh commits replacement through user initiated gate`() async throws {
         let fixture = try self.makeSettingsFixture(suite: "ProviderSettingsDescriptorTests-opencode-refresh")
         let context = fixture.settingsContext(provider: .opencode)
@@ -238,7 +230,6 @@ struct ProviderSettingsDescriptorTests {
     {
         let environment = ProcessInfo.processInfo.environment
         precondition(environment["CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS"] == "1")
-        precondition(environment[CodexCredentialFileAccess.isolationEnvironmentKey] == "1")
         precondition(environment["CODEXBAR_TEST_SESSION_FILE_ISOLATION"] == "1")
         precondition(environment["CODEXBAR_ALLOW_TEST_KEYCHAIN_ACCESS"] != "1")
         let output = URL(fileURLWithPath: directory, isDirectory: true)
@@ -257,25 +248,6 @@ struct ProviderSettingsDescriptorTests {
             .write(to: output.appendingPathComponent("source-picker.png"))
         try picker.subtitle.write(
             to: output.appendingPathComponent("source-picker.txt"), atomically: true, encoding: .utf8)
-    }
-
-    @Test
-    func `codex exposes open AI web extras toggle as default off opt in`() throws {
-        let fixture = try self.makeSettingsFixture(suite: "ProviderSettingsDescriptorTests-codex-openai-toggle")
-        let context = fixture.settingsContext(provider: .codex)
-
-        let toggles = CodexProviderImplementation().settingsToggles(context: context)
-        let extrasToggle = try #require(toggles.first(where: { $0.id == "codex-openai-web-extras" }))
-        #expect(extrasToggle.binding.wrappedValue == false)
-        #expect(extrasToggle.subtitle.contains("Optional."))
-        #expect(extrasToggle.subtitle.contains("Turn this on"))
-
-        let batterySaverToggle = try #require(toggles.first(where: { $0.id == "codex-openai-web-battery-saver" }))
-        #expect(batterySaverToggle.binding.wrappedValue == false)
-        #expect(batterySaverToggle.isVisible?() == false)
-
-        fixture.settings.openAIWebAccessEnabled = true
-        #expect(batterySaverToggle.isVisible?() == true)
     }
 
     @Test
@@ -302,13 +274,9 @@ struct ProviderSettingsDescriptorTests {
     func `provider implementations omit superseded one-off usage visibility toggles`() throws {
         let fixture = try self.makeSettingsFixture(suite: "ProviderSettingsDescriptorTests-shared-usage-items")
         let claudeContext = fixture.settingsContext(provider: .claude)
-        let codexContext = fixture.settingsContext(provider: .codex)
 
         #expect(!ClaudeProviderImplementation().settingsToggles(context: claudeContext).contains {
             $0.id == "claude-daily-routines-usage-visible"
-        })
-        #expect(!CodexProviderImplementation().settingsToggles(context: codexContext).contains {
-            $0.id == "codex-spark-usage-visible"
         })
     }
 
@@ -666,7 +634,6 @@ extension ProviderSettingsDescriptorTests {
                 result: .success(ProviderFetchResult(
                     usage: refreshed,
                     credits: nil,
-                    dashboard: nil,
                     sourceLabel: "api",
                     strategyID: "deepseek.api",
                     strategyKind: .apiToken)),
@@ -712,7 +679,6 @@ extension ProviderSettingsDescriptorTests {
                 result: .success(ProviderFetchResult(
                     usage: refreshedBalance,
                     credits: nil,
-                    dashboard: nil,
                     sourceLabel: "api",
                     strategyID: "deepseek.api",
                     strategyKind: .apiToken)),
@@ -893,7 +859,7 @@ extension ProviderSettingsDescriptorTests {
             override: TokenAccountOverride(provider: .deepseek, account: active)))
         fixture.settings.showOptionalCreditsAndExtraUsage = false
         #expect(!ProviderTokenAccountSelection.shouldIncludeOptionalUsage(
-            provider: .codex,
+            provider: .claude,
             settings: fixture.settings,
             override: nil))
         fixture.settings.costSummaryOption = .inlineSummary
@@ -942,7 +908,6 @@ extension ProviderSettingsDescriptorTests {
             configStore: testConfigStore(suiteName: suite),
             keychainAccessPolicy: .init(setDisabled: { _ in }, isExplicitlyDisabled: { false }))
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             environmentBase: environmentBase)

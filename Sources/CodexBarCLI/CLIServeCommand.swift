@@ -193,7 +193,6 @@ struct ServeUsageContext: Sendable {
     let providerTimeout: TimeInterval?
     let providerDeadline: ContinuousClock.Instant?
     let providerOperations: CLIServeOperationCoordinator<UsageCommandOutput>
-    let includeAllCodexAccounts: Bool
     let includeAllAccounts: Bool
     let persistCLISessions: Bool
 
@@ -204,7 +203,6 @@ struct ServeUsageContext: Sendable {
         providerTimeout: TimeInterval?,
         providerDeadline: ContinuousClock.Instant?,
         providerOperations: CLIServeOperationCoordinator<UsageCommandOutput>,
-        includeAllCodexAccounts: Bool = true,
         includeAllAccounts: Bool = false,
         persistCLISessions: Bool = true)
     {
@@ -214,7 +212,6 @@ struct ServeUsageContext: Sendable {
         self.providerTimeout = providerTimeout
         self.providerDeadline = providerDeadline
         self.providerOperations = providerOperations
-        self.includeAllCodexAccounts = includeAllCodexAccounts
         self.includeAllAccounts = includeAllAccounts
         self.persistCLISessions = persistCLISessions
     }
@@ -1047,7 +1044,6 @@ extension CodexBarCLI {
                             providerTimeout: providerTimeout,
                             providerDeadline: providerDeadline,
                             providerOperations: runtime.providerOperations,
-                            includeAllCodexAccounts: runtime.dashboardAllAccounts,
                             includeAllAccounts: runtime.dashboardAllAccounts),
                         costCollection: ServeCostCollectionContext(
                             configFingerprint: snapshot.cacheToken,
@@ -1464,9 +1460,6 @@ extension CodexBarCLI {
         }
 
         let fetcher = CostUsageFetcher(calendar: context.calendar)
-        let piSessionProcessContexts = await Self.piSessionProcessContextsForCost(
-            providers: providers,
-            includePiSessions: true)
         let payload = await Self.collectConfiguredCostPayloads(
             providers: providers,
             config: context.config,
@@ -1478,14 +1471,8 @@ extension CodexBarCLI {
                     now: context.now,
                     forceRefresh: false,
                     historyDays: context.period.days(now: context.now, calendar: context.calendar),
-                    refreshPricingInBackground: Self.serveCostRefreshesPricingInBackground,
-                    includePiSessions: Self.costIncludePiSessions(
-                        provider: provider,
-                        selectedProviders: providers,
-                        groupBy: .none,
-                        format: .json,
-                        includePiSessions: true),
-                    piSessionProcessContexts: piSessionProcessContexts).reporting(context.period)
+                    refreshPricingInBackground: Self.serveCostRefreshesPricingInBackground)
+                    .reporting(context.period)
                 return Self.makeCostPayload(
                     provider: provider,
                     snapshot: snapshot,
@@ -1520,9 +1507,6 @@ extension CodexBarCLI {
     {
         // Preserve the established scan order. The injected fetch decides whether
         // pricing refresh is awaited; provider deadlines still bound each row.
-        // Provider-specific by design: the same provider may be requested once as
-        // an inclusive Claude/Codex row and once as native-only when Pi is emitted
-        // separately. Keep those operations from coalescing under one config key.
         var payload: [CostPayload] = []
         for provider in providers {
             let deadline = Self.serveCostProviderDeadline(
@@ -1533,17 +1517,9 @@ extension CodexBarCLI {
                 provider: provider,
                 snapshot: nil,
                 error: CLIServeCostTimeoutError(provider: provider))
-            let includesPi = Self.costIncludePiSessions(
-                provider: provider,
-                selectedProviders: providers,
-                groupBy: .none,
-                format: .json,
-                includePiSessions: true)
-            let mode = includesPi ? "inclusive" : "native"
-            let operationFingerprint = "\(context.configFingerprint)|piAccounting=\(provider.rawValue):\(mode)"
             let item = await context.providerOperations.value(
                 for: provider.rawValue,
-                fingerprint: operationFingerprint,
+                fingerprint: context.configFingerprint,
                 deadline: deadline,
                 timeoutValue: timeout)
             {

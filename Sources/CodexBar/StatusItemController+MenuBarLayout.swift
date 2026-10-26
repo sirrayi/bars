@@ -213,19 +213,6 @@ extension StatusItemController {
             now: now)
     }
 
-    func menuBarLayoutCodexCredits(
-        provider: UsageProvider,
-        snapshot: UsageSnapshot?,
-        now: Date = .init()) -> CreditsSnapshot?
-    {
-        guard !self.menuBarUsageSource(for: provider).isFleet else { return nil }
-        return self.store.codexConsumerProjectionIfNeeded(
-            for: provider,
-            surface: .menuBar,
-            snapshotOverride: snapshot,
-            now: now)?.credits?.snapshot
-    }
-
     func menuBarLayoutAccountLabel(provider: UsageProvider, snapshot: UsageSnapshot?) -> String? {
         let rawAccountLabel = snapshot?.accountEmail(for: provider)?
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -366,11 +353,6 @@ extension UsageStore {
             provider: provider,
             snapshot: snapshot,
             showsOptionalCredits: self.settings.showOptionalCreditsAndExtraUsage)
-        let codexCredits = includeLocalDerivedData ? self.codexConsumerProjectionIfNeeded(
-            for: provider,
-            surface: .menuBar,
-            snapshotOverride: snapshot,
-            now: now)?.credits?.snapshot : nil
         let spend = includeLocalDerivedData
             ? self.menuBarLayoutSpend(provider: provider, snapshot: snapshot, now: now) : .unavailable
         let providerName = L(self.metadata(for: provider).displayName)
@@ -418,7 +400,6 @@ extension UsageStore {
             balance: MenuBarLayoutBalanceResolver.balance(
                 provider: provider,
                 snapshot: snapshot,
-                codexCredits: codexCredits,
                 showsOptionalCredits: self.settings.showOptionalCreditsAndExtraUsage),
             tokensPerMinute: snapshot?.throughput?.latestTokensPerMinute,
             tokensSparkline: snapshot?.throughput.map { MenuBarTokensSparkline(minutes: $0.minutes) },
@@ -464,25 +445,6 @@ extension UsageStore {
         -> MenuBarLayoutWindows
     {
         let spend = includeLocalDerivedData ? self.spendLimit(for: provider, snapshot: snapshot, now: now)?.window : nil
-        if includeLocalDerivedData, provider == .codex,
-           let projection = self.codexConsumerProjectionIfNeeded(
-               for: provider,
-               surface: .menuBar,
-               snapshotOverride: snapshot,
-               now: now)
-        {
-            let session = projection.menuBarSelectableRateWindow(for: .session)
-            let weekly = projection.menuBarSelectableRateWindow(for: .weekly)
-            let automatic = projection.automaticMenuBarWindow()
-            return MenuBarLayoutWindows(
-                primary: session,
-                secondary: weekly,
-                tertiary: snapshot?.tertiary,
-                session: session,
-                weekly: weekly,
-                automatic: automatic,
-                spend: spend)
-        }
 
         let semanticWindows = MenuBarLayoutSemanticWindowResolver.windows(
             provider: provider,

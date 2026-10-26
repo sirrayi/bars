@@ -43,7 +43,7 @@ struct QuotaLowHookAccountScopingTests {
         let claude = UsageStore.QuotaWarningStateKey(
             provider: .claude, window: .session, accountDiscriminator: "account", windowID: nil)
         let codex = UsageStore.QuotaWarningStateKey(
-            provider: .codex, window: .session, accountDiscriminator: "account", windowID: nil)
+            provider: .opencode, window: .session, accountDiscriminator: "account", windowID: nil)
         store.quotaLowHookUsage = [claude: 0.4, codex: 0.5]
 
         store.clearQuotaLowHookUsage(provider: .claude)
@@ -93,7 +93,6 @@ struct QuotaLowHookAccountScopingTests {
 
     private func makeStore(suiteName: String) -> UsageStore {
         UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: testSettingsStore(suiteName: suiteName),
             environmentBase: [:])

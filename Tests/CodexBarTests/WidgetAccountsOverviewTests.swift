@@ -42,12 +42,12 @@ struct WidgetAccountsOverviewTests {
         let snapshot = try WidgetSnapshot(
             entries: [#require(usage)],
             accounts: [
-                .init(id: "private-owner-id", provider: .codex, label: "Account 2", usage: nil),
-                .init(id: "verified", provider: .codex, label: "Account 1", usage: usage),
+                .init(id: "private-owner-id", provider: .opencode, label: "Account 2", usage: nil),
+                .init(id: "verified", provider: .opencode, label: "Account 1", usage: usage),
             ],
-            enabledProviders: [.codex],
+            enabledProviders: [.opencode],
             generatedAt: fixture.date)
-        let entry = CodexBarWidgetEntry(date: fixture.date, provider: .codex, snapshot: snapshot)
+        let entry = CodexBarWidgetEntry(date: fixture.date, provider: .opencode, snapshot: snapshot)
         let result = WidgetAccountsOverview.make(entry: entry, family: .systemMedium)
         #expect(result.rows.map(\.account.label) == ["Account 1", "Account 2"])
         #expect(result.rows.last?.quota == nil)
@@ -59,17 +59,17 @@ struct WidgetAccountsOverviewTests {
         let fixture = self.entry(remaining: [20])
         let usage = fixture.snapshot.accounts[0].usage
         let accounts: [WidgetSnapshot.AccountEntry] = [
-            .init(id: "duplicate", provider: .codex, label: "Hidden", usage: usage),
+            .init(id: "duplicate", provider: .opencode, label: "Hidden", usage: usage),
             .init(id: "duplicate", provider: .claude, label: "Hidden", usage: nil),
             .init(id: "mismatch", provider: .claude, label: "Hidden", usage: usage),
-            .init(id: "foreign", provider: .codex, label: "Hidden", usage: usage),
+            .init(id: "foreign", provider: .opencode, label: "Hidden", usage: usage),
             .init(id: "unavailable", provider: .claude, label: "Account 1", usage: nil),
         ]
         for enabled in [[], [.claude]] as [[ProviderInstanceID]] {
             let snapshot = WidgetSnapshot(
                 entries: [],
                 accounts: accounts,
-                accountOverflowCounts: ["claude": 2, "codex": 7],
+                accountOverflowCounts: ["claude": 2, "opencode": 7],
                 enabledProviders: enabled,
                 generatedAt: fixture.date)
             let entry = CodexBarWidgetEntry(date: fixture.date, provider: .claude, snapshot: snapshot)
@@ -84,7 +84,7 @@ struct WidgetAccountsOverviewTests {
         let snapshot = self.entry(remaining: [20], overflow: 3).snapshot
         let data = try JSONEncoder().encode(snapshot)
         let decoded = try JSONDecoder().decode(WidgetSnapshot.self, from: data)
-        #expect(decoded.accountOverflowCounts == ["codex": 3])
+        #expect(decoded.accountOverflowCounts == ["opencode": 3])
         var object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
         object.removeValue(forKey: "accountOverflowCounts")
         let legacy = try JSONDecoder().decode(WidgetSnapshot.self, from: JSONSerialization.data(withJSONObject: object))
@@ -101,7 +101,7 @@ struct WidgetAccountsOverviewTests {
         let now = Date().addingTimeInterval(-300)
         let accounts: [WidgetSnapshot.AccountEntry] = remaining.enumerated().map { index, left in
             let usage = WidgetSnapshot.ProviderEntry(
-                provider: .codex,
+                provider: .opencode,
                 updatedAt: now,
                 primary: RateWindow(usedPercent: 0, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
                 secondary: RateWindow(
@@ -114,13 +114,13 @@ struct WidgetAccountsOverviewTests {
                 codeReviewRemainingPercent: includeExtras ? 0 : nil,
                 tokenUsage: nil,
                 dailyUsage: [])
-            return .init(id: "fixture-\(index + 1)", provider: .codex, label: "Account \(index + 1)", usage: usage)
+            return .init(id: "fixture-\(index + 1)", provider: .opencode, label: "Account \(index + 1)", usage: usage)
         }
-        return CodexBarWidgetEntry(date: now, provider: .codex, snapshot: WidgetSnapshot(
+        return CodexBarWidgetEntry(date: now, provider: .opencode, snapshot: WidgetSnapshot(
             entries: [],
             accounts: accounts,
-            accountOverflowCounts: ["codex": overflow],
-            enabledProviders: [.codex],
+            accountOverflowCounts: ["opencode": overflow],
+            enabledProviders: [.opencode],
             usageBarsShowUsed: showUsed,
             generatedAt: now))
     }

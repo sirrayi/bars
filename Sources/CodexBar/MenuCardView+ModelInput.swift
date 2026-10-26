@@ -7,7 +7,6 @@ extension UsageMenuCardView.Model {
         let provider: UsageProvider
         let metadata: ProviderMetadata
         let snapshot: UsageSnapshot?
-        let codexProjection: CodexConsumerProjection?
         let credits: CreditsSnapshot?
         let creditsError: String?
         let dashboardError: String?
@@ -26,13 +25,11 @@ extension UsageMenuCardView.Model {
         let resetTimeDisplayStyle: ResetTimeDisplayStyle
         let tokenCostUsageEnabled: Bool
         let tokenCostIsRefreshing: Bool
-        let codexLocalSessionCostLedgerEnabled: Bool
         let costSummaryInlineEnabled: Bool
         let tokenCostMenuSectionEnabled: Bool
         let costComparisonPeriodsEnabled: Bool
         let showOptionalCreditsAndExtraUsage: Bool
         let claudeDailyRoutinesUsageVisible: Bool
-        let codexSparkUsageVisible: Bool
         /// Provider details is the diagnostic surface and lists every usage lane a provider reports.
         /// The menu and widgets stay curated and may drop lanes that carry no information.
         let showsAllUsageLanes: Bool
@@ -57,7 +54,6 @@ extension UsageMenuCardView.Model {
             throughputPresentation: ProviderThroughputPresentation? = nil,
             metadata: ProviderMetadata,
             snapshot: UsageSnapshot?,
-            codexProjection: CodexConsumerProjection? = nil,
             credits: CreditsSnapshot?,
             creditsError: String?,
             dashboardError: String?,
@@ -76,13 +72,11 @@ extension UsageMenuCardView.Model {
             resetTimeDisplayStyle: ResetTimeDisplayStyle,
             tokenCostUsageEnabled: Bool,
             tokenCostIsRefreshing: Bool = false,
-            codexLocalSessionCostLedgerEnabled: Bool = false,
             costSummaryInlineEnabled: Bool? = nil,
             tokenCostMenuSectionEnabled: Bool? = nil,
             costComparisonPeriodsEnabled: Bool = false,
             showOptionalCreditsAndExtraUsage: Bool,
             claudeDailyRoutinesUsageVisible: Bool = true,
-            codexSparkUsageVisible: Bool = true,
             showsAllUsageLanes: Bool = false,
             sourceLabel: String? = nil,
             subtitleOverride: String? = nil,
@@ -104,7 +98,6 @@ extension UsageMenuCardView.Model {
             self.provider = provider
             self.metadata = metadata
             self.snapshot = snapshot
-            self.codexProjection = codexProjection
             self.credits = credits
             self.creditsError = creditsError
             self.dashboardError = dashboardError
@@ -123,13 +116,11 @@ extension UsageMenuCardView.Model {
             self.resetTimeDisplayStyle = resetTimeDisplayStyle
             self.tokenCostUsageEnabled = tokenCostUsageEnabled
             self.tokenCostIsRefreshing = tokenCostIsRefreshing
-            self.codexLocalSessionCostLedgerEnabled = codexLocalSessionCostLedgerEnabled
             self.costSummaryInlineEnabled = costSummaryInlineEnabled ?? tokenCostUsageEnabled
             self.tokenCostMenuSectionEnabled = tokenCostMenuSectionEnabled ?? tokenCostUsageEnabled
             self.costComparisonPeriodsEnabled = costComparisonPeriodsEnabled
             self.showOptionalCreditsAndExtraUsage = showOptionalCreditsAndExtraUsage
             self.claudeDailyRoutinesUsageVisible = claudeDailyRoutinesUsageVisible
-            self.codexSparkUsageVisible = codexSparkUsageVisible
             self.showsAllUsageLanes = showsAllUsageLanes
             self.sourceLabel = sourceLabel
             self.subtitleOverride = subtitleOverride

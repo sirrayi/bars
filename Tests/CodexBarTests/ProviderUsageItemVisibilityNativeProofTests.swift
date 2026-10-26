@@ -24,11 +24,11 @@ private final class UsageVisibilityNativeState {
     init(root: URL) throws {
         self.root = root
         self.provider = ProcessInfo.processInfo
-            .environment["CODEXBAR_USAGE_VISIBILITY_NATIVE_PROOF_PROVIDER"] == "deepseek" ? .deepseek : .codex
+            .environment["CODEXBAR_USAGE_VISIBILITY_NATIVE_PROOF_PROVIDER"] == "deepseek" ? .deepseek : .opencode
         self.configStore = CodexBarConfigStore(fileURL: root.appendingPathComponent("config.json"))
         if try self.configStore.load() == nil {
             try self.configStore.save(CodexBarConfig(providers: UsageProvider.allCases.map {
-                ProviderConfig(id: $0.instanceID, enabled: [.codex, .claude, .deepseek].contains($0))
+                ProviderConfig(id: $0.instanceID, enabled: [.opencode, .claude, .deepseek].contains($0))
             }))
         }
         let settings = Self.makeSettings(root: root, configStore: self.configStore)
@@ -57,7 +57,7 @@ private final class UsageVisibilityNativeState {
             "hidden": self.settings.hiddenUsageItemIDs(for: self.provider).map(\.rawValue).sorted(),
             "detailSections": self.model(for: self.provider).providerDetails.map { $0.title ?? "(untitled)" },
             "detailRawTitles": self.model(for: self.provider).providerDetailRawTitles.map { $0 ?? "(untitled)" },
-            "codexMetrics": self.model(for: .codex).metrics.map(\.id),
+            "codexMetrics": self.model(for: .opencode).metrics.map(\.id),
             "claudeMetrics": self.model(for: .claude).metrics.map(\.id),
             "fetchRevisionUnchanged": self.settings.providerConfigRevision(for: self.provider) == self.fetchRevision,
         ]
@@ -71,10 +71,7 @@ private final class UsageVisibilityNativeState {
             "debugDisableKeychainAccess": true,
         ])
         let settings = ProviderUsageItemVisibilityTests.settings(defaults: defaults, configStore: configStore)
-        settings._test_managedCodexAccountStoreURL = root.appendingPathComponent("managed-accounts.json")
-        settings._test_codexReconciliationEnvironment = self.environment(root: root)
         settings.statusChecksEnabled = false
-        settings.openAIWebAccessEnabled = false
         settings.costUsageEnabled = false
         settings.refreshFrequency = .manual
         return settings
@@ -91,14 +88,13 @@ private final class UsageVisibilityNativeState {
     private static func makeStore(root: URL, settings: SettingsStore) -> UsageStore {
         let environment = self.environment(root: root)
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: environment),
             browserDetection: BrowserDetection(homeDirectory: root.path, cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
             environmentBase: environment)
         store._test_providerRefreshOverride = { _ in XCTFail("Unexpected provider transport") }
         store._test_widgetSnapshotSaveOverride = { _ in }
-        for provider in [UsageProvider.codex, .claude, .deepseek] {
+        for provider in [UsageProvider.opencode, .claude, .deepseek] {
             let details = provider == .deepseek ? [
                 try? ProviderDetailSection(
                     title: "Quota details",

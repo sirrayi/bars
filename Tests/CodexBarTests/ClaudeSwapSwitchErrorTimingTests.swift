@@ -7,7 +7,7 @@ import Testing
 struct ClaudeSwapSwitchErrorTimingTests {
     @Test(arguments: [true, false])
     func `active foreign credential repair respects adapter capability`(supportsAccountSwitching: Bool) async throws {
-        let fixture = try CodexWorkspacesNavigationFixture(userDefaults: InMemoryUserDefaults())
+        let fixture = try MenuNavigationFixture(userDefaults: InMemoryUserDefaults())
         defer { fixture.cleanup() }
         let executable = fixture.files.root.appendingPathComponent("cswap-repair")
         let script = #"""
@@ -67,7 +67,7 @@ struct ClaudeSwapSwitchErrorTimingTests {
     func `failed switch is visible before ambient refresh finishes`(
         configurationChange: ConfigurationChange) async throws
     {
-        let fixture = try CodexWorkspacesNavigationFixture(userDefaults: InMemoryUserDefaults())
+        let fixture = try MenuNavigationFixture(userDefaults: InMemoryUserDefaults())
         defer { fixture.cleanup() }
         let executable = fixture.files.root.appendingPathComponent("cswap")
         let script = """
@@ -161,7 +161,7 @@ struct ClaudeSwapSwitchErrorTimingTests {
     func `successful activation reports reconciliation without inventing an active account`(
         invalidateDuringActivation: Bool) async throws
     {
-        let fixture = try CodexWorkspacesNavigationFixture(userDefaults: InMemoryUserDefaults())
+        let fixture = try MenuNavigationFixture(userDefaults: InMemoryUserDefaults())
         defer { fixture.cleanup() }
         let executable = fixture.files.root.appendingPathComponent("cswap-success")
         let script = #"""
@@ -253,7 +253,7 @@ struct ClaudeSwapSwitchErrorTimingTests {
 
     @Test
     func `cancelled independent adapter reads cannot publish`() async throws {
-        let fixture = try CodexWorkspacesNavigationFixture(userDefaults: InMemoryUserDefaults())
+        let fixture = try MenuNavigationFixture(userDefaults: InMemoryUserDefaults())
         defer { fixture.cleanup() }
         let metadata = try #require(ProviderRegistry.shared.metadata[.claude])
         fixture.settings.setProviderEnabled(provider: .claude, metadata: metadata, enabled: true)

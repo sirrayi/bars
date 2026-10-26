@@ -7,53 +7,6 @@ import Testing
 @Suite(.serialized)
 struct SpendDashboardControllerTests {
     @Test
-    func `empty codex history loads as successful inactive source`() async {
-        let now = Date(timeIntervalSince1970: 1_784_179_200)
-        let recorder = SpendDashboardCodexLoadRecorder()
-        let account = CodexSpendScanRequest(
-            id: "inactive",
-            displayName: "Codex",
-            source: .profileHome(path: "/synthetic/codex-home"),
-            homePath: "/synthetic/codex-home",
-            authFingerprint: nil,
-            authFileWasReadable: false,
-            cacheIdentity: "inactive-cache")
-        let request = SpendDashboardLoadRequest(
-            configuration: Self.configuration(account: "inactive|inactive-cache"),
-            capturedInputs: [],
-            unavailableSourceIDs: [],
-            codexRequests: [account],
-            now: now,
-            force: false)
-
-        let result = await SpendDashboardSource.load(request, codexSnapshotLoader: { context in
-            await recorder.record(context)
-            return CostUsageTokenSnapshot(
-                sessionTokens: nil,
-                sessionCostUSD: nil,
-                last30DaysTokens: 0,
-                last30DaysCostUSD: 0,
-                historyDays: context.historyDays,
-                daily: [],
-                updatedAt: context.now)
-        })
-        let contexts = await recorder.contexts
-
-        #expect(result.inputs.count == 1)
-        #expect(result.inputs.first?.id == "codex:inactive")
-        #expect(result.inputs.first?.snapshot.daily.isEmpty == true)
-        #expect(result.failedSourceIDs.isEmpty)
-        #expect(contexts.count == 1)
-        #expect(contexts.first?.account == account)
-        #expect(contexts.first?.cacheRoot.lastPathComponent == "inactive-cache")
-        #expect(contexts.first?.now == now)
-        #expect(contexts.first?.force == false)
-        #expect(contexts.first?.historyDays == SpendDashboardSource.scanDays)
-        #expect(contexts.first?.refreshPricingInBackground == false)
-        #expect(contexts.first?.includePiSessions == false)
-    }
-
-    @Test
     func `replacement generation rejects stale completion`() async {
         let gate = SpendDashboardLoaderGate()
         let controller = Self.controller(gate: gate)
@@ -128,7 +81,7 @@ struct SpendDashboardControllerTests {
         await Self.waitUntil { !controller.isRefreshing }
 
         #expect(controller.model.groups.first?.totalCost == 11)
-        #expect(Set(controller.model.groups.flatMap(\.providers).map(\.id)) == ["codex", "claude"])
+        #expect(Set(controller.model.groups.flatMap(\.providers).map(\.id)) == ["opencode", "claude"])
     }
 
     @Test
@@ -144,7 +97,6 @@ struct SpendDashboardControllerTests {
             settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: provider == .claude)
         }
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -186,7 +138,6 @@ struct SpendDashboardControllerTests {
             settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: provider == .claude)
         }
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -232,7 +183,6 @@ struct SpendDashboardControllerTests {
             settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: provider == .claude)
         }
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -261,7 +211,6 @@ struct SpendDashboardControllerTests {
             config.enterpriseHost = "owner-one.invalid"
         }
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -319,7 +268,6 @@ struct SpendDashboardControllerTests {
             settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: provider == .claude)
         }
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -347,7 +295,6 @@ struct SpendDashboardControllerTests {
             settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: provider == .claude)
         }
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -381,7 +328,6 @@ struct SpendDashboardControllerTests {
             settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: provider == .claude)
         }
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -427,7 +373,6 @@ struct SpendDashboardControllerTests {
                     configuration: latestConfiguration,
                     capturedInputs: [Self.input(id: "claude", provider: .claude, cost: 2)],
                     unavailableSourceIDs: [],
-                    codexRequests: [],
                     now: Date(timeIntervalSince1970: 1_784_179_200),
                     force: false)
             },
@@ -455,8 +400,7 @@ struct SpendDashboardControllerTests {
 
         controller.update(configuration: SpendDashboardConfiguration(
             costUsageEnabled: false,
-            providerIDs: [UsageProvider.codex.rawValue],
-            codexAccountIdentities: ["enabled"]))
+            providerIDs: [UsageProvider.opencode.rawValue]))
         #expect(!controller.isRefreshing)
         #expect(controller.model.groups.isEmpty)
 
@@ -520,7 +464,6 @@ struct SpendDashboardControllerTests {
                     configuration: configuration,
                     capturedInputs: mode == .captureOnly ? captureStore.inputs : [],
                     unavailableSourceIDs: [],
-                    codexRequests: [],
                     now: Date(timeIntervalSince1970: 1_784_179_200),
                     force: mode.forcesLoader)
             },
@@ -541,7 +484,6 @@ struct SpendDashboardControllerTests {
             configuration: configuration,
             capturedInputs: [],
             unavailableSourceIDs: [],
-            codexRequests: [],
             now: Date(timeIntervalSince1970: 1_784_179_200),
             force: force)
     }
@@ -553,15 +495,14 @@ struct SpendDashboardControllerTests {
     {
         SpendDashboardConfiguration(
             costUsageEnabled: true,
-            providerIDs: [UsageProvider.codex.rawValue],
-            codexAccountIdentities: [account],
-            sourceOwnershipFingerprints: [sourceOwnershipFingerprint],
+            providerIDs: [UsageProvider.opencode.rawValue],
+            sourceOwnershipFingerprints: ["\(account)|\(sourceOwnershipFingerprint)"],
             sourceRevisions: [revision])
     }
 
     private static func input(
         id: String? = nil,
-        provider: UsageProvider = .codex,
+        provider: UsageProvider = .opencode,
         cost: Double) -> SpendDashboardModel.ProviderInput
     {
         let entry = CostUsageDailyReport.Entry(
@@ -609,76 +550,7 @@ struct SpendDashboardControllerTests {
 }
 
 @MainActor
-extension SpendDashboardControllerTests {
-    @Test
-    func `capture keeps inclusive claude totals when pi source is absent`() async throws {
-        let settings = testSettingsStore(suiteName: "SpendDashboardControllerTests-pi-absent-projection")
-        settings.costUsageEnabled = true
-        for provider in UsageProvider.allCases {
-            guard let metadata = ProviderRegistry.shared.metadata[provider] else { continue }
-            settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: provider == .claude)
-        }
-        let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
-            browserDetection: BrowserDetection(cacheTTL: 0),
-            settings: settings,
-            startupBehavior: .testing,
-            environmentBase: [:])
-        let inclusive = Self.input(provider: .claude, cost: 9).snapshot
-        let native = Self.input(provider: .claude, cost: 4).snapshot
-        store._setSpendDashboardTokenSnapshotForTesting(
-            inclusive,
-            for: .claude,
-            accounting: .includesPi(scope: "pi-scope", native: native))
-
-        let request = await SpendDashboardSource.makeRequest(
-            settings: settings,
-            store: store,
-            mode: .captureOnly)
-
-        let captured = try #require(request.capturedInputs.first)
-        #expect(request.capturedInputs.count == 1)
-        #expect(captured.provider == .claude)
-        #expect(captured.snapshot.last30DaysCostUSD == inclusive.last30DaysCostUSD)
-    }
-
-    @Test
-    func `hidden pi source still owns pi rows in the claude projection`() async throws {
-        let settings = testSettingsStore(suiteName: "SpendDashboardControllerTests-pi-hidden-projection")
-        settings.costUsageEnabled = true
-        for provider in UsageProvider.allCases {
-            guard let metadata = ProviderRegistry.shared.metadata[provider] else { continue }
-            settings.setProviderEnabled(
-                provider: provider,
-                metadata: metadata,
-                enabled: provider == .claude || provider == .pi)
-        }
-        settings.spendDashboardHiddenSourceIDs = [UsageProvider.pi.rawValue]
-        let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
-            browserDetection: BrowserDetection(cacheTTL: 0),
-            settings: settings,
-            startupBehavior: .testing,
-            environmentBase: [:])
-        let inclusive = Self.input(provider: .claude, cost: 9).snapshot
-        let native = Self.input(provider: .claude, cost: 4).snapshot
-        let pi = Self.input(provider: .pi, cost: 5).snapshot
-        store._setSpendDashboardTokenSnapshotForTesting(
-            inclusive,
-            for: .claude,
-            accounting: .includesPi(scope: "pi-scope", native: native))
-        store._setSpendDashboardTokenSnapshotForTesting(pi, for: .pi)
-
-        let request = await SpendDashboardSource.makeRequest(
-            settings: settings,
-            store: store,
-            mode: .captureOnly)
-
-        let claude = try #require(request.capturedInputs.first { $0.provider == .claude })
-        #expect(request.configuration.hiddenSourceIDs == [UsageProvider.pi.rawValue])
-        #expect(claude.snapshot.last30DaysCostUSD == native.last30DaysCostUSD)
-    }
-}
+extension SpendDashboardControllerTests {}
 
 @MainActor
 struct SpendDashboardRequestTimeTests {
@@ -730,7 +602,6 @@ struct SpendDashboardRequestTimeTests {
             settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: provider == .claude)
         }
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -781,8 +652,8 @@ struct SpendDashboardControllerRevisionTests {
     }
 
     @Test
-    func `same amounts and timestamp still publish detail completeness and chat classification`() {
-        let snapshots = [false, true].flatMap { isProjectless in
+    func `same amounts and timestamp still publish detail completeness`() {
+        let snapshots = [false].flatMap { isProjectless in
             [false, true].map { complete in
                 CostUsageTokenSnapshot(
                     sessionTokens: nil,
@@ -921,13 +792,11 @@ struct SpendDashboardControllerRevisionTests {
                 let configuration = controllerBox.controller?.configuration
                     ?? SpendDashboardConfiguration(
                         costUsageEnabled: false,
-                        providerIDs: [],
-                        codexAccountIdentities: [])
+                        providerIDs: [])
                 return SpendDashboardLoadRequest(
                     configuration: configuration,
                     capturedInputs: [],
                     unavailableSourceIDs: [],
-                    codexRequests: [],
                     now: Date(timeIntervalSince1970: 1_784_179_200),
                     force: mode.forcesLoader)
             },
@@ -947,7 +816,6 @@ struct SpendDashboardControllerRevisionTests {
                 enabled: provider == .claude)
         }
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -1077,14 +945,6 @@ private actor SpendDashboardCapturedInputStore {
 
     func replace(with inputs: [SpendDashboardModel.ProviderInput]) {
         self.inputs = inputs
-    }
-}
-
-private actor SpendDashboardCodexLoadRecorder {
-    private(set) var contexts: [CodexSpendSnapshotLoadContext] = []
-
-    func record(_ context: CodexSpendSnapshotLoadContext) {
-        self.contexts.append(context)
     }
 }
 

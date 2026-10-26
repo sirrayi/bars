@@ -14,7 +14,6 @@ final class SpendDashboardHeaderLayoutTests: XCTestCase {
                 config: testConfigWithAllProvidersDisabled())
             settings.costUsageEnabled = true
             let store = UsageStore(
-                fetcher: UsageFetcher(environment: [:]),
                 browserDetection: BrowserDetection(cacheTTL: 0),
                 settings: settings,
                 startupBehavior: .testing,

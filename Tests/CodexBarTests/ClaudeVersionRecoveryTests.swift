@@ -154,7 +154,6 @@ struct ClaudeVersionRecoveryTests {
         }
 
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -182,7 +181,6 @@ struct ClaudeVersionRecoveryTests {
                         accountOrganization: nil,
                         loginMethod: "Max")),
                 credits: nil,
-                dashboard: nil,
                 sourceLabel: "claude",
                 strategyID: "test.claude-success",
                 strategyKind: strategyKind,

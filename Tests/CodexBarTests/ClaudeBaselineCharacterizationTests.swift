@@ -71,7 +71,6 @@ struct ClaudeBaselineCharacterizationTests {
             verbose: false,
             env: env,
             settings: settings,
-            fetcher: UsageFetcher(environment: env),
             claudeFetcher: ClaudeUsageFetcher(browserDetection: browserDetection),
             browserDetection: browserDetection,
             claudeOwnerCLIRecoveryOnly: claudeOwnerCLIRecoveryOnly)
@@ -195,7 +194,6 @@ struct ClaudeBaselineCharacterizationTests {
             verbose: baseContext.verbose,
             env: baseContext.env,
             settings: baseContext.settings,
-            fetcher: baseContext.fetcher,
             claudeFetcher: baseContext.claudeFetcher,
             browserDetection: baseContext.browserDetection,
             selectedTokenAccountID: UUID())

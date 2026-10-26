@@ -20,13 +20,6 @@ private final class SpendHourlyDaysMemo: @unchecked Sendable, Equatable {
 
 // swiftlint:disable:next type_body_length
 struct SpendDashboardModel: Equatable, Sendable {
-    enum SourceKind: String, Sendable, Equatable {
-        case native
-        case openCodex
-        case localHistory
-    }
-
-    static let openCodexSourceID = "opencodex"
     struct ProviderInput: Sendable {
         let id: String
         let provider: UsageProvider
@@ -35,7 +28,6 @@ struct SpendDashboardModel: Equatable, Sendable {
         var snapshot: CostUsageTokenSnapshot
         var retainedDetailSnapshot: CostUsageTokenSnapshot?
         let tokenActivityCache: CostUsageTokenActivityCache?
-        let accounting: PiSnapshotAccounting?
 
         init(
             id: String? = nil,
@@ -43,9 +35,7 @@ struct SpendDashboardModel: Equatable, Sendable {
             displayName: String,
             modelProviderName: String? = nil,
             snapshot: CostUsageTokenSnapshot,
-            tokenActivityCache: CostUsageTokenActivityCache? = nil,
-            sourceKind: SpendDashboardModel.SourceKind = .native,
-            accounting: PiSnapshotAccounting? = nil)
+            tokenActivityCache: CostUsageTokenActivityCache? = nil)
         {
             self.id = id ?? provider.rawValue
             self.provider = provider
@@ -53,11 +43,7 @@ struct SpendDashboardModel: Equatable, Sendable {
             self.modelProviderName = modelProviderName ?? displayName
             self.snapshot = snapshot
             self.tokenActivityCache = tokenActivityCache
-            self.sourceKind = sourceKind
-            self.accounting = accounting
         }
-
-        let sourceKind: SpendDashboardModel.SourceKind
     }
 
     struct SourceFilterItem: Identifiable, Equatable, Sendable {
@@ -73,7 +59,6 @@ struct SpendDashboardModel: Equatable, Sendable {
         let totalTokens: Int?
         let totalCost: Double?
         let coveredDayCount: Int
-        let sourceKind: SourceKind
 
         let incompleteRequestCount: Int
         /// The spend shown is a floor: some requests could not be priced, or the scan that produced
@@ -90,7 +75,6 @@ struct SpendDashboardModel: Equatable, Sendable {
             totalTokens: Int?,
             totalCost: Double?,
             coveredDayCount: Int,
-            sourceKind: SourceKind = .native,
             incompleteRequestCount: Int = 0,
             costIsLowerBound: Bool = false,
             tokensAreLowerBound: Bool = false)
@@ -105,7 +89,6 @@ struct SpendDashboardModel: Equatable, Sendable {
             self.totalTokens = totalTokens
             self.totalCost = totalCost
             self.coveredDayCount = coveredDayCount
-            self.sourceKind = sourceKind
         }
     }
 
@@ -415,18 +398,14 @@ struct SpendDashboardModel: Equatable, Sendable {
         calendar: Calendar = .current,
         preferredCurrencyCode: String = "auto",
         hiddenSourceIDs: Set<String> = [],
-        hideNativeCodexWhenOpenCodexPresent: Bool = false,
         selectedDay: Date? = nil) -> Self
     {
         let calculationCalendar = Self.gregorianCalendar(timeZone: calendar.timeZone)
         let availableSources = inputs
             .map { SourceFilterItem(id: $0.id, displayName: $0.displayName) }
             .sorted { $0.id < $1.id }
-        let aggregateInputs = Self.visibleInputs(
-            inputs,
-            hiddenSourceIDs: hiddenSourceIDs,
-            hideNativeCodexWhenOpenCodexPresent: hideNativeCodexWhenOpenCodexPresent)
-        let detailInputs = inputs.filter { !hiddenSourceIDs.contains($0.id) }
+        let aggregateInputs = inputs.filter { !hiddenSourceIDs.contains($0.id) }
+        let detailInputs = aggregateInputs
         let aggregateIDs = Set(aggregateInputs.map(\.id))
         var conversionCache: [String: Double?] = [:]
         let classifiedInputs = detailInputs.compactMap { input -> ClassifiedInput? in
@@ -488,24 +467,6 @@ struct SpendDashboardModel: Equatable, Sendable {
                 now: now,
                 calendar: calculationCalendar),
             selectedDay: selectedDay.map { calculationCalendar.startOfDay(for: $0) })
-    }
-
-    static func visibleInputs(
-        _ inputs: [ProviderInput],
-        hiddenSourceIDs: Set<String>,
-        hideNativeCodexWhenOpenCodexPresent: Bool) -> [ProviderInput]
-    {
-        var filtered = inputs.filter { !hiddenSourceIDs.contains($0.id) }
-        // Provider-specific by design: only a canonical OpenCodex Codex row may replace native Codex rows.
-        let hasOpenCodex = filtered.contains {
-            $0.id == Self.openCodexSourceID &&
-                $0.provider == .codex &&
-                $0.sourceKind == .openCodex
-        }
-        if hideNativeCodexWhenOpenCodexPresent, hasOpenCodex {
-            filtered.removeAll { $0.sourceKind == .native && $0.provider == .codex }
-        }
-        return filtered
     }
 
     private struct ClassifiedInput {
@@ -609,8 +570,7 @@ struct SpendDashboardModel: Equatable, Sendable {
         for summary in scopedSummaries {
             let summaryModelHistory = Self.modelSummary(summaries: [summary])
             let retainsModelHistory = if summary.totalCost != nil {
-                summaryModelHistory.completeness == .complete || summary.incompleteRequestCount > 0 ||
-                    Self.canRetainPartialCodexModelHistory(summary)
+                summaryModelHistory.completeness == .complete || summary.incompleteRequestCount > 0
             } else {
                 Self.canRetainUnpricedModelHistory(summary) ||
                     (summary.incompleteRequestCount > 0 && summary.entries
@@ -820,7 +780,6 @@ struct SpendDashboardModel: Equatable, Sendable {
                     totalTokens: entry.element.totalTokens,
                     totalCost: entry.element.totalCost,
                     coveredDayCount: entry.element.coveredDayCount,
-                    sourceKind: entry.element.input.sourceKind,
                     incompleteRequestCount: entry.element.incompleteRequestCount,
                     costIsLowerBound: entry.element.hasUnpricedRequests || entry.element.historyScanIsPartial,
                     tokensAreLowerBound: entry.element.historyScanIsPartial)
@@ -994,8 +953,6 @@ struct SpendDashboardModel: Equatable, Sendable {
         return abs(lhs - rhs) <= tolerance
     }
 
-    /// A completed Codex scan can carry an authoritative priced subtotal while exact request-tier
-    /// evidence leaves some model/day rows unpriceable. Those explicit gaps do not contradict the subtotal.
     private static func hasConsistentCostHistory(
         _ input: ProviderInput,
         displayCalendar: Calendar) -> Bool
@@ -1010,9 +967,7 @@ struct SpendDashboardModel: Equatable, Sendable {
             }
             guard coverage.contains(day) else { continue }
             guard let cost = validCost(entry.costUSD) else {
-                // Provider-specific by design: Codex and Cursor can omit prices on some model/day rows.
                 let isKnownUnpriced = entry.hasOnlyIncompleteRequests ||
-                    Self.hasExplicitlyUnpriceableLedgerCost(input.provider, entry) ||
                     (input.snapshot.costProvenance == .listPriceEstimate
                         && (entry.unpricedRequestCount ?? 0) > 0)
                 guard isKnownUnpriced,
@@ -1511,15 +1466,7 @@ struct SpendDashboardModel: Equatable, Sendable {
                 snapshot: summary.input.snapshot, calendar: calendar)
             return summary.input.snapshot.sessions.compactMap { session -> SessionRow? in
                 let day = calendar.startOfDay(for: session.lastActivity)
-                // Provider-specific by design: only the native Codex ledger has validated turn timing.
-                let nativeSamples = summary.input.provider == .codex && summary.input.sourceKind == .native
-                    ? session.turnPerformanceSamples : []
-                let performanceSamples = nativeSamples.filter {
-                    let completionDay = calendar.startOfDay(for: $0.completedAt)
-                    return bounds.contains(completionDay) &&
-                        (selectedDay == nil || completionDay == selectedDay)
-                }
-                guard bounds.contains(day) || !performanceSamples.isEmpty else { return nil }
+                guard bounds.contains(day) else { return nil }
                 let modelName = session.modelBreakdowns.max {
                     ($0.totalTokens ?? 0) < ($1.totalTokens ?? 0)
                 }?.modelName
@@ -1536,14 +1483,9 @@ struct SpendDashboardModel: Equatable, Sendable {
                     totalTokens: session.totalTokens,
                     totalCost: session.costUSD.map { $0 * summary.costMultiplier },
                     modelName: modelName,
-                    turnPerformance: CostUsageTurnPerformanceSummary(samples: performanceSamples),
-                    // Provider-specific by design: Only native Codex logs supply owned item_completed tool records.
-                    toolActivitySource: summary.input.provider == .codex && summary.input.sourceKind == .native
-                        ? session.toolActivitySource : nil,
-                    usage: session.withInspectionMetadata(
-                        toolActivitySource: summary.input.provider == .codex && summary.input.sourceKind == .native
-                            ? session.toolActivitySource : nil,
-                        turnPerformanceSamples: nativeSamples),
+                    turnPerformance: nil,
+                    toolActivitySource: nil,
+                    usage: session.withInspectionMetadata(toolActivitySource: nil, turnPerformanceSamples: []),
                     sourceName: summary.input.displayName,
                     costMultiplier: summary.costMultiplier,
                     reportingRange: reportingRange,

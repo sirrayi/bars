@@ -1,7 +1,13 @@
 import CodexBarCore
+import CryptoKit
 import Foundation
 
 extension UsageStore {
+    nonisolated static func sha256Hex(_ input: String) -> String {
+        let digest = SHA256.hash(data: Data(input.utf8))
+        return digest.map { String(format: "%02x", $0) }.joined()
+    }
+
     nonisolated static let sessionLimitResetDetectorDefaultsKey = "sessionLimitResetDetectorStates"
     nonisolated static let weeklyLimitResetDetectorDefaultsKey = "weeklyLimitResetDetectorStates"
     private nonisolated static let claudeOAuthAccountUuidMapDefaultsKey = "ClaudeOAuthHistoryOwnerAccountUuidMapV2"
@@ -150,48 +156,6 @@ extension UsageStore {
         return providerBuckets.selection(for: accountKey)
     }
 
-    func codexPlanUtilizationHistories(forVisibleAccount account: CodexVisibleAccount)
-        -> [PlanUtilizationSeriesHistory]
-    {
-        self.codexPlanUtilizationHistorySelection(forVisibleAccount: account).histories
-    }
-
-    func codexPlanUtilizationHistorySelection(forVisibleAccount account: CodexVisibleAccount)
-        -> PlanUtilizationHistorySelection
-    {
-        // Same gate as `planUtilizationHistorySelection`: defer ownership
-        // migration until the persisted history has been read. Unlike the live
-        // selection, an explicit account must never borrow unscoped startup data.
-        if !self.planUtilizationHistoryLoaded {
-            return .unavailable
-        }
-        var providerBuckets = self.planUtilizationHistory[.codex] ?? PlanUtilizationHistoryBuckets()
-        let originalProviderBuckets = providerBuckets
-        let ownership = self.codexOwnershipContext(forVisibleAccount: account)
-        guard let canonicalKey = ownership.canonicalKey else { return .unavailable }
-
-        if ownership.hasAdjacentEmailScopeAmbiguity {
-            guard canonicalKey != ownership.canonicalEmailHashKey else { return .unavailable }
-            return providerBuckets.selection(for: canonicalKey)
-        }
-
-        let accountKey = self.materializeCodexPlanUtilizationHistoryIfNeeded(
-            into: canonicalKey,
-            ownership: ownership,
-            shouldAdoptUnscopedHistory: true,
-            providerBuckets: &providerBuckets)
-        self.planUtilizationHistory[.codex] = providerBuckets
-        if providerBuckets != originalProviderBuckets {
-            self.planUtilizationHistoryRevision &+= 1
-            self.sessionEquivalentBurnCache.removeValue(forKey: .codex)
-            let snapshotToPersist = self.planUtilizationHistory
-            Task {
-                await self.planUtilizationPersistenceCoordinator.enqueue(snapshotToPersist)
-            }
-        }
-        return providerBuckets.selection(for: accountKey)
-    }
-
     func shouldShowRefreshingMenuCard(for provider: UsageProvider) -> Bool {
         self.refreshingProviders.contains(provider.instanceID)
             && self.snapshots[provider.instanceID] == nil
@@ -220,7 +184,6 @@ extension UsageStore {
         isClaudeOAuthSample: Bool = false,
         shouldUpdatePreferredAccountKey: Bool = true,
         shouldAdoptUnscopedHistory: Bool = true,
-        codexLimitResetOwnerKey: CodexLimitResetOwnerKey? = nil,
         sessionRestoredNotificationPending: Bool = false,
         now: Date = Date())
         async
@@ -268,7 +231,6 @@ extension UsageStore {
             snapshot: snapshot,
             accountKey: detectorAccountKey,
             capturedAt: now,
-            codexLimitResetOwnerKey: codexLimitResetOwnerKey,
             sessionRestoredNotificationPending: sessionRestoredNotificationPending)
         self.postLimitResetCelebrationsIfNeeded(context: detectorContext, samples: detectorSamples)
 
@@ -307,7 +269,7 @@ extension UsageStore {
             var histories = providerBuckets.histories(for: accountKey)
             let originalHistories = histories
             var samplesToPersist = samples
-            if ![UsageProvider.codex, .claude].contains(provider) {
+            if provider != .claude {
                 self.reconcileGenericSessionEquivalentHistory(
                     scope: (provider, accountKey),
                     snapshot: snapshot,
@@ -484,25 +446,16 @@ extension UsageStore {
         context: LimitResetDetectionContext,
         samples: [PlanUtilizationSeriesSample])
     {
-        // Provider-specific by design: Codex reset celebration confirmation uses owner-scoped session observations.
-        let sessionObservation: LimitResetObservation? = if context.provider == .codex {
-            samples.last(where: { $0.name == .session }).map {
+        let sessionObservation: LimitResetObservation? = self.sessionQuotaWindow(
+            provider: context.provider,
+            snapshot: context.snapshot).flatMap { resolved in
+            guard Self.isSemanticSessionResetWindow(resolved) else { return nil }
+            return Self.clampedPercent(resolved.window.usedPercent).map {
                 LimitResetObservation(
-                    usedPercent: $0.entry.usedPercent,
-                    observedAt: $0.entry.capturedAt,
-                    resetBoundary: $0.entry.resetsAt,
-                    source: nil)
-            }
-        } else {
-            self.sessionQuotaWindow(provider: context.provider, snapshot: context.snapshot).flatMap { resolved in
-                guard Self.isSemanticSessionResetWindow(resolved) else { return nil }
-                return Self.clampedPercent(resolved.window.usedPercent).map {
-                    LimitResetObservation(
-                        usedPercent: $0,
-                        observedAt: context.capturedAt,
-                        resetBoundary: resolved.window.resetsAt,
-                        source: resolved.source)
-                }
+                    usedPercent: $0,
+                    observedAt: context.capturedAt,
+                    resetBoundary: resolved.window.resetsAt,
+                    source: resolved.source)
             }
         }
         self.postLimitResetCelebrationIfNeeded(
@@ -586,14 +539,6 @@ extension UsageStore {
 
         // Provider-specific by design: payload shapes project different semantic lanes into history series.
         switch provider {
-        case .codex:
-            let projection = self.codexConsumerProjection(
-                surface: .liveCard,
-                snapshotOverride: snapshot,
-                now: capturedAt)
-            for lane in projection.planUtilizationLanes {
-                appendWindow(lane.window, name: lane.role)
-            }
         case .claude:
             appendWindow(snapshot.primary, name: .session)
             appendWindow(snapshot.secondary, name: .weekly)
@@ -770,10 +715,7 @@ extension UsageStore {
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
         if let normalizedEmail, !normalizedEmail.isEmpty {
-            // Provider-specific by design: Codex hashes email ownership; Claude also binds organization and plan.
-            if provider == .codex {
-                return CodexHistoryOwnership.canonicalEmailHashKey(for: normalizedEmail)
-            }
+            // Provider-specific by design: Claude also binds organization and plan.
             if provider == .claude {
                 let normalizedOrganization = identity.accountOrganization?
                     .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -856,12 +798,6 @@ extension UsageStore {
             guard var migratedState = states[key] else { continue }
             migratedState.recoveryAboveThresholdCount = 0
             states[key] = migratedState
-        }
-        // Legacy Codex states predate the plan and posted-boundary evidence needed by delayed confirmation.
-        // Discard them instead of guessing: the next sample safely establishes a fresh detector baseline.
-        states = states.filter { key, state in
-            !key.hasPrefix("\(UsageProvider.codex.rawValue):")
-                || state.codexWeeklyEvidenceVersion == LimitResetDetectorState.currentCodexWeeklyEvidenceVersion
         }
         return states
     }
@@ -1036,16 +972,6 @@ extension UsageStore {
         readOnly: Bool = false,
         providerBuckets: inout PlanUtilizationHistoryBuckets) -> String?
     {
-        // Provider-specific by design: Codex reconciliation and Claude OAuth use distinct persisted owner migrations.
-        if provider == .codex {
-            return self.resolveCodexPlanUtilizationAccountKey(
-                snapshot: snapshot,
-                shouldUpdatePreferredAccountKey: shouldUpdatePreferredAccountKey,
-                shouldAdoptUnscopedHistory: shouldAdoptUnscopedHistory,
-                readOnly: readOnly,
-                providerBuckets: &providerBuckets)
-        }
-
         // Claude's unscoped history is only safe to adopt during the first unambiguous migration.
         // The sentinel marks identityless OAuth, while any scoped bucket proves multiple owners may exist.
         let canAdoptUnscopedHistory = !readOnly && shouldAdoptUnscopedHistory
@@ -1130,121 +1056,6 @@ extension UsageStore {
         return nil
     }
 
-    private func resolveCodexPlanUtilizationAccountKey(
-        snapshot: UsageSnapshot?,
-        shouldUpdatePreferredAccountKey: Bool,
-        shouldAdoptUnscopedHistory: Bool,
-        readOnly: Bool,
-        providerBuckets: inout PlanUtilizationHistoryBuckets) -> String?
-    {
-        let ownership = self.codexOwnershipContext(snapshot: snapshot, includeDashboardFallback: true)
-        if let canonicalKey = ownership.canonicalKey {
-            if readOnly { return canonicalKey }
-            let resolvedAccountKey = self.materializeCodexPlanUtilizationHistoryIfNeeded(
-                into: canonicalKey,
-                ownership: ownership,
-                shouldAdoptUnscopedHistory: shouldAdoptUnscopedHistory,
-                providerBuckets: &providerBuckets)
-            if shouldUpdatePreferredAccountKey {
-                providerBuckets.preferredAccountKey = resolvedAccountKey
-            }
-            return resolvedAccountKey
-        }
-
-        if let stickyAccountKey = self.stickyPlanUtilizationAccountKey(providerBuckets: providerBuckets) {
-            return stickyAccountKey
-        }
-
-        return nil
-    }
-
-    private func materializeCodexPlanUtilizationHistoryIfNeeded(
-        into canonicalKey: String,
-        ownership: CodexOwnershipContext,
-        shouldAdoptUnscopedHistory: Bool,
-        providerBuckets: inout PlanUtilizationHistoryBuckets) -> String
-    {
-        var historiesToMerge: [[PlanUtilizationSeriesHistory]] = []
-        let scopedRawKeys = Array(providerBuckets.accounts.keys)
-        var legacyRawKeysToRemove: [String] = []
-        var hasForeignHistoryToMerge = false
-
-        for rawKey in scopedRawKeys {
-            let owner = CodexHistoryOwnership.classifyPersistedKey(
-                rawKey,
-                legacyEmailHash: ownership.planUtilizationLegacyEmailHash)
-            let matchesTargetContinuity = CodexHistoryOwnership.belongsToTargetContinuity(
-                owner,
-                targetCanonicalKey: canonicalKey,
-                canonicalEmailHashKey: ownership.canonicalEmailHashKey)
-            if matchesTargetContinuity,
-               !Self.codexPlanHistoryOwnerIsAmbiguousEmailScope(owner, ownership: ownership),
-               let accountHistories = providerBuckets.accounts[rawKey],
-               !accountHistories.isEmpty
-            {
-                historiesToMerge.append(accountHistories)
-                if rawKey != canonicalKey {
-                    legacyRawKeysToRemove.append(rawKey)
-                    hasForeignHistoryToMerge = true
-                }
-            }
-        }
-
-        if let recoverableOpaqueRawKey = self.recoverableCodexOpaquePlanHistoryRawKey(
-            targetCanonicalKey: canonicalKey,
-            ownership: ownership,
-            providerBuckets: providerBuckets),
-            let opaqueHistories = providerBuckets.accounts[recoverableOpaqueRawKey],
-            !opaqueHistories.isEmpty
-        {
-            historiesToMerge.append(opaqueHistories)
-            legacyRawKeysToRemove.append(recoverableOpaqueRawKey)
-            hasForeignHistoryToMerge = true
-        }
-
-        if shouldAdoptUnscopedHistory,
-           !providerBuckets.unscoped.isEmpty,
-           CodexHistoryOwnership.hasStrictSingleAccountContinuity(
-               scopedRawKeys: Self.scopedRawKeysRelevantToCodexUnscopedPlanHistory(providerBuckets),
-               targetCanonicalKey: canonicalKey,
-               canonicalEmailHashKey: ownership.canonicalEmailHashKey,
-               legacyEmailHash: ownership.planUtilizationLegacyEmailHash,
-               hasAdjacentMultiAccountVeto: ownership.hasAdjacentMultiAccountVeto)
-        {
-            historiesToMerge.append(providerBuckets.unscoped)
-            providerBuckets.unscoped = []
-            hasForeignHistoryToMerge = true
-        }
-
-        // Canonical-only contribution is not a migration; re-merging it with itself is quadratic.
-        // Skipping also skips incidental re-canonicalization of already-canonical series (duplicate
-        // (name, windowMinutes) collapse and per-hour peak replay). Repairing legacy data belongs
-        // at load time, not on every refresh and menu open.
-        guard hasForeignHistoryToMerge else { return canonicalKey }
-        for rawKey in legacyRawKeysToRemove {
-            providerBuckets.accounts.removeValue(forKey: rawKey)
-        }
-        // Provider-specific by design: legacy Codex email/workspace buckets merge only after ambiguity checks.
-        let mergedHistory = Self.mergedPlanUtilizationHistories(histories: historiesToMerge)
-        providerBuckets.setHistories(mergedHistory, for: canonicalKey)
-        return canonicalKey
-    }
-
-    private static func codexPlanHistoryOwnerIsAmbiguousEmailScope(
-        _ owner: CodexHistoryPersistedOwner,
-        ownership: CodexOwnershipContext) -> Bool
-    {
-        guard ownership.hasAdjacentEmailScopeAmbiguity else { return false }
-        return switch owner {
-        case let .canonical(key):
-            key == ownership.canonicalEmailHashKey
-        case .legacyEmailHash:
-            true
-        case .legacyOpaqueScoped, .legacyUnscoped:
-            false
-        }
-    }
-
     private func materializeLegacyClaudePlanUtilizationHistoryIfNeeded(
         into accountKey: String,
         provider: UsageProvider,
@@ -1288,7 +1099,7 @@ extension UsageStore {
         ])
         providerBuckets.setHistories(mergedHistory, for: accountKey)
         providerBuckets.setHistories([], for: nil)
-        if ![UsageProvider.codex, .claude].contains(provider) {
+        if provider != .claude {
             self.materializeLegacySessionEquivalentHistoryIdentityDuringAccountAdoption(
                 provider: provider,
                 from: nil,
@@ -1329,95 +1140,9 @@ extension UsageStore {
         }
     }
 
-    private func recoverableCodexOpaquePlanHistoryRawKey(
-        targetCanonicalKey: String,
-        ownership: CodexOwnershipContext,
-        providerBuckets: PlanUtilizationHistoryBuckets) -> String?
-    {
-        guard !ownership.hasAdjacentMultiAccountVeto,
-              let targetWeeklyResetAt = ownership.currentWeeklyResetAt
-        else {
-            return nil
-        }
-
-        let candidates = providerBuckets.accounts.compactMap { rawKey, histories -> String? in
-            let owner = CodexHistoryOwnership.classifyPersistedKey(
-                rawKey,
-                legacyEmailHash: ownership.planUtilizationLegacyEmailHash)
-            guard case .legacyOpaqueScoped = owner else { return nil }
-            guard Self.isRecoverableCodexOpaquePlanHistory(
-                histories,
-                targetWeeklyResetAt: targetWeeklyResetAt)
-            else {
-                return nil
-            }
-            return rawKey
-        }
-
-        guard candidates.count == 1,
-              let recoverableRawKey = candidates.first
-        else {
-            return nil
-        }
-
-        guard !Self.hasConflictingScopedCodexPlanHistory(
-            recoverableRawKey: recoverableRawKey,
-            targetWeeklyResetAt: targetWeeklyResetAt,
-            targetCanonicalKey: targetCanonicalKey,
-            ownership: ownership,
-            providerBuckets: providerBuckets)
-        else {
-            return nil
-        }
-
-        return recoverableRawKey
-    }
-
-    private nonisolated static func isRecoverableCodexOpaquePlanHistory(
-        _ histories: [PlanUtilizationSeriesHistory],
-        targetWeeklyResetAt: Date) -> Bool
-    {
-        guard let weekly = histories.first(where: { $0.name == .weekly && $0.windowMinutes == 10080 }),
-              let session = histories.first(where: { $0.name == .session && $0.windowMinutes == 300 }),
-              !session.entries.isEmpty
-        else {
-            return false
-        }
-
-        let distinctWeeklyResets = Set(weekly.entries.compactMap(\.resetsAt))
-        guard distinctWeeklyResets.count >= 2 else { return false }
-        guard weekly.entries.contains(where: { entry in
-            Self.areEquivalentPlanUtilizationResetBoundaries(entry.resetsAt, targetWeeklyResetAt)
-        }) else {
-            return false
-        }
-        guard weekly.entries.contains(where: { entry in
-            guard let reset = entry.resetsAt else { return false }
-            return !Self.areEquivalentPlanUtilizationResetBoundaries(reset, targetWeeklyResetAt)
-        }) else {
-            return false
-        }
-        return true
-    }
-
     nonisolated static func areEquivalentPlanUtilizationResetBoundaries(_ lhs: Date?, _ rhs: Date?) -> Bool {
         guard let lhs, let rhs else { return false }
         return abs(lhs.timeIntervalSince(rhs)) < self.planUtilizationResetEquivalenceToleranceSeconds
-    }
-
-    private nonisolated static func scopedRawKeysRelevantToCodexUnscopedPlanHistory(
-        _ providerBuckets: PlanUtilizationHistoryBuckets) -> [String]
-    {
-        guard let continuityWindow = self.planUtilizationContinuityWindow(for: providerBuckets) else {
-            return []
-        }
-
-        return providerBuckets.accounts.compactMap { rawKey, histories in
-            guard self.planUtilizationHistories(histories, overlap: continuityWindow) else {
-                return nil
-            }
-            return rawKey
-        }
     }
 
     private nonisolated static func planUtilizationContinuityWindow(
@@ -1441,39 +1166,6 @@ extension UsageStore {
     {
         histories.contains { history in
             history.entries.contains { continuityWindow.contains($0.capturedAt) }
-        }
-    }
-
-    private nonisolated static func hasConflictingScopedCodexPlanHistory(
-        recoverableRawKey: String,
-        targetWeeklyResetAt: Date,
-        targetCanonicalKey: String,
-        ownership: CodexOwnershipContext,
-        providerBuckets: PlanUtilizationHistoryBuckets) -> Bool
-    {
-        providerBuckets.accounts.contains { rawKey, histories in
-            guard rawKey != recoverableRawKey else { return false }
-            guard self.historiesContainEquivalentWeeklyResetBoundary(
-                histories,
-                targetWeeklyResetAt: targetWeeklyResetAt)
-            else {
-                return false
-            }
-
-            let owner = CodexHistoryOwnership.classifyPersistedKey(
-                rawKey,
-                legacyEmailHash: ownership.planUtilizationLegacyEmailHash)
-            switch owner {
-            case .legacyOpaqueScoped:
-                return false
-            case .canonical, .legacyEmailHash:
-                return !CodexHistoryOwnership.belongsToTargetContinuity(
-                    owner,
-                    targetCanonicalKey: targetCanonicalKey,
-                    canonicalEmailHashKey: ownership.canonicalEmailHashKey)
-            case .legacyUnscoped:
-                return false
-            }
         }
     }
 

@@ -14,7 +14,6 @@ final class DevinQuotaVisibilityNativeProofTests: XCTestCase {
         let output = URL(fileURLWithPath: path, isDirectory: true)
         guard SettingsStore.isRunningTests,
               environment["CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS"] == "1",
-              environment[CodexCredentialFileAccess.isolationEnvironmentKey] == "1",
               environment["CODEXBAR_TEST_SESSION_FILE_ISOLATION"] == "1",
               environment["CODEXBAR_ALLOW_TEST_KEYCHAIN_ACCESS"] != "1",
               NSHomeDirectory().hasPrefix(output.deletingLastPathComponent().path + "/")

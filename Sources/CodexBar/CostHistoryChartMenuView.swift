@@ -122,10 +122,6 @@ struct CostHistoryChartMenuView: View {
             ? self.metric
             : Self.defaultMetric(provider: self.provider, daily: self.daily)
         let model = Self.makeModel(provider: self.provider, daily: self.daily, metric: activeMetric)
-        let showsHistoryRefreshing = Self.showsHistoryRefreshing(
-            provider: self.provider,
-            metric: activeMetric,
-            historyCoverageIsEstablished: self.historyCoverageIsEstablished)
         let selectedDateKey = self.selectedDateKey.flatMap { model.pointsByDateKey[$0] == nil ? nil : $0 }
             ?? Self.defaultSelectedDateKey(model: model)
         let incompleteCount = CostUsageIncompleteRequests.sum(self.daily.map(\.incompleteRequestCount))
@@ -232,27 +228,19 @@ struct CostHistoryChartMenuView: View {
                     }
                 }
 
-                if availableMetrics.count > 1 || showsHistoryRefreshing {
+                if availableMetrics.count > 1 {
                     HStack {
-                        if showsHistoryRefreshing {
-                            Text(L("Refreshing"))
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                                .accessibilityLabel(L("Refreshing"))
-                        }
                         Spacer(minLength: 0)
-                        if availableMetrics.count > 1 {
-                            Picker(L("Display mode"), selection: self.$metric) {
-                                ForEach(availableMetrics, id: \.self) { metric in
-                                    Text(metric.title).tag(metric)
-                                }
+                        Picker(L("Display mode"), selection: self.$metric) {
+                            ForEach(availableMetrics, id: \.self) { metric in
+                                Text(metric.title).tag(metric)
                             }
-                            .pickerStyle(.segmented)
-                            .controlSize(.small)
-                            .labelsHidden()
-                            .frame(width: Self.metricPickerWidth, height: Self.metricPickerHeight, alignment: .trailing)
-                            .accessibilityLabel(L("Display mode"))
                         }
+                        .pickerStyle(.segmented)
+                        .controlSize(.small)
+                        .labelsHidden()
+                        .frame(width: Self.metricPickerWidth, height: Self.metricPickerHeight, alignment: .trailing)
+                        .accessibilityLabel(L("Display mode"))
                     }
                     .frame(height: Self.metricPickerHeight)
                 }
@@ -780,23 +768,10 @@ struct CostHistoryChartMenuView: View {
             return .tokens
         }
         let available = self.availableMetrics(provider: provider, daily: daily)
-        // Provider-specific by design: Codex exposes exact local token totals, so its chart defaults to tokens.
-        if provider == .codex, available.contains(.tokens) {
-            return .tokens
-        }
         if available.contains(.cost) {
             return .cost
         }
         return available.first ?? .cost
-    }
-
-    private static func showsHistoryRefreshing(
-        provider: UsageProvider,
-        metric: ChartMetric,
-        historyCoverageIsEstablished: Bool) -> Bool
-    {
-        // Provider-specific by design: only Codex exposes incremental local-history coverage for token scans.
-        provider == .codex && metric == .tokens && !historyCoverageIsEstablished
     }
 
     private static func peakPoint(model: Model) -> Point? {
@@ -1206,8 +1181,9 @@ extension CostHistoryChartMenuView {
         displayCurrencyCode: String? = nil,
         displayCostMultiplier: Double = 1.0) -> RenderFingerprint
     {
-        let projects = provider == .codex ? snapshot.projects : []
-        let sessions = provider == .codex ? snapshot.sessions : []
+        // Project and session breakdowns were only produced by the removed Codex scanner.
+        let projects: [CostUsageProjectBreakdown] = []
+        let sessions: [CostUsageSessionBreakdown] = []
         return RenderFingerprint(
             hidePersonalInfo: hidePersonalInfo,
             currencyCode: displayCurrencyCode ?? snapshot.currencyCode,
@@ -1274,17 +1250,6 @@ extension CostHistoryChartMenuView {
             provider: provider,
             daily: daily,
             metric: self.defaultMetric(provider: provider, daily: daily)))
-    }
-
-    static func _showsHistoryRefreshingForTesting(
-        provider: UsageProvider,
-        metric: ChartMetric,
-        historyCoverageIsEstablished: Bool) -> Bool
-    {
-        self.showsHistoryRefreshing(
-            provider: provider,
-            metric: metric,
-            historyCoverageIsEstablished: historyCoverageIsEstablished)
     }
 
     static func _dateFromDayKeyForTesting(

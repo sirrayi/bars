@@ -24,7 +24,7 @@ private enum CompactAccountResetFixtures {
     }
 
     static func row(
-        provider: UsageProvider = .codex,
+        provider: UsageProvider = .opencode,
         primary: RateWindow? = nil,
         weekly: RateWindow? = nil,
         monthly: RateWindow? = nil,

@@ -79,35 +79,12 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
         await self.withProviderInteraction(interaction) {
             await self.store.awaitForcedRefreshEnrichment()
             guard !Task.isCancelled, !self.hasPreparedForAppShutdown else { return }
-            let refreshStartedAt = Date()
             await self.store.refreshProvider(provider)
             guard !Task.isCancelled, !self.hasPreparedForAppShutdown else { return }
-            // Provider-specific by design: Codex publishes a compatible core quota model before its optional
-            // credits and OpenAI Web enrichment stages below. Incompatible cards remain frozen until the final
-            // menu reconciliation, so they never lose their loading state while still showing the old layout.
-            if provider == .codex {
-                self.menuCardRefreshMonitor.publishResolvedModelIfCompatible(for: provider)
-            }
             await self.store.refreshProviderStatus(provider)
             guard !Task.isCancelled, !self.hasPreparedForAppShutdown else { return }
             await self.store.refreshTokenUsageNow(for: provider, force: true)
             guard !Task.isCancelled, !self.hasPreparedForAppShutdown else { return }
-            // Provider-specific by design: Codex refresh also owns OpenAI dashboard and reset-credit enrichment.
-            if provider == .codex {
-                await self.store.refreshCreditsNow(minimumSnapshotUpdatedAt: refreshStartedAt)
-                guard !Task.isCancelled, !self.hasPreparedForAppShutdown else { return }
-                await self.store.refreshOpenAIDashboardIfNeeded(
-                    force: true,
-                    expectedGuard: self.store.freshCodexOpenAIWebRefreshGuard(),
-                    bypassCoalescing: true)
-                guard !Task.isCancelled, !self.hasPreparedForAppShutdown else { return }
-                if self.store.openAIDashboardRequiresLogin {
-                    await self.store.refreshProvider(.codex)
-                    guard !Task.isCancelled, !self.hasPreparedForAppShutdown else { return }
-                    await self.store.refreshCreditsNow(minimumSnapshotUpdatedAt: refreshStartedAt)
-                    guard !Task.isCancelled, !self.hasPreparedForAppShutdown else { return }
-                }
-            }
             self.store.scheduleStorageFootprintRefresh(for: [provider], force: true)
             self.store.persistWidgetSnapshot(reason: "provider-refresh")
             if refreshOpenMenusWhenComplete {
@@ -335,11 +312,10 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
     }
 
     @objc func openDashboard() {
-        // Provider-specific by design: Codex remains the historical action fallback when no provider is selected.
         let preferred = self.lastMenuProvider?.firstPartyProvider
-            ?? (self.store.isEnabled(.codex) ? .codex : self.store.enabledFirstPartyProviders().first)
+            ?? self.store.enabledFirstPartyProviders().first
 
-        let provider = preferred ?? .codex
+        let provider = preferred ?? .claude
         guard let url = self.dashboardURL(for: provider) else { return }
         NSWorkspace.shared.open(url)
     }
@@ -364,68 +340,17 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
         return URL(string: urlString)
     }
 
-    @objc func openCreditsPurchase() {
-        // Provider-specific by design: codexResetCredits payload supplies the validated ChatGPT purchase URL.
-        let preferred = self.lastMenuProvider
-            ?? (self.store.isEnabled(.codex) ? .codex : self.store.enabledProviders().first)
-        let provider = preferred ?? .codex
-        guard provider == .codex else { return }
-
-        let dashboardURL = self.store.metadata(for: .codex).dashboardURL
-        let purchaseURL = Self.sanitizedCreditsPurchaseURL(self.store.openAIDashboard?.creditsPurchaseURL)
-        let urlString = purchaseURL ?? dashboardURL
-        guard let urlString,
-              let url = URL(string: urlString) else { return }
-
-        let autoStart = true
-        let accountEmail = self.store.codexAccountEmailForOpenAIDashboard()
-        let cacheScope = self.store.codexCookieCacheScopeForOpenAIWeb()
-        guard OpenAICreditsPurchaseWindowController.canOpenPurchaseWindow(
-            accountEmail: accountEmail,
-            cacheScope: cacheScope)
-        else {
-            self.creditsPurchaseWindow?.close()
-            self.creditsPurchaseWindow = nil
-            return
-        }
-        let controller = self.creditsPurchaseWindow ?? OpenAICreditsPurchaseWindowController()
-        controller.show(
-            purchaseURL: url,
-            accountEmail: accountEmail,
-            cacheScope: cacheScope,
-            autoStartPurchase: autoStart)
-        self.creditsPurchaseWindow = controller
-    }
-
-    static func sanitizedCreditsPurchaseURL(_ raw: String?) -> String? {
-        guard let raw, let url = URL(string: raw) else { return nil }
-        guard Self.isAllowedChatGPTPurchaseHost(url) else { return nil }
-        let pathComponents = url.pathComponents.map { $0.lowercased() }
-        let allowed = ["settings", "usage", "billing", "credits"]
-        guard pathComponents.contains(where: { allowed.contains($0) }) else { return nil }
-        var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-        components?.query = nil
-        components?.fragment = nil
-        return components?.url?.absoluteString ?? url.absoluteString
-    }
-
-    private static func isAllowedChatGPTPurchaseHost(_ url: URL) -> Bool {
-        guard url.scheme?.lowercased() == "https" else { return false }
-        guard let host = url.host?.lowercased() else { return false }
-        return host == "chatgpt.com" || host.hasSuffix(".chatgpt.com")
-    }
-
     @objc func openStatusPage() {
         let preferred = self.lastMenuProvider?.firstPartyProvider
-            ?? (self.store.isEnabled(.codex) ? .codex : self.store.enabledFirstPartyProviders().first)
+            ?? self.store.enabledFirstPartyProviders().first
 
-        self.openStatusPage(for: preferred ?? .codex)
+        self.openStatusPage(for: preferred ?? .claude)
     }
 
     @objc func openStatusPageFromMenuItem(_ sender: NSMenuItem) {
         let provider = (sender.identifier?.rawValue).flatMap(UsageProvider.init(rawValue:))
             ?? self.lastMenuProvider?.firstPartyProvider
-            ?? .codex
+            ?? .claude
         self.openStatusPage(for: provider)
     }
 
@@ -438,9 +363,9 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
 
     @objc func openChangelog() {
         let preferred = self.lastMenuProvider?.firstPartyProvider
-            ?? (self.store.isEnabled(.codex) ? .codex : self.store.enabledFirstPartyProviders().first)
+            ?? self.store.enabledFirstPartyProviders().first
 
-        let provider = preferred ?? .codex
+        let provider = preferred ?? .claude
         let meta = self.store.metadata(for: provider)
         guard let urlString = meta.changelogURL, let url = URL(string: urlString) else { return }
         NSWorkspace.shared.open(url)
@@ -458,50 +383,6 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
         NSWorkspace.shared.open(url)
     }
 
-    @objc func addManagedCodexAccountFromMenu(_: NSMenuItem) {
-        guard self.codexAccountPromotionCoordinator.isInteractionBlocked() == false else {
-            self.loginLogger.info("Add Account tap ignored: Codex account change already in-flight")
-            return
-        }
-        guard self.settings.hasUnreadableManagedCodexAccountStore == false else {
-            self.presentLoginAlert(
-                title: L("Managed Codex accounts unavailable"),
-                message: L(
-                    "CodexBar could not read managed account storage. " +
-                        "Recover the store before adding another account."))
-            return
-        }
-
-        Task { @MainActor [weak self] in
-            guard let self else { return }
-            do {
-                let account = try await self.managedCodexAccountCoordinator.authenticateManagedAccount()
-                self.settings.selectAuthenticatedManagedCodexAccount(account)
-                await ProviderInteractionContext.$current.withValue(.userInitiated) {
-                    await self.store.refreshCodexAccountScopedState(allowDisabled: true)
-                }
-            } catch {
-                self.presentManagedCodexAccountError(error)
-            }
-        }
-    }
-
-    @objc func requestCodexSystemPromotionFromMenu(_ sender: NSMenuItem) {
-        guard let rawManagedAccountID = sender.representedObject as? String,
-              let managedAccountID = UUID(uuidString: rawManagedAccountID)
-        else {
-            return
-        }
-
-        Task { @MainActor [weak self] in
-            guard let self else { return }
-            let result = await self.codexAccountPromotionCoordinator.promote(managedAccountID: managedAccountID)
-            if case let .failure(error) = result {
-                self.presentLoginAlert(title: error.title, message: error.message)
-            }
-        }
-    }
-
     @objc func runSwitchAccount(_ sender: NSMenuItem) {
         if self.loginTask != nil {
             self.loginLogger.info("Switch Account tap ignored: login already in-flight")
@@ -511,7 +392,7 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
         let rawProvider = sender.representedObject as? String
         let provider = rawProvider.flatMap(UsageProvider.init(rawValue:))
             ?? self.lastMenuProvider?.firstPartyProvider
-            ?? .codex
+            ?? .claude
         self.loginLogger.info("Switch Account tapped", metadata: ["provider": provider.rawValue])
         self.startLoginFlow(provider: provider)
     }
@@ -580,7 +461,7 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
         } else if let provider, let existing = self.statusItems[provider.instanceID], existing.isVisible {
             existing
         } else {
-            self.lazyStatusItem(for: provider ?? .codex)
+            self.lazyStatusItem(for: provider ?? .claude)
         }
 
         guard let button = item.button,
@@ -651,7 +532,7 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
         if let first = self.store.enabledFirstPartyProviders().first {
             return first
         }
-        return .codex
+        return .claude
     }
 
     private func startLoginFlow(provider: UsageProvider) {
@@ -675,27 +556,6 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
         }
     }
 
-    func presentCodexLoginResult(_ result: CLILoginRunner.Result) {
-        guard let info = CodexLoginAlertPresentation.alertInfo(for: result) else { return }
-        self.presentLoginAlert(title: info.title, message: info.message)
-    }
-
-    private func presentManagedCodexAccountError(_ error: Error) {
-        let info = if let error = error as? ManagedCodexAccountCoordinatorError,
-                      error == .authenticationInProgress
-        {
-            LoginAlertInfo(
-                title: L("Codex account login already running"),
-                message: L("Wait for the current managed Codex login to finish before adding another account."))
-        } else if let error = error as? ManagedCodexAccountServiceError {
-            LoginAlertInfo(title: L("Could not add Codex account"), message: error.userFacingMessage)
-        } else {
-            LoginAlertInfo(title: L("Could not add Codex account"), message: error.localizedDescription)
-        }
-
-        self.presentLoginAlert(title: info.title, message: info.message)
-    }
-
     func presentClaudeLoginResult(_ result: ClaudeLoginRunner.Result) {
         switch result.outcome {
         case .success:
@@ -714,17 +574,6 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
             let statusLine = String(format: L("claude auth login exited with status %d."), status)
             let message = self.trimmedLoginOutput(result.output.isEmpty ? statusLine : result.output)
             self.presentLoginAlert(title: L("Claude login failed"), message: message)
-        }
-    }
-
-    func describe(_ outcome: CLILoginRunner.Result.Outcome) -> String {
-        switch outcome {
-        case .success: "success"
-        case .cancelled: "cancelled"
-        case .timedOut: "timedOut"
-        case let .failed(status): "failed(status: \(status))"
-        case .missingBinary: "missingBinary"
-        case let .launchFailed(message): "launchFailed(\(message))"
         }
     }
 

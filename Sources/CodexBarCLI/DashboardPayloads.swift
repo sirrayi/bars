@@ -54,7 +54,7 @@ struct DashboardProviderPayload: Encodable {
     let display: DashboardDisplayPayload
     let error: ProviderErrorPayload?
     let updatedAt: Date?
-    /// Saved managed Codex and Claude-swap entries; additional live accounts are opt-in.
+    /// Saved Claude-swap entries; additional live accounts are opt-in.
     /// Additive schema-v1 data; absent for providers without such a source.
     let accounts: [DashboardAccountPayload]?
     /// Row-local failure of the multi-account source; the ambient provider row stays intact.

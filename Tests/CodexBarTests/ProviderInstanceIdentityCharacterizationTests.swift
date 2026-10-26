@@ -7,11 +7,12 @@ import Testing
 struct ProviderInstanceIdentityCharacterizationTests {
     @Test
     func `config provider IDs and enablement encode as their existing bare strings`() throws {
-        let input = Data(#"{"version":1,"providers":[{"id":"claude","enabled":true},{"id":"codex","enabled":false}]}"#
-            .utf8)
+        let input = Data(
+            #"{"version":1,"providers":[{"id":"claude","enabled":true},{"id":"opencode","enabled":false}]}"#
+                .utf8)
         let config = try JSONDecoder().decode(CodexBarConfig.self, from: input)
 
-        #expect(config.orderedProviders() == [.claude, .codex])
+        #expect(config.orderedProviders() == [.claude, .opencode])
         #expect(config.enabledProviders() == [.claude])
 
         let encoder = JSONEncoder()
@@ -19,7 +20,7 @@ struct ProviderInstanceIdentityCharacterizationTests {
         let encoded = try encoder.encode(config)
         let encodedJSON = try #require(String(data: encoded, encoding: .utf8))
         #expect(encodedJSON ==
-            #"{"providers":[{"enabled":true,"id":"claude"},{"enabled":false,"id":"codex"}],"version":1}"#)
+            #"{"providers":[{"enabled":true,"id":"claude"},{"enabled":false,"id":"opencode"}],"version":1}"#)
     }
 
     @Test
@@ -93,7 +94,7 @@ struct ProviderInstanceIdentityCharacterizationTests {
 
     @Test
     func `widget snapshot provider IDs retain their payload format and order`() throws {
-        let entries = [UsageProvider.claude, .codex].map { provider in
+        let entries = [UsageProvider.claude, .opencode].map { provider in
             WidgetSnapshot.ProviderEntry(
                 provider: provider,
                 updatedAt: Date(timeIntervalSinceReferenceDate: 0),
@@ -107,16 +108,16 @@ struct ProviderInstanceIdentityCharacterizationTests {
         }
         let snapshot = WidgetSnapshot(
             entries: entries,
-            enabledProviders: [.claude, .codex],
+            enabledProviders: [.claude, .opencode],
             generatedAt: Date(timeIntervalSinceReferenceDate: 0))
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
         let encoded = try encoder.encode(snapshot)
         let encodedJSON = try #require(String(data: encoded, encoding: .utf8))
-        let expectedJSON = #"{"enabledProviders":["claude","codex"],"entries":["# +
+        let expectedJSON = #"{"enabledProviders":["claude","opencode"],"entries":["# +
             #"{"dailyUsage":[],"provider":"claude","updatedAt":0},"# +
-            #"{"dailyUsage":[],"provider":"codex","updatedAt":0}],"# +
+            #"{"dailyUsage":[],"provider":"opencode","updatedAt":0}],"# +
             #""generatedAt":0,"usageBarsShowUsed":false}"#
 
         #expect(encodedJSON == expectedJSON)
@@ -132,7 +133,6 @@ struct ProviderInstanceIdentityCharacterizationTests {
             status: nil,
             usage: nil,
             credits: nil,
-            openaiDashboard: nil,
             error: nil)
 
         let expected = """

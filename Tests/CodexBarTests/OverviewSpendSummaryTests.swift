@@ -8,7 +8,7 @@ struct OverviewSpendSummaryTests {
     func `summary keeps distinct currencies separate`() {
         let usd = self.group(
             currencyCode: "USD",
-            providers: [self.provider(.codex, tokens: 1000, cost: 12)],
+            providers: [self.provider(.opencode, tokens: 1000, cost: 12)],
             totalTokens: 1000,
             totalCost: 12,
             coveredDayCount: 7)
@@ -56,7 +56,7 @@ struct OverviewSpendSummaryTests {
     @Test
     func `summary marks a missing selected provider as partial`() {
         let group = self.group(
-            providers: [self.provider(.codex, tokens: 1000, cost: 12)],
+            providers: [self.provider(.opencode, tokens: 1000, cost: 12)],
             totalTokens: 1000,
             totalCost: 12)
 

@@ -261,10 +261,8 @@ enum DashboardSnapshotBuilder {
         let presentedEmail = identityMode != .none && sourceEmail?.contains("@") == true
             ? self.dashboardEmail(sourceEmail, mode: identityMode)
             : nil
-        // Provider-specific by design: claude-swap has no plan; Codex retains its saved account plan.
-        let plan = account.provider == .codex
-            ? self.makeIdentity(provider: account.provider, usage: account.snapshot, mode: identityMode)?.plan : nil
-        let identity = presentedEmail.map { DashboardIdentityPayload(accountEmail: $0, plan: plan) }
+        // Provider-specific by design: claude-swap accounts carry no plan.
+        let identity = presentedEmail.map { DashboardIdentityPayload(accountEmail: $0, plan: nil) }
         let trimmedLabel = account.displayLabel.trimmingCharacters(in: .whitespacesAndNewlines)
         let fallbackLabel = trimmedLabel.isEmpty ? "Account \(account.id.opaqueID)" : trimmedLabel
         let label = self.dashboardAccountLabel(
@@ -434,10 +432,6 @@ enum DashboardSnapshotBuilder {
             return nil
         }
 
-        // Provider-specific by design: Codex plan aliases and Kilo's auto-top-up suffix require distinct cleanup.
-        if provider == .codex {
-            return CodexPlanFormatting.displayName(raw) ?? UsageFormatter.cleanPlanName(raw)
-        }
         return UsageFormatter.cleanPlanName(raw)
     }
 

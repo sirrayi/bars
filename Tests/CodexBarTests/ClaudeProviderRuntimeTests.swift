@@ -289,7 +289,6 @@ struct ClaudeProviderRuntimeTests {
             userDefaults: defaults,
             configStore: testConfigStore(suiteName: suite))
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         return (settings, store)

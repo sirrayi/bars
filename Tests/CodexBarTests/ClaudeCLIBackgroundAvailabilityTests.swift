@@ -386,7 +386,6 @@ struct ClaudeCLIBackgroundAvailabilityTests {
             verbose: false,
             env: environment,
             settings: nil,
-            fetcher: UsageFetcher(environment: environment),
             claudeFetcher: ClaudeUsageFetcher(browserDetection: browserDetection, environment: environment),
             browserDetection: browserDetection)
     }

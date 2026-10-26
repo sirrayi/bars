@@ -30,9 +30,7 @@ struct ProviderTransportRegressionFixtures: TestTrait, SuiteTrait, TestScoping {
                     try await CookieHeaderCache.withLegacyBaseURLOverrideForTesting(
                         root.appendingPathComponent("legacy"))
                     {
-                        try await CodexCredentialFileAccess.withFixtureScope(.init(roots: [root])) {
-                            try await Self.withPrivateClaudeState(root: root, operation: function)
-                        }
+                        try await Self.withPrivateClaudeState(root: root, operation: function)
                     }
                 }
             }
@@ -131,7 +129,6 @@ enum ProviderTransportRegressionSupport {
         let settings = SettingsStore(
             userDefaults: InMemoryUserDefaults(),
             configStore: configStore,
-            codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
             opencodeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore(fileURL: root.appendingPathComponent("accounts.json")),
@@ -141,7 +138,6 @@ enum ProviderTransportRegressionSupport {
         settings.providerDetectionCompleted = true
         settings.refreshFrequency = .manual
         settings.statusChecksEnabled = false
-        settings.openAIWebAccessEnabled = false
         settings.claudeUsageDataSource = .oauth
         settings.updateProviderConfig(provider: provider) { config in
             config.source = .oauth
@@ -149,11 +145,8 @@ enum ProviderTransportRegressionSupport {
         enableTestProviders([provider], settings: settings)
         let environment = Self.environment
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: environment),
             browserDetection: Self.browser(root: root),
             settings: settings,
-            historicalUsageHistoryStore: HistoricalUsageHistoryStore(fileURL: root
-                .appendingPathComponent("history.json")),
             planUtilizationHistoryStore: PlanUtilizationHistoryStore(directoryURL: nil),
             startupBehavior: .testing,
             environmentBase: environment,

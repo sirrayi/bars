@@ -3,7 +3,7 @@ import Testing
 @testable import CodexBarCore
 
 struct AgentSessionExecutableTests {
-    @Test(arguments: ["codex", "claude"])
+    @Test(arguments: ["claude"])
     func `preserved CLI arguments can mention application bundle paths`(provider: String) {
         let arguments = [
             "/usr/local/bin/\(provider)", provider == "codex" ? "exec" : "-p",
@@ -16,7 +16,7 @@ struct AgentSessionExecutableTests {
         #expect(AgentPSOutputParser.source(for: record) == .cli)
     }
 
-    @Test(arguments: ["codex", "claude"])
+    @Test(arguments: ["claude"])
     func `preserved CLI prompts cannot change provider or desktop source`(provider: String) {
         let record = Self.record(
             [
@@ -61,21 +61,7 @@ struct AgentSessionExecutableTests {
             Self.record([path, "Inspect README.md"], pid: Int32(index + 1), hasArguments: hasArguments)
         }
 
-        #expect(AgentPSOutputParser.agentProcesses(from: records).map(\.pid) == [1, 2, 3, 4])
-    }
-
-    @Test
-    func `preserved app server arguments may refer to an application bundle`() {
-        let record = Self.record(
-            [
-                "/usr/local/bin/codex", "-c",
-                #"shell_environment_policy.set.REVIEW_PATH="/Applications/Example.app/Contents""#, "app-server",
-            ],
-            pid: 101,
-            hasArguments: true)
-
-        #expect(AgentPSOutputParser.hasCodexAppServer(in: [record]))
-        #expect(AgentPSOutputParser.agentProcesses(from: [record]).isEmpty)
+        #expect(AgentPSOutputParser.agentProcesses(from: records).map(\.pid) == [2])
     }
 
     @Test(arguments: [
@@ -95,7 +81,7 @@ struct AgentSessionExecutableTests {
         #expect(AgentPSOutputParser.source(for: record) == .desktopApp)
     }
 
-    @Test(arguments: ["codex", "claude"])
+    @Test(arguments: ["claude"])
     func `scanner keeps command-only CLI rows before a transcript exists`(provider: String) async throws {
         let home = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let command = "/usr/local/bin/\(provider) \(provider == "codex" ? "exec" : "-p") " +
@@ -105,7 +91,7 @@ struct AgentSessionExecutableTests {
             cwdProvider: { _, _ in [101: "/synthetic/project"] })
 
         let sessions = await scanner.scan(
-            environment: ["HOME": home.path, "CODEX_HOME": home.appendingPathComponent(".codex").path],
+            environment: ["HOME": home.path, "CODEX_HOME": home.appendingPathComponent(".claude").path],
             includeFileOnlySessions: false)
 
         let session = try #require(sessions.first)

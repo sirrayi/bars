@@ -19,13 +19,11 @@ public struct ProviderDebugPaneCapabilities: Sendable {
 
 // swiftformat:disable sortDeclarations
 public enum UsageProvider: String, CaseIterable, Sendable, Codable {
-    case codex
     case claude
     case opencode
     case opencodego
     case devin
     case deepseek
-    case pi
 }
 
 // swiftformat:enable sortDeclarations
@@ -50,7 +48,6 @@ public struct IconStyle: RawRepresentable, Hashable, Sendable, CaseIterable, Cus
     }
 
     // Provider-specific by design: named styles preserve source-compatible renderer entry points.
-    public static let codex = Self(provider: .codex)
     public static let claude = Self(provider: .claude)
     public static let combined = Self(rawValue: "combined")
 }
@@ -86,8 +83,6 @@ public struct ProviderMetadata: Sendable {
     public let statusPageURL: String?
     /// Browser-only status link (no API polling); used when statusPageURL is nil.
     public let statusLinkURL: String?
-    /// Google Workspace product ID for status polling (appsstatus dashboard).
-    public let statusWorkspaceProductID: String?
     /// Optional top-level component/group names to show from a provider status feed.
     public let statusComponentAllowlist: Set<String>?
 
@@ -119,7 +114,6 @@ public struct ProviderMetadata: Sendable {
         changelogURL: String? = nil,
         statusPageURL: String?,
         statusLinkURL: String? = nil,
-        statusWorkspaceProductID: String? = nil,
         statusComponentAllowlist: Set<String>? = nil)
     {
         self.id = id
@@ -149,7 +143,6 @@ public struct ProviderMetadata: Sendable {
         self.changelogURL = changelogURL
         self.statusPageURL = statusPageURL
         self.statusLinkURL = statusLinkURL
-        self.statusWorkspaceProductID = statusWorkspaceProductID
         self.statusComponentAllowlist = statusComponentAllowlist
     }
 }

@@ -15,7 +15,6 @@ final class QuotaWindowNativeProofTests: XCTestCase {
         }
         guard SettingsStore.isRunningTests,
               environment["CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS"] == "1",
-              environment[CodexCredentialFileAccess.isolationEnvironmentKey] == "1",
               environment["CODEXBAR_TEST_SESSION_FILE_ISOLATION"] == "1"
         else { return XCTFail("Native proof requires credential and session isolation") }
         let root = URL(fileURLWithPath: path, isDirectory: true)
@@ -80,7 +79,7 @@ final class QuotaWindowNativeProofTests: XCTestCase {
 @MainActor
 @Observable
 private final class QuotaNativeState {
-    var provider = UsageProvider.codex
+    var provider = UsageProvider.opencode
     var scenario = "Complete"
     var dark = false
 
@@ -165,7 +164,7 @@ private struct QuotaNativeView: View {
     var body: some View {
         VStack(spacing: 14) {
             HStack {
-                Button("Codex") { self.state.provider = .codex }
+                Button("Codex") { self.state.provider = .opencode }
                 Button("Claude") { self.state.provider = .claude }
                 Toggle("Dark", isOn: self.$state.dark).toggleStyle(.checkbox)
             }

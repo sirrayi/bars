@@ -3,7 +3,6 @@ import AppKit
 struct CachedMergedSwitcherMenuContent {
     let requiredMenuContentVersion: Int
     let menuWidth: CGFloat
-    let codexAccountDisplay: CodexAccountMenuDisplay?
     let tokenAccountDisplay: TokenAccountMenuDisplay?
     let localizationSignature: String
     let items: [NSMenuItem]
@@ -11,14 +10,12 @@ struct CachedMergedSwitcherMenuContent {
     func matches(
         requiredMenuContentVersion: Int,
         menuWidth: CGFloat,
-        codexAccountDisplay: CodexAccountMenuDisplay?,
         tokenAccountDisplay: TokenAccountMenuDisplay?,
         localizationSignature: String)
         -> Bool
     {
         self.requiredMenuContentVersion >= requiredMenuContentVersion &&
             abs(self.menuWidth - menuWidth) <= 0.5 &&
-            self.codexAccountDisplay == codexAccountDisplay &&
             self.tokenAccountDisplay == tokenAccountDisplay &&
             self.localizationSignature == localizationSignature
     }
@@ -26,7 +23,6 @@ struct CachedMergedSwitcherMenuContent {
 
 struct MergedSwitcherContentCacheContext {
     let menuWidth: CGFloat
-    let codexAccountDisplay: CodexAccountMenuDisplay?
     let tokenAccountDisplay: TokenAccountMenuDisplay?
     let contentVersion: Int?
 }
@@ -64,7 +60,6 @@ extension StatusItemController {
             selection: selection,
             context: MergedSwitcherContentCacheContext(
                 menuWidth: menuWidth,
-                codexAccountDisplay: self.lastCodexAccountMenuDisplay,
                 tokenAccountDisplay: self.lastTokenAccountMenuDisplay,
                 contentVersion: contentVersion))
     }
@@ -82,7 +77,6 @@ extension StatusItemController {
                 self.menuSession.renderedVersion(for: ObjectIdentifier(menu)) ??
                 self.menuSession.latestRequiredRebuildVersion,
             menuWidth: context.menuWidth,
-            codexAccountDisplay: context.codexAccountDisplay,
             tokenAccountDisplay: context.tokenAccountDisplay,
             localizationSignature: self.lastMenuLocalizationSignature,
             items: items)
@@ -94,7 +88,6 @@ extension StatusItemController {
         for selection: ProviderSwitcherSelection,
         in menu: NSMenu,
         menuWidth: CGFloat,
-        codexAccountDisplay: CodexAccountMenuDisplay?,
         tokenAccountDisplay: TokenAccountMenuDisplay?)
         -> [NSMenuItem]?
     {
@@ -103,7 +96,6 @@ extension StatusItemController {
         guard entry.matches(
             requiredMenuContentVersion: self.menuSession.latestRequiredRebuildVersion,
             menuWidth: menuWidth,
-            codexAccountDisplay: codexAccountDisplay,
             tokenAccountDisplay: tokenAccountDisplay,
             localizationSignature: self.menuLocalizationSignature())
         else {
@@ -117,7 +109,6 @@ extension StatusItemController {
         for selection: ProviderSwitcherSelection,
         to menu: NSMenu,
         menuWidth: CGFloat,
-        codexAccountDisplay: CodexAccountMenuDisplay?,
         tokenAccountDisplay: TokenAccountMenuDisplay?)
         -> Bool
     {
@@ -125,11 +116,9 @@ extension StatusItemController {
             for: selection,
             in: menu,
             menuWidth: menuWidth,
-            codexAccountDisplay: codexAccountDisplay,
             tokenAccountDisplay: tokenAccountDisplay)
         else { return false }
 
-        self.lastCodexAccountMenuDisplay = codexAccountDisplay
         self.lastTokenAccountMenuDisplay = tokenAccountDisplay
         for item in items {
             menu.addItem(item)

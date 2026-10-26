@@ -14,26 +14,11 @@ extension StatusItemController {
         // same presentation snapshot (claude-swap active-account override, issue #2731).
         let source = self.menuBarUsageSource(for: provider)
         let snapshot = source.snapshot
-        if let metric = Self.switcherWeeklyMetricPercent(
+        return Self.switcherWeeklyMetricPercent(
             for: provider,
             snapshot: snapshot,
             showUsed: self.settings.usageBarsShowUsed,
             preference: self.settings.menuBarMetricPreference(for: provider, snapshot: snapshot))
-        {
-            return metric
-        }
-
-        // Business accounts can expose only a monthly credit limit. Keep the existing
-        // rate-limit lanes preferred, then use the projected monthly lane for the switcher bar.
-        // Provider-specific by design: Codex Business accounts report an included monthly credit limit without
-        // rate-limit windows, so only the Codex switcher tab needs this credit fallback.
-        // Remote iCloud snapshots must not borrow this Mac's Codex credits projection.
-        guard provider == .codex, !source.isFleet else { return nil }
-        let projection = self.store.codexConsumerProjection(
-            surface: .menuBar,
-            snapshotOverride: snapshot)
-        guard let monthly = projection.sourceRateWindow(for: .monthly) else { return nil }
-        return self.settings.usageBarsShowUsed ? monthly.usedPercent : monthly.remainingPercent
     }
 
     func applySubtitle(_ subtitle: String, to item: NSMenuItem, title: String) {

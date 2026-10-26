@@ -180,7 +180,6 @@ struct ClaudeSyntheticPlaceholderDisplayTests {
         let settings = testSettingsStore(suiteName: "ClaudeSyntheticPlaceholderDisplayTests")
         settings.statusChecksEnabled = false
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing)

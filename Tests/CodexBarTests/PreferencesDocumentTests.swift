@@ -154,18 +154,22 @@ struct PreferencesDocumentTests {
         let defaults = InMemoryUserDefaults()
         let settings = self.store("plugin-overview", defaults: defaults)
         var document = PreferencesDocument()
-        try document.set("mergedOverviewSelectedProviders", ["codex", "fixture-meter"])
+        try document.set("mergedOverviewSelectedProviders", ["claude", "fixture-meter"])
         try settings.importPreferences(document)
-        #expect(settings.mergedOverviewSelectedProviders.map(\.rawValue) == ["codex", "fixture-meter"])
-        #expect(defaults.stringArray(forKey: "mergedOverviewSelectedProviders") == ["codex", "fixture-meter"])
+        #expect(settings.mergedOverviewSelectedProviders.map(\.rawValue) == ["claude", "fixture-meter"])
+        #expect(defaults.stringArray(forKey: "mergedOverviewSelectedProviders") == ["claude", "fixture-meter"])
         let legacySelection = defaults.stringArray(forKey: "mergedOverviewSelectedProviders")?
             .compactMap(UsageProvider.init(rawValue:))
-        #expect(legacySelection == [.codex])
+        #expect(legacySelection == [.claude])
     }
 
     @Test
     func `overview import marks the selection edited for local active providers`() throws {
         let settings = self.store("overview")
+        try settings.setProviderEnabled(
+            provider: .claude,
+            metadata: #require(ProviderDefaults.metadata[.claude]),
+            enabled: true)
         let active = settings.orderedProviders().filter { settings.providerEnablement[$0] ?? false }
         try #require(!active.isEmpty)
         var document = PreferencesDocument()

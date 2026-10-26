@@ -96,14 +96,6 @@ extension StatusItemController {
         }
     }
 
-    func deferOpenAIDashboardRefreshUntilMenuCloses(reason: String) {
-        if let existingReason = self.deferredOpenAIDashboardRefreshReason {
-            self.deferredOpenAIDashboardRefreshReason = "\(existingReason), \(reason)"
-        } else {
-            self.deferredOpenAIDashboardRefreshReason = reason
-        }
-    }
-
     func cancelDeferredMenuInteractionRefreshTask() {
         self.deferredMenuInteractionRefreshTask?.cancel()
         self.deferredMenuInteractionRefreshTask = nil
@@ -111,9 +103,7 @@ extension StatusItemController {
 
     func scheduleDeferredMenuInteractionRefreshIfNeeded(delay: Duration? = nil) {
         guard self.openMenus.isEmpty else { return }
-        guard self.deferredMenuInteractionRefreshPending || self.deferredOpenAIDashboardRefreshReason != nil else {
-            return
-        }
+        guard self.deferredMenuInteractionRefreshPending else { return }
         guard !self.hasPreparedForAppShutdown else { return }
 
         self.cancelDeferredMenuInteractionRefreshTask()
@@ -139,9 +129,7 @@ extension StatusItemController {
                 return
             }
             self.clearSatisfiedDeferredMenuInteractionRefreshes(for: Array(pendingProviders))
-            let shouldRefreshStore = self.deferredMenuInteractionRefreshPending
-            let openAIDashboardRefreshReason = self.deferredOpenAIDashboardRefreshReason
-            guard shouldRefreshStore || openAIDashboardRefreshReason != nil else {
+            guard self.deferredMenuInteractionRefreshPending else {
                 self.deferredMenuInteractionRefreshTask = nil
                 return
             }
@@ -151,26 +139,13 @@ extension StatusItemController {
             }
             self.deferredMenuInteractionRefreshTask = nil
             self.deferredMenuInteractionRefreshProviders.removeAll()
-            self.deferredOpenAIDashboardRefreshReason = nil
             #if DEBUG
             self.onDeferredMenuInteractionRefreshForTesting?()
             #endif
-            if shouldRefreshStore {
-                await self.performStoreRefresh(
-                    forceTokenUsage: false,
-                    refreshOpenMenusWhenComplete: false,
-                    interaction: .background)
-                guard !Task.isCancelled else { return }
-            }
-            if let openAIDashboardRefreshReason {
-                guard self.openMenus.isEmpty else {
-                    self.deferOpenAIDashboardRefreshUntilMenuCloses(reason: openAIDashboardRefreshReason)
-                    return
-                }
-                // Keep menu-originated automatic dashboard refreshes non-interactive:
-                // opening a menu is not consent to show macOS Keychain prompts.
-                self.store.requestOpenAIDashboardRefreshIfStale(reason: openAIDashboardRefreshReason)
-            }
+            await self.performStoreRefresh(
+                forceTokenUsage: false,
+                refreshOpenMenusWhenComplete: false,
+                interaction: .background)
         }
     }
 }

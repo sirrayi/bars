@@ -6,40 +6,6 @@ import Testing
 @MainActor
 struct UsageStoreQuotaWindowHistoryTests {
     @Test
-    func `live Codex reset history uses the workspace owner instead of email or stale preference`() throws {
-        let store = try Self.makeStore()
-        let snapshot = Self.snapshot(provider: .codex)
-        store.snapshots[.codex] = snapshot
-        store.settings._test_liveSystemCodexAccount = ObservedSystemCodexAccount(
-            email: "fixture@example.com",
-            workspaceAccountID: "workspace-current",
-            codexHomePath: "/synthetic/codex",
-            observedAt: snapshot.updatedAt,
-            identity: .providerAccount(id: "workspace-current"))
-        defer { store.settings._test_liveSystemCodexAccount = nil }
-        let currentKey = try #require(CodexHistoryOwnership
-            .canonicalKey(for: .providerAccount(id: "workspace-current")))
-        let otherKey = try #require(CodexHistoryOwnership.canonicalKey(for: .providerAccount(id: "workspace-other")))
-        let current = Self.history(resetOffset: 3600)
-        let other = Self.history(resetOffset: 7200)
-        store.planUtilizationHistory[.codex] = .init(
-            preferredAccountKey: otherKey,
-            accounts: [currentKey: [current], otherKey: [other]])
-
-        Self.expectLiveObservations(store, provider: .codex, history: current)
-        let explicit = store.menuCardInput(
-            for: .codex,
-            context: .account(.init(
-                snapshot: snapshot,
-                historySelection: .init(accountKey: otherKey, histories: [other]))),
-            now: snapshot.updatedAt)
-        #expect(explicit.observedWeeklyResets == Self.observations(other))
-
-        store.planUtilizationHistory[.codex]?.accounts.removeValue(forKey: currentKey)
-        Self.expectLiveObservations(store, provider: .codex, history: nil)
-    }
-
-    @Test
     func `live Claude reset history uses the selected token account instead of snapshot email`() throws {
         let store = try Self.makeStore()
         store.settings.addTokenAccount(provider: .claude, label: "Selected", token: "fixture-token")
@@ -76,18 +42,14 @@ struct UsageStoreQuotaWindowHistoryTests {
         Self.expectLiveObservations(store, provider: .claude, history: history)
     }
 
-    @Test(arguments: [UsageProvider.codex, .claude])
-    func `quota history reads do not migrate legacy buckets or adopt unscoped history`(
-        provider: UsageProvider) throws
-    {
+    @Test
+    func `quota history reads do not migrate legacy buckets or adopt unscoped history`() throws {
+        let provider = UsageProvider.claude
         let store = try Self.makeStore()
         let snapshot = Self.snapshot(provider: provider)
         store.snapshots[provider.instanceID] = snapshot
-        let legacyKey = if provider == .codex {
-            UsageStore._codexLegacyPlanUtilizationEmailHashKeyForTesting(normalizedEmail: "fixture@example.com")
-        } else {
-            try #require(UsageStore._legacyClaudePlanUtilizationEmailAccountKeyForTesting(snapshot: snapshot))
-        }
+        let legacyKey = try #require(UsageStore._legacyClaudePlanUtilizationEmailAccountKeyForTesting(
+            snapshot: snapshot))
         store.planUtilizationHistory[provider.instanceID] = .init(
             preferredAccountKey: legacyKey,
             unscoped: [Self.history(resetOffset: 3600)],
@@ -121,13 +83,7 @@ struct UsageStoreQuotaWindowHistoryTests {
     private static func makeStore() throws -> UsageStore {
         let suite = "UsageStoreQuotaWindowHistoryTests-\(UUID().uuidString)"
         let settings = testSettingsStore(suiteName: suite, userDefaults: InMemoryUserDefaults())
-        let managedURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(suite)-accounts.json")
-        try FileManagedCodexAccountStore(fileURL: managedURL).storeAccounts(ManagedCodexAccountSet(
-            version: FileManagedCodexAccountStore.currentVersion, accounts: []))
-        settings._test_managedCodexAccountStoreURL = managedURL
-        settings.codexActiveSource = .liveSystem
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             planUtilizationHistoryStore: testPlanUtilizationHistoryStore(suiteName: suite),

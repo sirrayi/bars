@@ -61,32 +61,8 @@ extension ProvidersPane {
         self.store.menuCardModel(for: provider, context: .settings)
     }
 
-    func _test_openAIWebDiagnostic(for provider: UsageProvider) -> String? {
-        self.openAIWebDiagnostic(for: provider)
-    }
-
     func _test_providerErrorDisplay(for provider: UsageProvider) -> ProviderErrorDisplay? {
         self.providerErrorDisplay(provider)
-    }
-
-    func _test_codexAccountsSectionState() -> CodexAccountsSectionState? {
-        self.codexAccountsSectionState(for: .codex)
-    }
-
-    func _test_selectCodexVisibleAccount(id: String) async {
-        await self.selectCodexVisibleAccount(id: id)
-    }
-
-    func _test_addManagedCodexAccount() async {
-        await self.addManagedCodexAccount()
-    }
-
-    func _test_reauthenticateCodexAccount(_ account: CodexVisibleAccount) async {
-        await self.reauthenticateCodexAccount(account)
-    }
-
-    func _test_requestCodexSystemVisibleAccount(id: String) async {
-        await self.requestCodexSystemVisibleAccount(id: id)
     }
 }
 
@@ -102,12 +78,11 @@ enum ProvidersPaneTestHarness {
     }
 
     private static func prepareTestState(settings: SettingsStore, store: UsageStore) {
-        store.versions[.codex] = "1.0.0"
         store.versions[.claude] = "2.0.0 (build 123)"
         store._setSnapshotForTesting(
             UsageSnapshot(primary: nil, secondary: nil, updatedAt: Date()),
-            provider: .codex)
-        store.refreshingProviders.insert(.codex)
+            provider: .claude)
+        store.refreshingProviders.insert(.claude)
 
         settings.claudeCookieSource = .manual
         settings.opencodeCookieSource = .manual
@@ -115,8 +90,7 @@ enum ProvidersPaneTestHarness {
     }
 
     private static func exercisePaneBasics(pane: ProvidersPane) {
-        _ = pane._test_binding(for: .codex).wrappedValue
-        _ = pane._test_providerSubtitle(.codex)
+        _ = pane._test_binding(for: .claude).wrappedValue
         _ = pane._test_providerSubtitle(.claude)
         _ = pane._test_providerSubtitle(.opencode)
         _ = pane._test_providerSubtitle(.opencodego)
@@ -131,17 +105,16 @@ enum ProvidersPaneTestHarness {
         var isEnabled = true
         let enabledBinding = Binding(get: { isEnabled }, set: { isEnabled = $0 })
         let pane = ProvidersPane(settings: store.settings, store: store)
-        let model = pane._test_menuCardModel(for: .codex)
+        let model = pane._test_menuCardModel(for: .claude)
         var expanded = false
         let expandedBinding = Binding(get: { expanded }, set: { expanded = $0 })
 
         _ = ProviderDetailView(
-            provider: .codex,
+            provider: .claude,
             store: store,
             isEnabled: enabledBinding,
             subtitle: "Subtitle",
             model: model,
-            openAIWebDiagnostic: pane._test_openAIWebDiagnostic(for: .codex),
             settingsPickers: [descriptors.picker],
             settingsToggles: [descriptors.toggle],
             settingsFields: [descriptors.fieldPlain, descriptors.fieldSecure],
@@ -149,13 +122,7 @@ enum ProvidersPaneTestHarness {
             errorDisplay: ProviderErrorDisplay(preview: "Preview", full: "Full"),
             isErrorExpanded: expandedBinding,
             onCopyError: { _ in },
-            onRefresh: {},
-            showsSupplementarySettingsContent: true,
-            supplementarySettingsContent: {
-                Section("Accounts") {
-                    Text("Supplementary")
-                }
-            }).body
+            onRefresh: {}).body
     }
 
     private static func makeDescriptors() -> ProviderListTestDescriptors {
@@ -219,7 +186,7 @@ enum ProvidersPaneTestHarness {
             title: "Accounts",
             subtitle: "Accounts subtitle",
             placeholder: "Token",
-            provider: .codex,
+            provider: .claude,
             isVisible: { true },
             accounts: { [] },
             activeIndex: { 0 },

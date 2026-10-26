@@ -39,19 +39,17 @@ struct MenuSwitchFlickerProbeTests {
         let registry = ProviderRegistry.shared
         for provider in UsageProvider.allCases {
             guard let metadata = registry.metadata[provider] else { continue }
-            let shouldEnable = provider == .codex || provider == .claude
+            let shouldEnable = provider == .opencode || provider == .claude
             settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: shouldEnable)
         }
 
-        let fetcher = UsageFetcher()
         let store = UsageStore(
-            fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -59,8 +57,8 @@ struct MenuSwitchFlickerProbeTests {
         // Synthetic merged menu: the switcher view is hosted in a real window so
         // the session can resolve a window number for its frame grabber.
         let switcher = ProviderSwitcherView(
-            providers: [.codex, .claude],
-            selected: .provider(.codex),
+            providers: [.opencode, .claude],
+            selected: .provider(.opencode),
             includesOverview: true,
             width: 320,
             showsIcons: false,

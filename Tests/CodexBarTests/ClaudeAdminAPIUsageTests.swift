@@ -25,7 +25,6 @@ struct ClaudeAdminAPIUsageTests {
             verbose: false,
             env: env,
             settings: nil,
-            fetcher: UsageFetcher(environment: env),
             claudeFetcher: ClaudeUsageFetcher(browserDetection: browserDetection),
             browserDetection: browserDetection)
     }

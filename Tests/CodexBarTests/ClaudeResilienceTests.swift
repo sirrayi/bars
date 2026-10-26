@@ -29,7 +29,6 @@ struct ClaudeResilienceTests {
                     }
 
                     let store = UsageStore(
-                        fetcher: UsageFetcher(environment: [:]),
                         browserDetection: BrowserDetection(cacheTTL: 0),
                         settings: settings,
                         startupBehavior: .testing,
@@ -98,7 +97,6 @@ struct ClaudeResilienceTests {
                         }
 
                         let store = UsageStore(
-                            fetcher: UsageFetcher(environment: [:]),
                             browserDetection: BrowserDetection(cacheTTL: 0),
                             settings: settings,
                             startupBehavior: .testing,
@@ -221,7 +219,6 @@ struct ClaudeResilienceTests {
                     }
 
                     let store = UsageStore(
-                        fetcher: UsageFetcher(environment: [:]),
                         browserDetection: BrowserDetection(cacheTTL: 0),
                         settings: settings,
                         startupBehavior: .testing,
@@ -306,7 +303,6 @@ struct ClaudeResilienceTests {
                     }
 
                     let store = UsageStore(
-                        fetcher: UsageFetcher(environment: [:]),
                         browserDetection: BrowserDetection(cacheTTL: 0),
                         settings: settings,
                         startupBehavior: .testing,
@@ -423,7 +419,6 @@ struct ClaudeResilienceTests {
                     }
 
                     let store = UsageStore(
-                        fetcher: UsageFetcher(environment: [:]),
                         browserDetection: BrowserDetection(cacheTTL: 0),
                         settings: settings,
                         startupBehavior: .testing,
@@ -511,7 +506,6 @@ struct ClaudeResilienceTests {
                         }
 
                         let store = UsageStore(
-                            fetcher: UsageFetcher(environment: [:]),
                             browserDetection: BrowserDetection(cacheTTL: 0),
                             settings: settings,
                             startupBehavior: .testing,
@@ -596,7 +590,6 @@ struct ClaudeResilienceTests {
                         }
 
                         let store = UsageStore(
-                            fetcher: UsageFetcher(environment: [:]),
                             browserDetection: BrowserDetection(cacheTTL: 0),
                             settings: settings,
                             startupBehavior: .testing,
@@ -705,7 +698,6 @@ struct ClaudeResilienceTests {
                                                         }
 
                                                         let store = UsageStore(
-                                                            fetcher: UsageFetcher(environment: [:]),
                                                             browserDetection: BrowserDetection(cacheTTL: 0),
                                                             settings: settings,
                                                             startupBehavior: .testing,
@@ -818,7 +810,6 @@ struct ClaudeResilienceTests {
                                                         }
 
                                                         let store = UsageStore(
-                                                            fetcher: UsageFetcher(environment: [:]),
                                                             browserDetection: BrowserDetection(cacheTTL: 0),
                                                             settings: settings,
                                                             startupBehavior: .testing,
@@ -925,7 +916,6 @@ extension ClaudeResilienceTests {
                                     }
 
                                     let store = UsageStore(
-                                        fetcher: UsageFetcher(environment: [:]),
                                         browserDetection: BrowserDetection(cacheTTL: 0),
                                         settings: settings,
                                         startupBehavior: .testing,
@@ -1038,7 +1028,6 @@ extension ClaudeResilienceTests {
                                                         }
 
                                                         let store = UsageStore(
-                                                            fetcher: UsageFetcher(environment: [:]),
                                                             browserDetection: BrowserDetection(cacheTTL: 0),
                                                             settings: settings,
                                                             startupBehavior: .testing,
@@ -1145,7 +1134,6 @@ extension ClaudeResilienceTests {
                         }
 
                         let store = UsageStore(
-                            fetcher: UsageFetcher(environment: [:]),
                             browserDetection: BrowserDetection(cacheTTL: 0),
                             settings: settings,
                             startupBehavior: .testing,
@@ -1221,7 +1209,6 @@ extension ClaudeResilienceTests {
 
                     let environment = ["CLAUDE_CONFIG_DIR": tempDir.path]
                     let store = UsageStore(
-                        fetcher: UsageFetcher(environment: environment),
                         browserDetection: BrowserDetection(cacheTTL: 0),
                         settings: settings,
                         startupBehavior: .testing,
@@ -1327,7 +1314,6 @@ extension ClaudeResilienceTests {
                         }
 
                         let store = UsageStore(
-                            fetcher: UsageFetcher(environment: [:]),
                             browserDetection: BrowserDetection(cacheTTL: 0),
                             settings: settings,
                             startupBehavior: .testing,
@@ -1391,7 +1377,6 @@ extension ClaudeResilienceTests {
         let settings = SettingsStore(
             userDefaults: defaults,
             configStore: testConfigStore(suiteName: suite),
-            codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
             opencodeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore())

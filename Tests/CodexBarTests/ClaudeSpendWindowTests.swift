@@ -52,7 +52,7 @@ struct ClaudeSpendWindowTests {
             weeklyRemaining: nil,
             creditsRemaining: nil,
             stale: false,
-            style: .codex,
+            style: IconStyle(provider: .opencode),
             hideCritters: true)
         #expect(try #require(actual.tiffRepresentation) == #require(expected.tiffRepresentation))
     }
@@ -84,7 +84,10 @@ struct ClaudeSpendWindowTests {
             providerCost: Self.snapshot(at: Date()).providerCost,
             updatedAt: Date(),
             identity: ProviderIdentitySnapshot(
-                providerID: .codex, accountEmail: "codex@example.test", accountOrganization: nil, loginMethod: "Pro"))
+                providerID: .opencode,
+                accountEmail: "opencode@example.test",
+                accountOrganization: nil,
+                loginMethod: "Pro"))
         #expect(IconRemainingResolver.resolvedWindows(snapshot: snapshot, style: .claude).primary == quota)
         #expect(IconRenderer.QuotaLayoutPolicy.provider(.claude, snapshot: snapshot).reservesMissingSecondaryLane)
         #expect(snapshot.accountEmail(for: .claude) == nil)

@@ -37,16 +37,14 @@ struct BatteryDrainDiagnosticTests {
             }
         }
 
-        let fetcher = UsageFetcher()
         let store = UsageStore(
-            fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
 
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -70,16 +68,14 @@ struct BatteryDrainDiagnosticTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .claude
 
         let registry = ProviderRegistry.shared
-        if let meta = registry.metadata[.codex] {
-            settings.setProviderEnabled(provider: .codex, metadata: meta, enabled: true)
+        if let meta = registry.metadata[.claude] {
+            settings.setProviderEnabled(provider: .claude, metadata: meta, enabled: true)
         }
 
-        let fetcher = UsageFetcher()
         let store = UsageStore(
-            fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
 
@@ -87,12 +83,12 @@ struct BatteryDrainDiagnosticTests {
             primary: RateWindow(usedPercent: 50, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
             secondary: RateWindow(usedPercent: 30, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
             updatedAt: Date())
-        store._setSnapshotForTesting(snapshot, provider: .codex)
+        store._setSnapshotForTesting(snapshot, provider: .claude)
 
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -118,20 +114,18 @@ struct BatteryDrainDiagnosticTests {
         settings.mergeIcons = false
 
         let registry = ProviderRegistry.shared
-        if let meta = registry.metadata[.codex] {
-            settings.setProviderEnabled(provider: .codex, metadata: meta, enabled: true)
+        if let meta = registry.metadata[.claude] {
+            settings.setProviderEnabled(provider: .claude, metadata: meta, enabled: true)
         }
 
-        let fetcher = UsageFetcher()
         let store = UsageStore(
-            fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
 
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -154,26 +148,24 @@ struct BatteryDrainDiagnosticTests {
         settings.mergeIcons = false
 
         let registry = ProviderRegistry.shared
-        if let meta = registry.metadata[.codex] {
-            settings.setProviderEnabled(provider: .codex, metadata: meta, enabled: true)
+        if let meta = registry.metadata[.claude] {
+            settings.setProviderEnabled(provider: .claude, metadata: meta, enabled: true)
         }
 
-        let fetcher = UsageFetcher()
         let store = UsageStore(
-            fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
-        store._setErrorForTesting("simulated Codex RPC timeout", provider: .codex)
+        store._setErrorForTesting("simulated provider timeout", provider: .claude)
 
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
 
-        #expect(store.isStale(provider: .codex) == true)
+        #expect(store.isStale(provider: .claude) == true)
         #expect(
             controller.needsMenuBarIconAnimation() == false,
             "Should not animate when provider has recorded an error")

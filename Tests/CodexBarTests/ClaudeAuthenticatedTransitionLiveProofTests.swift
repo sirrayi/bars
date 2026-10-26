@@ -79,7 +79,6 @@ struct ClaudeAuthenticatedTransitionLiveProofTests {
 
         let browserDetection = BrowserDetection(cacheTTL: 0)
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: environment),
             browserDetection: browserDetection,
             claudeFetcher: ClaudeUsageFetcher(
                 browserDetection: browserDetection,

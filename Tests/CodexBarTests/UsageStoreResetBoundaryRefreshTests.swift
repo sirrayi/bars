@@ -11,7 +11,7 @@ struct UsageStoreResetBoundaryRefreshTests {
         let snapshot = Self.snapshot(updatedAt: now, primaryResetsAt: resetsAt)
 
         let refreshAt = UsageStore.nextResetBoundaryRefreshDate(
-            snapshots: [.codex: snapshot],
+            snapshots: [.claude: snapshot],
             normalRefreshInterval: 30 * 60,
             now: now)
 
@@ -25,7 +25,7 @@ struct UsageStoreResetBoundaryRefreshTests {
         let snapshot = Self.snapshot(updatedAt: now, primaryResetsAt: resetsAt)
 
         let refreshAt = UsageStore.nextResetBoundaryRefreshDate(
-            snapshots: [.codex: snapshot],
+            snapshots: [.claude: snapshot],
             normalRefreshInterval: 60 * 60,
             minimumAutomaticRefreshInterval: BackgroundWorkPowerPolicy.lowPowerMinimumInterval,
             now: now)
@@ -42,7 +42,7 @@ struct UsageStoreResetBoundaryRefreshTests {
             primaryResetsAt: resetsAt)
 
         let refreshAt = UsageStore.nextResetBoundaryRefreshDate(
-            snapshots: [.codex: snapshot],
+            snapshots: [.claude: snapshot],
             normalRefreshInterval: 30 * 60,
             now: now)
 
@@ -59,7 +59,7 @@ struct UsageStoreResetBoundaryRefreshTests {
             primaryResetsAt: resetsAt)
 
         let refreshAt = UsageStore.nextResetBoundaryRefreshDate(
-            snapshots: [.codex: snapshot],
+            snapshots: [.claude: snapshot],
             normalRefreshInterval: 30 * 60,
             attemptedBoundaryRefreshes: [boundaryRefreshAt],
             now: now)
@@ -80,7 +80,7 @@ struct UsageStoreResetBoundaryRefreshTests {
         #expect(UsageStore.shouldRecordResetBoundaryAttempt(isRefreshing: false) == true)
 
         let refreshAt = UsageStore.nextResetBoundaryRefreshDate(
-            snapshots: [.codex: snapshot],
+            snapshots: [.claude: snapshot],
             normalRefreshInterval: 30 * 60,
             attemptedBoundaryRefreshes: [],
             now: now)
@@ -88,7 +88,7 @@ struct UsageStoreResetBoundaryRefreshTests {
         #expect(refreshAt == now.addingTimeInterval(UsageStore.resetBoundaryRefreshMinimumDelaySeconds))
 
         let suppressedAfterRecordedAttempt = UsageStore.nextResetBoundaryRefreshDate(
-            snapshots: [.codex: snapshot],
+            snapshots: [.claude: snapshot],
             normalRefreshInterval: 30 * 60,
             attemptedBoundaryRefreshes: [boundaryRefreshAt],
             now: now)
@@ -108,11 +108,10 @@ struct UsageStoreResetBoundaryRefreshTests {
             primaryResetsAt: resetsAt)
         let settings = testSettingsStore(suiteName: "UsageStoreResetBoundaryRefreshTests-inflight-marker")
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing)
-        store.snapshots[.codex] = snapshot
+        store.snapshots[.claude] = snapshot
         store.isRefreshing = true
         store.scheduledResetBoundaryRefreshAt = retryAt
 
@@ -134,14 +133,11 @@ struct UsageStoreResetBoundaryRefreshTests {
         let settings = testSettingsStore(suiteName: "UsageStoreResetBoundaryRefreshTests-waits-for-tail")
         settings.statusChecksEnabled = false
         settings.costUsageEnabled = true
-        settings.openAIWebAccessEnabled = false
-        settings.codexCookieSource = .off
         for provider in UsageProvider.allCases {
             guard let metadata = ProviderRegistry.shared.metadata[provider] else { continue }
-            settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: provider == .codex)
+            settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: provider == .claude)
         }
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing)
@@ -150,9 +146,6 @@ struct UsageStoreResetBoundaryRefreshTests {
         var didObserveWait = false
         store._test_providerRefreshOverride = { _ in
             providerRefreshes += 1
-        }
-        store._test_codexCreditsLoaderOverride = {
-            CreditsSnapshot(remaining: 25, events: [], updatedAt: Date())
         }
         store._test_tokenUsageRefreshOverride = { provider, force in
             guard force else { return }
@@ -168,7 +161,6 @@ struct UsageStoreResetBoundaryRefreshTests {
         }
         defer {
             store._test_providerRefreshOverride = nil
-            store._test_codexCreditsLoaderOverride = nil
             store._test_tokenUsageRefreshOverride = nil
             store._test_forcedRefreshEnrichmentWaitObserver = nil
         }
@@ -204,20 +196,17 @@ struct UsageStoreResetBoundaryRefreshTests {
         settings.refreshFrequency = .oneMinute
         settings.statusChecksEnabled = false
         settings.costUsageEnabled = false
-        settings.openAIWebAccessEnabled = false
-        settings.codexCookieSource = .off
         for provider in UsageProvider.allCases {
             guard let metadata = ProviderRegistry.shared.metadata[provider] else { continue }
-            settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: provider == .codex)
+            settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: provider == .claude)
         }
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing)
         let now = Date()
         let boundaryRefreshAt = now.addingTimeInterval(1)
-        store.snapshots[.codex] = Self.snapshot(
+        store.snapshots[.claude] = Self.snapshot(
             updatedAt: now.addingTimeInterval(-60),
             primaryResetsAt: boundaryRefreshAt.addingTimeInterval(-UsageStore.resetBoundaryRefreshGraceSeconds))
         var providerRefreshes = 0
@@ -244,7 +233,7 @@ struct UsageStoreResetBoundaryRefreshTests {
         let snapshot = Self.snapshot(updatedAt: now, primaryResetsAt: resetsAt)
 
         let refreshAt = UsageStore.nextResetBoundaryRefreshDate(
-            snapshots: [.codex: snapshot],
+            snapshots: [.claude: snapshot],
             normalRefreshInterval: 30 * 60,
             now: now)
 
@@ -258,7 +247,7 @@ struct UsageStoreResetBoundaryRefreshTests {
         let snapshot = Self.snapshot(updatedAt: now, primaryResetsAt: resetsAt)
 
         let refreshAt = UsageStore.nextResetBoundaryRefreshDate(
-            snapshots: [.codex: snapshot],
+            snapshots: [.claude: snapshot],
             normalRefreshInterval: 30 * 60,
             now: now)
 
@@ -295,7 +284,7 @@ struct UsageStoreResetBoundaryRefreshTests {
             updatedAt: now)
 
         let refreshAt = UsageStore.nextResetBoundaryRefreshDate(
-            snapshots: [.codex: snapshot],
+            snapshots: [.claude: snapshot],
             normalRefreshInterval: 30 * 60,
             now: now)
 
@@ -310,7 +299,7 @@ struct UsageStoreResetBoundaryRefreshTests {
             primaryResetsAt: now.addingTimeInterval(10 * 60))
 
         let refreshAt = UsageStore.nextResetBoundaryRefreshDate(
-            snapshots: [.codex: snapshot],
+            snapshots: [.claude: snapshot],
             normalRefreshInterval: nil,
             now: now)
 

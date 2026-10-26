@@ -6,7 +6,7 @@ import XCTest
 /// Uses only pre-existing store/task seams so the identical fixture can also prove the unfixed baseline.
 @MainActor
 final class ClaudeSwapProgressNativeProofFixture {
-    let navigation: CodexWorkspacesNavigationFixture
+    let navigation: MenuNavigationFixture
     let executable: URL
     let refreshGate = ClaudeSwapProgressNativeRefreshGate()
     let targetID = ProviderAccountIdentity(source: ClaudeSwapAccountProjection.sourceName, opaqueID: "2")
@@ -37,7 +37,7 @@ final class ClaudeSwapProgressNativeProofFixture {
     }
 
     init() throws {
-        let navigation = try CodexWorkspacesNavigationFixture(userDefaults: InMemoryUserDefaults())
+        let navigation = try MenuNavigationFixture(userDefaults: InMemoryUserDefaults())
         self.navigation = navigation
         let executable = navigation.files.root.appendingPathComponent("synthetic-cswap-native")
         self.executable = executable
@@ -75,7 +75,6 @@ final class ClaudeSwapProgressNativeProofFixture {
         settings.refreshAllProvidersOnMenuOpen = false
         settings.agentSessionsEnabled = false
         settings.providerStorageFootprintsEnabled = false
-        settings.codexCookieSource = .off
         settings.claudeSwapExecutablePath = executable.path
         settings.claudeSwapEnabled = true
         settings.setProviderEnabled(
@@ -84,7 +83,7 @@ final class ClaudeSwapProgressNativeProofFixture {
             enabled: true)
         // A genuine merged menu needs two providers; the auxiliary Codex snapshot is inert and synthetic.
         let store = navigation.store
-        store._setSnapshotForTesting(Self.ambientSnapshot(provider: .codex, percent: 29), provider: .codex)
+        store._setSnapshotForTesting(Self.ambientSnapshot(provider: .opencode, percent: 29), provider: .opencode)
         store._setSnapshotForTesting(Self.ambientSnapshot(provider: .claude, percent: 61), provider: .claude)
         store.claudeSwapAccountSnapshots = Self.accounts(activeSlot: 1)
         store.claudeSwapLastRefreshAt = Date()

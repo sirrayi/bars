@@ -11,8 +11,8 @@ struct CostUsageClaudeReportWireTests {
         var sourceInventory: [String: CostUsageClaudeFileStamp] = [:]
         var reportKey: CostUsageClaudeReportMemoKey
         var report: CostUsageDailyReport
-        var hourly: [CostUsageCodexPreviousReport.HourlyEntry]?
-        var quotaSlices: [CostUsageCodexPreviousReport.QuotaSlice]?
+        var hourly: [CostUsageCachedReport.HourlyEntry]?
+        var quotaSlices: [CostUsageCachedReport.QuotaSlice]?
         var hasWindowScopedRows: Bool? = true
     }
 
@@ -125,7 +125,7 @@ struct CostUsageClaudeReportWireTests {
         let slice = CostUsageTimedEntry(timestamp: Date(timeIntervalSince1970: 0), totalTokens: 1, costUSD: cost)
         var oracle = fixture.envelope
         oracle.report = CostUsageDailyReport(data: [], summary: nil, quotaSlices: [slice])
-        oracle.quotaSlices = [CostUsageCodexPreviousReport.QuotaSlice(slice)]
+        oracle.quotaSlices = [CostUsageCachedReport.QuotaSlice(slice)]
         #expect(throws: EncodingError.self) { try JSONEncoder().encode(oracle) }
         fixture.store(report: oracle.report)
         #expect(try Data(contentsOf: fixture.memoURL) == bytes)
@@ -213,8 +213,8 @@ struct CostUsageClaudeReportWireTests {
                     cacheArtifactStamp: nil,
                     pricingArtifactStamp: nil),
                 report: report,
-                hourly: hourly.map(CostUsageCodexPreviousReport.HourlyEntry.init),
-                quotaSlices: slices.map(CostUsageCodexPreviousReport.QuotaSlice.init))
+                hourly: hourly.map(CostUsageCachedReport.HourlyEntry.init),
+                quotaSlices: slices.map(CostUsageCachedReport.QuotaSlice.init))
         }
 
         func encoded() throws -> Data {

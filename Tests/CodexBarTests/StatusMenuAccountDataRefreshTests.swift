@@ -16,7 +16,7 @@ struct StatusMenuAccountDataRefreshTests {
             }
             defer { controller._test_openMenuRebuildObserver = nil }
             for _ in 0..<3 {
-                controller.scheduleOpenRootMenuDataRebuildIfStillVisible(menu, provider: .codex)
+                controller.scheduleOpenRootMenuDataRebuildIfStillVisible(menu, provider: .opencode)
             }
             #expect(controller.menuNeedsRefresh(menu))
             Self.drainTracking()
@@ -31,14 +31,14 @@ struct StatusMenuAccountDataRefreshTests {
     func `account data rebuild preserves a hosted submenu and leaves parent stale`() throws {
         try self.withMenu { _, controller, menu in
             let submenu = controller.makeHostedSubviewPlaceholderMenu(
-                chartID: StatusItemController.costHistoryChartID, provider: .codex)
+                chartID: StatusItemController.costHistoryChartID, provider: .opencode)
             let childKey = ObjectIdentifier(submenu)
             controller.openMenus[childKey] = submenu
             defer { controller.openMenus.removeValue(forKey: childKey) }
             var rebuilds = 0
             controller._test_openMenuRebuildObserver = { _ in rebuilds += 1 }
             defer { controller._test_openMenuRebuildObserver = nil }
-            controller.scheduleOpenRootMenuDataRebuildIfStillVisible(menu, provider: .codex)
+            controller.scheduleOpenRootMenuDataRebuildIfStillVisible(menu, provider: .opencode)
             Self.drainTracking()
             #expect(rebuilds == 0)
             #expect(controller.openMenus[childKey] === submenu)
@@ -51,10 +51,10 @@ struct StatusMenuAccountDataRefreshTests {
     func `account data resumes during parent tracking after a hosted submenu closes`() throws {
         try self.withMenu { _, controller, menu in
             let submenu = controller.makeHostedSubviewPlaceholderMenu(
-                chartID: StatusItemController.costHistoryChartID, provider: .codex)
+                chartID: StatusItemController.costHistoryChartID, provider: .opencode)
             let childKey = ObjectIdentifier(submenu)
             controller.openMenus[childKey] = submenu
-            controller.scheduleOpenRootMenuDataRebuildIfStillVisible(menu, provider: .codex)
+            controller.scheduleOpenRootMenuDataRebuildIfStillVisible(menu, provider: .opencode)
             Self.drainTracking()
             #expect(controller.menuNeedsRefresh(menu))
             controller.menuDidClose(submenu)
@@ -72,7 +72,7 @@ struct StatusMenuAccountDataRefreshTests {
             item.isEnabled = true
             menu.addItem(item)
             controller.highlightedMenuItems[key] = item
-            controller.scheduleOpenRootMenuDataRebuildIfStillVisible(menu, provider: .codex)
+            controller.scheduleOpenRootMenuDataRebuildIfStillVisible(menu, provider: .opencode)
             Self.drainTracking()
             #expect(controller.menuNeedsRefresh(menu))
             #expect(controller.nativeHighlightDeferredMenuRebuilds[key] != nil)
@@ -86,20 +86,20 @@ struct StatusMenuAccountDataRefreshTests {
 
     @Test
     func `late account data cannot replace a newer provider selection request`() throws {
-        try self.withMenu { fixture, controller, menu in
-            fixture.settings.setProviderEnabled(
+        try self.withMenu { settings, controller, menu in
+            settings.setProviderEnabled(
                 provider: .claude,
                 metadata: ProviderDescriptorRegistry.descriptor(for: .claude).metadata,
                 enabled: true)
             controller.selectedMenuProvider = .claude
-            fixture.settings.mergedMenuLastSelectedWasOverview = false
+            settings.mergedMenuLastSelectedWasOverview = false
             var selectionRequestRan = false
             controller.scheduleTrackingMenuRebuildIfStillVisible(menu, provider: .claude) {
                 selectionRequestRan = true
                 return true
             }
             let version = controller.menuContentVersion
-            controller.scheduleOpenRootMenuDataRebuildIfStillVisible(menu, provider: .codex)
+            controller.scheduleOpenRootMenuDataRebuildIfStillVisible(menu, provider: .opencode)
             #expect(controller.menuContentVersion == version)
             Self.drainTracking()
             #expect(selectionRequestRan)
@@ -114,7 +114,7 @@ struct StatusMenuAccountDataRefreshTests {
             var rebuilds = 0
             controller._test_openMenuRebuildObserver = { _ in rebuilds += 1 }
             defer { controller._test_openMenuRebuildObserver = nil }
-            controller.scheduleOpenRootMenuDataRebuildIfStillVisible(menu, provider: .codex) {
+            controller.scheduleOpenRootMenuDataRebuildIfStillVisible(menu, provider: .opencode) {
                 selection.id == "account-a"
             }
             selection.id = "account-b"
@@ -130,7 +130,7 @@ struct StatusMenuAccountDataRefreshTests {
             var rebuilds = 0
             controller._test_openMenuRebuildObserver = { _ in rebuilds += 1 }
             defer { controller._test_openMenuRebuildObserver = nil }
-            controller.scheduleOpenRootMenuDataRebuildIfStillVisible(menu, provider: .codex)
+            controller.scheduleOpenRootMenuDataRebuildIfStillVisible(menu, provider: .opencode)
             controller.menuDidClose(menu)
             Self.drainTracking()
             #expect(rebuilds == 0)
@@ -144,7 +144,7 @@ struct StatusMenuAccountDataRefreshTests {
     }
 
     private func withMenu(
-        _ body: (CodexAccountMenuPhaseFixture, StatusItemController, NSMenu) throws -> Void) throws
+        _ body: (SettingsStore, StatusItemController, NSMenu) throws -> Void) throws
     {
         let previousRendering = StatusItemController.menuCardRenderingEnabled
         let previousRefresh = StatusItemController.menuRefreshEnabled
@@ -154,13 +154,36 @@ struct StatusMenuAccountDataRefreshTests {
             StatusItemController.menuCardRenderingEnabled = previousRendering
             StatusItemController.setMenuRefreshEnabledForTesting(previousRefresh)
         }
-        let fixture = try CodexAccountMenuPhaseFixture()
-        defer { fixture.cleanup() }
-        let controller = fixture.makeController()
+        let settings = SettingsStore(
+            configStore: testConfigStore(suiteName: "StatusMenuAccountDataRefreshTests-\(UUID().uuidString)"))
+        settings.statusChecksEnabled = false
+        settings.refreshFrequency = .manual
+        settings.mergeIcons = true
+        settings.selectedMenuProvider = .opencode
+        settings.mergedMenuLastSelectedWasOverview = false
+        settings.agentSessionsEnabled = false
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        for provider in [UsageProvider.opencode, .claude] {
+            settings.setProviderEnabled(
+                provider: provider,
+                metadata: ProviderDescriptorRegistry.descriptor(for: provider).metadata,
+                enabled: true)
+            store._setSnapshotForTesting(UsageSnapshot(
+                primary: RateWindow(usedPercent: 11, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
+                secondary: nil,
+                updatedAt: Date()), provider: provider)
+        }
+        let controller = StatusItemController(
+            store: store,
+            settings: settings,
+            account: AccountInfo(email: nil, plan: nil),
+            updater: DisabledUpdaterController(),
+            preferencesSelection: PreferencesSelection(),
+            statusBar: .system)
         defer { controller.releaseStatusItemsForTesting() }
         let menu = controller.makeMenu()
         controller.menuWillOpen(menu)
-        try body(fixture, controller, menu)
+        try body(settings, controller, menu)
     }
 
     private static func drainTracking() {

@@ -9,9 +9,8 @@ extension StatusItemController {
         let currentProvider: UsageProvider
         let switcherSelection: ProviderSwitcherSelection
         let menuWidth: CGFloat
-        let codexAccountDisplay: CodexAccountMenuDisplay?
         let tokenAccountDisplay: TokenAccountMenuDisplay?
-        let openAIContext: OpenAIWebContext
+        let submenuContext: MenuSubmenuContext
         let descriptor: MenuDescriptor
     }
 
@@ -37,7 +36,6 @@ extension StatusItemController {
                    for: context.switcherSelection,
                    in: menu,
                    menuWidth: context.menuWidth,
-                   codexAccountDisplay: context.codexAccountDisplay,
                    tokenAccountDisplay: context.tokenAccountDisplay)
             {
                 MenuSwitchFlickerProbe.debugLog("cached-swap begin \(context.switcherSelection)")
@@ -45,7 +43,6 @@ extension StatusItemController {
                 // Park the outgoing payloads for an equally instant switch-back. Compatible
                 // menu-item shells stay attached, avoiding the empty intermediate layout that
                 // AppKit can visibly render when the whole content block is removed first.
-                let outgoingCodexAccountDisplay = self.lastCodexAccountMenuDisplay
                 let outgoingTokenAccountDisplay = self.lastTokenAccountMenuDisplay
                 self.rememberMergedSwitcherState(enabledProviders, context.switcherSelection)
                 let displacedItems = self.replaceMenuContentKeepingRowsVisible(
@@ -61,10 +58,8 @@ extension StatusItemController {
                     selection: outgoingSelection,
                     context: MergedSwitcherContentCacheContext(
                         menuWidth: context.menuWidth,
-                        codexAccountDisplay: outgoingCodexAccountDisplay,
                         tokenAccountDisplay: outgoingTokenAccountDisplay,
                         contentVersion: nil))
-                self.lastCodexAccountMenuDisplay = context.codexAccountDisplay
                 self.lastTokenAccountMenuDisplay = context.tokenAccountDisplay
                 self.cacheVisibleMergedSwitcherContent(
                     in: menu,
@@ -111,12 +106,6 @@ extension StatusItemController {
         captureMenu: NSMenu,
         context: MenuUpdateContext)
     {
-        self.addCodexAccountSwitcherIfNeeded(
-            to: target,
-            display: context.codexAccountDisplay,
-            width: context.menuWidth,
-            captureMenu: captureMenu)
-        self.lastCodexAccountMenuDisplay = context.codexAccountDisplay
         self.addTokenAccountSwitcherIfNeeded(
             to: target,
             display: context.tokenAccountDisplay,
@@ -128,9 +117,8 @@ extension StatusItemController {
             currentProvider: context.currentProvider,
             selectedProvider: context.provider,
             menuWidth: context.menuWidth,
-            codexAccountDisplay: context.codexAccountDisplay,
             tokenAccountDisplay: context.tokenAccountDisplay,
-            openAIContext: context.openAIContext)
+            submenuContext: context.submenuContext)
         self.addPrimaryMenuContent(
             to: target,
             context: menuContext,

@@ -34,7 +34,7 @@ struct MergedIconSettingsLabelTests {
                     mergeIcons: merged,
                     iconStyle: .iconAndPercent,
                     requestedStyle: mode == "stacked" ? .stacked : .switcher,
-                    eligibleProviders: [.codex, .claude],
+                    eligibleProviders: [.opencode, .claude],
                     preferredTop: nil,
                     preferredBottom: nil)
                 for dark in [false, true] {

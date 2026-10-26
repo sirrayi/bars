@@ -807,12 +807,12 @@ struct MenuBarLayoutTests {
         settings.menuBarLayoutSize = size
         settings.menuBarLayoutGap = .tight
 
-        #expect(settings.menuBarLayout(for: .codex) == global)
+        #expect(settings.menuBarLayout(for: .opencode) == global)
         #expect(settings.menuBarLayout(for: .claude) == provider)
-        #expect(!settings.menuBarLayoutResolution(for: .codex).usesLegacyRendering)
+        #expect(!settings.menuBarLayoutResolution(for: .opencode).usesLegacyRendering)
 
         let reloaded = Self.reloadSettingsStore(settings)
-        #expect(reloaded.menuBarLayout(for: .codex) == global)
+        #expect(reloaded.menuBarLayout(for: .opencode) == global)
         #expect(reloaded.menuBarLayout(for: .claude) == provider)
         #expect(reloaded.menuBarLayoutSize == size)
         #expect(reloaded.menuBarLayoutMonospacedDigits)
@@ -1033,7 +1033,6 @@ struct MenuBarLayoutTests {
         SettingsStore(
             userDefaults: settings.userDefaults,
             configStore: settings.configStore,
-            codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
             opencodeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore())

@@ -20,7 +20,6 @@ final class MenuBarBalanceNativeProofTests: XCTestCase {
         let settings = SettingsStore(
             userDefaults: defaults,
             configStore: config,
-            codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
             opencodeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore(fileURL: root.appendingPathComponent("accounts.json")),
@@ -29,7 +28,6 @@ final class MenuBarBalanceNativeProofTests: XCTestCase {
         settings.refreshFrequency = .manual
         settings.refreshAllProvidersOnMenuOpen = false
         settings.statusChecksEnabled = false
-        settings.openAIWebAccessEnabled = false
         settings.costUsageEnabled = false
         settings.mergeIcons = false
         settings.hidePersonalInfo = true

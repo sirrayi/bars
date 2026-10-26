@@ -19,13 +19,11 @@ struct ClaudeLoginFlowTests {
             settings.claudeUsageDataSource = source
             settings.setProviderEnabled(provider: .claude, metadata: claudeMetadata, enabled: false)
 
-            let fetcher = UsageFetcher()
             let store = UsageStore(
-                fetcher: fetcher,
                 browserDetection: BrowserDetection(cacheTTL: 0),
                 settings: settings)
 
-            await withStatusItemControllerForTesting(store: store, settings: settings, fetcher: fetcher) { controller in
+            await withStatusItemControllerForTesting(store: store, settings: settings) { controller in
                 let didLogin = await controller.runClaudeLoginFlow { _, onPhaseChange in
                     onPhaseChange(.requesting)
                     await Task.yield()

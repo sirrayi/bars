@@ -14,8 +14,6 @@ struct ProviderPayload: Encodable {
     let usage: UsageSnapshot?
     let rateWindowLabels: ProviderWindowLabelsPayload?
     let credits: CreditsSnapshot?
-    let resetCredits: ProviderResetCreditsPayload?
-    let openaiDashboard: OpenAIDashboardSnapshot?
     let diagnostic: String?
     let error: ProviderErrorPayload?
     let pace: ProviderPacePayload?
@@ -31,8 +29,6 @@ struct ProviderPayload: Encodable {
         case usage
         case rateWindowLabels
         case credits
-        case resetCredits
-        case openaiDashboard
         case diagnostic
         case error
         case pace
@@ -48,7 +44,6 @@ struct ProviderPayload: Encodable {
         status: ProviderStatusPayload?,
         usage: UsageSnapshot?,
         credits: CreditsSnapshot?,
-        openaiDashboard: OpenAIDashboardSnapshot?,
         error: ProviderErrorPayload?,
         diagnostic: String? = nil,
         pace: ProviderPacePayload? = nil)
@@ -62,7 +57,6 @@ struct ProviderPayload: Encodable {
             status: status,
             usage: usage,
             credits: credits,
-            openaiDashboard: openaiDashboard,
             error: error,
             diagnostic: diagnostic,
             pace: pace)
@@ -77,7 +71,6 @@ struct ProviderPayload: Encodable {
         status: ProviderStatusPayload?,
         usage: UsageSnapshot?,
         credits: CreditsSnapshot?,
-        openaiDashboard: OpenAIDashboardSnapshot?,
         error: ProviderErrorPayload?,
         diagnostic: String? = nil,
         pace: ProviderPacePayload? = nil)
@@ -91,8 +84,6 @@ struct ProviderPayload: Encodable {
         self.usage = usage
         self.rateWindowLabels = Self.makeRateWindowLabels(providerID: providerID, usage: usage)
         self.credits = credits
-        self.resetCredits = usage?.codexResetCredits.map { ProviderResetCreditsPayload($0) }
-        self.openaiDashboard = openaiDashboard
         self.diagnostic = diagnostic
         self.error = error
         self.pace = pace
@@ -110,17 +101,6 @@ struct ProviderPayload: Encodable {
             primary: usage.primary == nil ? nil : labels.primary,
             secondary: usage.secondary == nil ? nil : labels.secondary,
             tertiary: usage.tertiary == nil ? nil : labels.tertiary)
-    }
-}
-
-struct ProviderResetCreditsPayload: Encodable {
-    let available: Int
-    let nextExpiresAt: Date?
-
-    init(_ snapshot: CodexRateLimitResetCreditsSnapshot, now: Date = Date()) {
-        let inventory = snapshot.availableInventory(at: now)
-        self.available = inventory.count
-        self.nextExpiresAt = inventory.nextExpiringCredit?.expiresAt
     }
 }
 

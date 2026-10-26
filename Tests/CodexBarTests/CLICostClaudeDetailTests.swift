@@ -72,7 +72,7 @@ struct CLICostClaudeDetailTests {
             updatedAt: Date(timeIntervalSince1970: 1_777_000_000))
 
         let output = CodexBarCLI.renderCostText(
-            provider: .codex,
+            provider: .devin,
             snapshot: snapshot,
             useColor: false,
             includeBreakdown: true)

@@ -88,12 +88,6 @@ enum CLIRenderer {
             useColor: context.useColor,
             lines: &lines)
         self.appendCreditsLine(provider: provider, credits: credits, useColor: context.useColor, lines: &lines)
-        self.appendCodexResetCreditsLine(
-            provider: provider,
-            snapshot: snapshot,
-            now: now,
-            useColor: context.useColor,
-            lines: &lines)
         if includeIdentity {
             self.appendIdentityAndNotes(
                 provider: provider,
@@ -348,12 +342,6 @@ enum CLIRenderer {
         now: Date = Date()) -> [String]
     {
         var lines: [String] = []
-        // Provider-specific by design: codexResetCredits is a behavioral Codex payload, not presentation metadata.
-        if provider == .codex, let resetCredits = snapshot.codexResetCredits {
-            let inventory = resetCredits.availableInventory(at: now)
-            let value = inventory.count == 1 ? "1 available" : "\(inventory.count) available"
-            lines.append(self.labelValueLine("Limit Reset Credits", value: value, useColor: useColor))
-        }
         if let credits,
            let remaining = ProviderDescriptorRegistry.descriptor(for: provider)
                .presentation
@@ -682,30 +670,6 @@ enum CLIRenderer {
             useColor: useColor))
     }
 
-    private static func appendCodexResetCreditsLine(
-        provider: UsageProvider,
-        snapshot: UsageSnapshot,
-        now: Date,
-        useColor: Bool,
-        lines: inout [String])
-    {
-        // Provider-specific by design: codexResetCredits is a behavioral Codex payload, not presentation metadata.
-        guard provider == .codex, let resetCredits = snapshot.codexResetCredits else { return }
-        let inventory = resetCredits.availableInventory(at: now)
-        let value = if inventory.count == 1 {
-            "1 available"
-        } else {
-            "\(inventory.count) available"
-        }
-        lines.append(self.labelValueLine("Limit Reset Credits", value: value, useColor: useColor))
-        guard let expiresAt = inventory.nextExpiringCredit?.expiresAt
-        else {
-            return
-        }
-        let expiry = UsageFormatter.resetCountdownDescription(from: expiresAt, now: now)
-        lines.append(self.subtleLine("Next reset credit expires \(expiry)", useColor: useColor))
-    }
-
     private static func appendLimitsUnavailableLine(
         provider: UsageProvider,
         snapshot: UsageSnapshot,
@@ -847,8 +811,7 @@ enum CLIRenderer {
     /// .session mirrors the GUI's session pace (5h window, real session windows only); .weekly reads
     /// weeklyProgressWorkDays from the GUI's UserDefaults (same key) and passes it to UsagePace.weekly,
     /// so the baseline matches the menu bar when the setting is configured. Descriptor-backed reset windows
-    /// also use .weekly wording. Codex historical refinement is not applied, so it can still differ from the
-    /// menu for Codex accounts.
+    /// also use .weekly wording.
     private struct PaceComputation {
         let pace: UsagePace
         let kind: ProviderPaceKind

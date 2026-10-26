@@ -133,7 +133,7 @@ final class SpendDailyLedgerNativeProofTests: XCTestCase {
             updatedAt: now)
         let model = SpendDashboardModel.build(
             inputs: [
-                .init(provider: .codex, displayName: "Synthetic Codex", snapshot: snapshot),
+                .init(provider: .claude, displayName: "Synthetic Codex", snapshot: snapshot),
                 .init(provider: .deepseek, displayName: "Synthetic DeepSeek", snapshot: unpricedSnapshot),
             ],
             requestedDays: 3,

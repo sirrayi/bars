@@ -6,32 +6,6 @@ import Testing
 
 struct OverviewMenuCardVisibilityTests {
     @Test
-    func `overview keeps cards with graceful unavailable placeholders`() throws {
-        let metadata = try #require(ProviderDefaults.metadata[.codex])
-        let model = UsageMenuCardView.Model.make(.init(
-            provider: .codex,
-            metadata: metadata,
-            snapshot: nil,
-            credits: nil,
-            creditsError: nil,
-            dashboardError: nil,
-            tokenSnapshot: nil,
-            tokenError: nil,
-            account: AccountInfo(email: "user@example.com", plan: "pro"),
-            isRefreshing: false,
-            lastError: UsageError.noRateLimitsFound.errorDescription,
-            usageBarsShowUsed: false,
-            resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
-            showOptionalCreditsAndExtraUsage: true,
-            hidePersonalInfo: false,
-            now: Date()))
-
-        #expect(model.placeholder == "Limits not available")
-        #expect(!model.isOverviewErrorOnly)
-    }
-
-    @Test
     func `claude subscription-only quota keeps local cost content`() throws {
         let metadata = try #require(ProviderDefaults.metadata[.claude])
         let now = Date(timeIntervalSince1970: 1_800_000_000)
@@ -159,7 +133,7 @@ struct MenuCardModelTests {
     func `builds metrics using remaining percent`() throws {
         let now = Date()
         let identity = ProviderIdentitySnapshot(
-            providerID: .codex,
+            providerID: .opencode,
             accountEmail: "codex@example.com",
             accountOrganization: nil,
             loginMethod: "Plus Plan")
@@ -176,7 +150,7 @@ struct MenuCardModelTests {
                 resetDescription: nil),
             updatedAt: now,
             identity: identity)
-        let metadata = try #require(ProviderDefaults.metadata[.codex])
+        let metadata = try #require(ProviderDefaults.metadata[.opencode])
         let updatedSnap = try UsageSnapshot(
             primary: snapshot.primary,
             secondary: RateWindow(
@@ -187,24 +161,11 @@ struct MenuCardModelTests {
             tertiary: snapshot.tertiary,
             updatedAt: now,
             identity: identity)
-        let codexProjection = CodexConsumerProjection.make(
-            surface: .liveCard,
-            context: CodexConsumerProjection.Context(
-                snapshot: updatedSnap,
-                rawUsageError: nil,
-                liveCredits: nil,
-                rawCreditsError: nil,
-                liveDashboard: nil,
-                rawDashboardError: nil,
-                dashboardAttachmentAuthorized: false,
-                dashboardRequiresLogin: false,
-                now: now))
 
         let model = UsageMenuCardView.Model.make(.init(
-            provider: .codex,
+            provider: .opencode,
             metadata: metadata,
             snapshot: updatedSnap,
-            codexProjection: codexProjection,
             credits: CreditsSnapshot(remaining: 12, events: [], updatedAt: now),
             creditsError: nil,
             dashboardError: nil,
@@ -221,7 +182,7 @@ struct MenuCardModelTests {
             quotaWarningThresholds: [.session: [50, 20], .weekly: [25, 0]],
             now: now))
 
-        #expect(model.providerName == "Codex")
+        #expect(model.providerName == "OpenCode")
         #expect(model.metrics.count == 2)
         #expect(model.metrics.first?.percent == 78)
         #expect(model.metrics.first?.warningMarkerPercents == [50, 20])
@@ -277,9 +238,9 @@ struct MenuCardModelTests {
 
     @Test
     func `shows error subtitle when present`() throws {
-        let metadata = try #require(ProviderDefaults.metadata[.codex])
+        let metadata = try #require(ProviderDefaults.metadata[.opencode])
         let model = UsageMenuCardView.Model.make(.init(
-            provider: .codex,
+            provider: .opencode,
             metadata: metadata,
             snapshot: nil,
             credits: nil,
@@ -300,46 +261,6 @@ struct MenuCardModelTests {
         #expect(model.subtitleStyle == .error)
         #expect(model.subtitleText.contains("Probe failed"))
         #expect(model.placeholder == nil)
-    }
-
-    @Test
-    func `cost section includes last30 days tokens`() throws {
-        let now = Date()
-        let metadata = try #require(ProviderDefaults.metadata[.codex])
-        let snapshot = UsageSnapshot(
-            primary: RateWindow(usedPercent: 0, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
-            secondary: nil,
-            tertiary: nil,
-            updatedAt: now)
-        let tokenSnapshot = CostUsageTokenSnapshot(
-            sessionTokens: 123,
-            sessionCostUSD: 1.23,
-            last30DaysTokens: 456,
-            last30DaysCostUSD: 78.9,
-            daily: [],
-            updatedAt: now)
-        let model = UsageMenuCardView.Model.make(.init(
-            provider: .codex,
-            metadata: metadata,
-            snapshot: snapshot,
-            credits: nil,
-            creditsError: nil,
-            dashboardError: nil,
-            tokenSnapshot: tokenSnapshot,
-            tokenError: nil,
-            account: AccountInfo(email: nil, plan: nil),
-            isRefreshing: false,
-            lastError: nil,
-            usageBarsShowUsed: false,
-            resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: true,
-            showOptionalCreditsAndExtraUsage: true,
-            hidePersonalInfo: false,
-            now: now))
-
-        #expect(model.tokenUsage?.monthLine.contains("456") == true)
-        #expect(model.tokenUsage?.monthLine.contains("tokens") == true)
-        #expect(model.tokenUsage?.hintLine == "Estimated from token usage · not a subscription bill")
     }
 
     @Test
@@ -411,7 +332,7 @@ struct MenuCardModelTests {
     func `hides email when personal info hidden`() throws {
         let now = Date()
         let identity = ProviderIdentitySnapshot(
-            providerID: .codex,
+            providerID: .opencode,
             accountEmail: "codex@example.com",
             accountOrganization: nil,
             loginMethod: nil)
@@ -421,10 +342,10 @@ struct MenuCardModelTests {
             tertiary: nil,
             updatedAt: now,
             identity: identity)
-        let metadata = try #require(ProviderDefaults.metadata[.codex])
+        let metadata = try #require(ProviderDefaults.metadata[.opencode])
 
         let model = UsageMenuCardView.Model.make(.init(
-            provider: .codex,
+            provider: .opencode,
             metadata: metadata,
             snapshot: snapshot,
             credits: nil,

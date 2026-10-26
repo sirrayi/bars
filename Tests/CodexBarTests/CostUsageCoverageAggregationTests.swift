@@ -43,7 +43,7 @@ struct CostUsageCoverageAggregationTests {
         let coverage: CostUsageCoverageCounts
         if dashboard {
             let model = SpendDashboardModel.build(
-                inputs: [.init(provider: .codex, displayName: "Codex", snapshot: snapshot)],
+                inputs: [.init(provider: .claude, displayName: "Codex", snapshot: snapshot)],
                 requestedDays: 30,
                 now: now,
                 calendar: calendar)
@@ -71,7 +71,7 @@ struct CostUsageCoverageAggregationTests {
         let inputs = [Int.max, 1, 1].enumerated().map { index, count in
             SpendDashboardModel.ProviderInput(
                 id: "synthetic-source-\(index)",
-                provider: .codex,
+                provider: .claude,
                 displayName: "Synthetic source \(index)",
                 snapshot: CostUsageTokenSnapshot(
                     sessionTokens: 10,
@@ -132,7 +132,7 @@ struct CostUsageCoverageAggregationTests {
         #expect(summary.totalRequests == 7)
         #expect(summary.totalCostUSD == 1)
         let model = SpendDashboardModel.build(
-            inputs: [.init(provider: .codex, displayName: "Codex", snapshot: snapshot)],
+            inputs: [.init(provider: .claude, displayName: "Codex", snapshot: snapshot)],
             requestedDays: 30,
             now: now,
             calendar: calendar)

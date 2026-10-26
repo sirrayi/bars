@@ -14,8 +14,8 @@ struct CreditsScaleScreenshotTests {
         let now = Date(timeIntervalSince1970: 1_790_000_000)
         let models = try [750.0, 1250.0, 12000.0].map { balance in
             try UsageMenuCardView.Model.make(.init(
-                provider: .codex,
-                metadata: #require(ProviderDefaults.metadata[.codex]),
+                provider: .claude,
+                metadata: #require(ProviderDefaults.metadata[.claude]),
                 snapshot: nil,
                 credits: CreditsSnapshot(remaining: balance, events: [], updatedAt: now),
                 creditsError: nil,

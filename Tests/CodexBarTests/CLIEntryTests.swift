@@ -225,8 +225,8 @@ final class CLIEntryTests: XCTestCase {
     }
 
     func test_providerSelectionPrefersOverride() {
-        let selection = CodexBarCLI.providerSelection(rawOverride: "codex", enabled: [.claude, .opencode])
-        XCTAssertEqual(selection.asList, [.codex])
+        let selection = CodexBarCLI.providerSelection(rawOverride: "devin", enabled: [.claude, .opencode])
+        XCTAssertEqual(selection.asList, [.devin])
     }
 
     func test_normalizeVersionExtractsNumeric() {
@@ -235,8 +235,8 @@ final class CLIEntryTests: XCTestCase {
     }
 
     func test_makeHeaderIncludesVersionWhenAvailable() {
-        let header = CodexBarCLI.makeHeader(provider: .codex, version: "1.2.3", source: "cli")
-        XCTAssertTrue(header.contains("Codex"))
+        let header = CodexBarCLI.makeHeader(provider: .devin, version: "1.2.3", source: "cli")
+        XCTAssertTrue(header.contains("Devin"))
         XCTAssertTrue(header.contains("1.2.3"))
         XCTAssertTrue(header.contains("cli"))
     }
@@ -449,62 +449,18 @@ final class CLIEntryTests: XCTestCase {
         return text
     }
 
-    func test_renderOpenAIWebDashboardTextIncludesSummary() {
-        let event = CreditEvent(
-            date: Date(timeIntervalSince1970: 1_700_000_000),
-            service: "codex",
-            creditsUsed: 10)
-        let snapshot = OpenAIDashboardSnapshot(
-            signedInEmail: "user@example.com",
-            codeReviewRemainingPercent: 45,
-            codeReviewLimit: RateWindow(
-                usedPercent: 55,
-                windowMinutes: nil,
-                resetsAt: Date().addingTimeInterval(3600),
-                resetDescription: nil),
-            creditEvents: [event],
-            dailyBreakdown: [],
-            usageBreakdown: [],
-            creditsPurchaseURL: nil,
-            updatedAt: Date())
-
-        let text = CodexBarCLI.renderOpenAIWebDashboardText(snapshot)
-
-        XCTAssertTrue(text.contains("Web session: user@example.com"))
-        XCTAssertTrue(text.contains("Code review: 45% remaining (Resets in "))
-        XCTAssertTrue(text.contains("Web history: 1 events"))
-    }
-
     func test_mapsErrorsToExitCodes() {
-        XCTAssertEqual(CodexBarCLI.mapError(CodexStatusProbeError.codexNotInstalled), ExitCode(2))
-        XCTAssertEqual(CodexBarCLI.mapError(CodexStatusProbeError.timedOut), ExitCode(4))
+        XCTAssertEqual(CodexBarCLI.mapError(ClaudeUsageError.claudeNotInstalled), ExitCode(2))
+        XCTAssertEqual(CodexBarCLI.mapError(TTYCommandRunner.Error.timedOut), ExitCode(4))
         XCTAssertEqual(CodexBarCLI.mapError(ClaudeWebFetchStrategyError.timedOut(seconds: 1)), ExitCode(4))
-        XCTAssertEqual(CodexBarCLI.mapError(UsageError.noRateLimitsFound), ExitCode(3))
-    }
-
-    func test_missingCodexBinaryErrorPayloadUsesInstallGuidance() {
-        let payload = CodexBarCLI.makeErrorPayload(CodexStatusProbeError.codexNotInstalled, kind: .provider)
-
-        XCTAssertEqual(payload.code, ExitCode.binaryNotFound.rawValue)
-        XCTAssertTrue(payload.message.contains("Codex CLI missing"))
-        XCTAssertFalse(payload.message.contains("Codex not running"))
-    }
-
-    func test_providerSelectionFallsBackToBothForPrimaryPair() {
-        let selection = CodexBarCLI.providerSelection(rawOverride: nil, enabled: [.codex, .claude])
-        switch selection {
-        case .both:
-            break
-        default:
-            XCTFail("Expected both selection")
-        }
+        XCTAssertEqual(CodexBarCLI.mapError(ClaudeUsageError.parseFailed("synthetic")), ExitCode(3))
     }
 
     func test_providerSelectionFallsBackToCustomWhenNonPrimary() {
-        let selection = CodexBarCLI.providerSelection(rawOverride: nil, enabled: [.codex, .opencode])
+        let selection = CodexBarCLI.providerSelection(rawOverride: nil, enabled: [.devin, .opencode])
         switch selection {
         case let .custom(providers):
-            XCTAssertEqual(providers, [.codex, .opencode])
+            XCTAssertEqual(providers, [.devin, .opencode])
         default:
             XCTFail("Expected custom selection")
         }
@@ -559,7 +515,7 @@ extension CLIEntryTests {
         process.environment = ProcessInfo.processInfo.environment.merging([
             "HOME": home.path,
             "CFFIXED_USER_HOME": home.path,
-            "CODEX_HOME": home.appendingPathComponent(".codex").path,
+            "CODEX_HOME": home.appendingPathComponent(".devin").path,
             "CODEXBAR_CONFIG": home.appendingPathComponent("config.json").path,
             "CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS": "1",
         ]) { _, override in override }.merging(environment) { _, override in override }
@@ -574,30 +530,5 @@ extension CLIEntryTests {
             process.terminationStatus,
             stdout.fileHandleForReading.readDataToEndOfFile(),
             stderr.fileHandleForReading.readDataToEndOfFile())
-    }
-}
-
-extension CodexBarCLI {
-    static func sourceModeRequiresWebSupport(
-        _ sourceMode: ProviderSourceMode,
-        provider: UsageProvider,
-        environment: [String: String]? = nil,
-        settings: ProviderSettingsSnapshot? = nil) async -> Bool
-    {
-        let env = environment ?? [:]
-        let browserDetection = BrowserDetection(cacheTTL: 0)
-        let context = ProviderFetchContext(
-            runtime: .cli,
-            sourceMode: sourceMode,
-            includeCredits: false,
-            webTimeout: 1,
-            webDebugDumpHTML: false,
-            verbose: false,
-            env: env,
-            settings: settings,
-            fetcher: UsageFetcher(environment: env),
-            claudeFetcher: ClaudeUsageFetcher(browserDetection: browserDetection),
-            browserDetection: browserDetection)
-        return await self.sourceModeRequiresWebSupport(provider: provider, context: context)
     }
 }

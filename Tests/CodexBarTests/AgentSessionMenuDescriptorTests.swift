@@ -9,12 +9,11 @@ struct AgentSessionMenuDescriptorTests {
     func `stay awake status follows the held assertion independently of session visibility`(held: Bool) {
         let settings = testSettingsStore(suiteName: "awake-menu-\(held)")
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing)
         let descriptor = MenuDescriptor.build(
-            provider: .codex,
+            provider: .claude,
             store: store,
             settings: settings,
             account: AccountInfo(email: nil, plan: nil),
@@ -31,14 +30,13 @@ struct AgentSessionMenuDescriptorTests {
         let settings = testSettingsStore(suiteName: "AgentSessionMenuDescriptorTests-default-off")
         settings.statusChecksEnabled = false
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         let session = Self.session(id: "local", host: "local-mac", activity: Date())
 
         let buildDescriptor = {
             MenuDescriptor.build(
-                provider: .codex,
+                provider: .claude,
                 store: store,
                 settings: settings,
                 account: AccountInfo(email: nil, plan: nil),
@@ -135,7 +133,7 @@ struct AgentSessionMenuDescriptorTests {
     }
 
     @Test
-    func `adaptive-only metadata reads require an agent or trusted codex app server`() {
+    func `adaptive-only metadata reads require an agent`() {
         #expect(!LocalAgentSessionScanner.shouldScanSessionMetadata(
             hasAgentProcesses: false,
             includeFileOnlySessions: false))
@@ -145,10 +143,6 @@ struct AgentSessionMenuDescriptorTests {
         #expect(LocalAgentSessionScanner.shouldScanSessionMetadata(
             hasAgentProcesses: false,
             includeFileOnlySessions: true))
-        #expect(LocalAgentSessionScanner.shouldScanSessionMetadata(
-            hasAgentProcesses: false,
-            includeFileOnlySessions: false,
-            hasTrustedCodexAppServer: true))
     }
 
     @Test
@@ -220,7 +214,7 @@ struct AgentSessionMenuDescriptorTests {
             Issue.record("Expected local session action")
             return
         }
-        #expect(localTitle.contains("alpha — codex · cli · 1m"))
+        #expect(localTitle.contains("alpha — claude · cli · 1m"))
         #expect(remoteHost == nil)
         guard case let .text(remoteGroup, .secondary) = section.entries[2] else {
             Issue.record("Expected remote group")
@@ -256,32 +250,11 @@ struct AgentSessionMenuDescriptorTests {
             activity: now,
             sessionName: "Fix Claude reauthorization")
 
-        #expect(Self.actionTitle(for: session, style: .project, now: now).contains("⌘ alpha —"))
+        #expect(Self.actionTitle(for: session, style: .project, now: now).contains("✦ alpha —"))
         #expect(Self.actionTitle(for: session, style: .descriptive, now: now)
-            .contains("⌘ Fix Claude reauthorization —"))
+            .contains("✦ Fix Claude reauthorization —"))
         #expect(Self.actionTitle(for: session, style: .descriptiveAndProject, now: now)
-            .contains("⌘ Fix Claude reauthorization · alpha —"))
-    }
-
-    @Test
-    func `Pi-family session rows use the dedicated glyph and dialect tag`() {
-        let now = Date(timeIntervalSince1970: 1000)
-        let session = AgentSession(
-            id: "omp",
-            provider: .pi,
-            dialect: .omp,
-            source: .cli,
-            state: .active,
-            pid: 42,
-            cwd: "/Users/test/alpha",
-            projectName: "alpha",
-            startedAt: nil,
-            lastActivityAt: now,
-            transcriptPath: nil,
-            host: "local-mac")
-
-        let title = Self.actionTitle(for: session, style: .project, now: now)
-        #expect(title.contains("π alpha — omp · cli · 0s"))
+            .contains("✦ Fix Claude reauthorization · alpha —"))
     }
 
     @Test
@@ -364,7 +337,7 @@ struct AgentSessionMenuDescriptorTests {
     {
         AgentSession(
             id: id,
-            provider: .codex,
+            provider: .claude,
             source: .cli,
             state: .active,
             pid: 42,

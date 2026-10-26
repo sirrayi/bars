@@ -69,8 +69,7 @@ struct KeychainPromptCoordinatorTests {
     @Test
     func `cookie explanations retain each provider and credential purpose`() {
         let providers: [(KeychainPromptContext.Kind, String)] = [
-            (.cursorCookie, "Cursor"), (.opencodeCookie, "OpenCode"), (.factoryCookie, "Factory"),
-            (.minimaxCookie, "MiniMax"), (.augmentCookie, "Augment"), (.ampCookie, "Amp"),
+            (.opencodeCookie, "OpenCode"),
         ]
         for (kind, name) in providers {
             let model = KeychainPromptCoordinator.alertModel(for: .init(

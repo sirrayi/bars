@@ -34,7 +34,6 @@ enum DeepSeekTransportTestSupport {
             verbose: false,
             env: [:],
             settings: nil,
-            fetcher: UsageFetcher(environment: [:]),
             claudeFetcher: ClaudeUsageFetcher(browserDetection: browser, environment: [:]),
             browserDetection: browser)
     }

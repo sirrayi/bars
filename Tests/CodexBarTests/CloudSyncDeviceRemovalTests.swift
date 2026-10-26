@@ -246,7 +246,7 @@ struct CloudSyncDeviceRemovalTests {
         }
         for (name, id, provider) in [
             ("snapshot-old-claude", "old", ProviderInstanceID.claude),
-            ("snapshot-old-codex", "old", .codex),
+            ("snapshot-old-codex", "old", .opencode),
             ("snapshot-current", "current", .claude),
             ("snapshot-other", "other", .claude),
         ] {

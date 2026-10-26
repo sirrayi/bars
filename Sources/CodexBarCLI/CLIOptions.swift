@@ -180,10 +180,10 @@ struct CLIUsageFetchOptions: CommanderParsable {
     @Option(name: .long("account-index"), help: "Token account index (1-based)")
     var accountIndex: Int?
 
-    @Flag(name: .long("all-accounts"), help: "Fetch all token accounts, or all visible Codex accounts")
+    @Flag(name: .long("all-accounts"), help: "Fetch all token accounts")
     var allAccounts: Bool = false
 
-    @Flag(name: .long("no-credits"), help: "Skip Codex credits line")
+    @Flag(name: .long("no-credits"), help: "Skip the credits line")
     var noCredits: Bool = false
 
     @Flag(name: .long("no-color"), help: "Disable ANSI colors in text output")
@@ -201,6 +201,6 @@ struct CLIUsageFetchOptions: CommanderParsable {
     @Option(name: .long("web-timeout"), help: "Web fetch timeout (seconds; source=auto or web)")
     var webTimeout: Double?
 
-    @Flag(name: .long("web-debug-dump-html"), help: "Dump HTML snapshots to /tmp when Codex dashboard data is missing")
+    @Flag(name: .long("web-debug-dump-html"), help: "Dump HTML snapshots to /tmp when web usage data is missing")
     var webDebugDumpHtml: Bool = false
 }

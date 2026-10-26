@@ -56,10 +56,10 @@ struct CLIUsageFetchSetupTests {
             }
         }
         #expect(throws: CLIArgumentError.self) {
-            try Self.decode(name, arguments: ["--all-accounts"], providers: [.codex, .claude])
+            try Self.decode(name, arguments: ["--all-accounts"], providers: [.opencode, .claude])
         }
         let all = try Self.decode(name, arguments: ["--all-accounts"])
-        #expect(all.command.includeAllCodexAccounts)
+        #expect(all.tokenSelection.allAccounts)
     }
 
     @Test
@@ -83,7 +83,7 @@ struct CLIUsageFetchSetupTests {
     private static func decode(
         _ name: String,
         arguments: [String],
-        providers: [UsageProvider] = [.codex]) throws -> CLIUsageFetchSetup
+        providers: [UsageProvider] = [.opencode]) throws -> CLIUsageFetchSetup
     {
         let values = try Program(descriptors: CodexBarCLI.commandDescriptors())
             .resolve(argv: [name] + arguments).parsedValues

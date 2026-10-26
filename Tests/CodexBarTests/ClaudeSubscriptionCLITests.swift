@@ -97,7 +97,6 @@ struct ClaudeSubscriptionCLITests {
                 webExtrasEnabled: false,
                 cookieSource: cookies,
                 manualCookieHeader: "sessionKey=sk-ant-sid01-synthetic")),
-            fetcher: UsageFetcher(environment: [:]),
             claudeFetcher: ClaudeUsageFetcher(browserDetection: browser, environment: [:]),
             browserDetection: browser)
         let transport = ProviderHTTPTransportHandler { try await server.respond($0) }

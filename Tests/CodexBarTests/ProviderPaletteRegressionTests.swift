@@ -21,7 +21,6 @@ struct ProviderPaletteRegressionTests {
         .init(.deepseek, 0x527DF0, 0x4D6BFE, 0x4D6BFE),
         .init(.devin, 0x46B482, 0x317CFF, 0x317CFF),
         .init(.opencode, 0x3B82F6, 0x3B82F6, 0x3B82F6),
-        .init(.pi, 0x7C3AED, 0x4D9ABF, 0x4D9ABF),
     ]
 
     @Test(arguments: Self.palettes)
@@ -67,14 +66,6 @@ struct ProviderPaletteRegressionTests {
         }) {
             #expect(tile.contains("--brand:\(hex)"))
         }
-    }
-
-    @Test
-    func `pi uses its official website palette and current repository`() {
-        let descriptor = PiProviderDescriptor.descriptor
-        #expect(descriptor.branding.color == ProviderColor(hex: 0x4D9ABF))
-        #expect(descriptor.branding.confettiPalette == [0xF09082, 0x4D9ABF, 0xF1BE58].map(ProviderColor.init(hex:)))
-        #expect(descriptor.metadata.dashboardURL == "https://github.com/earendil-works/pi")
     }
 
     private static func contrast(_ color: ProviderColor, _ background: ProviderColor) -> Double {

@@ -91,7 +91,7 @@ ln -s "$CLI_BIN" "$CLI_SYMLINK"
 SMOKE_HOME="$SMOKE_DIR/home"
 mkdir -p "$SMOKE_HOME/.config" "$SMOKE_DIR/tmp"
 cat > "$SMOKE_HOME/config.json" <<'JSON'
-{"providers":[{"id":"codex","enabled":false},{"id":"claude","enabled":false}]}
+{"providers":[{"id":"claude","enabled":false}]}
 JSON
 SMOKE_ENV=(/usr/bin/env -i
   "PATH=/usr/bin:/bin:/usr/sbin:/sbin"

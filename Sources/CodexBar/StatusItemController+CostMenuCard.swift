@@ -126,7 +126,6 @@ extension StatusItemController {
         ]
             .compactMap(\.self)
             + (tokenUsage?.comparisonLines ?? [])
-            + [provider == .codex ? tokenUsage?.hintLine : nil].compactMap(\.self)
             + [tokenUsage?.errorLine].compactMap(\.self))
             .filter { !$0.isEmpty }
         guard primaryLines.isEmpty else { return primaryLines }

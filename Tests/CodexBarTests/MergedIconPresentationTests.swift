@@ -25,7 +25,7 @@ struct MergedIconPresentationTests {
     }
 
     private static func presentation(
-        providers: [UsageProvider] = [.codex, .claude],
+        providers: [UsageProvider] = [.opencode, .claude],
         top: UsageProvider? = nil,
         bottom: UsageProvider? = nil,
         mergeIcons: Bool = true,

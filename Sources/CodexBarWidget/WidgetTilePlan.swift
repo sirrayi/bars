@@ -90,7 +90,7 @@ extension WidgetTileLane {
     /// Every quota lane a tile can draw for this entry: the provider's usage rows plus the
     /// separately-tracked code review lane.
     static func lanes(for entry: WidgetSnapshot.ProviderEntry, limit: Int? = nil) -> [WidgetTileLane] {
-        var lanes = WidgetUsageRow.rows(for: entry, limit: limit, applyBindingCap: false)
+        var lanes = WidgetUsageRow.rows(for: entry, limit: limit)
             .map(WidgetTileLane.init(row:))
         if let provider = entry.provider.firstPartyProvider {
             let binding = ProviderDescriptorRegistry.descriptor(for: provider).presentation.primaryBindingQuotaLanes

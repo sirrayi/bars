@@ -13,16 +13,16 @@ struct CodexBarConfigUnknownProviderTests {
             {"id": "kimik2", "enabled": true},
             {"id": "crossmodel", "enabled": true},
             {"id": "crof", "enabled": true, "apiKey": "retired-fixture-key"},
-            {"id": "codex", "enabled": false, "source": "oauth"}
+            {"id": "opencode", "enabled": false, "source": "oauth"}
           ]
         }
         """#.utf8)
 
         let decoded = try JSONDecoder().decode(CodexBarConfig.self, from: data)
 
-        #expect(decoded.providers.map(\.id) == [.codex])
-        #expect(decoded.providerConfig(for: .codex)?.enabled == false)
-        #expect(decoded.providerConfig(for: .codex)?.source == .oauth)
+        #expect(decoded.providers.map(\.id) == [.opencode])
+        #expect(decoded.providerConfig(for: .opencode)?.enabled == false)
+        #expect(decoded.providerConfig(for: .opencode)?.source == .oauth)
     }
 
     @Test

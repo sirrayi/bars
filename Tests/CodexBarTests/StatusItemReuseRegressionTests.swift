@@ -25,12 +25,10 @@ struct StatusItemReuseRegressionTests {
             settings.setProviderEnabled(
                 provider: provider,
                 metadata: metadata,
-                enabled: provider == .codex)
+                enabled: provider == .claude)
         }
 
-        let fetcher = UsageFetcher()
         let store = UsageStore(
-            fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         let controller = StatusItemController(
@@ -44,14 +42,14 @@ struct StatusItemReuseRegressionTests {
             menuRefreshEnabled: false)
         defer { controller.releaseStatusItemsForTesting() }
 
-        let initialItem = try #require(controller.statusItems[.codex])
-        controller.statusItems.removeValue(forKey: .codex)
+        let initialItem = try #require(controller.statusItems[.claude])
+        controller.statusItems.removeValue(forKey: .claude)
         controller.statusBar.removeStatusItem(initialItem)
 
         var itemSeenByUpdate: NSStatusItem?
-        let vendedItem = controller.lazyStatusItem(for: .codex) { created in
-            #expect(created.autosaveName == "codexbar-codex")
-            #expect(controller.statusItems[.codex] === created)
+        let vendedItem = controller.lazyStatusItem(for: .claude) { created in
+            #expect(created.autosaveName == "codexbar-claude")
+            #expect(controller.statusItems[.claude] === created)
             store._setSnapshotForTesting(
                 UsageSnapshot(
                     primary: RateWindow(
@@ -61,9 +59,9 @@ struct StatusItemReuseRegressionTests {
                         resetDescription: nil),
                     secondary: nil,
                     updatedAt: Date()),
-                provider: .codex)
+                provider: .claude)
             controller.updateIcons()
-            itemSeenByUpdate = controller.statusItems[.codex]
+            itemSeenByUpdate = controller.statusItems[.claude]
         }
         defer {
             if let itemSeenByUpdate, itemSeenByUpdate !== vendedItem {
@@ -74,7 +72,7 @@ struct StatusItemReuseRegressionTests {
         let updatedItem = try #require(itemSeenByUpdate)
         #expect(updatedItem === vendedItem)
         #expect(controller.statusItems.count == 1)
-        #expect(controller.statusItems[.codex] === vendedItem)
+        #expect(controller.statusItems[.claude] === vendedItem)
         #expect(vendedItem.button?.title.contains("77%") == true)
     }
 }

@@ -8,7 +8,7 @@ struct WidgetSnapshotCompatibilityTests {
         let snapshot = try self.decoder().decode(WidgetSnapshot.self, from: Data(Self.legacyJSON.utf8))
 
         #expect(snapshot.accounts.isEmpty)
-        #expect(snapshot.enabledProviders == [.claude, .codex])
+        #expect(snapshot.enabledProviders == [.claude, .opencode])
         #expect(snapshot.usageBarsShowUsed)
         let claude = try #require(snapshot.entries.first { $0.provider == .claude })
         #expect(claude.primary?.remainingPercent == 75)
@@ -17,7 +17,7 @@ struct WidgetSnapshotCompatibilityTests {
         #expect(claude.quotaOwnerKey == "fixture-claude-owner")
         #expect(claude.updatedAt == snapshot.generatedAt)
         #expect(claude.details == nil)
-        let codex = try #require(snapshot.entries.first { $0.provider == .codex })
+        let codex = try #require(snapshot.entries.first { $0.provider == .opencode })
         #expect(codex.primary?.remainingPercent == 90)
         #expect(codex.creditsRemaining == 12.5)
         #expect(codex.tokenUsage?.sessionCostUSD == 1.25)
@@ -59,7 +59,7 @@ struct WidgetSnapshotCompatibilityTests {
             dailyUsage: [],
             details: [ProviderDetailSection(rows: [.init(label: "Cloud credits", value: "$12 remaining")])])
         let snapshot = WidgetSnapshot(
-            entries: [accountUsage] + old.entries.filter { $0.provider == .codex },
+            entries: [accountUsage] + old.entries.filter { $0.provider == .opencode },
             accounts: [
                 .init(id: "claude/token:work", provider: .claude, label: "Work", usage: accountUsage),
                 .init(id: "claude/token:unavailable", provider: .claude, label: "Personal", usage: nil),
@@ -73,7 +73,7 @@ struct WidgetSnapshotCompatibilityTests {
         let current = try self.decoder().decode(WidgetSnapshot.self, from: encoder.encode(snapshot))
         #expect(current.entries.first?.details?.first?.rows.first?.label == "Cloud credits")
 
-        #expect(legacy.entries.map(\.provider) == [.claude, .codex])
+        #expect(legacy.entries.map(\.provider) == [.claude, .opencode])
         #expect(legacy.entries.first?.primary?.remainingPercent == 20)
         #expect(legacy.entries.last?.creditsRemaining == 12.5)
         #expect(legacy.entries.last?.tokenUsage?.sessionTokens == 1200)
@@ -92,7 +92,7 @@ struct WidgetSnapshotCompatibilityTests {
     @Test
     func `an account record cannot substitute quota from a different provider`() throws {
         let old = try self.decoder().decode(WidgetSnapshot.self, from: Data(Self.legacyJSON.utf8))
-        let codex = try #require(old.entries.first { $0.provider == .codex })
+        let codex = try #require(old.entries.first { $0.provider == .opencode })
         let snapshot = WidgetSnapshot(
             entries: old.entries,
             accounts: [.init(id: "claude/token:work", provider: .claude, label: "Work", usage: codex)],
@@ -101,7 +101,7 @@ struct WidgetSnapshotCompatibilityTests {
         let selected = snapshot.selectingAccount("claude/token:work", for: .claude)
 
         #expect(!selected.entries.contains { $0.provider == .claude })
-        #expect(selected.entries.first?.provider == .codex)
+        #expect(selected.entries.first?.provider == .opencode)
         #expect(selected.entries.first?.primary?.remainingPercent == 90)
     }
 
@@ -128,7 +128,7 @@ struct WidgetSnapshotCompatibilityTests {
           "quotaOwnerKey": "fixture-claude-owner"
         },
         {
-          "provider": "codex",
+          "provider": "opencode",
           "updatedAt": "2025-12-20T12:00:00Z",
           "primary": {"usedPercent": 10, "windowMinutes": 300, "resetsAt": "2025-12-20T16:00:00Z"},
           "secondary": {"usedPercent": 20, "windowMinutes": 10080, "resetsAt": "2025-12-26T12:00:00Z"},
@@ -147,7 +147,7 @@ struct WidgetSnapshotCompatibilityTests {
           "dailyUsage": [{"dayKey": "2025-12-20", "totalTokens": 1200, "costUSD": 1.25}]
         }
       ],
-      "enabledProviders": ["claude", "codex"],
+      "enabledProviders": ["claude", "opencode"],
       "usageBarsShowUsed": true,
       "generatedAt": "2025-12-20T12:00:00Z"
     }

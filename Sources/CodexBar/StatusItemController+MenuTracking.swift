@@ -395,9 +395,9 @@ extension StatusItemController {
             parts.append(self.providerIdentitySignature(
                 self.store.snapshot(for: target.instanceID)?.identity(for: target.instanceID)))
 
-            // Provider-specific by design: Codex managed profiles and Claude swap accounts contribute extra identity
-            // sources beyond the generic provider snapshot/account fallback.
-            if target != .codex, self.store.metadata(for: target).usesAccountFallback {
+            // Provider-specific by design: Claude swap accounts contribute extra identity sources beyond the
+            // generic provider snapshot/account fallback.
+            if self.store.metadata(for: target).usesAccountFallback {
                 let account = self.store.accountInfo(for: target)
                 parts.append(Self.menuIdentityField(account.email))
                 parts.append(Self.menuIdentityField(account.plan))
@@ -407,23 +407,6 @@ extension StatusItemController {
                 parts.append(accountSnapshot.account.id.uuidString)
                 parts.append(Self.menuIdentityField(accountSnapshot.account.label))
                 parts.append(self.providerIdentitySignature(accountSnapshot.snapshot?.identity(for: target.instanceID)))
-            }
-
-            if target == .codex {
-                parts.append(Self.menuIdentityField(self.account.email))
-                parts.append(Self.menuIdentityField(self.account.plan))
-                for account in self.settings.codexVisibleAccountProjectionForMenuDisplay?.visibleAccounts ?? [] {
-                    parts.append(Self.menuIdentityField(account.id))
-                    parts.append(Self.menuIdentityField(account.email))
-                    parts.append(Self.menuIdentityField(account.workspaceLabel))
-                    parts.append(account.isActive ? "active" : "inactive")
-                    parts.append(account.isLive ? "live" : "stored")
-                }
-                for accountSnapshot in self.store.codexAccountSnapshots {
-                    parts.append(Self.menuIdentityField(accountSnapshot.id))
-                    parts.append(self.providerIdentitySignature(
-                        accountSnapshot.snapshot?.identity(for: target.instanceID)))
-                }
             }
 
             if target == .claude {

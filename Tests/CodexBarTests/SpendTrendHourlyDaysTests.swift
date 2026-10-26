@@ -242,7 +242,7 @@ struct SpendTrendHourlyDaysTests {
             ],
             updatedAt: now)
         let group = try #require(SpendDashboardModel.build(
-            inputs: [.init(id: "demo-partial", provider: .codex, displayName: "Demo account", snapshot: snapshot)],
+            inputs: [.init(id: "demo-partial", provider: .claude, displayName: "Demo account", snapshot: snapshot)],
             reportingPeriod: .allTime,
             now: now,
             calendar: calendar).groups.first)
@@ -262,7 +262,7 @@ struct SpendTrendHourlyDaysTests {
     {
         SpendDashboardModel.HourlyPoint(
             sourceID: sourceID,
-            provider: .codex,
+            provider: .claude,
             providerName: "Demo account",
             hour: hour,
             cost: cost,
@@ -296,7 +296,7 @@ struct SpendTrendHourlyDaysTests {
     {
         SpendDashboardModel.ProviderInput(
             id: id,
-            provider: .codex,
+            provider: .claude,
             displayName: "Demo account",
             snapshot: CostUsageTokenSnapshot(
                 sessionTokens: nil,

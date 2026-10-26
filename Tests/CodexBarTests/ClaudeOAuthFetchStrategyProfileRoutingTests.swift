@@ -42,7 +42,6 @@ struct ClaudeOAuthFetchStrategyProfileRoutingTests {
             verbose: false,
             env: environment,
             settings: nil,
-            fetcher: UsageFetcher(environment: environment),
             claudeFetcher: StubClaudeFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0))
         let record = ClaudeOAuthCredentialRecord(

@@ -373,28 +373,11 @@ struct UsageFormatterTests {
         #expect(UsageFormatter.modelDisplayName("Claude Opus 4.5 2025 1101") == "Claude Opus 4.5")
         #expect(UsageFormatter.modelDisplayName("claude-sonnet-4-5") == "claude-sonnet-4-5")
         #expect(UsageFormatter.modelDisplayName("gpt-5.3-codex-spark") == "gpt-5.3-codex-spark")
-        #expect(UsageFormatter.modelDisplayName("unknown") == "Unknown model")
-    }
-
-    @Test
-    func `model display name labels codex auto review role`() {
-        #expect(UsageFormatter.modelDisplayName("codex-auto-review") == "Codex Auto Review")
-        #expect(UsageFormatter.modelDisplayName("gpt-5.6-sol") == "gpt-5.6-sol")
-    }
-
-    @Test
-    func `model cost detail uses research preview label`() {
-        #expect(
-            UsageFormatter.modelCostDetail("gpt-5.3-codex-spark", costUSD: 0, totalTokens: nil) == "Research Preview")
-        #expect(UsageFormatter.modelCostDetail("gpt-5.2-codex", costUSD: 0.42, totalTokens: nil) == "$0.42")
     }
 
     @Test
     func `model cost detail includes token counts when present`() {
         #expect(UsageFormatter.modelCostDetail("gpt-5.2-codex", costUSD: 0.42, totalTokens: 1200) == "$0.42 · 1.2K")
-        #expect(
-            UsageFormatter.modelCostDetail("gpt-5.3-codex-spark", costUSD: 0, totalTokens: 1500)
-                == "Research Preview · 1.5K")
         #expect(UsageFormatter.modelCostDetail("custom-model", costUSD: nil, totalTokens: 987) == "987")
     }
 

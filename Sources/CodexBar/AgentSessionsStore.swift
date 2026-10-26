@@ -34,8 +34,7 @@ typealias AgentSessionRemoteRefreshGate = AgentSessionRefreshGate
 @MainActor
 @Observable
 final class AgentSessionsStore {
-    typealias LocalScan = @Sendable (
-        _ includeFileOnlySessions: Bool, _ includeRolloutActivity: Bool) async -> LocalAgentSessionScanner.ScanResult
+    typealias LocalScan = @Sendable (_ includeFileOnlySessions: Bool) async -> [AgentSession]
     typealias RemoteHostDiscovery = @Sendable () async -> [String]
     typealias RemoteFetch = @Sendable (_ hosts: [String]) async -> [RemoteSessionHostResult]
     typealias PeriodicSleep = @Sendable (_ duration: Duration) async throws -> Void
@@ -79,10 +78,8 @@ final class AgentSessionsStore {
     {
         self.init(
             settings: settings,
-            localScan: { includeFileOnlySessions, includeRolloutActivity in
-                await localScanner.scanWithActivity(
-                    includeFileOnlySessions: includeFileOnlySessions,
-                    includeRolloutActivity: includeRolloutActivity)
+            localScan: { includeFileOnlySessions in
+                await localScanner.scan(includeFileOnlySessions: includeFileOnlySessions)
             },
             remoteFetcher: remoteFetcher)
     }
@@ -155,8 +152,8 @@ final class AgentSessionsStore {
             hasRemoteImmediateTask: self.remoteImmediateTask != nil)
     }
 
-    nonisolated static func latestActivityAt(in sessions: [AgentSession], rolloutActivityAt: Date? = nil) -> Date? {
-        (sessions.compactMap(\.lastActivityAt) + [rolloutActivityAt].compactMap(\.self)).max()
+    nonisolated static func latestActivityAt(in sessions: [AgentSession]) -> Date? {
+        sessions.compactMap(\.lastActivityAt).max()
     }
 
     nonisolated static func shouldScanLocally(
@@ -244,14 +241,10 @@ final class AgentSessionsStore {
         await task?.value
     }
 
-    func applyLocalScanResult(
-        _ sessions: [AgentSession], rolloutActivityAt: Date? = nil, updatedAt: Date = Date())
-    {
+    func applyLocalScanResult(_ sessions: [AgentSession], updatedAt: Date = Date()) {
         let wasKeepingAwake = self.isKeepingAwake
         self.updatePowerAssertion(hasLiveSession: sessions.contains { ($0.pid ?? 0) > 0 })
-        let latestActivityAt = Self.latestActivityAt(
-            in: sessions,
-            rolloutActivityAt: self.settings.adaptiveActivityScanningEnabled ? rolloutActivityAt : nil)
+        let latestActivityAt = Self.latestActivityAt(in: sessions)
         let effectiveSessions = self.settings.agentSessionsEnabled ? sessions : []
         // Rescans that reproduce the current content must not publish: `onUpdate` invalidates
         // menus, and a redundant invalidation landing while the user hovers an Overview row's
@@ -351,14 +344,13 @@ final class AgentSessionsStore {
         guard let generation = self.localRefreshGate.begin() else { return }
 
         let includeFileOnlySessions = self.settings.agentSessionsEnabled
-        let includeRolloutActivity = self.settings.adaptiveActivityScanningEnabled && activityScanAllowed
         let localScan = self.localScan
         self.localImmediateTask = Task { [weak self] in
             guard !Task.isCancelled else {
                 self?.completeLocalRefresh(generation: generation, result: nil, wasCancelled: true)
                 return
             }
-            let result = await localScan(includeFileOnlySessions, includeRolloutActivity)
+            let result = await localScan(includeFileOnlySessions)
             self?.completeLocalRefresh(
                 generation: generation,
                 result: result,
@@ -368,13 +360,13 @@ final class AgentSessionsStore {
 
     private func completeLocalRefresh(
         generation: Int,
-        result: LocalAgentSessionScanner.ScanResult?,
+        result: [AgentSession]?,
         wasCancelled: Bool)
     {
         self.localImmediateTask = nil
         let outcome = self.localRefreshGate.finish(generation: generation)
         if !wasCancelled, outcome.shouldPublish, self.isStarted, self.localMonitoringEnabled, let result {
-            self.applyLocalScanResult(result.sessions, rolloutActivityAt: result.latestRolloutActivityAt)
+            self.applyLocalScanResult(result)
         }
         if outcome.shouldRetry, self.isStarted, self.localMonitoringEnabled {
             self.requestLocalRefresh()

@@ -17,7 +17,6 @@ struct UsageStoreWidgetSnapshotAccountTests {
         settings.statusChecksEnabled = false
 
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         let quotaUpdatedAt = Date(timeIntervalSince1970: 1_800_000_000)
@@ -84,7 +83,6 @@ struct UsageStoreWidgetSnapshotAccountTests {
 
         let environmentA = ["CLAUDE_CONFIG_DIR": "/tmp/codexbar-widget-profile-a"]
         let storeA = UsageStore(
-            fetcher: UsageFetcher(environment: environmentA),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settingsA,
             environmentBase: environmentA)
@@ -124,7 +122,6 @@ struct UsageStoreWidgetSnapshotAccountTests {
         #expect(profileAOwner != profileBOwner)
 
         let storeB = UsageStore(
-            fetcher: UsageFetcher(environment: environmentB),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settingsB,
             environmentBase: environmentB)
@@ -172,7 +169,6 @@ struct UsageStoreWidgetSnapshotAccountTests {
         settings.setActiveTokenAccountIndex(0, for: .claude)
 
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         let accounts = settings.tokenAccounts(for: .claude)
@@ -249,7 +245,6 @@ struct UsageStoreWidgetSnapshotAccountTests {
         settings.setActiveTokenAccountIndex(0, for: .claude)
 
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         let account = try #require(settings.effectiveSelectedTokenAccount(for: .claude))
@@ -267,7 +262,6 @@ struct UsageStoreWidgetSnapshotAccountTests {
                     secondary: nil,
                     updatedAt: quotaUpdatedAt),
                 credits: nil,
-                dashboard: nil,
                 sourceLabel: "fixture",
                 strategyID: "fixture.api-token",
                 strategyKind: .apiToken)),

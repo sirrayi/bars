@@ -43,8 +43,6 @@ struct CodexBarApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var settings: SettingsStore
     @State private var store: UsageStore
-    @State private var managedCodexAccountCoordinator: ManagedCodexAccountCoordinator
-    @State private var codexAccountPromotionCoordinator: CodexAccountPromotionCoordinator
     private let preferencesSelection: PreferencesSelection
 
     init() {
@@ -79,32 +77,18 @@ struct CodexBarApp: App {
         let settings = SettingsStore()
         Self.applyLanguagePreference(from: settings)
         configureUsageFormatterLocalizationProvider()
-        let managedCodexAccountCoordinator = ManagedCodexAccountCoordinator()
-        managedCodexAccountCoordinator.onManagedAccountsDidChange = {
-            _ = settings.refreshCodexAccountReconciliationAfterManagedAccountsDidChange()
-        }
-        _ = settings.persistResolvedCodexActiveSourceCorrectionIfNeeded()
-        let fetcher = UsageFetcher()
         let browserDetection = BrowserDetection(cacheTTL: BrowserDetection.defaultCacheTTL)
-        let account = fetcher.loadAccountInfo()
-        let store = UsageStore(fetcher: fetcher, browserDetection: browserDetection, settings: settings)
-        let codexAccountPromotionCoordinator = CodexAccountPromotionCoordinator(
-            settingsStore: settings,
-            usageStore: store,
-            managedAccountCoordinator: managedCodexAccountCoordinator)
+        let account = AccountInfo(email: nil, plan: nil)
+        let store = UsageStore(browserDetection: browserDetection, settings: settings)
         self.preferencesSelection = preferencesSelection
         _settings = State(wrappedValue: settings)
         _store = State(wrappedValue: store)
-        _managedCodexAccountCoordinator = State(wrappedValue: managedCodexAccountCoordinator)
-        _codexAccountPromotionCoordinator = State(wrappedValue: codexAccountPromotionCoordinator)
         CodexBarLog.setLogLevel(settings.debugLogLevel)
         self.appDelegate.configure(.init(
             store: store,
             settings: settings,
             account: account,
-            selection: preferencesSelection,
-            managedCodexAccountCoordinator: managedCodexAccountCoordinator,
-            codexAccountPromotionCoordinator: codexAccountPromotionCoordinator))
+            selection: preferencesSelection))
     }
 
     @SceneBuilder
@@ -200,8 +184,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let settings: SettingsStore
         let account: AccountInfo
         let selection: PreferencesSelection
-        let managedCodexAccountCoordinator: ManagedCodexAccountCoordinator
-        let codexAccountPromotionCoordinator: CodexAccountPromotionCoordinator
     }
 
     let updaterController: UpdaterProviding = makeUpdaterController()
@@ -218,8 +200,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settings: SettingsStore?
     private var account: AccountInfo?
     private var preferencesSelection: PreferencesSelection?
-    private var managedCodexAccountCoordinator: ManagedCodexAccountCoordinator?
-    private var codexAccountPromotionCoordinator: CodexAccountPromotionCoordinator?
     private var cloudSyncCoordinator: CloudSyncCoordinator?
     private var settingsWindowController: SettingsWindowController?
     private var pendingUpdateSettingsOpen = false
@@ -251,8 +231,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.settings = dependencies.settings
         self.account = dependencies.account
         self.preferencesSelection = dependencies.selection
-        self.managedCodexAccountCoordinator = dependencies.managedCodexAccountCoordinator
-        self.codexAccountPromotionCoordinator = dependencies.codexAccountPromotionCoordinator
         self.cloudSyncCoordinator = CloudSyncCoordinator(settings: dependencies.settings, state: self.cloudSyncState)
         self.settingsWindowController = SettingsWindowController(
             settings: dependencies.settings,
@@ -260,8 +238,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             cloudSyncState: self.cloudSyncState,
             updater: self.updaterController,
             selection: dependencies.selection,
-            managedCodexAccountCoordinator: dependencies.managedCodexAccountCoordinator,
-            codexAccountPromotionCoordinator: dependencies.codexAccountPromotionCoordinator,
             runProviderLoginFlow: { [weak self] provider in
                 guard let self else { return }
                 await self.runProviderLoginFlow(provider)
@@ -558,18 +534,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let store,
            let settings,
            let account,
-           let selection = self.preferencesSelection,
-           let managedCodexAccountCoordinator,
-           let codexAccountPromotionCoordinator
+           let selection = self.preferencesSelection
         {
             let statusController = StatusItemController.factory(
                 store,
                 settings,
                 account,
                 self.updaterController,
-                selection,
-                managedCodexAccountCoordinator,
-                codexAccountPromotionCoordinator)
+                selection)
             statusController.setSettingsOpenHandler { [weak self] pane in
                 self?.openSettings(pane: pane)
             }
@@ -586,23 +558,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .error("StatusItemController fallback path used; settings/store mismatch likely.")
         assertionFailure("StatusItemController fallback path used; check app lifecycle wiring.")
         let fallbackSettings = SettingsStore()
-        let fetcher = UsageFetcher()
         let browserDetection = BrowserDetection(cacheTTL: BrowserDetection.defaultCacheTTL)
-        let fallbackAccount = fetcher.loadAccountInfo()
-        let fallbackStore = UsageStore(fetcher: fetcher, browserDetection: browserDetection, settings: fallbackSettings)
-        let fallbackManagedCodexAccountCoordinator = ManagedCodexAccountCoordinator()
-        let fallbackCodexAccountPromotionCoordinator = CodexAccountPromotionCoordinator(
-            settingsStore: fallbackSettings,
-            usageStore: fallbackStore,
-            managedAccountCoordinator: fallbackManagedCodexAccountCoordinator)
+        let fallbackAccount = AccountInfo(email: nil, plan: nil)
+        let fallbackStore = UsageStore(browserDetection: browserDetection, settings: fallbackSettings)
         let statusController = StatusItemController.factory(
             fallbackStore,
             fallbackSettings,
             fallbackAccount,
             self.updaterController,
-            PreferencesSelection(),
-            fallbackManagedCodexAccountCoordinator,
-            fallbackCodexAccountPromotionCoordinator)
+            PreferencesSelection())
         statusController.setSettingsOpenHandler { [weak self] pane in
             self?.openSettings(pane: pane)
         }
@@ -613,10 +577,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         var summary = MemoryPressureCacheTrimSummary()
         let statusSummary = self.statusController?.trimRebuildableCachesForMemoryPressure()
             ?? MemoryPressureCacheTrimSummary()
-        let storeSummary = self.store?.trimRebuildableCachesForMemoryPressure()
-            ?? MemoryPressureCacheTrimSummary()
         summary.merge(statusSummary)
-        summary.merge(storeSummary)
         return summary
     }
 
@@ -647,9 +608,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func handleDebugMemoryPressureNotification(rawLevel: String?, shouldSeedCaches: Bool) {
         let isCritical = rawLevel?.caseInsensitiveCompare("critical") == .orderedSame
         if shouldSeedCaches {
-            OpenAIDashboardFetcher.seedCachedWebViewsForMemoryPressureProof()
             self.statusController?.seedRebuildableCachesForMemoryPressureProof()
-            self.store?.seedRebuildableCachesForMemoryPressureProof()
         }
         CodexBarLog.logger(LogCategories.memoryPressure).info(
             "Debug memory pressure notification received",

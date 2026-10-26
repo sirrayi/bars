@@ -118,7 +118,11 @@ struct MenuBarProviderColorTests {
             let options = self.options(colorByProvider: enabled)
             return MenuBarLayoutRenderer.composeStackedProviderRows(
                 top: renderer.render(layout: layout, data: self.data(provider: .claude), icon: nil, options: options),
-                bottom: renderer.render(layout: layout, data: self.data(provider: .codex), icon: nil, options: options),
+                bottom: renderer.render(
+                    layout: layout,
+                    data: self.data(provider: .opencode),
+                    icon: nil,
+                    options: options),
                 topProviderName: "Claude",
                 bottomProviderName: "Codex")
         }
@@ -145,11 +149,10 @@ struct MenuBarProviderColorTests {
         for provider in UsageProvider.allCases {
             if let metadata = ProviderRegistry.shared.metadata[provider] {
                 settings.setProviderEnabled(
-                    provider: provider, metadata: metadata, enabled: provider == .claude || provider == .codex)
+                    provider: provider, metadata: metadata, enabled: provider == .claude || provider == .opencode)
             }
         }
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         store._setSnapshotForTesting(UsageSnapshot(
             primary: RateWindow(usedPercent: 25, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
             secondary: nil,
@@ -157,7 +160,7 @@ struct MenuBarProviderColorTests {
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
@@ -257,7 +260,7 @@ struct MenuBarProviderColorTests {
     func `color by provider preserves pace colors when both are enabled`() throws {
         let renderer = MenuBarLayoutRenderer()
         let layout = MenuBarLayout(lines: [[.percent(window: .session), .pace(window: .weekly)]])
-        let data = self.data(provider: .codex)
+        let data = self.data(provider: .opencode)
 
         let options = self.options(colorPace: true, colorByProvider: true)
         let output = renderer.render(layout: layout, data: data, icon: nil, options: options)
@@ -272,7 +275,7 @@ struct MenuBarProviderColorTests {
         let percentColor = title.attribute(.foregroundColor, at: percentRange.location, effectiveRange: nil) as? NSColor
         let paceColor = title.attribute(.foregroundColor, at: paceRange.location, effectiveRange: nil) as? NSColor
 
-        let codexAccent = ProviderAccentPalette.color(for: .codex)
+        let codexAccent = ProviderAccentPalette.color(for: .opencode)
         let expectedCodexColor = NSColor(
             srgbRed: codexAccent.red,
             green: codexAccent.green,
@@ -482,7 +485,7 @@ struct MenuBarProviderColorTests {
 
     // MARK: - Fixtures & Helpers
 
-    private func data(provider: UsageProvider = .codex) -> MenuBarLayoutRenderData {
+    private func data(provider: UsageProvider = .opencode) -> MenuBarLayoutRenderData {
         MenuBarLayoutRendererTests().data(provider: provider)
     }
 

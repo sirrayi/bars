@@ -128,9 +128,9 @@ struct MenuCardQuotaWarningMarkerTests {
     @Test
     func `omits quota warning markers for disabled windows`() throws {
         let now = Date()
-        let metadata = try #require(ProviderDefaults.metadata[.codex])
+        let metadata = try #require(ProviderDefaults.metadata[.claude])
         let identity = ProviderIdentitySnapshot(
-            providerID: .codex,
+            providerID: .claude,
             accountEmail: nil,
             accountOrganization: nil,
             loginMethod: "Plus Plan")
@@ -147,24 +147,11 @@ struct MenuCardQuotaWarningMarkerTests {
                 resetDescription: nil),
             updatedAt: now,
             identity: identity)
-        let codexProjection = CodexConsumerProjection.make(
-            surface: .liveCard,
-            context: CodexConsumerProjection.Context(
-                snapshot: snapshot,
-                rawUsageError: nil,
-                liveCredits: nil,
-                rawCreditsError: nil,
-                liveDashboard: nil,
-                rawDashboardError: nil,
-                dashboardAttachmentAuthorized: false,
-                dashboardRequiresLogin: false,
-                now: now))
 
         let model = UsageMenuCardView.Model.make(.init(
-            provider: .codex,
+            provider: .claude,
             metadata: metadata,
             snapshot: snapshot,
-            codexProjection: codexProjection,
             credits: nil,
             creditsError: nil,
             dashboardError: nil,

@@ -27,7 +27,7 @@ struct SpendTrendOverflowTests {
             },
             updatedAt: now)
         let group = try #require(SpendDashboardModel.build(
-            inputs: [.init(provider: .codex, displayName: "Synthetic source", snapshot: snapshot)],
+            inputs: [.init(provider: .claude, displayName: "Synthetic source", snapshot: snapshot)],
             requestedDays: days,
             now: now,
             calendar: calendar).groups.first)

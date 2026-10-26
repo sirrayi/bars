@@ -123,7 +123,7 @@ struct SpendDashboardProjectlessTests {
     {
         SpendDashboardModel.ProjectRow(
             rank: 1,
-            provider: .codex,
+            provider: .claude,
             providerName: "Codex",
             sourceID: "codex-a",
             projectName: name,
@@ -167,7 +167,7 @@ struct SpendDashboardProjectlessTests {
     {
         SpendDashboardModel.ProviderInput(
             id: id,
-            provider: .codex,
+            provider: .claude,
             displayName: "Codex",
             snapshot: CostUsageTokenSnapshot(
                 sessionTokens: nil,

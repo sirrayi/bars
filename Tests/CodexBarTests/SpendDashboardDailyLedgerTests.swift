@@ -21,39 +21,6 @@ struct SpendDashboardDailyLedgerTests {
         #expect(expanded == Array(summaries.reversed()))
     }
 
-    @Test(arguments: [7, 60])
-    func `OpenCodex aggregates and ledger counts cover the full declared history`(days: Int) throws {
-        let entries = [0, 45].map { age in
-            OpenCodexUsageEntry(
-                requestID: "synthetic-\(age)",
-                timestamp: Self.now.addingTimeInterval(-Double(age) * 86400),
-                provider: "openai",
-                model: "gpt-5.2",
-                usageStatus: .reported,
-                usage: OpenCodexTokenUsage(inputTokens: 100, outputTokens: 50, totalTokens: 150),
-                totalTokens: 150)
-        }
-        let snapshot = OpenCodexUsageAggregator.snapshot(
-            entries: entries,
-            now: Self.now,
-            historyDays: days,
-            calendar: Self.calendar,
-            modelsDevCatalog: ModelsDevCatalog(providers: [:]))
-        let expectedRequests = days == 60 ? 2 : 1
-        #expect(snapshot.last30DaysRequests == expectedRequests)
-        #expect(snapshot.last30DaysTokens == expectedRequests * 150)
-        #expect(snapshot.last30DaysCostUSD == snapshot.daily.compactMap(\.costUSD).reduce(0, +))
-        let model = SpendDashboardModel.build(
-            inputs: [.init(provider: .codex, displayName: "Codex", snapshot: snapshot, sourceKind: .openCodex)],
-            requestedDays: days,
-            now: Self.now,
-            calendar: Self.calendar)
-        let group = try #require(model.groups.first)
-        #expect(group.dailySummaries.allSatisfy { $0.requestCount != nil })
-        #expect(group.dailySummaries.compactMap(\.requestCount).reduce(0, +) == expectedRequests)
-        #expect(group.dailySummaries.allSatisfy { $0.totalCost != nil })
-    }
-
     @Test
     func `daily ledger date text follows the selected app locale`() {
         let day = Self.date(day: 16)
@@ -86,9 +53,9 @@ struct SpendDashboardDailyLedgerTests {
     @Test
     func `zero cost with unavailable activity totals is not a known idle day`() throws {
         let input = Self.input(
-            id: "codex",
-            provider: .codex,
-            displayName: "Codex",
+            id: "claude",
+            provider: .claude,
+            displayName: "Claude",
             entries: [Self.entry(day: "2026-07-16", cost: 0, tokens: 20, requests: nil)],
             totalTokens: 99)
         let group = try #require(Self.group(inputs: [input]))
@@ -100,35 +67,11 @@ struct SpendDashboardDailyLedgerTests {
     }
 
     @Test
-    func `unpriced day preserves priced neighboring ledger days without becoming zero`() throws {
-        var entries = [
-            Self.entry(day: "2026-07-14", cost: 2, tokens: 10, requests: 1),
-            Self.entry(day: "2026-07-16", cost: 0, tokens: 20, requests: 2),
-        ]
-        entries[1] = CostUsageDailyReport.Entry(
-            date: "2026-07-16",
-            inputTokens: nil,
-            outputTokens: nil,
-            totalTokens: 20,
-            requestCount: 2,
-            costUSD: nil,
-            modelsUsed: ["fixture-unpriced"],
-            modelBreakdowns: [.init(modelName: "fixture-unpriced", costUSD: nil, totalTokens: 20)])
-        let input = Self.input(id: "codex", provider: .codex, displayName: "Codex", entries: entries, totalTokens: 30)
-        let group = try #require(Self.group(inputs: [input]))
-        #expect(group.dailySummaries.count == 3)
-        #expect(group.dailySummaries.first?.totalCost == 2)
-        #expect(group.dailySummaries[1].totalCost == 0)
-        #expect(group.dailySummaries.last?.totalCost == nil)
-        #expect(group.dailySummaries.last?.totalTokens == 20)
-    }
-
-    @Test
     func `daily requests derive from complete rows without a snapshot aggregate`() throws {
         let input = Self.input(
-            id: "codex",
-            provider: .codex,
-            displayName: "Codex",
+            id: "claude",
+            provider: .claude,
+            displayName: "Claude",
             entries: [
                 Self.entry(day: "2026-07-14", cost: 1, tokens: 10, requests: 2),
                 Self.entry(day: "2026-07-16", cost: 2, tokens: 20, requests: 5),
@@ -144,9 +87,9 @@ struct SpendDashboardDailyLedgerTests {
     @Test
     func `daily requests fail closed when the aggregate contradicts rows`() throws {
         let input = Self.input(
-            id: "codex",
-            provider: .codex,
-            displayName: "Codex",
+            id: "claude",
+            provider: .claude,
+            displayName: "Claude",
             entries: [Self.entry(day: "2026-07-16", cost: 2, tokens: 20, requests: 5)],
             totalTokens: 20,
             totalRequests: 99)
@@ -160,9 +103,9 @@ struct SpendDashboardDailyLedgerTests {
     @Test
     func `daily requests stay unavailable when a covered row omits its count`() throws {
         let input = Self.input(
-            id: "codex",
-            provider: .codex,
-            displayName: "Codex",
+            id: "claude",
+            provider: .claude,
+            displayName: "Claude",
             entries: [Self.entry(day: "2026-07-16", cost: 2, tokens: 20, requests: nil)],
             totalTokens: 20,
             totalRequests: nil)
@@ -187,9 +130,9 @@ struct SpendDashboardDailyLedgerTests {
             ],
             totalTokens: 30)
         let uncounted = Self.input(
-            id: "codex",
-            provider: .codex,
-            displayName: "Codex",
+            id: "claude",
+            provider: .claude,
+            displayName: "Claude",
             entries: [
                 Self.entry(
                     day: "2026-07-14",
@@ -240,7 +183,7 @@ struct SpendDashboardDailyLedgerTests {
             updatedAt: Self.date(day: 15))
         let later = Self.input(
             id: "later",
-            provider: .codex,
+            provider: .opencode,
             displayName: "Later",
             entries: [Self.entry(day: "2026-07-14", cost: 3, tokens: 30, requests: 3)],
             totalTokens: 30)
@@ -263,7 +206,7 @@ struct SpendDashboardDailyLedgerTests {
             updatedAt: Self.date(day: 10))
         let later = Self.input(
             id: "later",
-            provider: .codex,
+            provider: .opencode,
             displayName: "Later",
             entries: [Self.entry(day: "2026-07-16", cost: 3, tokens: 30, requests: 3)],
             totalTokens: 30)

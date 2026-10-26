@@ -90,7 +90,6 @@ struct APITokenFetchStrategyTests {
             verbose: false,
             env: environment,
             settings: nil,
-            fetcher: UsageFetcher(environment: environment),
             claudeFetcher: APITokenStrategyStubClaudeFetcher(),
             browserDetection: browserDetection)
     }

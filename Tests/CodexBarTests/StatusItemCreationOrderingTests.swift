@@ -27,7 +27,7 @@ struct StatusItemCreationOrderingTests {
 
     @Test(arguments: [true, false])
     func `initial and recovery creation name the item before sizing or registration`(merged: Bool) {
-        let identity: StatusItemController.StatusItemIdentity = merged ? .merged : .provider(.codex)
+        let identity: StatusItemController.StatusItemIdentity = merged ? .merged : .provider(.opencode)
         let defaults = InMemoryUserDefaults()
         let key = MenuBarStatusItemPlacementPreflight.preferredPositionKey(autosaveName: identity.autosaveName)
         for _ in 0..<2 {
@@ -55,11 +55,11 @@ struct StatusItemCreationOrderingTests {
     func `registration rendering keeps its chosen width`() {
         let item = StatusItemController.makeStatusItem(
             create: { Item(length: $0) },
-            identity: .provider(.codex),
+            identity: .provider(.opencode),
             defaults: InMemoryUserDefaults(),
             legacyDefaultItemIndex: nil,
             onCreated: { item in
-                #expect(item.autosaveName == "codexbar-codex")
+                #expect(item.autosaveName == "codexbar-opencode")
                 item.length = 44
             })
         #expect(item.length == 44)
@@ -68,14 +68,14 @@ struct StatusItemCreationOrderingTests {
     @Test
     func `placement repair rejects positions beyond every attached screen width`() {
         let frames = (0..<3).map { CGRect(x: $0 * 2560, y: 0, width: 2560, height: 1440) }
-        let key = MenuBarStatusItemPlacementPreflight.preferredPositionKey(autosaveName: "codexbar-codex")
+        let key = MenuBarStatusItemPlacementPreflight.preferredPositionKey(autosaveName: "codexbar-opencode")
         let defaults = InMemoryUserDefaults(values: [key: 6247])
         let bound = MenuBarStatusItemPlacementPreflight.currentMaximumPreferredPosition(screenFrames: frames)
 
         #expect(bound == 2560)
         #expect(MenuBarStatusItemPlacementPreflight.prepare(
             defaults: defaults,
-            autosaveName: "codexbar-codex",
+            autosaveName: "codexbar-opencode",
             maximumPreferredPosition: bound))
         #expect(defaults.object(forKey: key) == nil)
     }
@@ -84,7 +84,7 @@ struct StatusItemCreationOrderingTests {
     func `placement repair scopes keys and respects display padding`() {
         let prefix = MenuBarStatusItemPlacementPreflight.preferredPositionPrefix
         let values: [String: Any] = [
-            prefix + "codexbar-codex": 6247,
+            prefix + "codexbar-opencode": 6247,
             prefix + "Item-1": 6247,
             prefix + "codexbar-claude": 6247,
             prefix + "Item-0": 6247,
@@ -96,7 +96,7 @@ struct StatusItemCreationOrderingTests {
             let shouldRepair = maximum == 2560
             #expect(MenuBarStatusItemPlacementPreflight.prepare(
                 defaults: defaults,
-                autosaveName: "codexbar-codex",
+                autosaveName: "codexbar-opencode",
                 legacyDefaultItemIndex: 1,
                 maximumPreferredPosition: maximum) == shouldRepair)
             for name in ["codexbar-merged", "codexbar-missing"] {
@@ -104,7 +104,7 @@ struct StatusItemCreationOrderingTests {
                     defaults: defaults, autosaveName: name, maximumPreferredPosition: maximum))
             }
             let expected = values.filter {
-                !shouldRepair || ($0.key != prefix + "codexbar-codex" && $0.key != prefix + "Item-1")
+                !shouldRepair || ($0.key != prefix + "codexbar-opencode" && $0.key != prefix + "Item-1")
             }
             #expect(defaults.dictionaryRepresentation() as NSDictionary == expected as NSDictionary)
         }

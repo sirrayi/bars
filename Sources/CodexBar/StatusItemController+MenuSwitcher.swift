@@ -45,7 +45,7 @@ extension StatusItemController {
             return .overview
         }
         let providerIDs = self.switcherProviderIDs(enabledFirstPartyProviders: enabledProviders)
-        let fallbackProviderID = (self.resolvedMenuProvider(enabledProviders: enabledProviders) ?? .codex).instanceID
+        let fallbackProviderID = (self.resolvedMenuProvider(enabledProviders: enabledProviders) ?? .claude).instanceID
         return .provider(Self.resolvedSwitcherProviderID(
             providerIDs: providerIDs,
             selectedProviderID: self.selectedMenuProvider,

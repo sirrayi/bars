@@ -3,7 +3,6 @@ import Foundation
 
 struct CodexBarConfigMigrator {
     struct LegacyStores {
-        let codexCookieStore: any CookieHeaderStoring
         let claudeCookieStore: any CookieHeaderStoring
         let opencodeCookieStore: any CookieHeaderStoring
         let tokenAccountStore: any ProviderTokenAccountStoring
@@ -108,9 +107,8 @@ struct CodexBarConfigMigrator {
         config: inout CodexBarConfig,
         state: inout MigrationState)
     {
-        // Provider-specific by design: upgrade the two retired visibility toggles before sync reads config.
+        // Provider-specific by design: upgrade the retired visibility toggle before sync reads config.
         let legacySelections: [(UsageProvider, String, [String])] = [
-            (.codex, "codexSparkUsageVisible", ["metric:codex-spark", "metric:codex-spark-weekly"]),
             (.claude, "claudeDailyRoutinesUsageVisible", ["metric:claude-routines"]),
         ]
         for (provider, key, hiddenIDs) in legacySelections {
@@ -148,7 +146,6 @@ struct CodexBarConfigMigrator {
     {
         // Provider-specific by design: this one-shot migration names the retired per-provider secret stores.
         let sources: [(UsageProvider, String, () throws -> String?, WritableKeyPath<ProviderConfig, String?>)] = [
-            (.codex, "codex-cookie", stores.codexCookieStore.loadCookieHeader, \.cookieHeader),
             (.claude, "claude-cookie", stores.claudeCookieStore.loadCookieHeader, \.cookieHeader),
             (.opencode, "opencode-cookie", stores.opencodeCookieStore.loadCookieHeader, \.cookieHeader),
         ]
@@ -183,7 +180,6 @@ struct CodexBarConfigMigrator {
     {
         // Provider-specific by design: these are the historical UserDefaults keys shipped before unified config.
         let sources: [(UsageProvider, String)] = [
-            (.codex, "codexCookieSource"),
             (.claude, "claudeCookieSource"),
             (.opencode, "opencodeCookieSource"),
         ]
@@ -195,15 +191,6 @@ struct CodexBarConfigMigrator {
             self.updateProvider(provider, config: &config, state: &state) { entry in
                 guard entry.cookieSource == nil else { return false }
                 entry.cookieSource = source
-                return true
-            }
-        }
-
-        if userDefaults.object(forKey: "openAIWebAccessEnabled") as? Bool == false {
-            // Provider-specific by design: the retired OpenAI web toggle controlled Codex dashboard cookies.
-            self.updateProvider(.codex, config: &config, state: &state) { entry in
-                guard entry.cookieSource == nil else { return false }
-                entry.cookieSource = .off
                 return true
             }
         }
@@ -308,7 +295,6 @@ struct CodexBarConfigMigrator {
     {
         var success = true
         do {
-            try stores.codexCookieStore.storeCookieHeader(nil)
             try stores.claudeCookieStore.storeCookieHeader(nil)
             try stores.opencodeCookieStore.storeCookieHeader(nil)
         } catch {

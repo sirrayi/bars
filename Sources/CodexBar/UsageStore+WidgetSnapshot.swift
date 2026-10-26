@@ -146,7 +146,6 @@ extension UsageStore {
         let snapshotKeys = self.cloudSyncAccountSnapshots().filter { $0.provider == provider.instanceID }
             .map(\.accountKey)
         var identities = Set(snapshotKeys)
-        var hasDefaultCodexSnapshot = false
         func insert(_ identity: String?) {
             guard let identity else { return }
             identities.insert(AccountSnapshotSyncPayload.accountKey(for: identity))
@@ -161,7 +160,7 @@ extension UsageStore {
             insert(account.externalIdentifier)
             insert(account.id.uuidString)
         }
-        // Provider-specific by design: Claude swap subprocesses own extra IDs; Codex alone has scoped account info.
+        // Provider-specific by design: Claude swap subprocesses own extra IDs.
         if provider == .claude {
             for accountSnapshot in self.claudeSwapAccountSnapshots {
                 insert(accountSnapshot.snapshot?.identity?.accountID)
@@ -169,18 +168,7 @@ extension UsageStore {
                 insert("\(accountSnapshot.id.source):\(accountSnapshot.id.opaqueID)")
             }
         }
-        if provider == .codex {
-            if let projection = self.settings.codexVisibleAccountProjectionForMenuDisplay {
-                for account in projection.visibleAccounts {
-                    insert(account.workspaceAccountID)
-                    insert(account.email)
-                    insert(account.id)
-                    insert(account.storedAccountID?.uuidString)
-                }
-            }
-            hasDefaultCodexSnapshot = snapshotKeys.contains(AccountSnapshotSyncPayload.accountKey(for: nil))
-        }
-        if identities.isEmpty || hasDefaultCodexSnapshot {
+        if identities.isEmpty {
             let fallback = self.accountInfo(for: provider)
             insert(fallback.email)
         }
@@ -291,20 +279,6 @@ extension UsageStore {
             self.lastWidgetSourceSnapshots[provider.instanceID] = snapshot
         }
 
-        let creditsRemaining: Double?
-        let codeReviewRemaining: Double?
-        if provider == .codex, let snapshot {
-            let projection = self.codexConsumerProjection(
-                surface: .widget,
-                snapshotOverride: snapshot,
-                now: now)
-            let displayOnlyExtrasHidden = projection.dashboardVisibility == .displayOnly
-            creditsRemaining = displayOnlyExtrasHidden ? nil : projection.credits?.remaining
-            codeReviewRemaining = displayOnlyExtrasHidden ? nil : projection.remainingPercent(for: .codeReview)
-        } else {
-            creditsRemaining = nil
-            codeReviewRemaining = nil
-        }
         let providerCost: ProviderCostSnapshot? = if provider == .devin,
                                                      self.settings.showOptionalCreditsAndExtraUsage
         {
@@ -320,18 +294,16 @@ extension UsageStore {
             nil
         }
 
-        // Provider-specific by design: Pi's local strategy has no quota measurement; age belongs to its history.
-        let historyUpdatedAt = provider == .pi ? tokenSnapshot?.updatedAt : nil
         return WidgetSnapshot.ProviderEntry(
             provider: provider,
-            updatedAt: historyUpdatedAt ?? snapshot?.updatedAt ?? preservedClaudeUsage?.updatedAt
+            updatedAt: snapshot?.updatedAt ?? preservedClaudeUsage?.updatedAt
                 ?? tokenSnapshot?.updatedAt ?? now,
             primary: snapshot?.primary ?? preservedClaudeUsage?.primary,
             secondary: snapshot?.secondary ?? preservedClaudeUsage?.secondary,
             tertiary: snapshot?.tertiary ?? preservedClaudeUsage?.tertiary,
             usageRows: usageRows,
-            creditsRemaining: creditsRemaining,
-            codeReviewRemainingPercent: codeReviewRemaining,
+            creditsRemaining: nil,
+            codeReviewRemainingPercent: nil,
             tokenUsage: tokenUsage,
             dailyUsage: dailyUsage,
             providerCost: providerCost,
@@ -400,20 +372,16 @@ extension UsageStore {
         guard let snapshot else { return nil }
         let fallbackTokens = CheckedSum.integers(snapshot.daily.compactMap(\.totalTokens))
             .flatMap { $0 > 0 ? $0 : nil }
-        let sessionLabel = switch provider {
-        default: "Today"
-        }
         let defaultMonthLabel = snapshot.historyDays == 1 ? "Today" : "\(snapshot.historyDays)d"
         let monthLabel = snapshot.historyLabel ?? defaultMonthLabel
-        let estimateSuffix = provider == .codex ? " API est. · not billed" : ""
         return WidgetSnapshot.TokenUsageSummary(
             sessionCostUSD: snapshot.sessionCostUSD,
             sessionTokens: snapshot.sessionTokens,
             last30DaysCostUSD: snapshot.last30DaysCostUSD,
             last30DaysTokens: snapshot.last30DaysTokens ?? fallbackTokens,
             currencyCode: snapshot.currencyCode,
-            sessionLabel: sessionLabel + estimateSuffix,
-            last30DaysLabel: monthLabel + estimateSuffix,
+            sessionLabel: "Today",
+            last30DaysLabel: monthLabel,
             updatedAt: snapshot.updatedAt)
     }
 
@@ -433,25 +401,6 @@ extension UsageStore {
         now: Date) -> [WidgetSnapshot.WidgetUsageRowSnapshot]
     {
         let metadata = ProviderDefaults.metadata[provider]
-        if provider == .codex {
-            let projection = self.codexConsumerProjection(
-                surface: .widget,
-                snapshotOverride: snapshot,
-                now: now)
-            return projection.visibleRateLanes.compactMap { lane in
-                guard let window = projection.sourceRateWindow(for: lane) else { return nil }
-                let title = CodexConsumerProjection.rateTitle(
-                    lane: lane,
-                    windowMinutes: window.windowMinutes,
-                    sessionLabel: metadata?.sessionLabel ?? "Session",
-                    weeklyLabel: metadata?.weeklyLabel ?? "Weekly")
-                return WidgetSnapshot.WidgetUsageRowSnapshot(
-                    id: lane.rawValue,
-                    title: title,
-                    percentLeft: window.remainingPercent,
-                    window: window)
-            }
-        }
         if provider == .claude,
            let spendLimit = MenuBarMetricWindowResolver.claudeSpendLimitWindow(snapshot: snapshot)
         {

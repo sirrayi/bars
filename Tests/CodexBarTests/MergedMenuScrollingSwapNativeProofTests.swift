@@ -21,7 +21,6 @@ final class MergedMenuScrollingSwapNativeProofTests: XCTestCase {
             throw XCTSkip("Set CODEXBAR_MENU_SWAP_PROOF_DIR for the merged-menu swap diagnostic")
         }
         guard env["CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS"] == "1",
-              env[CodexCredentialFileAccess.isolationEnvironmentKey] == "1",
               env["CODEXBAR_TEST_SESSION_FILE_ISOLATION"] == "1"
         else { return XCTFail("Use credential isolation") }
         let output = URL(fileURLWithPath: path, isDirectory: true)
@@ -243,11 +242,11 @@ final class MergedMenuScrollingSwapNativeProofTests: XCTestCase {
         }
     }
 
-    private static func makeFixture() throws -> CodexWorkspacesNavigationFixture {
-        let fixture = try CodexWorkspacesNavigationFixture(userDefaults: InMemoryUserDefaults())
+    private static func makeFixture() throws -> MenuNavigationFixture {
+        let fixture = try MenuNavigationFixture(userDefaults: InMemoryUserDefaults())
         fixture.settings.mergeIcons = true
         fixture.settings.multiAccountMenuLayout = .segmented
-        fixture.settings.selectedMenuProvider = .codex
+        fixture.settings.selectedMenuProvider = .opencodego
         let now = Date()
         func window(_ used: Double, _ minutes: Int) -> RateWindow {
             RateWindow(
@@ -266,7 +265,7 @@ final class MergedMenuScrollingSwapNativeProofTests: XCTestCase {
         }
         // Every provider the swap script selects must be enabled here.
         let windowsByProvider: [(UsageProvider, Int)] = [
-            (.codex, 3), (.claude, 1), (.opencode, 3), (.deepseek, 2), (.devin, 1), (.pi, 3),
+            (.opencodego, 3), (.claude, 1), (.opencode, 3), (.deepseek, 2), (.devin, 1),
         ]
         for (provider, windows) in windowsByProvider {
             fixture.settings.setProviderEnabled(
@@ -278,7 +277,7 @@ final class MergedMenuScrollingSwapNativeProofTests: XCTestCase {
         if ProcessInfo.processInfo.environment["CODEXBAR_MENU_SWAP_COST"] == "1" {
             // Cost sections and the Overview spend summary add rows whose heights differ per provider.
             fixture.settings.costUsageEnabled = true
-            for (provider, days) in [(UsageProvider.codex, 30), (.claude, 3), (.opencode, 12)] {
+            for (provider, days) in [(UsageProvider.opencodego, 30), (.claude, 3), (.opencode, 12)] {
                 let daily = (0..<days).map { offset in
                     CostUsageDailyReport.Entry(
                         date: Self.dayString(now.addingTimeInterval(TimeInterval(-offset * 86400))),

@@ -7,10 +7,7 @@ enum ProviderCredentialFailure {
         switch error {
         case let error as ProviderFetchClassifiedError:
             error.kind == .authenticationExpired || error.kind == .missingCredential
-        case ClaudeOAuthFetchError.unauthorized, CodexOAuthFetchError.unauthorized,
-             CodexTokenRefresher.RefreshError.expired, CodexTokenRefresher.RefreshError.revoked,
-             CodexTokenRefresher.RefreshError.reused,
-             CodexOAuthCredentialsError.nativeRefreshRequired, CodexOAuthCredentialsError.readOnlySource:
+        case ClaudeOAuthFetchError.unauthorized:
             true
         case let error as ClaudeOAuthCredentialsError:
             switch error {

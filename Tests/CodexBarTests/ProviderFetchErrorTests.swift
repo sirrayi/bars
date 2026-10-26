@@ -14,7 +14,6 @@ enum ProviderFetchErrorTests {
             verbose: false,
             env: [:],
             settings: nil,
-            fetcher: UsageFetcher(environment: [:]),
             claudeFetcher: ClaudeUsageFetcher(browserDetection: browserDetection),
             browserDetection: browserDetection)
     }

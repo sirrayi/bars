@@ -50,13 +50,8 @@ extension UsageStore {
             return
         }
         let environment = self.environmentBase
-        let managedAccountsOverride = self.managedCodexAccountsForStorageOverride
         let request = await Task.detached(priority: .utility) {
-            let managedAccounts = Self.loadManagedCodexAccountsForStorage(override: managedAccountsOverride)
-            return Self.makeStorageRefreshRequest(
-                for: providers,
-                environment: environment,
-                managedAccounts: managedAccounts)
+            Self.makeStorageRefreshRequest(for: providers, environment: environment)
         }.value
         guard let request else {
             self.clearStorageFootprints()
@@ -88,10 +83,7 @@ extension UsageStore {
             self.clearStorageFootprints()
             return
         }
-        let managedAccountsOverride = self.managedCodexAccountsForStorageOverride
-        let requestKey = Self.storageRefreshRequestKey(
-            for: providers,
-            managedAccountsOverride: managedAccountsOverride)
+        let requestKey = Self.storageRefreshRequestKey(for: providers)
         guard !requestKey.isEmpty else {
             self.clearStorageFootprints()
             return
@@ -121,12 +113,7 @@ extension UsageStore {
         let environment = self.environmentBase
 
         self.storageRefreshTask = Task.detached(priority: .utility) { [weak self] in
-            let managedAccounts = Self.loadManagedCodexAccountsForStorage(override: managedAccountsOverride)
-            guard let request = Self.makeStorageRefreshRequest(
-                for: providers,
-                environment: environment,
-                managedAccounts: managedAccounts)
-            else {
+            guard let request = Self.makeStorageRefreshRequest(for: providers, environment: environment) else {
                 await MainActor.run { [weak self] in
                     guard let self,
                           !Task.isCancelled,
@@ -209,8 +196,7 @@ extension UsageStore {
 
     private nonisolated static func makeStorageRefreshRequest(
         for providers: [UsageProvider],
-        environment: [String: String],
-        managedAccounts: [ManagedCodexAccount])
+        environment: [String: String])
         -> StorageRefreshRequest?
     {
         let uniqueProviders = Array(Set(providers)).sorted { $0.rawValue < $1.rawValue }
@@ -221,8 +207,7 @@ extension UsageStore {
         for provider in uniqueProviders {
             let candidatePaths = ProviderStoragePathCatalog.candidatePaths(
                 for: provider,
-                environment: environment,
-                managedCodexAccounts: managedAccounts)
+                environment: environment)
             guard !candidatePaths.isEmpty else { continue }
             candidatePathsByProvider[provider] = candidatePaths
         }
@@ -242,41 +227,11 @@ extension UsageStore {
             signature: signature)
     }
 
-    private nonisolated static func storageRefreshRequestKey(
-        for providers: [UsageProvider],
-        managedAccountsOverride: [ManagedCodexAccount]?)
-        -> String
-    {
-        let uniqueProviders = Array(Set(providers))
+    private nonisolated static func storageRefreshRequestKey(for providers: [UsageProvider]) -> String {
+        Array(Set(providers))
             .sorted { $0.rawValue < $1.rawValue }
-        let providerKey = uniqueProviders.map(\.rawValue).joined(separator: ",")
-        guard uniqueProviders.contains(.codex) else { return providerKey }
-
-        let managedAccountsRevision: String
-        if let managedAccountsOverride {
-            managedAccountsRevision = Array(Set(managedAccountsOverride.map(\.managedHomePath)))
-                .sorted()
-                .joined(separator: "\u{1f}")
-        } else {
-            let fileURL = FileManagedCodexAccountStore.defaultURL()
-            let attributes = try? FileManager.default.attributesOfItem(atPath: fileURL.path)
-            let modificationDate = (attributes?[.modificationDate] as? Date)?
-                .timeIntervalSinceReferenceDate.bitPattern ?? 0
-            let fileNumber = (attributes?[.systemFileNumber] as? NSNumber)?.uint64Value ?? 0
-            let fileSize = (attributes?[.size] as? NSNumber)?.uint64Value ?? 0
-            managedAccountsRevision = "\(fileNumber):\(modificationDate):\(fileSize)"
-        }
-        return "\(providerKey)\u{1e}\(managedAccountsRevision)"
-    }
-
-    private nonisolated static func loadManagedCodexAccountsForStorage(
-        override: [ManagedCodexAccount]?)
-        -> [ManagedCodexAccount]
-    {
-        if let override {
-            return override
-        }
-        return (try? FileManagedCodexAccountStore().loadAccounts().accounts) ?? []
+            .map(\.rawValue)
+            .joined(separator: ",")
     }
 
     private nonisolated static func scanStorageFootprints(

@@ -20,7 +20,6 @@ struct AdaptiveRefreshTimerTests {
         #expect(settings.refreshFrequency == .oneMinute)
         #expect(settings.providerDetectionCompleted)
         #expect(settings.backgroundWorkLowPowerModePreference == .off)
-        #expect(!settings.openAIWebAccessEnabled)
     }
 
     @Test
@@ -70,7 +69,7 @@ struct AdaptiveRefreshTimerTests {
                 secondary: nil,
                 updatedAt: now,
                 identity: nil),
-            provider: .codex)
+            provider: .claude)
         store.scheduleResetBoundaryRefreshIfNeeded(normalRefreshInterval: 30 * 60, now: now)
         defer { store.cancelResetBoundaryRefresh() }
         let resetBoundarySchedule = try #require(store.scheduledResetBoundaryRefreshAt)
@@ -450,9 +449,8 @@ struct AdaptiveRefreshTimerTests {
         let settings = testSettingsStore(
             suiteName: suite,
             config: testConfigWithAllProvidersDisabled(),
-            prepareDefaults: { defaults in
+            prepareDefaults: { _ in
                 // An existing config otherwise opts this fresh fixture into OpenAI web access.
-                defaults.set(false, forKey: "openAIWebAccessEnabled")
             })
         settings.providerDetectionCompleted = true
         settings.refreshFrequency = frequency
@@ -464,7 +462,6 @@ struct AdaptiveRefreshTimerTests {
         startupBehavior: UsageStore.StartupBehavior) -> UsageStore
     {
         UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: startupBehavior,

@@ -69,7 +69,6 @@ struct ClaudeTokenAccountCostTests {
             claudeConfigDirectory: second.path)
         settings.addTokenAccount(provider: .claude, label: "Combined", token: "fixture-combined")
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             costUsageFetcher: CostUsageFetcher(scannerOptions: .init(
                 claudeProjectsRoots: roots.map { $0.appendingPathComponent("projects") },
@@ -83,29 +82,24 @@ struct ClaudeTokenAccountCostTests {
         // Reuse the same scanner cache across account changes, including returning to an earlier scope.
         for (index, tokens) in [(0, 110), (1, 210), (0, 110), (2, 630)] {
             settings.setActiveTokenAccountIndex(index, for: .claude)
-            #expect(store.shouldIncludePiSessionsInTokenSnapshot(for: .claude) == (index == 2))
             #expect(store.tokenSnapshot(for: .claude) == nil)
             let result = try await store.loadTokenUsageSnapshot(
                 provider: .claude,
                 force: false,
                 now: now,
-                codexHomePath: nil,
-                historyDays: 30,
-                includePiSessions: false)
+                historyDays: 30)
             #expect(result.snapshot.last30DaysTokens == tokens)
             #expect(result.snapshot.last30DaysCostUSD != nil)
             store.publishTokenSnapshot(result.snapshot, for: .claude)
         }
-        #expect(store.tokenCostScope(for: .claude).signature == "claude")
+        #expect(store.tokenCostScopeSignature(for: .claude) == "claude")
         settings.setActiveTokenAccountIndex(0, for: .claude)
         #expect(store.tokenSnapshot(for: .claude) == nil)
         let dashboard = try await store.loadTokenUsageSnapshot(
             provider: .claude,
             force: false,
             now: now,
-            codexHomePath: nil,
             historyDays: SpendDashboardSource.scanDays,
-            includePiSessions: false,
             reportContext: .spendDashboard)
         #expect(dashboard.snapshot.last30DaysTokens == 110)
         settings.updateTokenAccount(
@@ -130,7 +124,7 @@ struct ClaudeTokenAccountCostTests {
             accountID: firstAccount.id,
             claudeConfigDirectory: .some(nil))
         #expect(store.claudeTokenCostConfigDirectory == nil)
-        #expect(store.tokenCostScope(for: .claude).signature == "claude")
+        #expect(store.tokenCostScopeSignature(for: .claude) == "claude")
     }
 
     @Test

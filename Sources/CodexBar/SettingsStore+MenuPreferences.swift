@@ -307,9 +307,7 @@ extension SettingsStore {
     }
 
     func isCostUsageEffectivelyEnabled(for provider: UsageProvider) -> Bool {
-        let isEnabled = self.costUsageEnabled ||
-            (provider == .codex && self.codexLocalSessionCostLedgerEnabled)
-        return isEnabled && ProviderDescriptorRegistry.descriptor(for: provider).tokenCost.supportsTokenCost
+        self.costUsageEnabled && ProviderDescriptorRegistry.descriptor(for: provider).tokenCost.supportsTokenCost
     }
 
     var resetTimeDisplayStyle: ResetTimeDisplayStyle {

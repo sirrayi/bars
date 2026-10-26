@@ -41,7 +41,7 @@ struct SpendDashboardMidnightDSTTests {
             updatedAt: now)
         for requestedDays in [7, 30, 365] {
             let model = SpendDashboardModel.build(
-                inputs: [.init(provider: .codex, displayName: "Codex", snapshot: snapshot)],
+                inputs: [.init(provider: .claude, displayName: "Codex", snapshot: snapshot)],
                 requestedDays: requestedDays,
                 now: now,
                 calendar: calendar)
@@ -87,14 +87,14 @@ struct SpendDashboardMidnightDSTTests {
             },
             updatedAt: next)
         let covered = SpendDashboardModel.build(
-            inputs: [.init(provider: .codex, displayName: "Synthetic Codex", snapshot: snapshot)],
+            inputs: [.init(provider: .claude, displayName: "Synthetic Codex", snapshot: snapshot)],
             requestedDays: 2,
             now: next,
             calendar: calendar)
         #expect(covered.groups.first?.coveredDayCount == 2)
         #expect(covered.groups.first?.providers.first?.coveredDayCount == 2)
         let selected = SpendDashboardModel.build(
-            inputs: [.init(provider: .codex, displayName: "Synthetic Codex", snapshot: snapshot)],
+            inputs: [.init(provider: .claude, displayName: "Synthetic Codex", snapshot: snapshot)],
             requestedDays: 2,
             now: transition,
             calendar: calendar,

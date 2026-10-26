@@ -45,13 +45,6 @@ extension UsageStore {
         if let error = error as? DeepSeekPlatformTransportError {
             return error.underlyingError
         }
-        // These owned OAuth error cases preserve transport identity inside their public wrappers.
-        if case let .networkError(underlyingError) = error as? CodexOAuthFetchError {
-            return underlyingError
-        }
-        if case let .networkError(underlyingError) = error as? CodexTokenRefresher.RefreshError {
-            return underlyingError
-        }
         return error
     }
 

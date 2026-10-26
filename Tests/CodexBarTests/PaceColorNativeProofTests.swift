@@ -18,10 +18,8 @@ final class PaceColorNativeProofTests: XCTestCase {
         let output = URL(fileURLWithPath: path, isDirectory: true)
         guard SettingsStore.isRunningTests,
               environment["CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS"] == "1",
-              environment[CodexCredentialFileAccess.isolationEnvironmentKey] == "1",
               environment["CODEXBAR_TEST_SESSION_FILE_ISOLATION"] == "1",
               environment["CODEXBAR_ALLOW_TEST_KEYCHAIN_ACCESS"] != "1",
-              environment["CODEXBAR_TEST_CODEX_FILE_FIXTURES"] == nil,
               NSHomeDirectory().hasPrefix(output.deletingLastPathComponent().path + "/")
         else { return XCTFail("Use a contained home and credential/session isolation") }
         try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
@@ -35,7 +33,7 @@ final class PaceColorNativeProofTests: XCTestCase {
             config: testConfigWithAllProvidersDisabled())
         defer { settings.configFileWatcher?.stop() }
         settings.menuBarIconStyle = .iconAndPercent
-        let oldResolution = settings.menuBarLayoutResolution(for: .codex)
+        let oldResolution = settings.menuBarLayoutResolution(for: .claude)
         XCTAssertTrue(oldResolution.usesLegacyRendering)
         XCTAssertFalse(settings.menuBarColorPace)
         XCTAssertFalse(settings.hasStoredMenuBarLayout)
@@ -85,7 +83,7 @@ final class PaceColorNativeProofTests: XCTestCase {
                 settings.menuBarColorPace = enabled
                 settings.menuBarHighContrastOnInactiveDisplays = phase.contains("high-contrast")
                 XCTAssertEqual(defaults.bool(forKey: "menuBarColorPace"), enabled)
-                XCTAssertEqual(settings.menuBarLayoutResolution(for: .codex), oldResolution)
+                XCTAssertEqual(settings.menuBarLayoutResolution(for: .claude), oldResolution)
                 XCTAssertFalse(settings.hasStoredMenuBarLayout)
                 XCTAssertEqual(defaults.string(forKey: "menuBarDisplayMode"), MenuBarDisplayMode.both.rawValue)
                 let lines: [[MenuBarLayoutToken]] = switch phase {
@@ -151,7 +149,7 @@ final class PaceColorNativeProofTests: XCTestCase {
                     "statusWindow": statusWindow.windowNumber,
                     "statusFrame": NSStringFromRect(statusWindow.frame),
                     "buttonFrame": NSStringFromRect(buttonRect),
-                    "legacyLayoutUnchanged": settings.menuBarLayoutResolution(for: .codex) == oldResolution,
+                    "legacyLayoutUnchanged": settings.menuBarLayoutResolution(for: .claude) == oldResolution,
                 ])
             }
         }
@@ -187,9 +185,7 @@ final class PaceColorNativeProofTests: XCTestCase {
 
     private func makeStore(root: URL, settings: SettingsStore) -> UsageStore {
         let isolated = ["HOME": root.path, "CODEX_HOME": root.appendingPathComponent("codex").path]
-        settings._test_codexReconciliationEnvironment = isolated
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: isolated),
             browserDetection: BrowserDetection(
                 homeDirectory: root.path,
                 cacheTTL: 0,
@@ -200,7 +196,6 @@ final class PaceColorNativeProofTests: XCTestCase {
                 profileAccessIssue: { _ in nil }),
             costUsageFetcher: CostUsageFetcher(cacheRoot: root.appendingPathComponent("cost")),
             settings: settings,
-            historicalUsageHistoryStore: HistoricalUsageHistoryStore(fileURL: root.appendingPathComponent("history")),
             planUtilizationHistoryStore: PlanUtilizationHistoryStore(directoryURL: nil),
             startupBehavior: .testing,
             environmentBase: isolated,

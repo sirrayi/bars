@@ -87,7 +87,7 @@ struct CodexBarAccountTimelineProviderTests {
     @Test
     func `disabled provider cannot expose retained account quota or label`() {
         let entry = CodexBarAccountTimelineProvider.makeEntry(
-            snapshot: self.snapshot(enabledProviders: [.codex]),
+            snapshot: self.snapshot(enabledProviders: [.opencode]),
             provider: .claude,
             accountID: "claude/work",
             now: self.now)
@@ -119,11 +119,11 @@ struct CodexBarAccountTimelineProviderTests {
         })
         #expect(entity.displayLabel(in: hidden) == "Account")
         #expect(entity.displayLabel(in: nil) == "Unavailable account")
-        #expect(entity.displayLabel(in: self.snapshot(enabledProviders: [.codex])) == "Unavailable account")
+        #expect(entity.displayLabel(in: self.snapshot(enabledProviders: [.opencode])) == "Unavailable account")
         let choices = WidgetAccountQuery.suggestedEntities(in: hidden, provider: .claude)
         #expect(choices.map(\.id) == ["claude/work", "claude/personal", "claude/unavailable"])
         #expect(WidgetAccountQuery.suggestedEntities(
-            in: self.snapshot(enabledProviders: [.codex]), provider: .claude).isEmpty)
+            in: self.snapshot(enabledProviders: [.opencode]), provider: .claude).isEmpty)
         let entry = CodexBarAccountTimelineProvider.makeEntry(
             snapshot: hidden, provider: .claude, accountID: entity.id, now: self.now)
         #expect(entry.accountLabel == "Account")
@@ -149,10 +149,10 @@ struct CodexBarAccountTimelineProviderTests {
 
     private func snapshot(
         accounts: [WidgetSnapshot.AccountEntry]? = nil,
-        enabledProviders: [ProviderInstanceID] = [.claude, .codex]) -> WidgetSnapshot
+        enabledProviders: [ProviderInstanceID] = [.claude, .opencode]) -> WidgetSnapshot
     {
         WidgetSnapshot(
-            entries: [self.usage(provider: .claude, usedPercent: 80), self.usage(provider: .codex, usedPercent: 40)],
+            entries: [self.usage(provider: .claude, usedPercent: 80), self.usage(provider: .opencode, usedPercent: 40)],
             accounts: accounts ?? [
                 .init(
                     id: "claude/work",
@@ -167,9 +167,9 @@ struct CodexBarAccountTimelineProviderTests {
                 .init(id: "claude/unavailable", provider: .claude, label: "Unavailable Work", usage: nil),
                 .init(
                     id: "codex/personal",
-                    provider: .codex,
+                    provider: .opencode,
                     label: "Codex Personal",
-                    usage: self.usage(provider: .codex, usedPercent: 20)),
+                    usage: self.usage(provider: .opencode, usedPercent: 20)),
             ],
             enabledProviders: enabledProviders,
             generatedAt: self.measuredAt)

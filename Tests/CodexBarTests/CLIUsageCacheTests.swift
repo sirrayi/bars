@@ -146,25 +146,6 @@ struct CLIUsageCacheTests {
     }
 
     @Test
-    func `reader excludes managed and profile Codex accounts`() throws {
-        let root = try Self.makeRoot()
-        defer { try? FileManager.default.removeItem(at: root) }
-        let url = root.appendingPathComponent("cache/usage.json")
-        try CLIUsageCache.write(Self.cache(.codex), to: url)
-        let sources: [CodexActiveSource] = [.liveSystem, .managedAccount(id: UUID()), .profileHome(path: "/synthetic")]
-        for source in sources {
-            var provider = ProviderConfig(id: .codex)
-            provider.codexActiveSource = source
-            let config = CodexBarConfig(providers: [provider], shareUsageWithCLI: true)
-            let optionalReader = CLIUsageCache.fallbackReader(
-                config: config, url: url, hasGraphicSession: { false }, now: { Self.now })
-            let reader = try #require(optionalReader)
-            let hit = reader(.codex, true, ProviderFetchClassifiedError(kind: .missingCredential, message: "Synthetic"))
-            #expect((hit != nil) == (source == .liveSystem))
-        }
-    }
-
-    @Test
     func `only credential access failures justify the cache`() {
         let credentialFailures: [Error] = [
             ClaudeWebAPIFetcher.FetchError.noSessionKeyFound,
@@ -278,7 +259,6 @@ struct CLIUsageCacheTests {
         #expect((output.payload.first?.ageSeconds ?? -1) >= 0)
         #expect(output.payload.first?.usage?.identity == nil)
         #expect(output.payload.first?.credits == nil)
-        #expect(output.payload.first?.openaiDashboard == nil)
     }
 
     @Test

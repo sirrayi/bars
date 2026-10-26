@@ -635,7 +635,6 @@ extension CostUsageScanner {
             size: stamp.size,
             days: [:],
             parsedBytes: parsed.parsedBytes,
-            codexCostCacheComplete: true,
             claudeRows: rows)
         state.cache.files[path] = usage
         state.sourceFileIDs[path] = stamp.fileID

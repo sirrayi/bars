@@ -25,14 +25,14 @@ struct AccountUsageSelectionIntent: AppIntent, WidgetConfigurationIntent {
     static let description = IntentDescription("Select the provider and account to display in the widget.")
 
     /// Provider-specific by design: keep the same initial provider as the established Usage widget intent.
-    @Parameter(title: "Provider", default: .codex)
+    @Parameter(title: "Provider", default: .claude)
     var provider: ProviderChoice
 
     @Parameter(title: "Account")
     var account: WidgetAccountEntity?
 
     init() {
-        self.provider = .codex
+        self.provider = .claude
     }
 }
 
@@ -56,8 +56,8 @@ struct CodexBarAccountTimelineProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> CodexBarAccountWidgetEntry {
         let now = Date()
         let usage = WidgetSnapshot.ProviderEntry(
-            // Provider-specific by design: gallery previews use the established synthetic Codex quota fixture.
-            provider: .codex,
+            // Provider-specific by design: gallery previews use the established synthetic Claude quota fixture.
+            provider: .claude,
             updatedAt: now,
             primary: RateWindow(usedPercent: 35, windowMinutes: 300, resetsAt: nil, resetDescription: "Resets in 4h"),
             secondary: RateWindow(
@@ -69,10 +69,10 @@ struct CodexBarAccountTimelineProvider: AppIntentTimelineProvider {
             snapshot: WidgetSnapshot(
                 entries: [],
                 // Provider-specific by design: this preview account and its provider belong to the same fixture.
-                accounts: [.init(id: "preview", provider: .codex, label: W("Personal"), usage: usage)],
-                enabledProviders: [.codex],
+                accounts: [.init(id: "preview", provider: .claude, label: W("Personal"), usage: usage)],
+                enabledProviders: [.claude],
                 generatedAt: now),
-            provider: .codex,
+            provider: .claude,
             accountID: "preview",
             now: now)
     }

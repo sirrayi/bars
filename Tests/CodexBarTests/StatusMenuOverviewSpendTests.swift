@@ -20,7 +20,6 @@ extension StatusMenuTests {
         let outputDirectory = URL(fileURLWithPath: directoryPath, isDirectory: true).standardizedFileURL
         let testProcess = SettingsStore.isRunningTests
         let flags = environment["CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS"] == "1" &&
-            environment[CodexCredentialFileAccess.isolationEnvironmentKey] == "1" &&
             environment["CODEXBAR_TEST_SESSION_FILE_ISOLATION"] == "1" &&
             environment["CODEXBAR_ALLOW_TEST_KEYCHAIN_ACCESS"] != "1"
         let homeBelowTmp = self.isStrictDescendant(home, of: temporaryDirectory)
@@ -56,13 +55,12 @@ extension StatusMenuTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .opencode
         settings.mergedMenuLastSelectedWasOverview = true
         settings.costUsageEnabled = true
         settings.spendDashboardHiddenSourceIDs = ["claude:hidden"]
-        enableTestProviders([.codex, .claude], settings: settings)
+        enableTestProviders([.opencode, .claude], settings: settings)
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -94,7 +92,7 @@ extension StatusMenuTests {
                     updatedAt: now))
         }
         let inputs = [
-            input(id: "codex:visible", provider: .codex, cost: 2),
+            input(id: "codex:visible", provider: .opencode, cost: 2),
             input(id: "claude:hidden", provider: .claude, cost: 900),
         ]
         store.spendDashboardPublication = SpendDashboardPublication(
@@ -109,7 +107,6 @@ extension StatusMenuTests {
                     id: $0.id,
                     provider: $0.provider,
                     displayName: $0.displayName,
-                    role: .subscription,
                     state: .available)
             })
         let controller = StatusItemController(
@@ -359,7 +356,7 @@ extension StatusMenuTests {
         let dayOfMonth = try #require(dayComponents.day)
         let day = String(format: "%04d-%02d-%02d", year, month, dayOfMonth)
 
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
+        let store = self.makeOpenCodeStore(settings: settings)
         store._setTokenSnapshotForTesting(CostUsageTokenSnapshot(
             sessionTokens: nil,
             sessionCostUSD: nil,
@@ -378,17 +375,17 @@ extension StatusMenuTests {
                     modelsUsed: ["test-model"],
                     modelBreakdowns: nil),
             ],
-            updatedAt: now), provider: .codex)
+            updatedAt: now), provider: .opencode)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
 
-        let model = controller.overviewSpendDashboardModel(providers: [.codex], now: now)
+        let model = controller.overviewSpendDashboardModel(providers: [.opencode], now: now)
         let group = try #require(model.groups.first)
         let bucketStart = bucketCalendar.startOfDay(for: now)
 
@@ -399,75 +396,8 @@ extension StatusMenuTests {
         #expect(group.totalTokens == 100)
         #expect(group.dailyPoints.map(\.day) == [bucketStart])
         let sharePayload = try #require(ShareStatsPayloadFactory.make(model: model, store: store))
-        #expect(sharePayload.providers.map(\.provider) == [.codex])
+        #expect(sharePayload.providers.map(\.provider) == [.opencode])
         #expect(sharePayload.providers.first?.estimatedCost == 1)
-    }
-
-    @Test
-    func `shared overview keeps Codex local ledger when global cost tracking is off`() async {
-        let settings = self.makeSettings()
-        settings.statusChecksEnabled = false
-        settings.refreshFrequency = .manual
-        settings.costUsageEnabled = false
-        settings.codexLocalSessionCostLedgerEnabled = true
-        enableTestProviders([.codex], settings: settings)
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
-        let now = Date(timeIntervalSince1970: 1_787_079_600)
-        let configuration = SpendDashboardSource.configuration(settings: settings, store: store)
-        let request = await SpendDashboardSource.makeRequest(
-            settings: settings,
-            store: store,
-            mode: .captureOnly,
-            now: now)
-        let input = SpendDashboardModel.ProviderInput(
-            id: "codex:local",
-            provider: .codex,
-            displayName: "Codex",
-            snapshot: CostUsageTokenSnapshot(
-                sessionTokens: 10,
-                sessionCostUSD: 4,
-                last30DaysTokens: 10,
-                last30DaysCostUSD: 4,
-                daily: [
-                    CostUsageDailyReport.Entry(
-                        date: "2026-08-17",
-                        inputTokens: 5,
-                        outputTokens: 5,
-                        totalTokens: 10,
-                        costUSD: 4,
-                        modelsUsed: nil,
-                        modelBreakdowns: nil),
-                ],
-                updatedAt: now))
-        store.spendDashboardPublication = SpendDashboardPublication(
-            revision: 1,
-            generation: 1,
-            configuration: configuration,
-            loadedAt: now,
-            isRefreshing: false,
-            inputs: [input],
-            sources: [
-                SpendSourcePublication(
-                    id: input.id,
-                    provider: .codex,
-                    displayName: input.displayName,
-                    role: .subscription,
-                    state: .available),
-            ])
-        let controller = StatusItemController(
-            store: store,
-            settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
-            statusBar: self.makeStatusBarForTesting())
-        defer { controller.releaseStatusItemsForTesting() }
-
-        #expect(configuration.costUsageEnabled)
-        #expect(configuration.providerIDs == [UsageProvider.codex.rawValue])
-        #expect(request.configuration.costUsageEnabled)
-        #expect(request.configuration.providerIDs == [UsageProvider.codex.rawValue])
-        #expect(controller.overviewSpendDashboardModel(providers: [.codex], now: now).groups.first?.totalCost == 4)
     }
 
     @Test(arguments: ["codex", "codex:account", "claude:hidden"])
@@ -477,8 +407,8 @@ extension StatusMenuTests {
         settings.refreshFrequency = .manual
         settings.costUsageEnabled = true
         settings.costSummaryDisplayStyle = .both
-        enableTestProviders([.codex], settings: settings)
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
+        enableTestProviders([.opencode], settings: settings)
+        let store = self.makeOpenCodeStore(settings: settings)
         let now = Date(timeIntervalSince1970: 1_787_079_600)
         store._setTokenSnapshotForTesting(CostUsageTokenSnapshot(
             sessionTokens: 10,
@@ -493,7 +423,7 @@ extension StatusMenuTests {
                 costUSD: 2,
                 modelsUsed: nil,
                 modelBreakdowns: nil)],
-            updatedAt: now), provider: .codex)
+            updatedAt: now), provider: .opencode)
         let controller = StatusItemController(
             store: store,
             settings: settings,
@@ -508,7 +438,7 @@ extension StatusMenuTests {
         settings.spendDashboardHiddenSourceIDs = [hiddenSource]
 
         #expect(controller.overviewShareStatsPayload(now: now) == nil)
-        let model = controller.overviewSpendDashboardModel(providers: [.codex], now: now)
+        let model = controller.overviewSpendDashboardModel(providers: [.opencode], now: now)
         #expect(model.groups.isEmpty)
         #expect(controller.makeOverviewShareStatsMenuItem(model: model) == nil)
     }
@@ -519,9 +449,9 @@ extension StatusMenuTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.costUsageEnabled = true
-        let providers: [UsageProvider] = [.codex, .claude]
+        let providers: [UsageProvider] = [.opencode, .claude]
         enableTestProviders(Set(providers), settings: settings)
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
+        let store = self.makeOpenCodeStore(settings: settings)
         let now = Date(timeIntervalSince1970: 1_787_079_600)
         func input(id: String, provider: UsageProvider, cost: Double) -> SpendDashboardModel.ProviderInput {
             SpendDashboardModel.ProviderInput(
@@ -546,14 +476,13 @@ extension StatusMenuTests {
                     updatedAt: now))
         }
         let inputs = [
-            input(id: "codex:first", provider: .codex, cost: 2),
-            input(id: "codex:second", provider: .codex, cost: 3),
+            input(id: "opencode:first", provider: .opencode, cost: 2),
+            input(id: "opencode:second", provider: .opencode, cost: 3),
             input(id: "claude", provider: .claude, cost: 7),
         ]
         let configuration = SpendDashboardConfiguration(
             costUsageEnabled: true,
             providerIDs: providers.map(\.rawValue),
-            codexAccountIdentities: ["first|cache-a", "second|cache-b"],
             menuOwnershipFingerprint: SpendDashboardSource.currentMenuOwnershipFingerprint(
                 settings: settings,
                 store: store))
@@ -569,13 +498,12 @@ extension StatusMenuTests {
                     id: $0.id,
                     provider: $0.provider,
                     displayName: $0.displayName,
-                    role: .subscription,
                     state: .available)
             })
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -584,13 +512,13 @@ extension StatusMenuTests {
         #expect(store.sharedSpendDashboardControllerStorage == nil)
         let model = controller.overviewSpendDashboardModel(providers: providers, now: now)
         #expect(store.sharedSpendDashboardControllerStorage == nil)
-        #expect(Set(model.groups.flatMap(\.providers).map(\.id)) == ["codex:first", "codex:second", "claude"])
+        #expect(Set(model.groups.flatMap(\.providers).map(\.id)) == ["opencode:first", "opencode:second", "claude"])
         #expect(model.groups.first?.totalCost == 12)
         #expect(controller.overviewSpendSubscriptionCount(providers: providers) == 3)
 
-        settings.spendDashboardHiddenSourceIDs = ["codex:second"]
+        settings.spendDashboardHiddenSourceIDs = ["opencode:second"]
         let sharePayload = try #require(controller.overviewShareStatsPayload(now: now))
-        #expect(Set(sharePayload.providers.map(\.providerName)) == ["codex:first", "claude"])
+        #expect(Set(sharePayload.providers.map(\.providerName)) == ["opencode:first", "claude"])
         #expect(sharePayload.currencies.first?.estimatedCost == 9)
 
         guard let claudeMetadata = ProviderRegistry.shared.metadata[.claude] else {
@@ -600,26 +528,6 @@ extension StatusMenuTests {
         settings.setProviderEnabled(provider: .claude, metadata: claudeMetadata, enabled: false)
         let staleOwnerModel = controller.overviewSpendDashboardModel(providers: providers, now: now)
         #expect(staleOwnerModel.groups.isEmpty)
-    }
-
-    @Test
-    func `overview fallback excludes pi local history from subscription count`() {
-        let settings = self.makeSettings()
-        settings.statusChecksEnabled = false
-        settings.refreshFrequency = .manual
-        settings.costUsageEnabled = true
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
-        let controller = StatusItemController(
-            store: store,
-            settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
-            statusBar: self.makeStatusBarForTesting())
-        defer { controller.releaseStatusItemsForTesting() }
-
-        #expect(store.spendDashboardPublication.configuration == nil)
-        #expect(controller.overviewSpendSubscriptionCount(providers: [.claude, .pi]) == 1)
     }
 
     @Test
@@ -645,14 +553,14 @@ extension StatusMenuTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .opencode
         settings.mergedMenuLastSelectedWasOverview = true
         settings.costSummaryDisplayStyle = style
         settings.costUsageEnabled = costUsageEnabled
 
-        enableTestProviders([.codex, .claude], settings: settings)
+        enableTestProviders([.opencode, .claude], settings: settings)
 
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
+        let store = self.makeOpenCodeStore(settings: settings)
         let now = Date()
         let components = Calendar.current.dateComponents([.year, .month, .day], from: now)
         let year = try #require(components.year)
@@ -676,12 +584,12 @@ extension StatusMenuTests {
                     modelsUsed: ["test-model"],
                     modelBreakdowns: nil),
             ],
-            updatedAt: now), provider: .codex)
+            updatedAt: now), provider: .opencode)
 
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())

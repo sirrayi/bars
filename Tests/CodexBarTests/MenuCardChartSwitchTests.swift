@@ -253,12 +253,12 @@ struct MenuCardChartSwitchTests {
             throughput: throughput ? live : nil,
             updatedAt: Self.now)
         return UsageMenuCardView.Model.make(.init(
-            provider: .codex,
+            provider: .claude,
             throughputPresentation: .init(
                 limitLine: limited ? "Peak org limit: 38% · 15M / 40M · synthetic-model" : nil,
                 limitPercent: limited ? 38 : nil,
                 action: nil),
-            metadata: ProviderDefaults.metadata[.codex]!,
+            metadata: ProviderDefaults.metadata[.claude]!,
             snapshot: snapshot,
             credits: nil,
             creditsError: nil,
@@ -278,13 +278,11 @@ struct MenuCardChartSwitchTests {
             resetTimeDisplayStyle: .countdown,
             tokenCostUsageEnabled: true,
             tokenCostIsRefreshing: false,
-            codexLocalSessionCostLedgerEnabled: false,
             costSummaryInlineEnabled: true,
             tokenCostMenuSectionEnabled: false,
             costComparisonPeriodsEnabled: false,
             showOptionalCreditsAndExtraUsage: false,
             claudeDailyRoutinesUsageVisible: false,
-            codexSparkUsageVisible: false,
             showsAllUsageLanes: false,
             sourceLabel: nil,
             subtitleOverride: nil,

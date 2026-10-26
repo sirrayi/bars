@@ -105,19 +105,9 @@ extension StatusItemController {
     }
 
     func menuAdjunctReadinessSignature() -> String {
-        let dashboard = self.store.openAIDashboard
-        let dashboardUsageBreakdown = OpenAIDashboardDailyBreakdown.removingSkillUsageServices(
-            from: dashboard?.usageBreakdown ?? [])
         var parts = [
             "costEnabled=\(self.settings.costUsageEnabled ? "1" : "0")",
-            "codexLocalCost=\(self.settings.codexLocalSessionCostLedgerEnabled ? "1" : "0")",
             "costStyle=\(self.settings.costSummaryDisplayStyle.rawValue)",
-            "openAIAttached=\(self.store.openAIDashboardAttachmentAuthorized ? "1" : "0")",
-            "openAILogin=\(self.store.openAIDashboardRequiresLogin ? "1" : "0")",
-            "openAIUpdated=\(Self.millisecondsSinceEpoch(dashboard?.updatedAt))",
-            "openAIDaily=\(Self.dashboardBreakdownReadinessSignature(dashboard?.dailyBreakdown ?? []))",
-            "openAIUsage=\(Self.dashboardBreakdownReadinessSignature(dashboardUsageBreakdown))",
-            "credits=\(self.store.credits == nil ? "0" : "1")",
             "planHistoryRevision=\(self.store.planUtilizationHistoryRevision)",
             "claudeSwapRevision=\(self.store.claudeSwapRevision)",
         ]
@@ -137,23 +127,6 @@ extension StatusItemController {
         }
 
         return parts.joined(separator: "|")
-    }
-
-    static func dashboardBreakdownReadinessSignature(
-        _ breakdown: [OpenAIDashboardDailyBreakdown]) -> String
-    {
-        breakdown
-            .map { day in
-                let services = day.services
-                    .map { "\($0.service)=\(Self.formatDoubleForSignature($0.creditsUsed))" }
-                    .joined(separator: ",")
-                return [
-                    day.day,
-                    Self.formatDoubleForSignature(day.totalCreditsUsed),
-                    services,
-                ].joined(separator: ":")
-            }
-            .joined(separator: ";")
     }
 
     private func tokenSnapshotReadinessSignature(for provider: UsageProvider) -> String {
@@ -197,11 +170,6 @@ extension StatusItemController {
             "daily=\(daily)",
             "projects=\(projects)",
         ].joined(separator: ",")
-    }
-
-    private static func millisecondsSinceEpoch(_ date: Date?) -> Int {
-        guard let date else { return -1 }
-        return Int(date.timeIntervalSince1970 * 1000)
     }
 
     private static func formatOptionalDoubleForSignature(_ value: Double?) -> String {

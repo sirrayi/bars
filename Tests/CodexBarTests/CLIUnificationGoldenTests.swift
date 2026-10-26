@@ -28,8 +28,8 @@ struct CLIUnificationGoldenTests {
         == claude ==
         Extra usage balance: $40.00
         ---
-        == codex ==
-        Session: 95% left [===========-]
+        == opencodego ==
+        5-hour: 95% left [===========-]
         Pace: 15% in reserve | Expected 20% used | Lasts until reset
         Resets in 4h
         Weekly: 75% left [=========---]
@@ -87,9 +87,9 @@ struct CLIUnificationGoldenTests {
         ╰────────────────────────────────────────╯
         ---
         ╭────────────────────────────────────────╮
-        │ Codex [fixture]                        │
+        │ OpenCode Go [fixture]                  │
         │ ────────────────────────────────────── │
-        │ Session                       95% left │
+        │ 5-hour                        95% left │
         │ [ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   ] │
         │ Reset in 4h                            │
         │                                        │
@@ -132,7 +132,6 @@ struct CLIUnificationGoldenTests {
                 status: nil,
                 usage: fixture.snapshot,
                 credits: nil,
-                openaiDashboard: nil,
                 error: nil,
                 pace: CLIRenderer.providerPacePayload(
                     provider: fixture.provider,
@@ -164,9 +163,9 @@ struct CLIUnificationGoldenTests {
                 "willLastToReset" : true
               }
             },
-            "provider" : "codex",
+            "provider" : "opencodego",
             "rateWindowLabels" : {
-              "primary" : "Session",
+              "primary" : "5-hour",
               "secondary" : "Weekly"
             },
             "source" : "fixture",
@@ -282,7 +281,7 @@ struct CLIUnificationGoldenTests {
 
     private static var paceFixtures: [Fixture] {
         [
-            Fixture(provider: .codex, snapshot: snapshot(
+            Fixture(provider: .opencodego, snapshot: snapshot(
                 primary: window(used: 5, minutes: 300, resetAfter: 4 * 60 * 60),
                 secondary: window(used: 25, minutes: 10080, resetAfter: 5 * 24 * 60 * 60))),
             Fixture(provider: .claude, snapshot: snapshot(

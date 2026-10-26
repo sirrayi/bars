@@ -35,8 +35,8 @@ struct StatusMenuSwitcherRefreshTests {
     func `native switcher action preserves off tab switches after button state toggles`() {
         var selections: [ProviderSwitcherSelection] = []
         let switcher = ProviderSwitcherView(
-            providers: [.codex, .claude],
-            selected: .provider(.codex),
+            providers: [.opencode, .claude],
+            selected: .provider(.opencode),
             includesOverview: false,
             width: 310,
             showsIcons: false,
@@ -52,8 +52,8 @@ struct StatusMenuSwitcherRefreshTests {
     func `native switcher action restores active tab after native toggle`() {
         var selections: [ProviderSwitcherSelection] = []
         let switcher = ProviderSwitcherView(
-            providers: [.codex, .claude],
-            selected: .provider(.codex),
+            providers: [.opencode, .claude],
+            selected: .provider(.opencode),
             includesOverview: false,
             width: 310,
             showsIcons: false,
@@ -80,12 +80,12 @@ struct StatusMenuSwitcherRefreshTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .opencode
         Self.enableCodexAndClaude(settings)
 
-        let activeProviders: [ProviderInstanceID] = [.codex, .claude]
+        let activeProviders: [ProviderInstanceID] = [.opencode, .claude]
         _ = settings.setMergedOverviewProviderSelection(
-            provider: .codex,
+            provider: .opencode,
             isSelected: false,
             activeProviders: activeProviders)
         _ = settings.setMergedOverviewProviderSelection(
@@ -93,14 +93,13 @@ struct StatusMenuSwitcherRefreshTests {
             isSelected: false,
             activeProviders: activeProviders)
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         store.isRefreshing = true
         defer { store.isRefreshing = false }
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -147,17 +146,15 @@ struct StatusMenuSwitcherRefreshTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
-        settings.openAIWebAccessEnabled = true
+        settings.selectedMenuProvider = .opencode
         Self.enableCodexAndClaude(settings)
         Self.disableOverview(settings)
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -195,16 +192,15 @@ struct StatusMenuSwitcherRefreshTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .opencode
         Self.enableCodexAndClaude(settings)
         Self.disableOverview(settings)
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -264,15 +260,14 @@ struct StatusMenuSwitcherRefreshTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .opencode
         Self.enableCodexAndClaude(settings)
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -290,123 +285,14 @@ struct StatusMenuSwitcherRefreshTests {
                 currentProvider: .claude,
                 switcherSelection: .provider(.claude),
                 menuWidth: StatusItemController.menuCardBaseWidth,
-                codexAccountDisplay: nil,
                 tokenAccountDisplay: nil,
-                openAIContext: StatusItemController.OpenAIWebContext(
-                    hasUsageBreakdown: false,
-                    hasCreditsHistory: false,
-                    hasCostHistory: false,
-                    canShowBuyCredits: false,
-                    hasOpenAIWebMenuItems: false),
+                submenuContext: StatusItemController.MenuSubmenuContext(hasCostHistory: false, hasSubmenuItems: false),
                 descriptor: descriptor))
 
         let expectedWidth = controller.renderedMenuWidth(for: menu)
         #expect(expectedWidth == 420)
         let refreshView = try #require(menu.items.first { $0.title == "Refresh" }?.view as? PersistentRefreshMenuView)
         #expect(abs(refreshView.frame.width - expectedWidth) <= 0.5)
-    }
-
-    @Test
-    func `manual refresh keeps codex quota visible after switching away and back`() async throws {
-        let previousMenuCardRendering = StatusItemController.menuCardRenderingEnabled
-        StatusItemController.menuCardRenderingEnabled = false
-        StatusItemController.setMenuRefreshEnabledForTesting(true)
-        defer {
-            StatusItemController.menuCardRenderingEnabled = previousMenuCardRendering
-            StatusItemController.resetMenuRefreshEnabledForTesting()
-        }
-
-        let settings = Self.makeSettings()
-        settings.statusChecksEnabled = false
-        settings.refreshFrequency = .manual
-        settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
-        Self.enableCodexAndClaude(settings)
-        Self.disableOverview(settings)
-
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let now = Date(timeIntervalSince1970: 1_800_000_000)
-        store._setSnapshotForTesting(Self.quotaSnapshot(usedPercent: 21, updatedAt: now), provider: .codex)
-        store._setSnapshotForTesting(Self.quotaSnapshot(usedPercent: 44, updatedAt: now), provider: .claude)
-        let event = CreditEvent(date: now, service: "CLI", creditsUsed: 1)
-        let breakdown = OpenAIDashboardSnapshot.makeDailyBreakdown(from: [event], maxDays: 30)
-        store.openAIDashboard = OpenAIDashboardSnapshot(
-            signedInEmail: "test@example.com",
-            codeReviewRemainingPercent: nil,
-            creditEvents: [event],
-            dailyBreakdown: breakdown,
-            usageBreakdown: breakdown,
-            creditsPurchaseURL: nil,
-            updatedAt: now)
-        store.openAIDashboardAttachmentAuthorized = true
-        store.openAIDashboardRequiresLogin = false
-        let controller = StatusItemController(
-            store: store,
-            settings: settings,
-            account: AccountInfo(email: "test@example.com", plan: "pro"),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
-            statusBar: .system)
-        defer {
-            controller.manualRefreshTasks.values.forEach { $0.cancel() }
-            controller.releaseStatusItemsForTesting()
-        }
-
-        let gate = SwitcherRefreshManualGate()
-        controller._test_manualRefreshOperation = {
-            await gate.wait()
-        }
-        defer { controller._test_manualRefreshOperation = nil }
-
-        let menu = controller.makeMenu()
-        controller.menuWillOpen(menu)
-        let selectedButton = try #require(Self.switcherButtons(in: menu).first { $0.state == .on })
-        let alternateButton = try #require(Self.switcherButtons(in: menu).first { $0.state == .off })
-
-        controller.refreshNow()
-        #expect(controller.menuCardRefreshMonitor.isManualRefreshInFlight)
-        store.refreshingProviders.insert(.codex)
-
-        store._setSnapshotForTesting(
-            UsageSnapshot(primary: nil, secondary: nil, updatedAt: now.addingTimeInterval(1)),
-            provider: .codex)
-
-        var rebuildCount = 0
-        controller._test_openMenuRebuildObserver = { _ in
-            rebuildCount += 1
-        }
-        defer { controller._test_openMenuRebuildObserver = nil }
-
-        let initialSwitcher = try #require(menu.items.first?.view as? ProviderSwitcherView)
-        #expect(initialSwitcher._test_simulateRuntimeClick(buttonTag: alternateButton.tag))
-        await Self.waitForRebuildCount(1, rebuildCount: { rebuildCount })
-
-        let alternateSwitcher = try #require(menu.items.first?.view as? ProviderSwitcherView)
-        #expect(alternateSwitcher._test_simulateRuntimeClick(buttonTag: selectedButton.tag))
-        await Self.waitForRebuildCount(2, rebuildCount: { rebuildCount })
-        #expect(settings.selectedMenuProvider == .codex)
-
-        let usageItem = menu.items.first { ($0.representedObject as? String) == "menuCardUsage" }
-        #expect(usageItem != nil)
-        #expect(menu.items.contains { ($0.representedObject as? String) == "menuCardHeader" } == false)
-
-        let emptyFallback = try #require(controller.menuCardModel(for: .codex))
-        let inFlight = controller.menuCardRefreshMonitor.model(for: .codex, fallback: emptyFallback)
-        let subtitle = controller.menuCardRefreshMonitor.subtitle(
-            for: .codex,
-            fallback: MenuCardLiveSubtitle(text: emptyFallback.subtitleText, style: emptyFallback.subtitleStyle))
-
-        #expect(emptyFallback.metrics.isEmpty)
-        #expect(subtitle.text == "Refreshing…")
-        #expect(inFlight.metrics.first?.percentLabel == "79% left")
-
-        gate.resume()
-        store.refreshingProviders.remove(.codex)
-        await controller.manualRefreshTasks[.global]?.value
-        #expect(!controller.menuCardRefreshMonitor.isManualRefreshInFlight)
-        let completed = controller.menuCardRefreshMonitor.model(for: .codex, fallback: emptyFallback)
-        #expect(completed.metrics.isEmpty)
     }
 
     @Test
@@ -423,16 +309,15 @@ struct StatusMenuSwitcherRefreshTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .opencode
         Self.enableCodexAndClaude(settings)
         Self.disableOverview(settings)
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -485,16 +370,15 @@ struct StatusMenuSwitcherRefreshTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .opencode
         Self.enableCodexAndClaude(settings)
         Self.disableOverview(settings)
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -506,7 +390,7 @@ struct StatusMenuSwitcherRefreshTests {
         let menu = controller.makeMenu()
         controller.menuWillOpen(menu)
         let cache = try #require(
-            controller.mergedSwitcherContentCaches[ObjectIdentifier(menu)]?[.provider(.codex)])
+            controller.mergedSwitcherContentCaches[ObjectIdentifier(menu)]?[.provider(.opencode)])
         let refreshItem = try #require(cache.items.first { $0.title == "Refresh" })
 
         controller.manualRefreshTasks[.global] = Task {}
@@ -520,10 +404,9 @@ struct StatusMenuSwitcherRefreshTests {
         #expect(!refreshItem.isEnabled)
 
         #expect(controller.addCachedMergedSwitcherContent(
-            for: .provider(.codex),
+            for: .provider(.opencode),
             to: menu,
             menuWidth: cache.menuWidth,
-            codexAccountDisplay: cache.codexAccountDisplay,
             tokenAccountDisplay: cache.tokenAccountDisplay))
         #expect(refreshItem.menu === menu)
         #expect(refreshItem.isEnabled)
@@ -535,16 +418,15 @@ struct StatusMenuSwitcherRefreshTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .opencode
         Self.enableCodexAndClaude(settings)
         Self.disableOverview(settings)
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -568,7 +450,7 @@ struct StatusMenuSwitcherRefreshTests {
         #expect(controller.isRefreshActionInFlight(for: menu))
 
         // An all-providers refresh busies every tab regardless of the selected provider.
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .opencode
         controller.manualRefreshTasks[.provider(.claude)] = nil
         controller.manualRefreshTasks[.global] = Task {}
         #expect(controller.isRefreshActionInFlight(for: menu))
@@ -577,12 +459,11 @@ struct StatusMenuSwitcherRefreshTests {
     @Test
     func `native image menu rows are replaced during reconciliation`() {
         let settings = Self.makeSettings()
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -607,12 +488,11 @@ struct StatusMenuSwitcherRefreshTests {
     @Test
     func `native image submenu rows reconcile in place`() {
         let settings = Self.makeSettings()
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -650,16 +530,15 @@ struct StatusMenuSwitcherRefreshTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .opencode
         Self.enableCodexAndClaude(settings)
         Self.disableOverview(settings)
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -704,8 +583,8 @@ struct StatusMenuSwitcherRefreshTests {
     @Test
     func `tab switch does not replace quota indicator constraints`() {
         let switcher = ProviderSwitcherView(
-            providers: [.codex, .claude],
-            selected: .provider(.codex),
+            providers: [.opencode, .claude],
+            selected: .provider(.opencode),
             includesOverview: false,
             width: 310,
             showsIcons: false,
@@ -726,8 +605,8 @@ struct StatusMenuSwitcherRefreshTests {
     func `quota indicator constraints are replaced when ratio changes`() {
         var currentRemaining = 75.0
         let switcher = ProviderSwitcherView(
-            providers: [.codex, .claude],
-            selected: .provider(.codex),
+            providers: [.opencode, .claude],
+            selected: .provider(.opencode),
             includesOverview: false,
             width: 310,
             showsIcons: false,
@@ -759,15 +638,15 @@ struct StatusMenuSwitcherRefreshTests {
         let registry = ProviderRegistry.shared
         for provider in UsageProvider.allCases {
             guard let metadata = registry.metadata[provider] else { continue }
-            let shouldEnable = provider == .codex || provider == .claude
+            let shouldEnable = provider == .opencode || provider == .claude
             settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: shouldEnable)
         }
     }
 
     private static func disableOverview(_ settings: SettingsStore) {
-        let activeProviders: [ProviderInstanceID] = [.codex, .claude]
+        let activeProviders: [ProviderInstanceID] = [.opencode, .claude]
         _ = settings.setMergedOverviewProviderSelection(
-            provider: .codex,
+            provider: .opencode,
             isSelected: false,
             activeProviders: activeProviders)
         _ = settings.setMergedOverviewProviderSelection(

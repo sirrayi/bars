@@ -99,7 +99,7 @@ struct CostReportingPeriodTests {
         ]
         let snapshot = CostUsageFetcher.tokenSnapshot(from: .init(data: rows, summary: nil), now: now, historyDays: 90)
         let dashboard = SpendDashboardModel.build(
-            inputs: [.init(provider: .codex, displayName: "Synthetic Codex", snapshot: snapshot)],
+            inputs: [.init(provider: .claude, displayName: "Synthetic Codex", snapshot: snapshot)],
             requestedDays: 90,
             reportingPeriod: .monthToDate,
             now: now,
@@ -110,7 +110,7 @@ struct CostReportingPeriodTests {
             historyDays: CostReportingPeriod.monthToDate.days(now: now, calendar: self.calendar),
             calendar: self.calendar).reporting(.monthToDate)
         let payload = CodexBarCLI.makeCostPayload(
-            provider: .codex,
+            provider: .claude,
             snapshot: cliSnapshot,
             error: nil,
             calendar: self.calendar)
@@ -134,7 +134,7 @@ struct CostReportingPeriodTests {
             calendar: self.calendar)
         let selected = source.selecting(.monthToDate, now: now, calendar: self.calendar)
         let payload = CodexBarCLI.makeCostPayload(
-            provider: .codex,
+            provider: .claude,
             snapshot: selected,
             error: nil,
             calendar: self.calendar)
@@ -216,7 +216,7 @@ struct CostReportingPeriodTests {
             now: now,
             historyDays: 1,
             calendar: calendar).reporting(.monthToDate)
-        let payload = CodexBarCLI.makeCostPayload(provider: .codex, snapshot: snapshot, error: nil, calendar: calendar)
+        let payload = CodexBarCLI.makeCostPayload(provider: .claude, snapshot: snapshot, error: nil, calendar: calendar)
         #expect(payload.totals?.totalCostUSD == 7)
         #expect(payload.totals?.coverage == payload.coverage)
         #expect(payload.totals?.coverage?.priced == 1)

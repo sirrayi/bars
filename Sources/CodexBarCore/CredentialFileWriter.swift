@@ -9,7 +9,7 @@ import Foundation
 
 /// Writes credential-bearing files (session tokens, cookies) with owner-only (`0600`) permissions
 /// established **before** any bytes are written, then atomically published — the same secure shape
-/// `CodexOAuthCredentials` already uses. Also repairs the mode of a pre-existing file so users who
+/// OAuth credential stores use. Also repairs the mode of a pre-existing file so users who
 /// upgrade from a build that wrote `0644` are corrected on first access.
 package enum CredentialFileWriter {
     #if DEBUG

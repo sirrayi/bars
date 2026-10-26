@@ -250,7 +250,7 @@ struct UsageMenuCardLayoutTests {
         placeholder: String? = nil) -> UsageMenuCardView.Model
     {
         UsageMenuCardView.Model(
-            provider: .codex,
+            provider: .claude,
             providerName: "Codex",
             email: "steipete@gmail.com",
             subtitleText: "Not fetched yet",

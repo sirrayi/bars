@@ -493,7 +493,6 @@ struct DeepSeekProviderDescriptorTests {
             verbose: false,
             env: environment,
             settings: nil,
-            fetcher: UsageFetcher(environment: [:]),
             claudeFetcher: ClaudeUsageFetcher(browserDetection: browserDetection),
             browserDetection: browserDetection,
             selectedTokenAccountID: selectedTokenAccountID)

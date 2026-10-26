@@ -6,13 +6,11 @@ import Testing
 /// descriptor registry so new or renamed providers fail here instead of drifting.
 struct WidgetProviderChoiceTests {
     private static let literalTitles: [String: String] = [
-        "codex": "Codex",
         "claude": "Claude",
         "opencode": "OpenCode",
         "opencodego": "OpenCode Go",
         "devin": "Devin",
         "deepseek": "DeepSeek",
-        "pi": "Pi",
     ]
 
     @Test

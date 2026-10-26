@@ -17,7 +17,7 @@ struct IconRendererStatusOverlayTests {
                 style: .combined,
                 statusIndicator: indicator,
                 hideCritters: true,
-                quotaLayoutPolicy: .provider(.codex))
+                quotaLayoutPolicy: .provider(.opencode))
             return try #require(image.representations.compactMap { $0 as? NSBitmapImageRep }.first {
                 $0.pixelsWide == 36 && $0.pixelsHigh == 36
             })

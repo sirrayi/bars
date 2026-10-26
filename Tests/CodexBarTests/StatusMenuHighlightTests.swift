@@ -17,12 +17,12 @@ extension StatusMenuTests {
     func `menu highlight updates only previous and current custom rows`() {
         self.disableMenuCardsForTesting()
         let settings = self.makeSettings()
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
+        let store = self.makeOpenCodeStore(settings: settings)
         store._cancelPlanUtilizationHistoryLoadForTesting()
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -61,12 +61,12 @@ extension StatusMenuTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
+        let store = self.makeOpenCodeStore(settings: settings)
         store._cancelPlanUtilizationHistoryLoadForTesting()
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -96,9 +96,9 @@ extension StatusMenuTests {
         defer { controller._test_openMenuRebuildObserver = nil }
         controller.scheduleOpenMenuRebuildIfStillVisible(
             menu,
-            provider: .codex,
+            provider: .opencode,
             resyncReadinessBaselineAfterRebuild: true)
-        controller.scheduleOpenMenuRebuildIfStillVisible(menu, provider: .codex)
+        controller.scheduleOpenMenuRebuildIfStillVisible(menu, provider: .opencode)
         for _ in 0..<20 where controller.nativeHighlightDeferredMenuRebuilds[key] == nil {
             await Task.yield()
         }
@@ -134,19 +134,19 @@ extension StatusMenuTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
+        let store = self.makeOpenCodeStore(settings: settings)
         store._cancelPlanUtilizationHistoryLoadForTesting()
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
 
         let menu = controller.makeMenu()
-        controller.populateMenu(menu, provider: .codex)
+        controller.populateMenu(menu, provider: .opencode)
         controller.markMenuFresh(menu)
         let key = ObjectIdentifier(menu)
         controller.openMenus[key] = menu
@@ -187,12 +187,12 @@ extension StatusMenuTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
+        let store = self.makeOpenCodeStore(settings: settings)
         store._cancelPlanUtilizationHistoryLoadForTesting()
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -200,7 +200,7 @@ extension StatusMenuTests {
         controller.menuRefreshEnabledOverrideForTesting = true
 
         let parent = controller.makeMenu()
-        controller.populateMenu(parent, provider: .codex)
+        controller.populateMenu(parent, provider: .opencode)
         controller.markMenuFresh(parent)
         let parentKey = ObjectIdentifier(parent)
         controller.openMenus[parentKey] = parent
@@ -229,7 +229,7 @@ extension StatusMenuTests {
 
         let submenu = controller.makeHostedSubviewPlaceholderMenu(
             chartID: StatusItemController.costHistoryChartID,
-            provider: .codex)
+            provider: .opencode)
         let submenuKey = ObjectIdentifier(submenu)
         controller.openMenus[submenuKey] = submenu
         controller.menu(parent, willHighlight: nil)
@@ -259,12 +259,12 @@ extension StatusMenuTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
+        let store = self.makeOpenCodeStore(settings: settings)
         store._cancelPlanUtilizationHistoryLoadForTesting()
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -272,7 +272,7 @@ extension StatusMenuTests {
         controller.menuRefreshEnabledOverrideForTesting = true
 
         let parent = controller.makeMenu()
-        controller.populateMenu(parent, provider: .codex)
+        controller.populateMenu(parent, provider: .opencode)
         controller.markMenuFresh(parent)
         let parentKey = ObjectIdentifier(parent)
         controller.openMenus[parentKey] = parent
@@ -297,7 +297,7 @@ extension StatusMenuTests {
 
         let submenu = controller.makeHostedSubviewPlaceholderMenu(
             chartID: StatusItemController.costHistoryChartID,
-            provider: .codex)
+            provider: .opencode)
         controller.openMenus[ObjectIdentifier(submenu)] = submenu
         controller.menuSession.invalidate(allowsStaleContent: false, requiresRebuild: true)
         #expect(controller.menuNeedsRefresh(parent))
@@ -328,12 +328,12 @@ extension StatusMenuTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
+        let store = self.makeOpenCodeStore(settings: settings)
         store._cancelPlanUtilizationHistoryLoadForTesting()
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -341,7 +341,7 @@ extension StatusMenuTests {
         controller.menuRefreshEnabledOverrideForTesting = true
 
         let parent = controller.makeMenu()
-        controller.populateMenu(parent, provider: .codex)
+        controller.populateMenu(parent, provider: .opencode)
         controller.markMenuFresh(parent)
         let parentKey = ObjectIdentifier(parent)
         controller.openMenus[parentKey] = parent
@@ -349,7 +349,7 @@ extension StatusMenuTests {
 
         let submenu = controller.makeHostedSubviewPlaceholderMenu(
             chartID: StatusItemController.costHistoryChartID,
-            provider: .codex)
+            provider: .opencode)
         let submenuKey = ObjectIdentifier(submenu)
         controller.openMenus[submenuKey] = submenu
 
@@ -365,7 +365,7 @@ extension StatusMenuTests {
 
         controller.scheduleOpenMenuRebuildIfStillVisible(
             parent,
-            provider: .codex,
+            provider: .opencode,
             resyncReadinessBaselineAfterRebuild: true)
         for _ in 0..<20 where controller.openMenuRebuildTasks[parentKey] != nil {
             await Task.yield()
@@ -394,12 +394,12 @@ extension StatusMenuTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
+        let store = self.makeOpenCodeStore(settings: settings)
         store._cancelPlanUtilizationHistoryLoadForTesting()
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -419,7 +419,7 @@ extension StatusMenuTests {
         defer { controller._test_openMenuRebuildObserver = nil }
         controller.scheduleOpenMenuRebuildIfStillVisible(
             menu,
-            provider: .codex,
+            provider: .opencode,
             resyncReadinessBaselineAfterRebuild: true)
         for _ in 0..<20 where controller.nativeHighlightDeferredMenuRebuilds[key] == nil {
             await Task.yield()
@@ -448,12 +448,12 @@ extension StatusMenuTests {
         settings.statusChecksEnabled = true
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
+        let store = self.makeOpenCodeStore(settings: settings)
         store._cancelPlanUtilizationHistoryLoadForTesting()
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -463,7 +463,7 @@ extension StatusMenuTests {
         let submenu = NSMenu()
         #expect(controller.appendStatusComponentsItem(
             to: submenu,
-            provider: .codex,
+            provider: .opencode,
             width: StatusItemController.menuCardBaseWidth))
         let key = ObjectIdentifier(submenu)
         controller.openMenus[key] = submenu
@@ -474,7 +474,7 @@ extension StatusMenuTests {
         #expect(originalLink.isEnabled)
         controller.menu(submenu, willHighlight: originalLink)
 
-        store.statusComponents[.codex] = [
+        store.statusComponents[.opencode] = [
             ProviderStatusComponent(
                 id: "api",
                 name: "API",
@@ -518,12 +518,12 @@ extension StatusMenuTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
+        let store = self.makeOpenCodeStore(settings: settings)
         store._cancelPlanUtilizationHistoryLoadForTesting()
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -545,7 +545,7 @@ extension StatusMenuTests {
         var rebuildCount = 0
         controller._test_openMenuRebuildObserver = { _ in rebuildCount += 1 }
         defer { controller._test_openMenuRebuildObserver = nil }
-        controller.rebuildOpenMenuIfStillVisible(menu, provider: .codex)
+        controller.rebuildOpenMenuIfStillVisible(menu, provider: .opencode)
 
         #expect(rebuildCount == 1)
         #expect(controller.nativeHighlightDeferredMenuRebuilds[key] == nil)

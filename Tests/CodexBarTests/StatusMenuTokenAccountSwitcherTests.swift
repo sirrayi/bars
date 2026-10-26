@@ -122,14 +122,13 @@ final class StatusMenuTokenAccountSwitcherTests: XCTestCase {
         settings.addTokenAccount(provider: .claude, label: "Secondary", token: "Bearer sk-ant-oat-secondary")
         settings.setActiveTokenAccountIndex(0, for: .claude)
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let blocker = BlockingTokenAccountFetchStrategy()
         self.installBlockingClaudeProvider(on: store, blocker: blocker)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
@@ -173,8 +172,7 @@ final class StatusMenuTokenAccountSwitcherTests: XCTestCase {
         settings.addTokenAccount(provider: .claude, label: "Primary", token: "Bearer sk-ant-oat-primary")
         settings.addTokenAccount(provider: .claude, label: "Secondary", token: "Bearer sk-ant-oat-secondary")
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let blocker = BlockingTokenAccountFetchStrategy()
         self.installBlockingClaudeProvider(on: store, blocker: blocker)
 
@@ -203,7 +201,6 @@ final class StatusMenuTokenAccountSwitcherTests: XCTestCase {
         let originalAccounts = settings.tokenAccounts(for: .claude)
 
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         store.accountSnapshots[.claude] = originalAccounts.map { account in
@@ -248,7 +245,6 @@ final class StatusMenuTokenAccountSwitcherTests: XCTestCase {
             addedAt: 2,
             lastUsed: nil)
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         store.accountSnapshots[.claude] = [
@@ -284,7 +280,6 @@ final class StatusMenuTokenAccountSwitcherTests: XCTestCase {
                 activeIndex: 1)
         }
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         store._test_providerFetchOutcomeOverride = { _ in
@@ -292,7 +287,6 @@ final class StatusMenuTokenAccountSwitcherTests: XCTestCase {
                 result: .success(ProviderFetchResult(
                     usage: self.snapshot(percent: 66),
                     credits: nil,
-                    dashboard: nil,
                     sourceLabel: "fixture",
                     strategyID: "fixture",
                     strategyKind: .apiToken)),
@@ -322,20 +316,19 @@ final class StatusMenuTokenAccountSwitcherTests: XCTestCase {
             settings.setProviderEnabled(
                 provider: provider,
                 metadata: metadata,
-                enabled: provider == .claude || provider == .codex)
+                enabled: provider == .claude || provider == .opencode)
         }
         settings.addTokenAccount(provider: .claude, label: "Primary", token: "Bearer sk-ant-oat-primary")
         settings.addTokenAccount(provider: .claude, label: "Secondary", token: "Bearer sk-ant-oat-secondary")
         settings.setActiveTokenAccountIndex(0, for: .claude)
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let blocker = BlockingTokenAccountFetchStrategy()
         self.installBlockingClaudeProvider(on: store, blocker: blocker)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
@@ -384,8 +377,7 @@ final class StatusMenuTokenAccountSwitcherTests: XCTestCase {
         settings.setActiveTokenAccountIndex(0, for: .claude)
         let accounts = settings.tokenAccounts(for: .claude)
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         store.snapshots[.claude] = self.snapshot(percent: 11)
         store.lastKnownResetSnapshots[.claude] = self.snapshot(percent: 11)
         store.errors[.claude] = "primary-error"
@@ -409,7 +401,7 @@ final class StatusMenuTokenAccountSwitcherTests: XCTestCase {
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
@@ -445,8 +437,7 @@ final class StatusMenuTokenAccountSwitcherTests: XCTestCase {
         settings.setActiveTokenAccountIndex(0, for: .claude)
         let accounts = settings.tokenAccounts(for: .claude)
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         store.snapshots[.claude] = self.snapshot(percent: 11)
         store.lastKnownResetSnapshots[.claude] = self.snapshot(percent: 11)
         store.errors[.claude] = "primary-error"
@@ -464,7 +455,7 @@ final class StatusMenuTokenAccountSwitcherTests: XCTestCase {
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
@@ -508,7 +499,6 @@ final class StatusMenuTokenAccountSwitcherTests: XCTestCase {
         settings.setActiveTokenAccountIndex(0, for: .claude)
 
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         store._test_providerFetchOutcomeOverride = { _ in
@@ -517,7 +507,6 @@ final class StatusMenuTokenAccountSwitcherTests: XCTestCase {
                 result: .success(ProviderFetchResult(
                     usage: self.snapshot(percent: percent),
                     credits: nil,
-                    dashboard: nil,
                     sourceLabel: "fixture",
                     strategyID: "fixture",
                     strategyKind: .apiToken)),
@@ -566,7 +555,6 @@ extension StatusMenuTokenAccountSwitcherTests {
         let account = try? XCTUnwrap(settings.selectedTokenAccount(for: .claude))
 
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         store._test_providerFetchOutcomeOverride = { _ in
@@ -574,7 +562,6 @@ extension StatusMenuTokenAccountSwitcherTests {
                 result: .success(ProviderFetchResult(
                     usage: self.snapshot(percent: 45),
                     credits: nil,
-                    dashboard: nil,
                     sourceLabel: "fixture",
                     strategyID: "fixture",
                     strategyKind: .apiToken)),
@@ -609,7 +596,6 @@ extension StatusMenuTokenAccountSwitcherTests {
         let accountID = settings.selectedTokenAccount(for: .claude)?.id
 
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         store._test_providerFetchOutcomeOverride = { _ in
@@ -617,7 +603,6 @@ extension StatusMenuTokenAccountSwitcherTests {
                 result: .success(ProviderFetchResult(
                     usage: self.snapshot(percent: 45),
                     credits: nil,
-                    dashboard: nil,
                     sourceLabel: "fixture",
                     strategyID: "fixture",
                     strategyKind: .apiToken)),
@@ -651,7 +636,6 @@ extension StatusMenuTokenAccountSwitcherTests {
         let accountID = settings.selectedTokenAccount(for: .claude)?.id
 
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         store._test_providerFetchOutcomeOverride = { _ in
@@ -684,7 +668,6 @@ extension StatusMenuTokenAccountSwitcherTests {
         self.enableOnlyClaude(settings)
 
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         store._setSnapshotForTesting(self.snapshot(percent: 45), provider: .claude)

@@ -112,7 +112,7 @@ struct ClaudeSwapWidgetSnapshotTests {
         let (settings, store) = self.makeStore()
         settings.claudeSwapShowSingleAccount = showSingle
         store._setSnapshotForTesting(self.usage(100), provider: .claude)
-        store._setSnapshotForTesting(self.usage(70), provider: .codex)
+        store._setSnapshotForTesting(self.usage(70), provider: .opencode)
         store.claudeSwapAccountSnapshots = [self.account("1", used: 20)]
         var saved: WidgetSnapshot?
         store._test_widgetSnapshotSaveOverride = { saved = $0 }
@@ -120,7 +120,7 @@ struct ClaudeSwapWidgetSnapshotTests {
         store.persistWidgetSnapshot(reason: "swap-single")
         await store.widgetSnapshotPersistTask?.value
         #expect(saved?.entries.first { $0.provider == .claude }?.primary?.usedPercent == (showSingle ? 20 : 100))
-        #expect(saved?.entries.first { $0.provider == .codex }?.primary?.usedPercent == 70)
+        #expect(saved?.entries.first { $0.provider == .opencode }?.primary?.usedPercent == 70)
 
         settings.claudeSwapEnabled = false
         store.persistWidgetSnapshot(reason: "swap-disabled")
@@ -133,10 +133,9 @@ struct ClaudeSwapWidgetSnapshotTests {
             suiteName: "ClaudeSwapWidgetSnapshotTests",
             userDefaults: InMemoryUserDefaults(),
             config: testConfigWithAllProvidersDisabled())
-        enableTestProviders([.claude, .codex], settings: settings)
+        enableTestProviders([.claude, .opencode], settings: settings)
         settings.claudeSwapEnabled = true
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(homeDirectory: "/synthetic", fileExists: { _ in false }),
             settings: settings,
             startupBehavior: .testing,

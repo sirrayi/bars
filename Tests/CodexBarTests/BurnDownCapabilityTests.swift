@@ -12,14 +12,14 @@ struct BurnDownCapabilityTests {
     @Test
     func `unknown duration or reset never fabricates a burn down`() throws {
         let window = RateWindow(usedPercent: 20, windowMinutes: 300, resetsAt: nil, resetDescription: nil)
-        let snapshot = Self.snapshot(provider: .codex, primary: window)
-        let state = try #require(BurnDownState(snapshot: snapshot, provider: .codex, selection: .session))
+        let snapshot = Self.snapshot(provider: .claude, primary: window)
+        let state = try #require(BurnDownState(snapshot: snapshot, provider: .claude, selection: .session))
         #expect(state.selectedWindow == nil)
     }
 
     @Test
     func `legacy intent aliases stay exact when new provider window shapes become available`() throws {
-        for provider in [UsageProvider.codex, .claude] {
+        for provider in [UsageProvider.claude] {
             let snapshot = Self.snapshot(provider: provider, primary: Self.window(minutes: 1440))
             let state = try #require(BurnDownState(snapshot: snapshot, provider: provider, selection: .session))
             #expect(state.selectedWindow == nil)
@@ -101,7 +101,7 @@ struct BurnDownCapabilityTests {
 
     @Test
     func `saved legacy provider and window values keep parameter types defaults and meaning`() throws {
-        let legacy = Data(#"[{"provider":"codex","window":"session"},{"provider":"claude","window":"weekly"}]"#.utf8)
+        let legacy = Data(#"[{"provider":"claude","window":"session"},{"provider":"claude","window":"weekly"}]"#.utf8)
         let values = try JSONDecoder().decode([[String: String]].self, from: legacy)
         for value in values {
             let providerRaw = try #require(value["provider"])
@@ -122,9 +122,9 @@ struct BurnDownCapabilityTests {
             #expect(state.selectedWindow?.windowMinutes == (selection == .session ? 300 : 10080))
             #expect(state.combinedSelections == [.session, .weekly])
         }
-        #expect(BurnDownSelectionIntent().provider == .codex)
+        #expect(BurnDownSelectionIntent().provider == .claude)
         #expect(BurnDownSelectionIntent().window == .session)
-        #expect(BurnProviderSelectionIntent().provider == .codex)
+        #expect(BurnProviderSelectionIntent().provider == .claude)
     }
 
     @Test
@@ -139,7 +139,7 @@ struct BurnDownCapabilityTests {
     @Test
     func `exhausted weekly quota still caps a session when its reset is unknown`() throws {
         let weekly = RateWindow(usedPercent: 100, windowMinutes: 10080, resetsAt: nil, resetDescription: nil)
-        for provider in [UsageProvider.codex, .claude] {
+        for provider in [UsageProvider.claude] {
             let state = try #require(BurnDownState(
                 snapshot: Self.snapshot(provider: provider, primary: Self.window(minutes: 300), secondary: weekly),
                 provider: provider,

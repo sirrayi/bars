@@ -49,7 +49,6 @@ struct UsageStoreSessionQuotaTransitionTests {
 
         let notifier = SessionQuotaNotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier)
@@ -80,7 +79,6 @@ struct UsageStoreSessionQuotaTransitionTests {
 
         let notifier = SessionQuotaNotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier)
@@ -118,7 +116,6 @@ struct UsageStoreSessionQuotaTransitionTests {
 
         let notifier = SessionQuotaNotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier)
@@ -147,7 +144,6 @@ struct UsageStoreSessionQuotaTransitionTests {
 
         let notifier = SessionQuotaNotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier)
@@ -156,7 +152,7 @@ struct UsageStoreSessionQuotaTransitionTests {
             primary: RateWindow(usedPercent: 90, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
             secondary: nil,
             updatedAt: Date())
-        store.handleQuotaWarningTransitions(provider: .codex, snapshot: snapshot)
+        store.handleQuotaWarningTransitions(provider: .opencode, snapshot: snapshot)
 
         #expect(notifier.quotaWarningPosts.isEmpty)
     }
@@ -174,41 +170,40 @@ struct UsageStoreSessionQuotaTransitionTests {
 
         let notifier = SessionQuotaNotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier)
 
         store.handleQuotaWarningTransitions(
-            provider: .codex,
+            provider: .opencode,
             snapshot: UsageSnapshot(
                 primary: RateWindow(usedPercent: 40, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 secondary: nil,
                 updatedAt: Date(),
                 identity: ProviderIdentitySnapshot(
-                    providerID: .codex,
+                    providerID: .opencode,
                     accountEmail: "person@example.com",
                     accountOrganization: nil,
                     loginMethod: nil)))
         store.handleQuotaWarningTransitions(
-            provider: .codex,
+            provider: .opencode,
             snapshot: UsageSnapshot(
                 primary: RateWindow(usedPercent: 55, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 secondary: nil,
                 updatedAt: Date(),
                 identity: ProviderIdentitySnapshot(
-                    providerID: .codex,
+                    providerID: .opencode,
                     accountEmail: "person@example.com",
                     accountOrganization: nil,
                     loginMethod: nil)))
         store.handleQuotaWarningTransitions(
-            provider: .codex,
+            provider: .opencode,
             snapshot: UsageSnapshot(
                 primary: RateWindow(usedPercent: 60, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 secondary: nil,
                 updatedAt: Date(),
                 identity: ProviderIdentitySnapshot(
-                    providerID: .codex,
+                    providerID: .opencode,
                     accountEmail: "person@example.com",
                     accountOrganization: nil,
                     loginMethod: nil)))
@@ -232,25 +227,24 @@ struct UsageStoreSessionQuotaTransitionTests {
 
         let notifier = SessionQuotaNotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier)
         let identity = ProviderIdentitySnapshot(
-            providerID: .codex,
+            providerID: .opencode,
             accountEmail: "person@example.com",
             accountOrganization: nil,
             loginMethod: nil)
 
         store.handleQuotaWarningTransitions(
-            provider: .codex,
+            provider: .opencode,
             snapshot: UsageSnapshot(
                 primary: RateWindow(usedPercent: 40, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 secondary: nil,
                 updatedAt: Date(),
                 identity: identity))
         store.handleQuotaWarningTransitions(
-            provider: .codex,
+            provider: .opencode,
             snapshot: UsageSnapshot(
                 primary: RateWindow(usedPercent: 55, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 secondary: nil,
@@ -274,19 +268,18 @@ struct UsageStoreSessionQuotaTransitionTests {
 
         let notifier = SessionQuotaNotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier)
 
         store.handleQuotaWarningTransitions(
-            provider: .codex,
+            provider: .opencode,
             snapshot: UsageSnapshot(
                 primary: RateWindow(usedPercent: 40, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 secondary: nil,
                 updatedAt: Date()))
         store.handleQuotaWarningTransitions(
-            provider: .codex,
+            provider: .opencode,
             snapshot: UsageSnapshot(
                 primary: RateWindow(usedPercent: 55, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 secondary: nil,
@@ -308,19 +301,18 @@ struct UsageStoreSessionQuotaTransitionTests {
 
         let notifier = SessionQuotaNotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier)
 
         store.handleQuotaWarningTransitions(
-            provider: .codex,
+            provider: .opencode,
             snapshot: UsageSnapshot(
                 primary: RateWindow(usedPercent: 10, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 secondary: nil,
                 updatedAt: Date()))
         store.handleQuotaWarningTransitions(
-            provider: .codex,
+            provider: .opencode,
             snapshot: UsageSnapshot(
                 primary: RateWindow(usedPercent: 85, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 secondary: nil,
@@ -341,14 +333,13 @@ struct UsageStoreSessionQuotaTransitionTests {
 
         let notifier = SessionQuotaNotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier)
 
         for used in [40, 55, 10, 55] {
             store.handleQuotaWarningTransitions(
-                provider: .codex,
+                provider: .opencode,
                 snapshot: UsageSnapshot(
                     primary: RateWindow(
                         usedPercent: Double(used),
@@ -371,23 +362,22 @@ struct UsageStoreSessionQuotaTransitionTests {
         settings.quotaWarningThresholds = [50]
         settings.setQuotaWarningWindowEnabled(.session, enabled: true)
         settings.setQuotaWarningWindowEnabled(.weekly, enabled: true)
-        settings.setQuotaWarningThresholds(provider: .codex, window: .session, thresholds: [10])
+        settings.setQuotaWarningThresholds(provider: .opencode, window: .session, thresholds: [10])
 
         let notifier = SessionQuotaNotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier)
 
         store.handleQuotaWarningTransitions(
-            provider: .codex,
+            provider: .opencode,
             snapshot: UsageSnapshot(
                 primary: RateWindow(usedPercent: 40, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 secondary: nil,
                 updatedAt: Date()))
         store.handleQuotaWarningTransitions(
-            provider: .codex,
+            provider: .opencode,
             snapshot: UsageSnapshot(
                 primary: RateWindow(usedPercent: 95, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 secondary: nil,
@@ -408,19 +398,18 @@ struct UsageStoreSessionQuotaTransitionTests {
 
         let notifier = SessionQuotaNotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier)
 
         store.handleQuotaWarningTransitions(
-            provider: .codex,
+            provider: .opencode,
             snapshot: UsageSnapshot(
                 primary: RateWindow(usedPercent: 40, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 secondary: RateWindow(usedPercent: 40, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 updatedAt: Date()))
         store.handleQuotaWarningTransitions(
-            provider: .codex,
+            provider: .opencode,
             snapshot: UsageSnapshot(
                 primary: RateWindow(usedPercent: 60, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 secondary: RateWindow(usedPercent: 60, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
@@ -441,19 +430,18 @@ struct UsageStoreSessionQuotaTransitionTests {
 
         let notifier = SessionQuotaNotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier)
 
         store.handleQuotaWarningTransitions(
-            provider: .codex,
+            provider: .opencode,
             snapshot: UsageSnapshot(
                 primary: RateWindow(usedPercent: 40, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 secondary: RateWindow(usedPercent: 40, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 updatedAt: Date()))
         store.handleQuotaWarningTransitions(
-            provider: .codex,
+            provider: .opencode,
             snapshot: UsageSnapshot(
                 primary: RateWindow(usedPercent: 60, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 secondary: RateWindow(usedPercent: 60, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
@@ -473,19 +461,18 @@ struct UsageStoreSessionQuotaTransitionTests {
 
         let notifier = SessionQuotaNotifierSpy()
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier)
 
         store.handleQuotaWarningTransitions(
-            provider: .codex,
+            provider: .opencode,
             snapshot: UsageSnapshot(
                 primary: RateWindow(usedPercent: 40, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 secondary: nil,
                 updatedAt: Date()))
         store.handleQuotaWarningTransitions(
-            provider: .codex,
+            provider: .opencode,
             snapshot: UsageSnapshot(
                 primary: RateWindow(usedPercent: 60, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 secondary: nil,
@@ -493,7 +480,7 @@ struct UsageStoreSessionQuotaTransitionTests {
 
         settings.setQuotaWarningWindowEnabled(.session, enabled: false)
         store.handleQuotaWarningTransitions(
-            provider: .codex,
+            provider: .opencode,
             snapshot: UsageSnapshot(
                 primary: RateWindow(usedPercent: 60, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 secondary: nil,
@@ -502,7 +489,7 @@ struct UsageStoreSessionQuotaTransitionTests {
         #expect(notifier.quotaWarningPosts.count == 1)
         #expect(store.quotaWarningState[
             UsageStore.QuotaWarningStateKey(
-                provider: .codex,
+                provider: .opencode,
                 window: .session,
                 accountDiscriminator: nil,
                 windowID: nil),

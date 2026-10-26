@@ -39,7 +39,6 @@ struct CodexBarConfigMigratorTests {
         let settings = SettingsStore(
             userDefaults: InMemoryUserDefaults(),
             configStore: configStore,
-            codexCookieStore: secrets,
             claudeCookieStore: secrets,
             opencodeCookieStore: secrets,
             tokenAccountStore: CountingTokenAccountStore(),
@@ -77,7 +76,6 @@ struct CodexBarConfigMigratorTests {
         let settings = SettingsStore(
             userDefaults: InMemoryUserDefaults(),
             configStore: configStore,
-            codexCookieStore: secrets,
             claudeCookieStore: secrets,
             opencodeCookieStore: secrets,
             tokenAccountStore: CountingTokenAccountStore(),
@@ -136,12 +134,10 @@ struct CodexBarConfigMigratorTests {
         let settings = SettingsStore(
             userDefaults: defaults,
             configStore: configStore,
-            codexCookieStore: secrets,
             claudeCookieStore: secrets,
             opencodeCookieStore: secrets,
             tokenAccountStore: CountingTokenAccountStore(),
             performInitialProviderDetection: false)
-        #expect(!settings.openAIWebAccessEnabled)
         #expect(try Data(contentsOf: configStore.fileURL) == corrupt)
         settings.updateProviderConfig(provider: .claude) { $0.enabled = true }
         #expect(try Data(contentsOf: configStore.fileURL) == corrupt)
@@ -212,7 +208,6 @@ struct CodexBarConfigMigratorTests {
         let store = SettingsStore(
             userDefaults: defaults,
             configStore: testConfigStore(suiteName: suite),
-            codexCookieStore: secrets,
             claudeCookieStore: secrets,
             opencodeCookieStore: secrets,
             tokenAccountStore: CountingTokenAccountStore(),
@@ -361,7 +356,6 @@ struct CodexBarConfigMigratorTests {
         let unreadableSecrets = CountingLegacySecretStore(throwOnLoad: true)
         let accountStore = CountingTokenAccountStore()
         let stores = CodexBarConfigMigrator.LegacyStores(
-            codexCookieStore: readableSecrets,
             claudeCookieStore: unreadableSecrets,
             opencodeCookieStore: readableSecrets,
             tokenAccountStore: accountStore)
@@ -439,7 +433,6 @@ struct CodexBarConfigMigratorTests {
         accountStore: CountingTokenAccountStore) -> CodexBarConfigMigrator.LegacyStores
     {
         CodexBarConfigMigrator.LegacyStores(
-            codexCookieStore: secrets,
             claudeCookieStore: secrets,
             opencodeCookieStore: secrets,
             tokenAccountStore: accountStore)

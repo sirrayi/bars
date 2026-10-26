@@ -19,10 +19,9 @@ extension StatusMenuTests {
         // unconditionally preferring cost history the way mistral's Overview row does.
         settings.costSummaryDisplayStyle = .inlineSummary
 
-        enableTestProviders([.opencodego, .codex], settings: settings)
+        enableTestProviders([.opencodego, .claude], settings: settings)
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let opencodegoSnapshot = OpenCodeGoUsageSnapshot(
             hasMonthlyUsage: true,
             rollingUsagePercent: 12,
@@ -48,7 +47,7 @@ extension StatusMenuTests {
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())

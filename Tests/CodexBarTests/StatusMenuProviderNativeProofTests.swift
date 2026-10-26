@@ -15,16 +15,14 @@ final class StatusMenuProviderNativeProofTests: XCTestCase {
         }
         guard SettingsStore.isRunningTests,
               environment["CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS"] == "1",
-              environment[CodexCredentialFileAccess.isolationEnvironmentKey] == "1",
               environment["CODEXBAR_TEST_SESSION_FILE_ISOLATION"] == "1",
-              environment["CODEXBAR_ALLOW_TEST_KEYCHAIN_ACCESS"] != "1",
-              environment["CODEXBAR_TEST_CODEX_FILE_FIXTURES"] == nil
+              environment["CODEXBAR_ALLOW_TEST_KEYCHAIN_ACCESS"] != "1"
         else {
             return XCTFail("Native proof requires credential and session isolation.")
         }
         let directory = URL(fileURLWithPath: directoryPath, isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let fixture = try CodexWorkspacesNavigationFixture(userDefaults: InMemoryUserDefaults())
+        let fixture = try MenuNavigationFixture(userDefaults: InMemoryUserDefaults())
         defer { fixture.cleanup() }
         let overview = environment["CODEXBAR_STATUS_PROVIDER_PROOF_OVERVIEW"] == "1"
         let compact = environment["CODEXBAR_STATUS_PROVIDER_PROOF_COMPACT"] == "1"
@@ -165,11 +163,11 @@ final class StatusMenuProviderNativeProofTests: XCTestCase {
     private static func nativeReceipt(
         menu: NSMenu,
         host: NSWindow,
-        fixture: CodexWorkspacesNavigationFixture,
+        fixture: MenuNavigationFixture,
         controller: StatusItemController) -> [String: String]
     {
         let overviewRow = menu.items.first {
-            ($0.representedObject as? String) == "overviewRow-codex"
+            ($0.representedObject as? String) == "overviewRow-opencode"
         }?.view as? MenuRowContainerView
         let contentHost = overviewRow?.subviews.last
         let statusItem = menu.items.first { $0.title == L("Status Page") }
@@ -196,7 +194,7 @@ final class StatusMenuProviderNativeProofTests: XCTestCase {
     }
 
     private static func measureHighlights(in menu: NSMenu, host: NSWindow, directory: URL) throws {
-        let item = try XCTUnwrap(menu.items.first { ($0.representedObject as? String) == "overviewRow-codex" })
+        let item = try XCTUnwrap(menu.items.first { ($0.representedObject as? String) == "overviewRow-opencode" })
         let row = try XCTUnwrap(item.view as? MenuRowContainerView)
         let width = max(300, row.frame.width)
         let size = NSSize(width: width, height: row.measuredHeight(width: width))
@@ -238,7 +236,7 @@ final class StatusMenuProviderNativeProofTests: XCTestCase {
             .write(to: directory.appendingPathComponent("benchmark.json"), options: .atomic)
     }
 
-    private static func seedCompactAccounts(in fixture: CodexWorkspacesNavigationFixture) {
+    private static func seedCompactAccounts(in fixture: MenuNavigationFixture) {
         fixture.settings.multiAccountMenuLayout = .stacked
         for index in 0..<5 {
             fixture.settings.addTokenAccount(
@@ -268,12 +266,12 @@ final class StatusMenuProviderNativeProofTests: XCTestCase {
         }
     }
 
-    private static func seedOverviewHistory(in fixture: CodexWorkspacesNavigationFixture) {
+    private static func seedOverviewHistory(in fixture: MenuNavigationFixture) {
         fixture.settings.costUsageEnabled = true
         fixture.settings.costSummaryDisplayStyle = .both
         let now = Date()
         let day = CostUsageScanner.CostUsageDayRange.dayKey(from: now)
-        for provider in [UsageProvider.claude, .codex] {
+        for provider in [UsageProvider.claude, .opencode] {
             fixture.store._setTokenSnapshotForTesting(
                 CostUsageTokenSnapshot(
                     sessionTokens: 100,
@@ -294,12 +292,12 @@ final class StatusMenuProviderNativeProofTests: XCTestCase {
     }
 
     private static func seedProviderMenu(
-        in fixture: CodexWorkspacesNavigationFixture,
+        in fixture: MenuNavigationFixture,
         overview: Bool,
         compact: Bool)
     {
         let providers: [UsageProvider] = compact ? [.claude]
-            : overview ? [.claude, .codex, .deepseek, .devin, .opencode] : [.claude, .codex, .deepseek]
+            : overview ? [.claude, .opencode, .deepseek, .devin, .opencodego] : [.claude, .opencode, .deepseek]
         for provider in providers {
             fixture.settings.setProviderEnabled(
                 provider: provider,
@@ -337,8 +335,8 @@ final class StatusMenuProviderNativeProofTests: XCTestCase {
         if overview { Self.seedOverviewHistory(in: fixture) }
         if compact {
             fixture.settings.setProviderEnabled(
-                provider: .codex,
-                metadata: ProviderDescriptorRegistry.descriptor(for: .codex).metadata,
+                provider: .opencode,
+                metadata: ProviderDescriptorRegistry.descriptor(for: .opencode).metadata,
                 enabled: false)
             Self.seedCompactAccounts(in: fixture)
             if ProcessInfo.processInfo.environment["CODEXBAR_STATUS_PROVIDER_PROOF_HIDE_SESSION"] == "1" {
@@ -348,8 +346,8 @@ final class StatusMenuProviderNativeProofTests: XCTestCase {
         fixture.store.statusComponents[.claude] = [
             ProviderStatusComponent(id: "claude", name: "Claude.ai", indicator: .none, status: "operational"),
         ]
-        fixture.store.statusComponents[.codex] = [
-            ProviderStatusComponent(id: "codex", name: "Codex", indicator: .none, status: "operational"),
+        fixture.store.statusComponents[.opencode] = [
+            ProviderStatusComponent(id: "opencode", name: "OpenCode", indicator: .none, status: "operational"),
         ]
     }
 }

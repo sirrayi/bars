@@ -46,7 +46,7 @@ struct ProviderStorageFootprintTests {
         let link = root.appendingPathComponent("linked.bin")
         try FileManager.default.createSymbolicLink(at: link, withDestinationURL: target)
 
-        let footprint = ProviderStorageScanner().scan(provider: .codex, candidatePaths: [root.path])
+        let footprint = ProviderStorageScanner().scan(provider: .opencode, candidatePaths: [root.path])
 
         #expect(footprint.totalBytes == 12)
         #expect(footprint.paths == [root.path])
@@ -66,7 +66,7 @@ struct ProviderStorageFootprintTests {
         let symlinkRoot = root.appendingPathComponent("codex-link", isDirectory: true)
         try FileManager.default.createSymbolicLink(at: symlinkRoot, withDestinationURL: target)
 
-        let footprint = ProviderStorageScanner().scan(provider: .codex, candidatePaths: [symlinkRoot.path])
+        let footprint = ProviderStorageScanner().scan(provider: .opencode, candidatePaths: [symlinkRoot.path])
 
         #expect(footprint.paths == [symlinkRoot.path])
         #expect(footprint.totalBytes == 0)
@@ -87,7 +87,7 @@ struct ProviderStorageFootprintTests {
         try Data(repeating: 3, count: 3).write(to: root.appendingPathComponent("top level.bin"))
         let candidatePath = usesUnnormalizedRoot ? unused.path + "/../" : root.path
 
-        let footprint = ProviderStorageScanner().scan(provider: .codex, candidatePaths: [candidatePath])
+        let footprint = ProviderStorageScanner().scan(provider: .opencode, candidatePaths: [candidatePath])
 
         #expect(footprint.totalBytes == 15)
         #expect(footprint.paths == [candidatePath])
@@ -114,31 +114,28 @@ struct ProviderStorageFootprintTests {
     }
 
     @Test
-    func `codex path catalog uses CODEX_HOME and managed homes`() {
-        let managed = ManagedCodexAccount(
-            id: UUID(),
-            email: "user@example.com",
-            managedHomePath: "/tmp/codex-managed-home",
-            createdAt: 1,
-            updatedAt: 1,
-            lastAuthenticatedAt: nil)
-
+    func `claude path catalog uses the environment home by default`() {
         let paths = ProviderStoragePathCatalog.candidatePaths(
-            for: .codex,
-            environment: ["CODEX_HOME": "/tmp/codex-home"],
-            managedCodexAccounts: [managed])
+            for: .claude,
+            environment: ["HOME": "/tmp/claude-home"])
 
-        #expect(paths == ["/tmp/codex-home", "/tmp/codex-managed-home"])
+        #expect(paths == [
+            "/tmp/claude-home/.claude",
+            "/tmp/claude-home/.config/claude",
+            "/tmp/claude-home/Library/Application Support/CodexBar/ClaudeProbe",
+        ])
     }
 
     @Test
-    func `codex path catalog falls back to default home`() {
-        let paths = ProviderStoragePathCatalog.candidatePaths(for: .codex, environment: [:])
-        let expected = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".codex", isDirectory: true)
-            .path
+    func `claude path catalog replaces default roots with CLAUDE_CONFIG_DIR`() {
+        let paths = ProviderStoragePathCatalog.candidatePaths(
+            for: .claude,
+            environment: ["HOME": "/tmp/claude-home", "CLAUDE_CONFIG_DIR": "/tmp/claude-profile"])
 
-        #expect(paths.first == expected)
+        #expect(paths == [
+            "/tmp/claude-profile",
+            "/tmp/claude-home/Library/Application Support/CodexBar/ClaudeProbe",
+        ])
     }
 
     @Test
@@ -167,41 +164,6 @@ struct ProviderStorageFootprintTests {
         ])
         #expect(recommendations[0].consequence.contains("resume"))
         #expect(recommendations.allSatisfy { $0.riskLevel == .manualCleanup })
-    }
-
-    @Test
-    func `codex recommendations stay under known homes and exclude auth and config`() {
-        let root = "/Users/test/.codex"
-        let footprint = ProviderStorageFootprint(
-            provider: .codex,
-            totalBytes: 51,
-            paths: [root],
-            missingPaths: [],
-            unreadablePaths: [],
-            components: [
-                .init(path: "\(root)/sessions", totalBytes: 20),
-                .init(path: "\(root)/archived_sessions", totalBytes: 15),
-                .init(path: "\(root)/log", totalBytes: 12),
-                .init(path: "\(root)/logs_2.sqlite", totalBytes: 11),
-                .init(path: "\(root)/cache", totalBytes: 10),
-                .init(path: "\(root)/shell_snapshots", totalBytes: 9),
-                .init(path: "\(root)/auth.json", totalBytes: 4),
-                .init(path: "\(root)/config.toml", totalBytes: 2),
-                .init(path: "/tmp/outside/sessions", totalBytes: 99),
-            ],
-            updatedAt: Date(timeIntervalSince1970: 0))
-
-        let recommendations = footprint.cleanupRecommendations
-
-        #expect(recommendations.map(\.path) == [
-            "\(root)/sessions",
-            "\(root)/archived_sessions",
-            "\(root)/cache",
-            "\(root)/log",
-            "\(root)/logs_2.sqlite",
-            "\(root)/shell_snapshots",
-        ])
-        #expect(recommendations.map(\.bytes) == [20, 15, 10, 12, 11, 9])
     }
 
     @Test
@@ -311,8 +273,8 @@ struct ProviderStorageFootprintTests {
         let home = try Self.makeTemporaryDirectory()
         defer { try? FileManager.default.removeItem(at: home) }
 
-        let codexHome = home.appendingPathComponent(".codex", isDirectory: true)
-        let sessions = codexHome.appendingPathComponent("sessions", isDirectory: true)
+        let configRoot = home.appendingPathComponent("claude-config", isDirectory: true)
+        let sessions = configRoot.appendingPathComponent("sessions", isDirectory: true)
         try FileManager.default.createDirectory(at: sessions, withIntermediateDirectories: true)
         try Data(repeating: 1, count: 32).write(to: sessions.appendingPathComponent("session.jsonl"))
 
@@ -322,26 +284,24 @@ struct ProviderStorageFootprintTests {
         let settings = SettingsStore(
             userDefaults: defaults,
             configStore: testConfigStore(suiteName: suite))
-        if let codexMetadata = ProviderDefaults.metadata[.codex] {
-            settings.setProviderEnabled(provider: .codex, metadata: codexMetadata, enabled: true)
+        if let metadata = ProviderDefaults.metadata[.claude] {
+            settings.setProviderEnabled(provider: .claude, metadata: metadata, enabled: true)
         }
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
-            environmentBase: ["CODEX_HOME": codexHome.path])
+            environmentBase: ["HOME": home.path, "CLAUDE_CONFIG_DIR": configRoot.path])
         settings.providerStorageFootprintsEnabled = true
         settings.backgroundWorkLowPowerModePreference = .on
-        store.managedCodexAccountsForStorageOverride = []
 
         await store.refreshStorageFootprintsForOverviewNow()
-        #expect(store.storageFootprint(for: .codex)?.totalBytes == 32)
+        #expect(store.storageFootprint(for: .claude)?.totalBytes == 32)
 
         try FileManager.default.removeItem(at: sessions)
         await store.refreshStorageFootprintsForOverviewNow()
 
-        #expect(store.storageFootprint(for: .codex)?.totalBytes == 0)
-        #expect(store.storageFootprintText(for: .codex) == "No local data found")
+        #expect(store.storageFootprint(for: .claude)?.totalBytes == 0)
+        #expect(store.storageFootprintText(for: .claude) == "No local data found")
     }
 
     @Test
@@ -350,8 +310,8 @@ struct ProviderStorageFootprintTests {
         let home = try Self.makeTemporaryDirectory()
         defer { try? FileManager.default.removeItem(at: home) }
 
-        let codexHome = home.appendingPathComponent(".codex", isDirectory: true)
-        let sessions = codexHome.appendingPathComponent("sessions", isDirectory: true)
+        let configRoot = home.appendingPathComponent("claude-config", isDirectory: true)
+        let sessions = configRoot.appendingPathComponent("sessions", isDirectory: true)
         try FileManager.default.createDirectory(at: sessions, withIntermediateDirectories: true)
         try Data(repeating: 1, count: 32).write(to: sessions.appendingPathComponent("session.jsonl"))
 
@@ -361,19 +321,17 @@ struct ProviderStorageFootprintTests {
         let settings = SettingsStore(
             userDefaults: defaults,
             configStore: testConfigStore(suiteName: suite))
-        if let codexMetadata = ProviderDefaults.metadata[.codex] {
-            settings.setProviderEnabled(provider: .codex, metadata: codexMetadata, enabled: true)
+        if let metadata = ProviderDefaults.metadata[.claude] {
+            settings.setProviderEnabled(provider: .claude, metadata: metadata, enabled: true)
         }
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
-            environmentBase: ["CODEX_HOME": codexHome.path])
+            environmentBase: ["HOME": home.path, "CLAUDE_CONFIG_DIR": configRoot.path])
         settings.providerStorageFootprintsEnabled = true
-        store.managedCodexAccountsForStorageOverride = []
 
-        await store.refreshStorageFootprintsNow(for: [.codex])
-        #expect(store.storageFootprint(for: .codex)?.totalBytes == 32)
+        await store.refreshStorageFootprintsNow(for: [.claude])
+        #expect(store.storageFootprint(for: .claude)?.totalBytes == 32)
 
         // A second scan over identical on-disk data must not re-assign the observable property.
         // Storage scans run on every menu open and every ~5 min; an unconditional re-publish wakes
@@ -384,11 +342,11 @@ struct ProviderStorageFootprintTests {
         } onChange: {
             didRepublish.set()
         }
-        await store.refreshStorageFootprintsNow(for: [.codex])
+        await store.refreshStorageFootprintsNow(for: [.claude])
         try? await Task.sleep(for: .milliseconds(50))
 
         #expect(didRepublish.get() == false)
-        #expect(store.storageFootprint(for: .codex)?.totalBytes == 32)
+        #expect(store.storageFootprint(for: .claude)?.totalBytes == 32)
     }
 
     @Test
@@ -397,9 +355,9 @@ struct ProviderStorageFootprintTests {
         let home = try Self.makeTemporaryDirectory()
         defer { try? FileManager.default.removeItem(at: home) }
 
-        let codexHome = home.appendingPathComponent(".codex", isDirectory: true)
-        try FileManager.default.createDirectory(at: codexHome, withIntermediateDirectories: true)
-        try Data(repeating: 1, count: 16).write(to: codexHome.appendingPathComponent("session.jsonl"))
+        let configRoot = home.appendingPathComponent("claude-config", isDirectory: true)
+        try FileManager.default.createDirectory(at: configRoot, withIntermediateDirectories: true)
+        try Data(repeating: 1, count: 16).write(to: configRoot.appendingPathComponent("session.jsonl"))
 
         let suite = "ProviderStorageFootprintTests-storage-opt-in-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suite))
@@ -407,26 +365,24 @@ struct ProviderStorageFootprintTests {
         let settings = SettingsStore(
             userDefaults: defaults,
             configStore: testConfigStore(suiteName: suite))
-        if let codexMetadata = ProviderDefaults.metadata[.codex] {
-            settings.setProviderEnabled(provider: .codex, metadata: codexMetadata, enabled: true)
+        if let metadata = ProviderDefaults.metadata[.claude] {
+            settings.setProviderEnabled(provider: .claude, metadata: metadata, enabled: true)
         }
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
-            environmentBase: ["CODEX_HOME": codexHome.path])
-        store.managedCodexAccountsForStorageOverride = []
+            environmentBase: ["HOME": home.path, "CLAUDE_CONFIG_DIR": configRoot.path])
 
         await store.refreshStorageFootprintsForOverviewNow()
-        #expect(store.storageFootprint(for: .codex) == nil)
+        #expect(store.storageFootprint(for: .claude) == nil)
 
         settings.providerStorageFootprintsEnabled = true
         await store.refreshStorageFootprintsForOverviewNow()
-        #expect(store.storageFootprint(for: .codex)?.totalBytes == 16)
+        #expect(store.storageFootprint(for: .claude)?.totalBytes == 16)
 
         settings.providerStorageFootprintsEnabled = false
         await store.refreshStorageFootprintsForOverviewNow()
-        #expect(store.storageFootprint(for: .codex) == nil)
+        #expect(store.storageFootprint(for: .claude) == nil)
         #expect(store.providerStorageFootprints.isEmpty)
     }
 
@@ -436,8 +392,8 @@ struct ProviderStorageFootprintTests {
         let home = try Self.makeTemporaryDirectory()
         defer { try? FileManager.default.removeItem(at: home) }
 
-        let codexHome = home.appendingPathComponent(".codex", isDirectory: true)
-        try FileManager.default.createDirectory(at: codexHome, withIntermediateDirectories: true)
+        let configRoot = home.appendingPathComponent("claude-config", isDirectory: true)
+        try FileManager.default.createDirectory(at: configRoot, withIntermediateDirectories: true)
 
         let suite = "ProviderStorageFootprintTests-storage-in-flight-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suite))
@@ -446,13 +402,15 @@ struct ProviderStorageFootprintTests {
             userDefaults: defaults,
             configStore: testConfigStore(suiteName: suite))
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
-            environmentBase: ["CODEX_HOME": codexHome.path])
+            environmentBase: ["HOME": home.path, "CLAUDE_CONFIG_DIR": configRoot.path])
         settings.providerStorageFootprintsEnabled = true
         store.storageRefreshGeneration = 41
-        store.storageRefreshInFlightSignature = "codex=\(codexHome.path)"
+        let paths = ProviderStoragePathCatalog.candidatePaths(
+            for: .claude,
+            environment: ["HOME": home.path, "CLAUDE_CONFIG_DIR": configRoot.path])
+        store.storageRefreshInFlightSignature = "claude=\(paths.joined(separator: "\u{1f}"))"
         store.storageRefreshTask = Task.detached {
             try? await Task.sleep(for: .seconds(30))
         }
@@ -462,70 +420,9 @@ struct ProviderStorageFootprintTests {
             store.storageRefreshInFlightSignature = nil
         }
 
-        store.scheduleStorageFootprintRefresh(for: [.codex], force: true)
+        store.scheduleStorageFootprintRefresh(for: [.claude], force: true)
 
         #expect(store.storageRefreshGeneration == 41)
-    }
-
-    @Test
-    @MainActor
-    func `scheduled storage refresh notices managed Codex home changes`() async throws {
-        let home = try Self.makeTemporaryDirectory()
-        defer { try? FileManager.default.removeItem(at: home) }
-
-        let ambientHome = home.appendingPathComponent("ambient", isDirectory: true)
-        let firstManagedHome = home.appendingPathComponent("managed-a", isDirectory: true)
-        let secondManagedHome = home.appendingPathComponent("managed-b", isDirectory: true)
-        try FileManager.default.createDirectory(at: ambientHome, withIntermediateDirectories: true)
-        try FileManager.default.createDirectory(at: firstManagedHome, withIntermediateDirectories: true)
-        try FileManager.default.createDirectory(at: secondManagedHome, withIntermediateDirectories: true)
-        try Data(repeating: 1, count: 16).write(to: firstManagedHome.appendingPathComponent("session.jsonl"))
-        try Data(repeating: 2, count: 32).write(to: secondManagedHome.appendingPathComponent("session.jsonl"))
-
-        let suite = "ProviderStorageFootprintTests-managed-refresh-\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: suite))
-        defaults.removePersistentDomain(forName: suite)
-        let settings = SettingsStore(
-            userDefaults: defaults,
-            configStore: testConfigStore(suiteName: suite))
-        if let codexMetadata = ProviderDefaults.metadata[.codex] {
-            settings.setProviderEnabled(provider: .codex, metadata: codexMetadata, enabled: true)
-        }
-        let store = UsageStore(
-            fetcher: UsageFetcher(),
-            browserDetection: BrowserDetection(cacheTTL: 0),
-            settings: settings,
-            environmentBase: ["CODEX_HOME": ambientHome.path])
-        settings.providerStorageFootprintsEnabled = true
-        store.managedCodexAccountsForStorageOverride = [
-            Self.managedCodexAccount(homePath: firstManagedHome.path),
-        ]
-
-        store.scheduleStorageFootprintRefresh(for: [.codex])
-        for _ in 0..<100 where store.isStorageRefreshInFlight {
-            try await Task.sleep(for: .milliseconds(10))
-        }
-        #expect(store.storageFootprint(for: .codex)?.totalBytes == 16)
-
-        store.managedCodexAccountsForStorageOverride = [
-            Self.managedCodexAccount(homePath: secondManagedHome.path),
-        ]
-        store.scheduleStorageFootprintRefresh(for: [.codex])
-        for _ in 0..<100 where store.isStorageRefreshInFlight {
-            try await Task.sleep(for: .milliseconds(10))
-        }
-
-        #expect(store.storageFootprint(for: .codex)?.totalBytes == 32)
-    }
-
-    private static func managedCodexAccount(homePath: String) -> ManagedCodexAccount {
-        ManagedCodexAccount(
-            id: UUID(),
-            email: "storage@example.com",
-            managedHomePath: homePath,
-            createdAt: 1,
-            updatedAt: 1,
-            lastAuthenticatedAt: nil)
     }
 
     private static func makeTemporaryDirectory() throws -> URL {

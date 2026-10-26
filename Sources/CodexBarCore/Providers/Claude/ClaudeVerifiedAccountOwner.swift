@@ -2,11 +2,11 @@ import Foundation
 
 enum ClaudeVerifiedAccountOwner {
     static func ownerID(accountUUID: String?, email: String?, organizationUUID: String?) -> String? {
-        guard let organization = CodexIdentityResolver.normalizeAccountID(organizationUUID) else { return nil }
+        guard let organization = ProviderIdentityNormalizer.normalizeAccountID(organizationUUID) else { return nil }
         let principal: [String]
-        if let account = CodexIdentityResolver.normalizeAccountID(accountUUID) {
+        if let account = ProviderIdentityNormalizer.normalizeAccountID(accountUUID) {
             principal = ["uuid", account]
-        } else if let email = CodexIdentityResolver.normalizeEmail(email) {
+        } else if let email = ProviderIdentityNormalizer.normalizeEmail(email) {
             principal = ["email", email]
         } else {
             return nil

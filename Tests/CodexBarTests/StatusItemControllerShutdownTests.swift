@@ -20,17 +20,15 @@ struct StatusItemControllerShutdownTests {
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
         let registry = ProviderRegistry.shared
-        if let codexMetadata = registry.metadata[.codex] {
-            settings.setProviderEnabled(provider: .codex, metadata: codexMetadata, enabled: true)
+        if let codexMetadata = registry.metadata[.opencode] {
+            settings.setProviderEnabled(provider: .opencode, metadata: codexMetadata, enabled: true)
         }
         if let claudeMetadata = registry.metadata[.claude] {
             settings.setProviderEnabled(provider: .claude, metadata: claudeMetadata, enabled: true)
         }
 
         let environment = Self.isolatedEnvironment()
-        let fetcher = UsageFetcher(environment: environment)
         let store = UsageStore(
-            fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -49,7 +47,7 @@ struct StatusItemControllerShutdownTests {
         controller.menuRefreshTasks[key] = Task { try? await Task.sleep(for: .seconds(30)) }
         controller.menuReadinessSignatures[key] = "readiness"
         controller.menuIdentitySignatures[key] = "identity"
-        controller.nativeHighlightDeferredMenuRebuilds[key] = .init(provider: .codex)
+        controller.nativeHighlightDeferredMenuRebuilds[key] = .init(provider: .opencode)
         controller.pendingMenuBaselineResyncs.insert(key)
 
         #expect(controller.openMenus[key] === menu)
@@ -133,7 +131,7 @@ struct StatusItemControllerShutdownTests {
             for unavailableSamples in [0, 1] {
                 let statusBar = RecordingStatusBar()
                 let controller = self.makeController(
-                    statusBar: statusBar, merged: merged, enabledProviders: [.codex, .claude])
+                    statusBar: statusBar, merged: merged, enabledProviders: [.opencode, .claude])
                 defer {
                     statusBar.onRemove = nil
                     controller.prepareForAppShutdown()
@@ -142,7 +140,7 @@ struct StatusItemControllerShutdownTests {
                 }
                 let defaults = controller.settings.userDefaults
                 let expectedNames = controller.expectedVisibleStatusItemAutosaveNames
-                #expect(expectedNames == (merged ? ["codexbar-merged"] : ["codexbar-codex", "codexbar-claude"]))
+                #expect(expectedNames == (merged ? ["codexbar-merged"] : ["codexbar-opencode", "codexbar-claude"]))
                 let originalItems = statusBar.createdItems
                 let names = originalItems.map { $0.autosaveName ?? "" }
                 for (index, name) in names.enumerated() {
@@ -352,121 +350,10 @@ struct StatusItemControllerShutdownTests {
         #expect(requestedPane == .provider(UsageProvider.claude.instanceID))
     }
 
-    @Test
-    func `app shutdown cancels forced enrichment`() async {
-        let controller = self.makeController()
-        defer {
-            StatusItemController.menuCardRenderingEnabled = !SettingsStore.isRunningTests
-            StatusItemController.resetMenuRefreshEnabledForTesting()
-        }
-        controller.settings.statusChecksEnabled = false
-        controller.settings.costUsageEnabled = true
-        controller.settings.openAIWebAccessEnabled = false
-        controller.settings.codexCookieSource = .off
-        let tokenTail = CancellationAwareTokenTail()
-
-        controller.store._test_providerRefreshOverride = { _ in }
-        controller.store._test_codexCreditsLoaderOverride = {
-            CreditsSnapshot(remaining: 25, events: [], updatedAt: Date())
-        }
-        controller.store._test_tokenUsageRefreshOverride = { _, _ in
-            await tokenTail.run()
-        }
-        defer {
-            controller.store._test_providerRefreshOverride = nil
-            controller.store._test_codexCreditsLoaderOverride = nil
-            controller.store._test_tokenUsageRefreshOverride = nil
-        }
-
-        controller.refreshNow()
-        let didStartTokenTail = await tokenTail.waitUntilStarted()
-        #expect(didStartTokenTail)
-        guard didStartTokenTail else {
-            controller.prepareForAppShutdown()
-            return
-        }
-        await controller.manualRefreshTasks[.global]?.value
-        let enrichmentTask = controller.store.forcedRefreshEnrichmentTask
-        let requiredRefresh = Task { @MainActor in
-            await controller.store.refreshForSettingsChange()
-        }
-        for _ in 0..<100 where controller.store.requiredRefreshTask == nil {
-            await Task.yield()
-        }
-
-        #expect(controller.store.hasForcedRefreshEnrichmentInFlight)
-        #expect(controller.store.requiredRefreshTask != nil)
-        controller.prepareForAppShutdown()
-        await enrichmentTask?.value
-        await requiredRefresh.value
-
-        #expect(await tokenTail.wasCancelled())
-        #expect(!controller.store.hasForcedRefreshEnrichmentInFlight)
-        #expect(controller.store.forcedRefreshEnrichmentTask == nil)
-        #expect(controller.store.pendingForcedRefreshEnrichmentTask == nil)
-        #expect(controller.store.requiredRefreshTask == nil)
-        #expect(controller.store.pendingRequiredRefreshRequest == nil)
-        #expect(controller.store.openAIDashboardRefreshTask == nil)
-        #expect(controller.store.tokenRefreshInFlight.isEmpty)
-    }
-
-    @Test
-    func `app shutdown cancels active and pending forced enrichment without promotion`() async {
-        let controller = self.makeController()
-        defer {
-            StatusItemController.menuCardRenderingEnabled = !SettingsStore.isRunningTests
-            StatusItemController.resetMenuRefreshEnabledForTesting()
-        }
-        controller.settings.statusChecksEnabled = false
-        controller.settings.costUsageEnabled = true
-        controller.settings.openAIWebAccessEnabled = false
-        controller.settings.codexCookieSource = .off
-        let tokenTail = CancellationAwareTokenTail()
-
-        controller.store._test_providerRefreshOverride = { _ in }
-        controller.store._test_codexCreditsLoaderOverride = {
-            CreditsSnapshot(remaining: 25, events: [], updatedAt: Date())
-        }
-        controller.store._test_tokenUsageRefreshOverride = { _, _ in
-            await tokenTail.run()
-        }
-        defer {
-            controller.store._test_providerRefreshOverride = nil
-            controller.store._test_codexCreditsLoaderOverride = nil
-            controller.store._test_tokenUsageRefreshOverride = nil
-        }
-
-        controller.refreshNow()
-        let didStartTokenTail = await tokenTail.waitUntilStarted(count: 1)
-        #expect(didStartTokenTail)
-        guard didStartTokenTail else {
-            controller.prepareForAppShutdown()
-            return
-        }
-        await controller.manualRefreshTasks[.global]?.value
-
-        await controller.store.refresh(enrichmentMode: .forcedBackground)
-        let activeTask = controller.store.forcedRefreshEnrichmentTask
-        let pendingTask = controller.store.pendingForcedRefreshEnrichmentTask
-        #expect(activeTask != nil)
-        #expect(pendingTask != nil)
-
-        controller.prepareForAppShutdown()
-        await activeTask?.value
-        await pendingTask?.value
-
-        #expect(await tokenTail.startedCount() == 1)
-        #expect(await tokenTail.cancelledCount() == 1)
-        #expect(pendingTask?.isCancelled == true)
-        #expect(!controller.store.hasForcedRefreshEnrichmentInFlight)
-        #expect(controller.store.forcedRefreshEnrichmentTask == nil)
-        #expect(controller.store.pendingForcedRefreshEnrichmentTask == nil)
-    }
-
     private func makeController(
         statusBar: NSStatusBar = .system,
         merged: Bool = true,
-        enabledProviders: Set<UsageProvider> = [.codex]) -> StatusItemController
+        enabledProviders: Set<UsageProvider> = [.opencode]) -> StatusItemController
     {
         StatusItemController.menuCardRenderingEnabled = false
         StatusItemController.setMenuRefreshEnabledForTesting(true)
@@ -478,9 +365,7 @@ struct StatusItemControllerShutdownTests {
         enableTestProviders(enabledProviders, settings: settings)
 
         let environment = Self.isolatedEnvironment()
-        let fetcher = UsageFetcher(environment: environment)
         let store = UsageStore(
-            fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -504,7 +389,7 @@ struct StatusItemControllerShutdownTests {
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         return [
             "HOME": root.path,
-            "CODEX_HOME": root.appendingPathComponent(".codex", isDirectory: true).path,
+            "CODEX_HOME": root.appendingPathComponent(".opencode", isDirectory: true).path,
             "XDG_CONFIG_HOME": root.appendingPathComponent(".config", isDirectory: true).path,
         ]
     }

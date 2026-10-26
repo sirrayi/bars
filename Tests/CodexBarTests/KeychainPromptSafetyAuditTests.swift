@@ -37,9 +37,7 @@ struct KeychainPromptSafetyAuditTests {
     func `live TTY integration tests are opt in`() throws {
         let ttyTests = try Self.readRepoFile("Tests/CodexBarTests/TTYIntegrationTests.swift")
 
-        #expect(ttyTests.contains("LIVE_CODEX_TTY"))
         #expect(ttyTests.contains("LIVE_CLAUDE_TTY"))
-        #expect(ttyTests.contains("guard ProcessInfo.processInfo.environment[\"LIVE_CODEX_TTY\"] == \"1\""))
         #expect(ttyTests.contains("guard ProcessInfo.processInfo.environment[\"LIVE_CLAUDE_TTY\"] == \"1\""))
     }
 

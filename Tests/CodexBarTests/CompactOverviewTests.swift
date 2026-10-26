@@ -52,7 +52,7 @@ struct CompactOverviewTests {
         #expect(visible.providerDetails.first?.rows.first?.value == "$12.00")
     }
 
-    @Test(arguments: [UsageProvider.codex, .claude])
+    @Test(arguments: [UsageProvider.opencode, .claude])
     func `plan dates add a row only in detailed overview when quotas are present`(provider: UsageProvider) throws {
         var model = try Self.model(provider: provider)
         model.providerDetails = []

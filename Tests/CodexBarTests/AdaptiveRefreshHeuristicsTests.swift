@@ -5,14 +5,14 @@ import Testing
 
 /// Covers `normalRefreshIntervalForHeuristics()` and every consumer that previously read
 /// `RefreshFrequency.seconds` directly. That property is nil for both `.manual` and `.adaptive`,
-/// so without the helper the interval-derived heuristics (reset-boundary refresh, OpenAI web
-/// staleness, persistent-CLI-session idle windows) silently degrade to manual behavior the
+/// so without the helper the interval-derived heuristics (reset-boundary refresh,
+/// persistent-CLI-session idle windows) silently degrade to manual behavior the
 /// moment a user picks adaptive. Each consumer has a test here that goes red if its call site
 /// is reverted to `.seconds`.
 @MainActor
 struct AdaptiveRefreshHeuristicsTests {
     @Test
-    func `heuristics fixture seeds disabled providers without enabling web access`() throws {
+    func `heuristics fixture seeds disabled providers`() throws {
         let store = Self.makeStore(suite: "heuristics-fixture-state", frequency: .adaptive)
         let metadata = ProviderRegistry.shared.metadata
         for provider in UsageProvider.allCases where metadata[provider] != nil {
@@ -23,20 +23,18 @@ struct AdaptiveRefreshHeuristicsTests {
         #expect(store.settings.refreshFrequency == .adaptive)
         #expect(store.settings.providerDetectionCompleted)
         #expect(store.settings.backgroundWorkLowPowerModePreference == .off)
-        #expect(!store.settings.openAIWebAccessEnabled)
         #expect(store.completedRefreshCountForTesting == 0)
     }
 
     @Test
-    func `reset boundary fixture enables only stubbed codex`() throws {
-        let store = Self.makeStoreWithStubbedCodex(suite: "heuristics-stub-fixture-state", frequency: .manual)
+    func `reset boundary fixture enables only stubbed claude`() throws {
+        let store = Self.makeStoreWithStubbedClaude(suite: "heuristics-stub-fixture-state", frequency: .manual)
         let metadata = ProviderRegistry.shared.metadata
         for provider in UsageProvider.allCases where metadata[provider] != nil {
             let entry = try #require(store.settings.configSnapshot.providerConfig(for: provider.instanceID))
-            #expect(entry.enabled == (provider == .codex))
+            #expect(entry.enabled == (provider == .claude))
         }
-        #expect(store.settings.enabledProvidersOrdered(metadataByProvider: metadata) == [.codex])
-        #expect(!store.settings.openAIWebAccessEnabled)
+        #expect(store.settings.enabledProvidersOrdered(metadataByProvider: metadata) == [.claude])
         #expect(store.completedRefreshCountForTesting == 0)
     }
 
@@ -99,7 +97,7 @@ struct AdaptiveRefreshHeuristicsTests {
 
     @Test
     func `adaptive cadence schedules a reset-boundary refresh through the refresh pipeline`() async {
-        let store = Self.makeStoreWithStubbedCodex(suite: "heuristics-boundary-adaptive", frequency: .adaptive)
+        let store = Self.makeStoreWithStubbedClaude(suite: "heuristics-boundary-adaptive", frequency: .adaptive)
 
         // Goes through the real end-of-refresh scheduling call, which must feed the adaptive
         // interval (30 min here — no menu open) rather than the nil `RefreshFrequency.seconds`.
@@ -111,26 +109,12 @@ struct AdaptiveRefreshHeuristicsTests {
 
     @Test
     func `manual cadence still never schedules a reset-boundary refresh through the refresh pipeline`() async {
-        let store = Self.makeStoreWithStubbedCodex(suite: "heuristics-boundary-manual", frequency: .manual)
+        let store = Self.makeStoreWithStubbedClaude(suite: "heuristics-boundary-manual", frequency: .manual)
 
         await store.refresh()
         defer { store.cancelResetBoundaryRefresh() }
 
         #expect(store.scheduledResetBoundaryRefreshAt == nil)
-    }
-
-    @Test
-    func `adaptive mode lifts the openai web refresh interval off the manual floor`() {
-        let adaptiveStore = Self.makeStore(suite: "heuristics-web-adaptive", frequency: .adaptive)
-        let manualStore = Self.makeStore(suite: "heuristics-web-manual", frequency: .manual)
-
-        let adaptiveInterval = adaptiveStore.openAIWebRefreshIntervalSeconds()
-        let manualInterval = manualStore.openAIWebRefreshIntervalSeconds()
-
-        // Manual hits the 120s fallback floor; adaptive with no menu open resolves to 1800s.
-        // Comparing as a ratio keeps this independent of the web-refresh multiplier.
-        #expect(manualInterval > 0)
-        #expect(adaptiveInterval == manualInterval * 15)
     }
 
     @Test
@@ -148,9 +132,9 @@ struct AdaptiveRefreshHeuristicsTests {
 
         // Registry specs have no UsageStore to ask, so adaptive maps to the policy's nominal
         // 300s steady-state interval: max(180, 300 + 60) = 360.
-        let adaptiveWindow = adaptiveStore.providerSpecs[.codex]?
+        let adaptiveWindow = adaptiveStore.providerSpecs[.claude]?
             .makeFetchContext().persistentCLISessionIdleWindow
-        let manualWindow = manualStore.providerSpecs[.codex]?
+        let manualWindow = manualStore.providerSpecs[.claude]?
             .makeFetchContext().persistentCLISessionIdleWindow
         #expect(adaptiveWindow == 360)
         #expect(manualWindow == 180)
@@ -164,9 +148,9 @@ struct AdaptiveRefreshHeuristicsTests {
         // Unlike registry specs, this path runs inside UsageStore, so adaptive uses the live
         // decision: 1800s with no menu open, giving max(180, 1800 + 60) = 1860.
         let adaptiveWindow = adaptiveStore
-            .makeFetchContext(provider: .codex, override: nil).persistentCLISessionIdleWindow
+            .makeFetchContext(provider: .claude, override: nil).persistentCLISessionIdleWindow
         let manualWindow = manualStore
-            .makeFetchContext(provider: .codex, override: nil).persistentCLISessionIdleWindow
+            .makeFetchContext(provider: .claude, override: nil).persistentCLISessionIdleWindow
         #expect(adaptiveWindow == 1860)
         #expect(manualWindow == 180)
     }
@@ -180,15 +164,10 @@ struct AdaptiveRefreshHeuristicsTests {
     private static func makeStore(suite: String, frequency: RefreshFrequency) -> UsageStore {
         let settings = testSettingsStore(
             suiteName: "AdaptiveRefreshHeuristicsTests-\(suite)",
-            config: testConfigWithAllProvidersDisabled(),
-            prepareDefaults: { defaults in
-                // An existing config otherwise opts this fresh fixture into OpenAI web access.
-                defaults.set(false, forKey: "openAIWebAccessEnabled")
-            })
+            config: testConfigWithAllProvidersDisabled())
         settings.providerDetectionCompleted = true
         settings.refreshFrequency = frequency
         return UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -197,30 +176,19 @@ struct AdaptiveRefreshHeuristicsTests {
 
     /// The reset-boundary pipeline tests need `refresh()` to complete with a snapshot still in
     /// place, and `clearProviderRuntimeState` wipes snapshots of disabled providers. So
-    /// codex stays enabled but its fetch is stubbed to return a canned snapshot whose primary
+    /// Claude stays enabled but its fetch is stubbed to return a canned snapshot whose primary
     /// window resets 10 minutes out — inside a 30-minute normal-refresh window, outside nothing.
-    /// The live-system account is pinned and the snapshot carries the same email, so the
-    /// account-scoped apply guard resolves identically whether or not the machine running the
-    /// tests has a real `~/.codex` login (CI runners do not).
-    private static func makeStoreWithStubbedCodex(suite: String, frequency: RefreshFrequency) -> UsageStore {
+    private static func makeStoreWithStubbedClaude(suite: String, frequency: RefreshFrequency) -> UsageStore {
         let store = Self.makeStore(suite: suite, frequency: frequency)
-        let metadata = ProviderRegistry.shared.metadata[.codex]!
-        store.settings._test_liveSystemCodexAccount = ObservedSystemCodexAccount(
-            email: Self.stubbedCodexEmail,
-            codexHomePath: "/Users/test/.codex",
-            observedAt: Date(),
-            identity: .unresolved)
-        store.settings.codexActiveSource = .liveSystem
-        store.settings.setProviderEnabled(provider: .codex, metadata: metadata, enabled: true)
-        store.providerSpecs[.codex] = CodexAccountScopedRefreshTests.makeCodexProviderSpec(
-            baseSpec: store.providerSpecs[.codex]!)
-        {
+        let metadata = ProviderRegistry.shared.metadata[.claude]!
+        store.settings.setProviderEnabled(provider: .claude, metadata: metadata, enabled: true)
+        store.providerSpecs[.claude] = .stubbed(store.providerSpecs[.claude]!) {
             Self.snapshot(updatedAt: Date(), primaryResetsAt: Date().addingTimeInterval(10 * 60))
         }
         return store
     }
 
-    private nonisolated static let stubbedCodexEmail = "adaptive-heuristics@example.com"
+    private nonisolated static let stubbedClaudeEmail = "adaptive-heuristics@example.com"
 
     private nonisolated static func snapshot(updatedAt: Date, primaryResetsAt: Date) -> UsageSnapshot {
         UsageSnapshot(
@@ -233,8 +201,8 @@ struct AdaptiveRefreshHeuristicsTests {
             tertiary: nil,
             updatedAt: updatedAt,
             identity: ProviderIdentitySnapshot(
-                providerID: .codex,
-                accountEmail: self.stubbedCodexEmail,
+                providerID: .claude,
+                accountEmail: self.stubbedClaudeEmail,
                 accountOrganization: nil,
                 loginMethod: "Pro"))
     }

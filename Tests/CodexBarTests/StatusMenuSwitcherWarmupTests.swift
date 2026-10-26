@@ -9,7 +9,7 @@ import XCTest
 @MainActor
 final class StatusMenuSwitcherWarmupTests: XCTestCase {
     private func makeController(
-        selectedProvider: UsageProvider = .codex,
+        selectedProvider: UsageProvider = .opencode,
         statusChecksEnabled: Bool = false) -> (controller: StatusItemController, menu: NSMenu)
     {
         StatusItemController.menuCardRenderingEnabled = false
@@ -29,11 +29,10 @@ final class StatusMenuSwitcherWarmupTests: XCTestCase {
             settings.setProviderEnabled(
                 provider: provider,
                 metadata: metadata,
-                enabled: [.claude, .codex, .deepseek].contains(provider))
+                enabled: [.claude, .opencode, .deepseek].contains(provider))
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
@@ -103,8 +102,8 @@ final class StatusMenuSwitcherWarmupTests: XCTestCase {
     }
 
     func test_warmedStatusSubmenusRemainScopedAcrossSwitchesAndReopen() throws {
-        for initialProvider: UsageProvider in [.claude, .codex, .deepseek] {
-            for provider: UsageProvider in [.deepseek, .codex, .claude] where provider != initialProvider {
+        for initialProvider: UsageProvider in [.claude, .deepseek] {
+            for provider: UsageProvider in [.deepseek, .claude] where provider != initialProvider {
                 let (controller, menu) = self.makeController(
                     selectedProvider: initialProvider,
                     statusChecksEnabled: true)
@@ -129,9 +128,10 @@ final class StatusMenuSwitcherWarmupTests: XCTestCase {
                             selectedProvider: provider,
                             descriptor: controller.makeMenuDescriptor(
                                 provider: provider, includeContextualActions: true)),
-                        codexAccountDisplay: nil,
                         tokenAccountDisplay: nil,
-                        openAIContext: controller.openAIWebContext(currentProvider: provider, showAllAccounts: false),
+                        submenuContext: controller.menuSubmenuContext(
+                            currentProvider: provider,
+                            showAllAccounts: false),
                         descriptor: controller.makeMenuDescriptor(provider: provider, includeContextualActions: true)))
                 let liveStatus = try XCTUnwrap(menu.items.first { $0.title == L("Status Page") })
                 XCTAssertTrue(liveStatus.submenu === cachedStatus.submenu)

@@ -543,14 +543,6 @@ extension SettingsStore {
         }
     }
 
-    var codexLocalSessionCostLedgerEnabled: Bool {
-        get { self.defaultsState.codexLocalSessionCostLedgerEnabled }
-        set {
-            self.setDefault(\.codexLocalSessionCostLedgerEnabled, newValue, key: "codexLocalSessionCostLedgerEnabled")
-            self.noteBackgroundWorkSettingsChanged()
-        }
-    }
-
     var costUsageHistoryDays: Int {
         get { self.costReportingPeriod.days(now: Date(), calendar: self.costUsageBucketCalendar) }
         set { self.costReportingPeriod = .rolling(days: max(1, min(365, newValue))) }
@@ -578,23 +570,6 @@ extension SettingsStore {
 
     var costUsageBucketCalendar: Calendar {
         CostUsageBucketTimeZone.calendar(identifier: self.costUsageBucketTimeZoneIdentifier)
-    }
-
-    var openCodexUsageLogsEnabled: Bool {
-        get { self.defaultsState.openCodexUsageLogsEnabled }
-        set {
-            self.setCostDefault(\.openCodexUsageLogsEnabled, newValue, key: "openCodexUsageLogsEnabled")
-        }
-    }
-
-    var hideNativeCodexCostWhenOpenCodexPresent: Bool {
-        get { self.defaultsState.hideNativeCodexCostWhenOpenCodexPresent }
-        set {
-            self.setCostDefault(
-                \.hideNativeCodexCostWhenOpenCodexPresent,
-                newValue,
-                key: "hideNativeCodexCostWhenOpenCodexPresent")
-        }
     }
 
     var spendDashboardHiddenSourceIDs: [String] {
@@ -768,41 +743,6 @@ extension SettingsStore {
             key: "claudeModelScopedWeeklyUsageVisible") }
     }
 
-    var codexSparkUsageVisible: Bool {
-        get { self.defaultsState.codexSparkUsageVisible }
-        set { self.setDefault(\.codexSparkUsageVisible, newValue, key: "codexSparkUsageVisible") }
-    }
-
-    var codexExternalOAuthSourcesAllowed: Bool {
-        get { self.defaultsState.codexExternalOAuthSourcesAllowed }
-        set {
-            self.setDefault(\.codexExternalOAuthSourcesAllowed, newValue, key: "codexExternalOAuthSourcesAllowed")
-            self.noteBackgroundWorkSettingsChanged()
-        }
-    }
-
-    var openAIWebAccessEnabled: Bool {
-        get { self.defaultsState.openAIWebAccessEnabled }
-        set {
-            self.setDefault(\.openAIWebAccessEnabled, newValue, key: "openAIWebAccessEnabled")
-            CodexBarLog.logger(LogCategories.settings).info(
-                "OpenAI web access updated",
-                metadata: ["enabled": newValue ? "1" : "0"])
-            self.noteBackgroundWorkSettingsChanged()
-        }
-    }
-
-    var openAIWebBatterySaverEnabled: Bool {
-        get { self.defaultsState.openAIWebBatterySaverEnabled }
-        set {
-            self.setDefault(\.openAIWebBatterySaverEnabled, newValue, key: "openAIWebBatterySaverEnabled")
-            CodexBarLog.logger(LogCategories.settings).info(
-                "OpenAI web battery saver updated",
-                metadata: ["enabled": newValue ? "1" : "0"])
-            self.noteBackgroundWorkSettingsChanged()
-        }
-    }
-
     var backgroundWorkLowPowerModePreference: LowPowerModePreference {
         get { self.defaultsState.backgroundWorkLowPowerModePreference }
         set {
@@ -823,10 +763,6 @@ extension SettingsStore {
         case .on: true
         case .automatic: ProcessInfo.processInfo.isLowPowerModeEnabled
         }
-    }
-
-    var effectiveOpenAIWebBatterySaverEnabled: Bool {
-        self.openAIWebBatterySaverEnabled || self.backgroundWorkLowPowerModeEnabled
     }
 
     var providerStorageFootprintsEnabled: Bool {

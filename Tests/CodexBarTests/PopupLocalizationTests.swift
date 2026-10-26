@@ -102,7 +102,6 @@ struct PopupLocalizationTests {
             let suite = "PopupLocalizationTests-descriptor"
             let settings = try Self.makeSettingsStore(suite: suite)
             let store = UsageStore(
-                fetcher: UsageFetcher(environment: [:]),
                 browserDetection: BrowserDetection(cacheTTL: 0),
                 settings: settings,
                 startupBehavior: .testing)
@@ -112,14 +111,14 @@ struct PopupLocalizationTests {
                     secondary: nil,
                     updatedAt: Date(),
                     identity: ProviderIdentitySnapshot(
-                        providerID: .codex,
+                        providerID: .opencode,
                         accountEmail: "codex@example.com",
                         accountOrganization: nil,
                         loginMethod: "free")),
-                provider: .codex)
+                provider: .opencode)
 
             let descriptor = MenuDescriptor.build(
-                provider: .codex,
+                provider: .opencode,
                 store: store,
                 settings: settings,
                 account: AccountInfo(email: nil, plan: nil),

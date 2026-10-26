@@ -131,7 +131,7 @@ struct CLIServeDashboardIdentityTests {
             let key = try CodexBarCLI.serveDashboardOperationKey(
                 identityMode: .redacted,
                 usageBarsShowUsed: showUsed,
-                provider: "codex")
+                provider: "opencode")
             let response = await CodexBarCLI.cachedServeResponse(
                 key: key, cache: cache, refreshInterval: 60, configFingerprint: "synthetic-config")
             {

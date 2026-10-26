@@ -34,93 +34,6 @@ struct UsageStoreCoverageTests {
     }
 
     @Test
-    func `claude and codex token ownership follows visible pi cost source`() throws {
-        let settings = Self.makeSettingsStore(suite: "UsageStoreCoverageTests-claude-pi-ownership")
-        settings.costUsageEnabled = true
-        let store = Self.makeUsageStore(settings: settings)
-        let metadata = ProviderRegistry.shared.metadata
-        try settings.setProviderEnabled(
-            provider: .claude,
-            metadata: #require(metadata[.claude]),
-            enabled: true)
-        try settings.setProviderEnabled(
-            provider: .pi,
-            metadata: #require(metadata[.pi]),
-            enabled: false)
-
-        let fallbackSignature = store.tokenSnapshotScopeSignature(for: .claude)
-        #expect(store.shouldIncludePiSessionsInTokenSnapshot(for: .claude))
-        #expect(store.shouldIncludePiSessionsInTokenSnapshot(for: .codex))
-        #expect(fallbackSignature.contains("|piRows=fallback"))
-        let codexFallbackSignature = store.tokenSnapshotScopeSignature(for: .codex)
-        #expect(codexFallbackSignature.contains("|piRows=fallback"))
-
-        try settings.setProviderEnabled(
-            provider: .pi,
-            metadata: #require(metadata[.pi]),
-            enabled: true)
-
-        #expect(!store.shouldIncludePiSessionsInTokenSnapshot(for: .claude))
-        #expect(fallbackSignature != store.tokenSnapshotScopeSignature(for: .claude))
-        #expect(!store.shouldIncludePiSessionsInTokenSnapshot(for: .codex))
-        #expect(codexFallbackSignature != store.tokenSnapshotScopeSignature(for: .codex))
-        #expect(store.tokenSnapshotScopeSignature(for: .codex).contains("|piRows=owned"))
-        #expect(store.shouldIncludePiSessionsInTokenSnapshot(for: .pi))
-    }
-
-    @Test
-    func `source label adds open AI web`() {
-        let settings = Self.makeSettingsStore(suite: "UsageStoreCoverageTests-source")
-        settings.debugDisableKeychainAccess = false
-        settings.codexUsageDataSource = .oauth
-        settings.codexCookieSource = .manual
-
-        let store = Self.makeUsageStore(settings: settings)
-        store.openAIDashboard = OpenAIDashboardSnapshot(
-            signedInEmail: "user@example.com",
-            codeReviewRemainingPercent: nil,
-            creditEvents: [],
-            dailyBreakdown: [],
-            usageBreakdown: [],
-            creditsPurchaseURL: nil,
-            updatedAt: Date())
-        store.openAIDashboardRequiresLogin = false
-
-        let label = store.sourceLabel(for: .codex)
-        #expect(label.contains("openai-web"))
-    }
-
-    @Test(CodexCredentialFixtures())
-    func `account info caches codex auth parsing until config revision changes`() throws {
-        let settings = Self.makeSettingsStore(suite: "UsageStoreCoverageTests-account-info-cache")
-        let home = CodexCredentialFixtures.root.appendingPathComponent(
-            "usage-store-account-info-\(UUID().uuidString)",
-            isDirectory: true)
-        defer { try? FileManager.default.removeItem(at: home) }
-
-        try Self.writeCodexAuthFile(homeURL: home, email: "first@example.com", plan: "plus")
-        let env = ["CODEX_HOME": home.path]
-        settings._test_codexReconciliationEnvironment = env
-        defer { settings._test_codexReconciliationEnvironment = nil }
-        let store = UsageStore(
-            fetcher: UsageFetcher(environment: env),
-            browserDetection: BrowserDetection(cacheTTL: 0),
-            settings: settings,
-            startupBehavior: .testing,
-            environmentBase: env)
-
-        let first = store.accountInfo(for: .codex)
-        try Self.writeCodexAuthFile(homeURL: home, email: "second@example.com", plan: "pro")
-        let cached = store.accountInfo(for: .codex)
-        settings.configRevision &+= 1
-        let refreshed = store.accountInfo(for: .codex)
-
-        #expect(first.email == "first@example.com")
-        #expect(cached.email == "first@example.com")
-        #expect(refreshed.email == "second@example.com")
-    }
-
-    @Test
     func `permission prompt errors are detected for notifications`() {
         let errors: [LocalizedTestError] = [
             LocalizedTestError("Waiting for folder trust prompt"),
@@ -146,7 +59,7 @@ struct UsageStoreCoverageTests {
                 metadata: #require(metadata[provider]),
                 enabled: false)
         }
-        try settings.setProviderEnabled(provider: .codex, metadata: #require(metadata[.codex]), enabled: true)
+        try settings.setProviderEnabled(provider: .opencode, metadata: #require(metadata[.opencode]), enabled: true)
 
         let store = Self.makeUsageStore(settings: settings)
         let staleSnapshot = UsageSnapshot(
@@ -160,7 +73,7 @@ struct UsageStoreCoverageTests {
             ProviderStatusComponent(id: "api", name: "API", indicator: .major, status: "major_outage"),
         ]
 
-        #expect(store.enabledProviders() == [.codex])
+        #expect(store.enabledProviders() == [.opencode])
 
         store.clearDisabledProviderState(enabledProviders: Set(store.enabledProvidersForDisplay()))
 
@@ -217,7 +130,7 @@ extension UsageStoreCoverageTests {
         let settings = Self.makeSettingsStore(suite: "UsageStoreCoverageTests-switcher-selection-observation")
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        try Self.enableOnly(.codex, settings: settings)
+        try Self.enableOnly(.opencode, settings: settings)
 
         let store = Self.makeUsageStore(settings: settings)
         let didChange = ObservationFlag()
@@ -228,7 +141,7 @@ extension UsageStoreCoverageTests {
             didChange.set()
         }
 
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .opencode
         try? await Task.sleep(nanoseconds: 50_000_000)
         #expect(didChange.get() == false)
 
@@ -245,117 +158,11 @@ extension UsageStoreCoverageTests {
     }
 
     @Test
-    func `background work settings observation ignores display only settings churn`() async throws {
-        let settings = Self.makeSettingsStore(suite: "UsageStoreCoverageTests-display-only-observation")
-        settings.refreshFrequency = .manual
-        settings.statusChecksEnabled = false
-        settings.mergeIcons = false
-        settings.randomBlinkEnabled = false
-        settings.usageBarsShowUsed = false
-        settings.showOptionalCreditsAndExtraUsage = false
-        try Self.enableOnly(.codex, settings: settings)
-
-        let store = Self.makeUsageStore(settings: settings)
-        let didChange = ObservationFlag()
-
-        withObservationTracking {
-            _ = store.backgroundWorkSettingsObservationToken
-        } onChange: {
-            didChange.set()
-        }
-
-        settings.usageBarsShowUsed = true
-        settings.mergeIcons = true
-        settings.randomBlinkEnabled = true
-        settings.codexSparkUsageVisible.toggle()
-        settings.debugLoadingPattern = .pulse
-        settings.setProviderOrder(Array(settings.orderedProviders().reversed()))
-        try? await Task.sleep(nanoseconds: 50_000_000)
-        #expect(didChange.get() == false)
-
-        let refreshDidChange = ObservationFlag()
-        withObservationTracking {
-            _ = store.backgroundWorkSettingsObservationToken
-        } onChange: {
-            refreshDidChange.set()
-        }
-
-        settings.statusChecksEnabled = true
-        try? await Task.sleep(nanoseconds: 50_000_000)
-        #expect(refreshDidChange.get() == true)
-
-        let layoutDidChange = ObservationFlag()
-        withObservationTracking {
-            _ = store.backgroundWorkSettingsObservationToken
-        } onChange: {
-            layoutDidChange.set()
-        }
-
-        settings.multiAccountMenuLayout = .stacked
-        try? await Task.sleep(nanoseconds: 50_000_000)
-        #expect(layoutDidChange.get() == true)
-
-        let optionalUsageDidChange = ObservationFlag()
-        withObservationTracking {
-            _ = store.backgroundWorkSettingsObservationToken
-        } onChange: {
-            optionalUsageDidChange.set()
-        }
-
-        settings.showOptionalCreditsAndExtraUsage = true
-        try? await Task.sleep(nanoseconds: 50_000_000)
-        #expect(optionalUsageDidChange.get() == true)
-    }
-
-    @Test
-    func `display only settings do not invoke provider refresh while background work is active`() async throws {
-        let settings = Self.makeSettingsStore(suite: "UsageStoreCoverageTests-display-only-no-provider-refresh")
-        settings.refreshFrequency = .manual
-        settings.statusChecksEnabled = false
-        settings.mergeIcons = false
-        settings.randomBlinkEnabled = false
-        settings.usageBarsShowUsed = false
-        try Self.enableOnly(.codex, settings: settings)
-
-        let store = Self.makeUsageStore(settings: settings)
-        var refreshedProviders: [UsageProvider] = []
-        store._test_providerRefreshOverride = { refreshedProviders.append($0) }
-        defer { store._test_providerRefreshOverride = nil }
-
-        func observeBackgroundSettingsForTest() {
-            withObservationTracking {
-                _ = store.backgroundWorkSettingsObservationToken
-            } onChange: {
-                Task { @MainActor in
-                    await store.refreshForSettingsChange()
-                }
-            }
-        }
-
-        observeBackgroundSettingsForTest()
-
-        settings.usageBarsShowUsed = true
-        settings.mergeIcons = true
-        settings.randomBlinkEnabled = true
-        settings.codexSparkUsageVisible.toggle()
-        settings.debugLoadingPattern = .pulse
-        settings.setProviderOrder(Array(settings.orderedProviders().reversed()))
-        try? await Task.sleep(nanoseconds: 50_000_000)
-        #expect(refreshedProviders.isEmpty)
-
-        settings.codexUsageDataSource = .cli
-        for _ in 0..<20 where !refreshedProviders.contains(.codex) {
-            try? await Task.sleep(nanoseconds: 25_000_000)
-        }
-        #expect(refreshedProviders.contains(.codex))
-    }
-
-    @Test
     func `startup status network failure schedules bounded retry`() async throws {
         let settings = Self.makeSettingsStore(suite: "UsageStoreCoverageTests-startup-status-retry")
         settings.refreshFrequency = .manual
         settings.statusChecksEnabled = true
-        try Self.enableOnly(.codex, settings: settings)
+        try Self.enableOnly(.opencode, settings: settings)
 
         let store = Self.makeUsageStore(settings: settings)
         store._test_providerRefreshOverride = { _ in }
@@ -379,7 +186,7 @@ extension UsageStoreCoverageTests {
 
         #expect(scheduled.map(\.attempt) == [1])
         #expect(scheduled.map(\.delay) == [15])
-        #expect(store.statuses[.codex] == nil)
+        #expect(store.statuses[.opencode] == nil)
     }
 
     @Test
@@ -387,11 +194,11 @@ extension UsageStoreCoverageTests {
         let settings = Self.makeSettingsStore(suite: "UsageStoreCoverageTests-status-failure-preserves-success")
         settings.refreshFrequency = .manual
         settings.statusChecksEnabled = true
-        try Self.enableOnly(.codex, settings: settings)
+        try Self.enableOnly(.opencode, settings: settings)
 
         let store = Self.makeUsageStore(settings: settings)
         let updatedAt = Date(timeIntervalSince1970: 1_750_000_000)
-        store.statuses[.codex] = ProviderStatus(
+        store.statuses[.opencode] = ProviderStatus(
             indicator: .major,
             description: "Service disruption",
             updatedAt: updatedAt)
@@ -404,9 +211,9 @@ extension UsageStoreCoverageTests {
             store.startupConnectivityRetryTask = nil
         }
 
-        await store.refreshProviderStatus(.codex)
+        await store.refreshProviderStatus(.opencode)
 
-        let status = try #require(store.statuses[.codex])
+        let status = try #require(store.statuses[.opencode])
         #expect(status.indicator == .major)
         #expect(status.description == "Service disruption")
         #expect(status.updatedAt == updatedAt)
@@ -417,7 +224,7 @@ extension UsageStoreCoverageTests {
         let settings = Self.makeSettingsStore(suite: "UsageStoreCoverageTests-startup-status-recovery")
         settings.refreshFrequency = .manual
         settings.statusChecksEnabled = true
-        try Self.enableOnly(.codex, settings: settings)
+        try Self.enableOnly(.opencode, settings: settings)
 
         let store = Self.makeUsageStore(settings: settings)
         store._test_providerRefreshOverride = { _ in }
@@ -447,8 +254,8 @@ extension UsageStoreCoverageTests {
         await retryTask.value
 
         #expect(statusAttempts == 2)
-        #expect(store.statuses[.codex]?.indicator == ProviderStatusIndicator.none)
-        #expect(store.statuses[.codex]?.description == "Operational")
+        #expect(store.statuses[.opencode]?.indicator == ProviderStatusIndicator.none)
+        #expect(store.statuses[.opencode]?.description == "Operational")
         #expect(store.startupConnectivityRetryTask == nil)
     }
 
@@ -474,7 +281,6 @@ extension UsageStoreCoverageTests {
         let settings = SettingsStore(
             userDefaults: defaults,
             configStore: configStore,
-            codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
             opencodeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore())
@@ -484,7 +290,6 @@ extension UsageStoreCoverageTests {
 
     private static func makeUsageStore(settings: SettingsStore) -> UsageStore {
         UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             environmentBase: [:])

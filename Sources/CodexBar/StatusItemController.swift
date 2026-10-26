@@ -91,19 +91,14 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
             SettingsStore,
             AccountInfo,
             UpdaterProviding,
-            PreferencesSelection,
-            ManagedCodexAccountCoordinator,
-            CodexAccountPromotionCoordinator)
+            PreferencesSelection)
         -> StatusItemControlling
-    // swiftlint:disable:next function_parameter_count
     static func makeDefaultController(
         store: UsageStore,
         settings: SettingsStore,
         account: AccountInfo,
         updater: UpdaterProviding,
-        selection: PreferencesSelection,
-        managedCodexAccountCoordinator: ManagedCodexAccountCoordinator,
-        codexAccountPromotionCoordinator: CodexAccountPromotionCoordinator)
+        selection: PreferencesSelection)
         -> StatusItemControlling
     {
         StatusItemController(
@@ -111,9 +106,7 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
             settings: settings,
             account: account,
             updater: updater,
-            preferencesSelection: selection,
-            managedCodexAccountCoordinator: managedCodexAccountCoordinator,
-            codexAccountPromotionCoordinator: codexAccountPromotionCoordinator)
+            preferencesSelection: selection)
     }
 
     static let defaultFactory: Factory = StatusItemController.makeDefaultController
@@ -135,8 +128,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
 
     let account: AccountInfo
     let updater: UpdaterProviding
-    let managedCodexAccountCoordinator: ManagedCodexAccountCoordinator
-    let codexAccountPromotionCoordinator: CodexAccountPromotionCoordinator
     let statusBar: NSStatusBar
     let menuCardRenderingEnabledForController: Bool
     let menuRefreshEnabledForController: Bool
@@ -173,7 +164,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
     var overviewSharePresentation = OverviewSharePresentation()
     var openMenuRebuildRequests = MenuRebuildRequestRegistry<ObjectIdentifier>()
     var menuIdentitySignatures: [ObjectIdentifier: String] = [:]
-    var codexAccountMenuProjectionRevalidationTask: Task<Void, Never>?
     var openMenuRebuildsClosingHostedSubviewMenus: Set<ObjectIdentifier> = []
     var parentMenuRebuildPendingAfterHostedSubviewClose = false
     var deferredMenuInteractionRefreshProviders: Set<ProviderInstanceID> = []
@@ -181,7 +171,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
         !self.deferredMenuInteractionRefreshProviders.isEmpty
     }
 
-    var deferredOpenAIDashboardRefreshReason: String?
     var deferredMenuInteractionRefreshTask: Task<Void, Never>?
     var highlightedMenuItems: [ObjectIdentifier: NSMenuItem] = [:]
     var keyboardHighlightedMenus: Set<ObjectIdentifier> = []
@@ -218,8 +207,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
     var _test_openMenuRefreshYieldOverride: (@MainActor () async -> Void)?
     var _test_openMenuRebuildObserver: (@MainActor (NSMenu) -> Void)?
     var _test_providerSwitcherMenuRebuildDebounceNanoseconds: UInt64?
-    var _test_codexAmbientLoginRunnerOverride:
-        (@MainActor (TimeInterval) async -> CLILoginRunner.Result)?
     #endif
     var manualRefreshViewportRestoreState = ManualRefreshViewportRestoreState()
     var blinkNow: @MainActor () -> Date = Date.init
@@ -230,8 +217,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
     var loginTask: Task<Void, Never>? {
         didSet { self.refreshMenusForLoginStateChange() }
     }
-
-    var creditsPurchaseWindow: OpenAICreditsPurchaseWindowController?
 
     var activeLoginProvider: UsageProvider? {
         didSet {
@@ -288,8 +273,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
     var lastMergedSwitcherSelection: ProviderSwitcherSelection?
     /// Tracks which provider/overview content is currently attached below the merged-menu switcher.
     var lastMergedMenuContentSelection: ProviderSwitcherSelection?
-    /// Tracks the visible Codex account switcher contents for merged-menu smart updates.
-    var lastCodexAccountMenuDisplay: CodexAccountMenuDisplay?
     /// Tracks the visible token account switcher contents for merged-menu smart updates.
     var lastTokenAccountMenuDisplay: TokenAccountMenuDisplay?
     /// Debounced pre-build of sibling switcher tabs for flicker-free tab switches.
@@ -349,20 +332,12 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
     }
 
     func menuBarMetricWindow(for provider: UsageProvider, snapshot: UsageSnapshot?, now: Date = Date()) -> RateWindow? {
-        if provider == .codex, !self.menuBarUsageSource(for: provider).isFleet {
-            return self.codexMenuBarMetricWindow(snapshot: snapshot, now: now)
-        }
-        return MenuBarMetricWindowResolver.rateWindow(
+        MenuBarMetricWindowResolver.rateWindow(
             preference: self.settings.menuBarMetricPreference(for: provider, snapshot: snapshot),
             provider: provider,
             snapshot: snapshot,
             supportsAverage: self.settings.menuBarMetricSupportsAverage(for: provider),
             now: now)
-    }
-
-    private func codexMenuBarMetricWindow(snapshot: UsageSnapshot?, now: Date) -> RateWindow? {
-        guard let snapshot else { return nil }
-        return self.store.codexMenuBarMetricWindow(snapshot: snapshot, now: now)
     }
 
     init(
@@ -372,9 +347,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
         updater: UpdaterProviding,
         preferencesSelection: PreferencesSelection,
         agentSessions: AgentSessionsStore? = nil,
-        managedCodexAccountCoordinator: ManagedCodexAccountCoordinator =
-            ManagedCodexAccountCoordinator(),
-        codexAccountPromotionCoordinator: CodexAccountPromotionCoordinator? = nil,
         statusBar: NSStatusBar = .system,
         menuCardRenderingEnabled: Bool = StatusItemController.menuCardRenderingEnabled,
         menuRefreshEnabled: Bool = StatusItemController.menuRefreshEnabled,
@@ -391,13 +363,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
         self.account = account
         self.updater = updater
         self.preferencesSelection = preferencesSelection
-        self.managedCodexAccountCoordinator = managedCodexAccountCoordinator
-        self.codexAccountPromotionCoordinator =
-            codexAccountPromotionCoordinator
-                ?? CodexAccountPromotionCoordinator(
-                    settingsStore: settings,
-                    usageStore: store,
-                    managedAccountCoordinator: managedCodexAccountCoordinator)
         self.lastConfigRevision = settings.configRevision
         self.lastProviderOrder = settings.providerOrder
         self.lastMergeIcons = settings.mergeIcons
@@ -437,8 +402,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
         self.updateVisibility()
         self.synchronizeFrontmostProviderMonitor()
         self.updateIcons()
-        self.scheduleCodexAccountMenuProjectionRevalidationIfNeeded(
-            for: self.store.enabledFirstPartyProvidersForDisplay())
         self.scheduleStartupStatusItemVisibilityCheck()
         NotificationCenter.default.addObserver(
             self,
@@ -475,31 +438,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
         self.observeMenuBarTimeEnvironmentChanges()
     }
 
-    convenience init(
-        store: UsageStore,
-        settings: SettingsStore,
-        account: AccountInfo,
-        updater: UpdaterProviding,
-        preferencesSelection: PreferencesSelection,
-        statusBar: NSStatusBar = .system,
-        menuCardRenderingEnabled: Bool = StatusItemController.menuCardRenderingEnabled,
-        menuRefreshEnabled: Bool = StatusItemController.menuRefreshEnabled,
-        observeProviderConfigNotifications: Bool = !SettingsStore.isRunningTests)
-    {
-        self.init(
-            store: store,
-            settings: settings,
-            account: account,
-            updater: updater,
-            preferencesSelection: preferencesSelection,
-            managedCodexAccountCoordinator: ManagedCodexAccountCoordinator(),
-            codexAccountPromotionCoordinator: nil,
-            statusBar: statusBar,
-            menuCardRenderingEnabled: menuCardRenderingEnabled,
-            menuRefreshEnabled: menuRefreshEnabled,
-            observeProviderConfigNotifications: observeProviderConfigNotifications)
-    }
-
     private func wireBindings() {
         self.observeStoreChanges()
         self.observeStoreIconChanges()
@@ -507,7 +445,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
         self.observeDebugForceAnimation()
         self.observeSettingsChanges()
         self.observeUpdaterChanges()
-        self.observeManagedCodexCoordinatorChanges()
         self.observeCloudSyncChanges()
     }
 
@@ -623,23 +560,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
                 guard let self else { return }
                 self.observeUpdaterChanges()
                 self.invalidateMenus()
-            }
-        }
-    }
-
-    private func observeManagedCodexCoordinatorChanges() {
-        withObservationTracking {
-            _ = self.managedCodexAccountCoordinator.isAuthenticatingManagedAccount
-            _ = self.managedCodexAccountCoordinator.authenticatingManagedAccountID
-            _ = self.managedCodexAccountCoordinator.isRemovingManagedAccount
-            _ = self.managedCodexAccountCoordinator.removingManagedAccountID
-            _ = self.codexAccountPromotionCoordinator.isAuthenticatingLiveAccount
-            _ = self.codexAccountPromotionCoordinator.isPromotingSystemAccount
-        } onChange: { [weak self] in
-            Task { @MainActor [weak self] in
-                guard let self else { return }
-                self.observeManagedCodexCoordinatorChanges()
-                self.refreshMenusForLoginStateChange()
             }
         }
     }

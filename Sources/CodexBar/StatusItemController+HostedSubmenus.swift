@@ -56,8 +56,6 @@ extension StatusItemController {
 
     func isHostedSubviewMenu(_ menu: NSMenu) -> Bool {
         let ids: Set = [
-            Self.usageBreakdownChartID,
-            Self.creditsHistoryChartID,
             Self.costHistoryChartID,
             Self.usageHistoryChartID,
             Self.storageBreakdownID,
@@ -109,10 +107,6 @@ extension StatusItemController {
         MainThreadActivityBreadcrumb.push("hydrateChart:\(chartID)")
         defer { MainThreadActivityBreadcrumb.pop() }
         let didHydrate: Bool = switch chartID {
-        case Self.usageBreakdownChartID:
-            self.appendUsageBreakdownChartItem(to: menu, width: width)
-        case Self.creditsHistoryChartID:
-            self.appendCreditsHistoryChartItem(to: menu, width: width)
         case Self.costHistoryChartID:
             if let providerRawValue = placeholder.toolTip,
                let provider = UsageProvider(rawValue: providerRawValue)
@@ -180,10 +174,6 @@ extension StatusItemController {
         MainThreadActivityBreadcrumb.push("refreshChart:\(identity.chartID)")
         defer { MainThreadActivityBreadcrumb.pop() }
         let didHydrate: Bool = switch identity.chartID {
-        case Self.usageBreakdownChartID:
-            self.appendUsageBreakdownChartItem(to: menu, width: width)
-        case Self.creditsHistoryChartID:
-            self.appendCreditsHistoryChartItem(to: menu, width: width)
         case Self.costHistoryChartID:
             if let provider = identity.provider {
                 self.appendCostHistoryChartItem(to: menu, provider: provider, width: width)
@@ -261,12 +251,6 @@ extension StatusItemController {
         width: CGFloat) -> HostedSubviewRenderSignature
     {
         let contentSignature: HostedSubviewContentFingerprint = switch identity.chartID {
-        case Self.usageBreakdownChartID:
-            .text(Self.dashboardBreakdownReadinessSignature(
-                OpenAIDashboardDailyBreakdown.removingSkillUsageServices(
-                    from: self.store.openAIDashboard?.usageBreakdown ?? [])))
-        case Self.creditsHistoryChartID:
-            .text(Self.dashboardBreakdownReadinessSignature(self.store.openAIDashboard?.dailyBreakdown ?? []))
         case Self.costHistoryChartID:
             if let provider = identity.provider {
                 self.costHistoryRenderFingerprint(for: provider)
@@ -365,61 +349,6 @@ extension StatusItemController {
     }
 
     @discardableResult
-    func appendUsageBreakdownChartItem(to submenu: NSMenu, width: CGFloat) -> Bool {
-        let breakdown = OpenAIDashboardDailyBreakdown.removingSkillUsageServices(
-            from: self.store.openAIDashboard?.usageBreakdown ?? [])
-        guard !breakdown.isEmpty else { return false }
-
-        if !self.menuCardRenderingEnabledForController {
-            let chartItem = NSMenuItem()
-            chartItem.isEnabled = true
-            chartItem.representedObject = Self.usageBreakdownChartID
-            submenu.addItem(chartItem)
-            return true
-        }
-
-        let chartView = UsageBreakdownChartMenuView(breakdown: breakdown, width: width)
-        let hosting = MenuHostingView(rootView: chartView.codexBarLocalized())
-        hosting.frame = NSRect(
-            origin: .zero,
-            size: NSSize(width: width, height: self.hostedSubviewFittingHeight(for: hosting, width: width)))
-
-        let chartItem = NSMenuItem()
-        chartItem.view = hosting
-        chartItem.isEnabled = true
-        chartItem.representedObject = Self.usageBreakdownChartID
-        submenu.addItem(chartItem)
-        return true
-    }
-
-    @discardableResult
-    func appendCreditsHistoryChartItem(to submenu: NSMenu, width: CGFloat) -> Bool {
-        let breakdown = self.store.openAIDashboard?.dailyBreakdown ?? []
-        guard !breakdown.isEmpty else { return false }
-
-        if !self.menuCardRenderingEnabledForController {
-            let chartItem = NSMenuItem()
-            chartItem.isEnabled = true
-            chartItem.representedObject = Self.creditsHistoryChartID
-            submenu.addItem(chartItem)
-            return true
-        }
-
-        let chartView = CreditsHistoryChartMenuView(breakdown: breakdown, width: width)
-        let hosting = MenuHostingView(rootView: chartView.codexBarLocalized())
-        hosting.frame = NSRect(
-            origin: .zero,
-            size: NSSize(width: width, height: self.hostedSubviewFittingHeight(for: hosting, width: width)))
-
-        let chartItem = NSMenuItem()
-        chartItem.view = hosting
-        chartItem.isEnabled = true
-        chartItem.representedObject = Self.creditsHistoryChartID
-        submenu.addItem(chartItem)
-        return true
-    }
-
-    @discardableResult
     func appendCostHistoryChartItem(
         to submenu: NSMenu,
         provider: UsageProvider,
@@ -447,7 +376,6 @@ extension StatusItemController {
             historyDays: tokenSnapshot.displayHistoryDays(calendar: self.settings.costUsageBucketCalendar),
             historyCoverageIsEstablished: tokenSnapshot.historyCoverageIsEstablished,
             windowLabel: tokenSnapshot.historyLabel,
-            projects: provider == .codex ? tokenSnapshot.projects : [],
             sessions: tokenSnapshot.sessions,
             hidePersonalInfo: self.settings.hidePersonalInfo,
             width: width,

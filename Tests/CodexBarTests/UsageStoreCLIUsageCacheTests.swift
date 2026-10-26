@@ -11,25 +11,17 @@ struct UsageStoreCLIUsageCacheTests {
             .appendingPathComponent("UsageStoreCLIUsageCacheTests-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: root) }
         let url = root.appendingPathComponent("cache/usage.json")
-        let store = Self.makeStore(shareUsage: true, cacheURL: url, providers: [.claude, .codex])
+        let store = Self.makeStore(shareUsage: true, cacheURL: url, providers: [.claude, .opencode])
         store._setSnapshotForTesting(Self.usage(), provider: .claude)
-        store._setSnapshotForTesting(Self.usage(), provider: .codex)
+        store._setSnapshotForTesting(Self.usage(), provider: .opencode)
 
-        store.lastCodexUsagePublicationGuard = CodexAccountScopedRefreshGuard(
-            source: .liveSystem, identity: .unresolved, accountKey: nil)
-
-        // A selected token account (Claude) and a non-live Codex account are skipped.
+        // A selected token account (Claude) is skipped; the default OpenCode account is published.
         store.settings.addTokenAccount(provider: .claude, label: "Work", token: "Bearer sk-ant-oat-work-token")
-        store.settings.codexActiveSource = .managedAccount(id: UUID())
         try await Self.persist(store)
-        #expect(CLIUsageCache.load(from: url)?.hit(for: .codex) == nil)
-
-        store.settings.codexActiveSource = .liveSystem
-        try await Self.persist(store)
-        #expect(try #require(CLIUsageCache.load(from: url)).entries.map(\.provider) == ["codex"])
+        #expect(try #require(CLIUsageCache.load(from: url)).entries.map(\.provider) == ["opencode"])
 
         // A newly ineligible account must withdraw previously published usage.
-        store.settings.codexActiveSource = .managedAccount(id: UUID())
+        store.tokenAccountLiveStateProviders.insert(.opencode)
         try await Self.persist(store)
         #expect(try #require(CLIUsageCache.load(from: url)).entries.isEmpty)
 
@@ -43,12 +35,11 @@ struct UsageStoreCLIUsageCacheTests {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
         let url = root.appendingPathComponent("cache/usage.json")
-        let store = Self.makeStore(shareUsage: true, cacheURL: url, providers: [.claude, .codex])
+        let store = Self.makeStore(shareUsage: true, cacheURL: url, providers: [.claude, .opencode])
         store._setSnapshotForTesting(Self.usage(), provider: .claude)
-        store._setSnapshotForTesting(Self.usage(), provider: .codex)
+        store._setSnapshotForTesting(Self.usage(), provider: .opencode)
         store.tokenAccountLiveStateProviders.insert(.claude)
-        store.lastCodexUsagePublicationGuard = CodexAccountScopedRefreshGuard(
-            source: .managedAccount(id: UUID()), identity: .unresolved, accountKey: nil)
+        store.tokenAccountLiveStateProviders.insert(.opencode)
 
         try await Self.persist(store)
 
@@ -69,7 +60,6 @@ struct UsageStoreCLIUsageCacheTests {
             config: config)
         enableTestProviders(providers, settings: settings)
         return UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(homeDirectory: "/synthetic", fileExists: { _ in false }),
             settings: settings,
             startupBehavior: .testing,

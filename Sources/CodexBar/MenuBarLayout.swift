@@ -683,17 +683,12 @@ enum MenuBarLayoutBalanceResolver {
     static func balance(
         provider: UsageProvider,
         snapshot: UsageSnapshot?,
-        codexCredits: CreditsSnapshot? = nil,
         showsOptionalCredits: Bool = true)
         -> String?
     {
         // Provider-specific by design: shared extraction for stored layouts, previews, and legacy text.
         // Explicit Balance tokens can coexist with quota windows; automatic callers select the fallback.
         switch provider {
-        case .codex:
-            guard let codexCredits, codexCredits.balanceReadSucceeded else { return nil }
-            return codexCredits.remaining.rounded().formatted(
-                .number.precision(.fractionLength(0)).locale(Locale(identifier: "en_US")))
         case .deepseek:
             return MenuBarDisplayText.deepSeekBalanceText(snapshot: snapshot)
         case .opencodego:
@@ -1006,7 +1001,7 @@ extension MenuBarLayout {
         -> PercentWindow
     {
         guard preference == .primary || preference == .secondary else { return .automatic }
-        let presentation = ProviderDescriptorRegistry.descriptor(for: provider ?? .codex).presentation
+        let presentation = ProviderDescriptorRegistry.descriptor(for: provider ?? .claude).presentation
         return PercentWindow.forMetric(
             preference.providerMetric,
             primarySemanticWindow: presentation.primarySemanticWindow,

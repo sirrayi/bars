@@ -21,8 +21,8 @@ struct MenuOpenRefreshPlanTests {
     func `ordinary refresh skips fresh providers`() {
         let plan = MenuOpenRefreshPlan.resolve(.init(
             refreshAllOnOpen: false,
-            enabledProviders: [.codex],
-            visibleProviders: [.codex],
+            enabledProviders: [.claude],
+            visibleProviders: [.claude],
             refreshingProviders: [],
             staleProviders: [],
             missingProviders: []))

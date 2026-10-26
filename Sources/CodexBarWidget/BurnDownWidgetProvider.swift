@@ -5,26 +5,21 @@ import WidgetKit
 /// Provider-specific by design: AppIntents requires compile-time enum cases and display representations;
 /// runtime presentation policy still comes from each provider descriptor below this literal WidgetKit surface.
 enum BurnProviderChoice: String, AppEnum {
-    case codex
     case claude
     case devin
     case opencode
     case opencodego
     case deepseek
-    case pi
     static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Provider")
 
     static let caseDisplayRepresentations: [BurnProviderChoice: DisplayRepresentation] = [
         // Provider-specific by design: AppIntents requires literal catalog titles; snapshot data gates eligibility.
-        .codex: DisplayRepresentation(title: "Codex"),
         .claude: DisplayRepresentation(title: "Claude"),
         .opencode: DisplayRepresentation(title: "OpenCode"),
         .opencodego: DisplayRepresentation(title: "OpenCode Go"),
         .devin: DisplayRepresentation(title: "Devin"),
         // Provider-specific by design: AppIntents requires literal catalog titles; snapshot data gates eligibility.
         .deepseek: DisplayRepresentation(title: "DeepSeek"),
-        // Provider-specific by design: AppIntents requires literal catalog titles; snapshot data gates eligibility.
-        .pi: DisplayRepresentation(title: "Pi"),
     ]
 
     var provider: UsageProvider {
@@ -51,32 +46,32 @@ enum BurnWindowChoice: String, AppEnum {
 }
 
 struct BurnDownSelectionIntent: AppIntent, WidgetConfigurationIntent {
-    // Provider-specific by design: the original burn-down widget defaults to Codex session usage.
+    // Provider-specific by design: the burn-down widget defaults to Claude session usage.
     static let title: LocalizedStringResource = "Burn Down"
     static let description = IntentDescription("Select the provider and usage window to display.")
 
-    @Parameter(title: "Provider", default: .codex, optionsProvider: BurnProviderOptions())
+    @Parameter(title: "Provider", default: .claude, optionsProvider: BurnProviderOptions())
     var provider: BurnProviderChoice
 
     @Parameter(title: "Usage window", default: .session, optionsProvider: BurnWindowOptions())
     var window: BurnWindowChoice
 
     init() {
-        self.provider = .codex
+        self.provider = .claude
         self.window = .session
     }
 }
 
 struct BurnProviderSelectionIntent: AppIntent, WidgetConfigurationIntent {
-    // Provider-specific by design: the provider-only burn-down widget also defaults to Codex.
+    // Provider-specific by design: the provider-only burn-down widget also defaults to Claude.
     static let title: LocalizedStringResource = "Burn Down Provider"
     static let description = IntentDescription("Select the provider to display.")
 
-    @Parameter(title: "Provider", default: .codex, optionsProvider: BurnProviderOptions(combined: true))
+    @Parameter(title: "Provider", default: .claude, optionsProvider: BurnProviderOptions(combined: true))
     var provider: BurnProviderChoice
 
     init() {
-        self.provider = .codex
+        self.provider = .claude
     }
 }
 
@@ -155,7 +150,7 @@ struct BurnDownState {
 
     /// Provider-specific by design: preserve the two original Combined intent lane identities on upgrade.
     var usesLegacyLanes: Bool {
-        self.entry.provider == UsageProvider.codex.instanceID || self.entry.provider == UsageProvider.claude.instanceID
+        self.entry.provider == UsageProvider.claude.instanceID
     }
 
     var availableSelections: [BurnWindowChoice] {
@@ -285,7 +280,7 @@ struct BurnDownTimelineProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> BurnDownEntry {
         BurnDownEntry(
             date: Date(),
-            provider: .codex,
+            provider: .claude,
             window: .session,
             snapshot: WidgetPreviewData.snapshot())
     }
@@ -316,7 +311,7 @@ struct CombinedBurnDownTimelineProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> CombinedBurnDownEntry {
         CombinedBurnDownEntry(
             date: Date(),
-            provider: .codex,
+            provider: .claude,
             snapshot: WidgetPreviewData.snapshot())
     }
 

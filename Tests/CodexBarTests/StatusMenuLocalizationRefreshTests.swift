@@ -29,19 +29,18 @@ struct StatusMenuLocalizationRefreshTests {
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
         settings.switcherShowsIcons = false
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .claude
         settings.costUsageEnabled = true
         settings.costSummaryDisplayStyle = .both
 
         let registry = ProviderRegistry.shared
         for provider in UsageProvider.allCases {
             guard let metadata = registry.metadata[provider] else { continue }
-            let shouldEnable = provider == .codex || provider == .claude
+            let shouldEnable = provider == .opencode || provider == .claude
             settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: shouldEnable)
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         store._setTokenSnapshotForTesting(CostUsageTokenSnapshot(
             sessionTokens: 123,
             sessionCostUSD: 0.12,
@@ -57,11 +56,11 @@ struct StatusMenuLocalizationRefreshTests {
                     modelsUsed: nil,
                     modelBreakdowns: nil),
             ],
-            updatedAt: Date()), provider: .codex)
+            updatedAt: Date()), provider: .claude)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: Self.makeStatusBarForTesting())

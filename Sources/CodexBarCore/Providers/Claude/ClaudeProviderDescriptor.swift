@@ -758,7 +758,6 @@ struct ClaudeOAuthFetchStrategy: ProviderFetchStrategy {
         return ProviderFetchResult(
             usage: Self.snapshot(from: usage, includeOptionalUsage: context.includeOptionalUsage),
             credits: nil,
-            dashboard: nil,
             sourceLabel: "oauth",
             strategyID: self.id,
             strategyKind: self.kind,

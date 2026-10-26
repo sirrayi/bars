@@ -590,7 +590,7 @@ extension UsageMenuCardView.Model {
         }
 
         if input.snapshot == nil, !input.isRefreshing, input.lastError == nil {
-            return self.hasLocalCodexTokenUsage(input) ? nil : L("No usage yet")
+            return L("No usage yet")
         }
 
         return nil
@@ -602,24 +602,8 @@ extension UsageMenuCardView.Model {
         else {
             return nil
         }
-        // Local Codex session costs are independent from OAuth, CLI quota, and OpenAI web
-        // dashboard access. Do not present a failed account-level quota fetch as a failure of
-        // a valid local API-key ledger.
-        if input.codexLocalSessionCostLedgerEnabled,
-           self.hasLocalCodexTokenUsage(input),
-           self.isRemoteCodexQuotaFetchError(lastError)
-        {
-            return nil
-        }
         if self.shouldShowRateLimitsUnavailablePlaceholder(input: input, lastError: lastError) {
             return nil
-        }
-        if self.hasCodexCreditOrRateMeters(input) {
-            if UsageError.isNoRateLimitsFoundDescription(lastError)
-                || ClaudeStatusProbe.isSubscriptionQuotaUnavailableDescription(lastError)
-            {
-                return nil
-            }
         }
         return lastError
     }
@@ -666,26 +650,12 @@ extension UsageMenuCardView.Model {
         .current
     }
 
-    private static func hasLocalCodexTokenUsage(_ input: Input) -> Bool {
-        input.provider == .codex &&
-            input.tokenCostUsageEnabled &&
-            self.tokenUsageSnapshot(input: input) != nil
-    }
-
-    private static func isRemoteCodexQuotaFetchError(_ error: String) -> Bool {
-        error.localizedCaseInsensitiveContains("Codex usage is temporarily unavailable")
-    }
-
     private static func shouldShowRateLimitsUnavailablePlaceholder(input: Input, lastError: String? = nil) -> Bool {
         let currentError = lastError ?? input.lastError
         if let currentError = currentError?.trimmingCharacters(in: .whitespacesAndNewlines),
            !currentError.isEmpty,
-           !UsageError.isNoRateLimitsFoundDescription(currentError),
            !ClaudeStatusProbe.isSubscriptionQuotaUnavailableDescription(currentError)
         {
-            return false
-        }
-        if self.hasCodexCreditOrRateMeters(input) {
             return false
         }
         if input.limitsAvailability?.isUnavailable == true {
@@ -694,22 +664,10 @@ extension UsageMenuCardView.Model {
         return self.rateLimitsUnavailable(input: input, lastError: currentError)
     }
 
-    private static func hasCodexCreditOrRateMeters(_ input: Input) -> Bool {
-        if let lanes = input.codexProjection?.displayedRateLanes(
-            showOptionalCreditsAndExtraUsage: input.showOptionalCreditsAndExtraUsage),
-            !lanes.isEmpty
-        {
-            return true
-        }
-        guard input.showOptionalCreditsAndExtraUsage else { return false }
-        return input.credits?.codexCreditLimit != nil
-    }
-
     private static func rateLimitsUnavailable(input: Input, lastError: String? = nil) -> Bool {
         UsageLimitsAvailability.resolve(
             provider: input.provider,
             snapshot: input.snapshot,
-            account: input.account,
             lastErrorDescription: lastError ?? input.lastError)
             .isUnavailable
     }
@@ -813,17 +771,7 @@ extension UsageMenuCardView.Model {
             extraRateWindows.append(spend)
         }
         let menuCard = ProviderDescriptorRegistry.descriptor(for: input.provider).presentation.menuCard
-        // Codex additional limits (e.g. Codex Spark) are optional extra usage and follow the
-        // "optional credits and extra usage" setting. Other providers' extra windows (Antigravity
-        // per-model quotas, Factory core windows, etc.) are core data and must always render.
-        if input.provider == .codex, !input.showOptionalCreditsAndExtraUsage {
-            return []
-        }
-        var visibleRateWindows = if input.provider == .codex, !input.codexSparkUsageVisible {
-            extraRateWindows.filter { !Self.isCodexSparkRateWindow($0) }
-        } else {
-            extraRateWindows
-        }
+        var visibleRateWindows = extraRateWindows
         if input.provider == .claude,
            !input.showOptionalCreditsAndExtraUsage || !input.claudeDailyRoutinesUsageVisible
         {
@@ -898,11 +846,6 @@ extension UsageMenuCardView.Model {
         }
     }
 
-    private static func isCodexSparkRateWindow(_ namedWindow: NamedRateWindow) -> Bool {
-        namedWindow.id == CodexAdditionalRateLimitMapper.sparkWindowID ||
-            namedWindow.id == CodexAdditionalRateLimitMapper.sparkWeeklyWindowID
-    }
-
     private static func isClaudeDailyRoutinesRateWindow(_ namedWindow: NamedRateWindow) -> Bool {
         namedWindow.id == "claude-routines"
     }
@@ -923,11 +866,8 @@ extension UsageMenuCardView.Model {
         input: Input) -> PaceDetail?
     {
         if let detail = resetWindowPaceDetail(window: window, input: input) { return detail }
-        // Provider-specific by design: extra-window pacing covers Codex, Claude, Antigravity, and Cursor 7-day extras.
-        if provider == .claude, window.windowMinutes != 10080 {
-            return nil
-        }
-        guard provider == .codex || provider == .claude else {
+        // Provider-specific by design: extra-window pacing covers Claude 7-day extras.
+        guard provider == .claude, window.windowMinutes == 10080 else {
             return nil
         }
         switch window.windowMinutes {

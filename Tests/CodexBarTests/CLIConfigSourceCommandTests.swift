@@ -96,7 +96,7 @@ struct CLIConfigSourceCommandTests {
             "CODEXBAR_CONFIG": root.appendingPathComponent("config.json").path,
             "HOME": root.path,
             "CFFIXED_USER_HOME": root.path,
-            "CODEX_HOME": root.appendingPathComponent(".codex").path,
+            "CODEX_HOME": root.appendingPathComponent(".opencode").path,
             "CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS": "1",
         ]
         let result = try await SubprocessRunner.run(

@@ -13,7 +13,7 @@ struct SyncModelTests {
             addedAt: 1,
             lastUsed: nil)
         var local = ProviderConfig(
-            id: .codex,
+            id: .opencode,
             enabled: true,
             source: .cli,
             extrasEnabled: true,
@@ -26,8 +26,6 @@ struct SyncModelTests {
             tokenAccounts: .init(version: 1, accounts: [account], activeIndex: 0))
         local.hiddenUsageItemIDs = ["metric:primary", "section:credits"]
         local.claudeSwapExecutablePath = "/machine/bin/cswap"
-        local.codexActiveSource = .managedAccount(id: UUID())
-        local.codexProfileHomePaths = ["/machine/codex"]
 
         let payload = ProviderIntentPayload(config: local)
         let encoded = try CanonicalSyncJSON.string(payload)
@@ -42,14 +40,12 @@ struct SyncModelTests {
         #expect(secrets["tokenAccounts"]?.contains("account-secret") == true)
 
         var baseline = ProviderConfig(
-            id: .codex,
+            id: .opencode,
             enabled: false,
             source: .web,
             apiKey: "local-api",
             cookieSource: .off)
         baseline.claudeSwapExecutablePath = "/local/cswap"
-        baseline.codexActiveSource = .liveSystem
-        baseline.codexProfileHomePaths = ["/local/home"]
         let applied = try decoded.applying(to: baseline, secretFields: secrets) { _, _ in true }
 
         #expect(applied.enabled == true)
@@ -58,8 +54,6 @@ struct SyncModelTests {
         #expect(applied.source == .web)
         #expect(applied.cookieSource == .off)
         #expect(applied.claudeSwapExecutablePath == "/local/cswap")
-        #expect(applied.codexActiveSource == .liveSystem)
-        #expect(applied.codexProfileHomePaths == ["/local/home"])
         #expect(applied.apiKey == "api-secret")
         #expect(applied.tokenAccounts?.accounts.first?.token == "account-secret")
         #expect(applied.hiddenUsageItemIDs == ["metric:primary", "section:credits"])
@@ -70,16 +64,16 @@ struct SyncModelTests {
         let oldPayload = try CanonicalSyncJSON.decode(
             ProviderIntentPayload.self,
             from: """
-            {"schemaVersion":1,"provider":"codex"}
+            {"schemaVersion":1,"provider":"opencode"}
             """)
         let local = ProviderConfig(
-            id: .codex,
+            id: .opencode,
             hiddenUsageItemIDs: ["metric:primary", "section:credits"])
 
         let preserved = try oldPayload.applying(to: local, secretFields: [:]) { _, _ in true }
         #expect(preserved.hiddenUsageItemIDs == ["metric:primary", "section:credits"])
 
-        let resetPayload = ProviderIntentPayload(config: ProviderConfig(id: .codex, hiddenUsageItemIDs: []))
+        let resetPayload = ProviderIntentPayload(config: ProviderConfig(id: .opencode, hiddenUsageItemIDs: []))
         #expect(resetPayload.hiddenUsageItemIDs == [])
         let reset = try resetPayload.applying(to: local, secretFields: [:]) { _, _ in true }
         #expect(reset.hiddenUsageItemIDs == [])
@@ -90,7 +84,7 @@ struct SyncModelTests {
         let malicious = """
         {
           "schemaVersion": 1,
-          "provider": "codex",
+          "provider": "opencode",
           "enabled": false,
           "hooks": {"enabled": true, "events": [{"executable": "/tmp/evil"}]}
         }
@@ -100,12 +94,12 @@ struct SyncModelTests {
             id: "safe",
             event: .quotaLow,
             executable: "/usr/bin/true")])
-        var config = CodexBarConfig(providers: [ProviderConfig(id: .codex, enabled: true)], hooks: hooks)
-        let local = try #require(config.providerConfig(for: .codex))
+        var config = CodexBarConfig(providers: [ProviderConfig(id: .opencode, enabled: true)], hooks: hooks)
+        let local = try #require(config.providerConfig(for: .opencode))
         try config.setProviderConfig(payload.applying(to: local, secretFields: [:]) { _, _ in true })
 
         #expect(config.hooks == hooks)
-        #expect(config.providerConfig(for: .codex)?.enabled == false)
+        #expect(config.providerConfig(for: .opencode)?.enabled == false)
     }
 
     @Test
@@ -299,7 +293,7 @@ struct SyncModelTests {
     @Test
     func `non Claude snapshot does not name an email keyed CloudKit predecessor`() {
         let payload = Self.snapshot(
-            provider: .codex,
+            provider: .opencode,
             loginMethod: "pro",
             accountID: "user-workspace-1",
             email: "owner@example.com")

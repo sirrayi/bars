@@ -60,7 +60,7 @@ extension StatusItemController {
         let selection = selections[nextIndex]
         let menuProvider: UsageProvider? = switch selection {
         case .overview:
-            self.navigationResolvedProvider(enabledProviders: enabledProviders) ?? .codex
+            self.navigationResolvedProvider(enabledProviders: enabledProviders) ?? .claude
         case let .provider(instanceID):
             instanceID.firstPartyProvider
         }
@@ -69,7 +69,7 @@ extension StatusItemController {
             case .overview:
                 self.settings.mergedMenuLastSelectedWasOverview = true
                 self.lastMenuProvider =
-                    (self.navigationResolvedProvider(enabledProviders: enabledProviders) ?? .codex).instanceID
+                    (self.navigationResolvedProvider(enabledProviders: enabledProviders) ?? .claude).instanceID
             case let .provider(provider):
                 self.settings.mergedMenuLastSelectedWasOverview = false
                 self.selectedMenuProvider = provider
@@ -88,7 +88,7 @@ extension StatusItemController {
 
     private func navigationResolvedProvider(enabledProviders: [UsageProvider]) -> UsageProvider? {
         if enabledProviders.isEmpty {
-            return .codex
+            return .claude
         }
         if let selected = self.selectedMenuProvider?.firstPartyProvider, enabledProviders.contains(selected) {
             return selected

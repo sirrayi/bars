@@ -243,8 +243,6 @@ struct ModelsDevModel: Codable, Equatable {
             rates.tier = nil
             return $0.tier?.type == "context" && ($0.tier?.size ?? 0) > 0 && rates == contextOver200K
         }?.tier?.size
-        let legacyThreshold = normalizedProviderID == CostUsagePricing.codexModelsDevProviderID
-            ? CostUsagePricing.codexLongContextThreshold(model: self.id) : nil
         return ModelsDevPricingInfo(
             providerID: normalizedProviderID,
             providerName: providerName,
@@ -255,7 +253,7 @@ struct ModelsDevModel: Codable, Equatable {
             cacheReadInputCostPerToken: self.cost?.cacheRead.map { $0 / unit },
             cacheCreationInputCostPerToken: self.cost?.cacheWrite.map { $0 / unit },
             contextWindow: self.limit?.context,
-            thresholdTokens: contextOver200K == nil ? nil : contextThreshold ?? legacyThreshold ?? 200_000,
+            thresholdTokens: contextOver200K == nil ? nil : contextThreshold ?? 200_000,
             inputCostPerTokenAboveThreshold: contextOver200K?.input.map { $0 / unit },
             outputCostPerTokenAboveThreshold: contextOver200K?.output.map { $0 / unit },
             cacheReadInputCostPerTokenAboveThreshold: contextOver200K?.cacheRead.map { $0 / unit },
@@ -428,7 +426,7 @@ struct ModelsDevCacheLoadResult: Equatable {
 ///
 /// `ModelsDevCache.load` is called once per usage row whenever a cost lookup is performed without a
 /// pre-resolved catalog (see `CostUsagePricing.modelsDevLookup`). Without this memo, scanning a large
-/// `~/.codex` history re-reads and re-decodes the ~800 KB catalog JSON for every row, which pegs the CPU
+/// long transcript history re-reads and re-decodes the ~800 KB catalog JSON for every row, which pegs the CPU
 /// and freezes the menu during a refresh.
 ///
 /// The full load *outcome* is memoized, not just successful decodes: a corrupt or wrong-version cache is

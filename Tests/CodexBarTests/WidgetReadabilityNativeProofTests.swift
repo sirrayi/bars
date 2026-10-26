@@ -81,13 +81,13 @@ final class WidgetReadabilityNativeProofTests: XCTestCase {
 @Observable
 private final class WidgetReadabilityProofModel {
     var fixture = "Quotas"
-    var selected: UsageProvider = .codex
+    var selected: UsageProvider = .devin
     var mode = "Color"
     var showUsed = false
     var margin: Double = 14
     var pagerChanges = 0
     let now = Date()
-    let providers: [UsageProvider] = [.codex, .claude, .opencode, .deepseek]
+    let providers: [UsageProvider] = [.devin, .claude, .opencode, .deepseek]
 
     var renderingMode: WidgetRenderingMode {
         switch self.mode {
@@ -99,7 +99,7 @@ private final class WidgetReadabilityProofModel {
 
     func selectFixture(_ fixture: String) {
         self.fixture = fixture
-        self.selected = fixture == "Long name" ? .deepseek : fixture == "Tokens only" ? .claude : .codex
+        self.selected = fixture == "Long name" ? .deepseek : fixture == "Tokens only" ? .claude : .devin
     }
 
     var snapshot: WidgetSnapshot {
@@ -116,8 +116,8 @@ private final class WidgetReadabilityProofModel {
                 windowMinutes: 10080,
                 resetsAt: self.now.addingTimeInterval(86400),
                 resetDescription: nil)
-            let primaryID = provider == .codex ? "session" : "primary"
-            let weeklyID = provider == .codex ? "weekly" : "secondary"
+            let primaryID = provider == .devin ? "session" : "primary"
+            let weeklyID = provider == .devin ? "weekly" : "secondary"
             var rows: [WidgetSnapshot.WidgetUsageRowSnapshot] = tokensOnly ? [] : [
                 .init(id: primaryID, title: "Session", percentLeft: 99, window: primary),
                 .init(id: weeklyID, title: "Weekly", percentLeft: 4, window: weekly),
@@ -130,7 +130,7 @@ private final class WidgetReadabilityProofModel {
                 tertiary: nil,
                 usageRows: rows,
                 creditsRemaining: nil,
-                codeReviewRemainingPercent: provider == .codex && !tokensOnly ? 0 : nil,
+                codeReviewRemainingPercent: provider == .devin && !tokensOnly ? 0 : nil,
                 tokenUsage: .init(
                     sessionCostUSD: tokensOnly ? nil : 1.5,
                     sessionTokens: 1200,

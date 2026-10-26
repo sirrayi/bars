@@ -37,7 +37,7 @@ struct WidgetBindingQuotaTests {
     @Test
     func `Codex review does not displace its binding coding quota`() {
         let entry = self.entry(
-            .codex,
+            .opencode,
             primary: 70,
             secondary: 40,
             rows: [
@@ -52,7 +52,7 @@ struct WidgetBindingQuotaTests {
 
     @Test
     func `Codex ranks raw quota windows before applying the weekly cap`() {
-        let entry = self.entry(.codex, primary: 99, secondary: 0, rows: [
+        let entry = self.entry(.opencode, primary: 99, secondary: 0, rows: [
             Row(id: "session", title: "Session", percentLeft: 99),
             Row(id: "weekly", title: "Weekly", percentLeft: 0),
         ])
@@ -98,7 +98,7 @@ struct WidgetBindingQuotaTests {
 
     @Test
     func `review only snapshots keep the detail and credit fallback`() {
-        let entry = self.entry(.codex, review: 0, credits: 10)
+        let entry = self.entry(.opencode, review: 0, credits: 10)
         let plan = WidgetTilePlan.make(lanes: WidgetTileLane.lanes(for: entry), maxSecondaryLanes: 5)
         #expect(plan.hero == nil)
         #expect(plan.lanes.map(\.id) == ["code-review"])

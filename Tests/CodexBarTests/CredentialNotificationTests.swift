@@ -97,7 +97,6 @@ struct CredentialNotificationTests {
 
     private static func store(_ settings: SettingsStore) -> UsageStore {
         UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing)
@@ -107,7 +106,6 @@ struct CredentialNotificationTests {
         ProviderFetchResult(
             usage: UsageSnapshot(primary: nil, secondary: nil, updatedAt: Date()),
             credits: nil,
-            dashboard: nil,
             sourceLabel: source,
             strategyID: "fixture",
             strategyKind: .oauth,

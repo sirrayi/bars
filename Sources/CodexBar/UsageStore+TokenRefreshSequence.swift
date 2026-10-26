@@ -175,7 +175,7 @@ extension UsageStore {
     private func startPendingTokenRefreshRetryIfPossible() -> Bool {
         guard !self.tokenRefreshRetryProviders.isEmpty,
               self.tokenRefreshSequenceTask == nil,
-              self.settings.costUsageEnabled || self.settings.codexLocalSessionCostLedgerEnabled
+              self.settings.costUsageEnabled
         else {
             return false
         }

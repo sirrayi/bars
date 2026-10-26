@@ -356,7 +356,6 @@ struct ClaudeWebFetchDeadlineTests {
                 webExtrasEnabled: false,
                 cookieSource: cookieSource,
                 manualCookieHeader: cookieSource == .manual ? "sessionKey=sk-ant-session-token" : nil)),
-            fetcher: UsageFetcher(),
             claudeFetcher: ClaudeUsageFetcher(browserDetection: browserDetection),
             browserDetection: browserDetection)
     }

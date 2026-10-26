@@ -2,4 +2,4 @@
 
 # Provider IDs
 
-`codex`, `claude`, `opencode`, `opencodego`, `devin`, `deepseek`, `pi`.
+`claude`, `opencode`, `opencodego`, `devin`, `deepseek`.

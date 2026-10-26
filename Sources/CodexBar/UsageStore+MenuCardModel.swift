@@ -64,15 +64,7 @@ extension UsageStore {
         let descriptor = ProviderDescriptorRegistry.descriptor(for: provider)
         // An explicitly empty account stays empty; live data may belong to another account.
         let snapshot = isLive ? self.presentationSnapshot(for: provider) : account?.snapshot
-        let codexProjection = self.codexConsumerProjectionIfNeeded(
-            for: provider,
-            surface: isLive ? .liveCard : .overrideCard,
-            snapshotOverride: account?.snapshot,
-            errorOverride: account?.error,
-            creditsOverride: account?.credits,
-            optionalUsageOverride: optionalUsageOverride,
-            now: now)
-        let supportsTokenCost = codexProjection != nil || descriptor.tokenCost.supportsTokenCost
+        let supportsTokenCost = descriptor.tokenCost.supportsTokenCost
         let tokenSnapshot: CostUsageTokenSnapshot?
         if isSettings {
             tokenSnapshot = usesStoredCosts && supportsTokenCost ? self.tokenSnapshot(for: provider) : nil
@@ -85,8 +77,7 @@ extension UsageStore {
                 : nil
             tokenSnapshot = projected ?? stored
         }
-        let weeklyWindow = codexProjection?.rateWindow(for: .weekly)
-            ?? snapshot.flatMap { descriptor.presentation.semanticWindows(snapshot: $0).weekly }
+        let weeklyWindow = snapshot.flatMap { descriptor.presentation.semanticWindows(snapshot: $0).weekly }
         let weeklyPace = weeklyWindow.flatMap {
             self.weeklyPace(
                 provider: provider,
@@ -97,11 +88,10 @@ extension UsageStore {
         let forecast = isSettings ? nil : self.menuCardSessionEquivalentForecast(
             provider: provider,
             snapshot: snapshot,
-            codexProjection: codexProjection,
             account: account,
             now: now)
         let presentation = isLive ? self.userFacingErrorPresentation(for: provider) : nil
-        let lastError = account?.error ?? codexProjection?.userFacingErrors.usage
+        let lastError = account?.error
             ?? (isLive && isSettings ? self.userFacingError(for: provider) : presentation?.message)
         // Settings keeps its error preview intact; menu cards have a dedicated secondary stale-usage line.
         let lastKnownUsageCapturedAt = isSettings ? nil : presentation?.lastKnownUsageCapturedAt
@@ -122,10 +112,9 @@ extension UsageStore {
             },
             metadata: metadata,
             snapshot: snapshot,
-            codexProjection: codexProjection,
-            credits: isSettings && !isLive ? account?.credits : codexProjection?.credits?.snapshot,
-            creditsError: isSettings ? codexProjection?.credits?.userFacingError : nil,
-            dashboardError: isSettings ? codexProjection?.userFacingErrors.dashboard : nil,
+            credits: isSettings && !isLive ? account?.credits : nil,
+            creditsError: nil,
+            dashboardError: nil,
             tokenSnapshot: tokenSnapshot,
             tokenError: usesStoredCosts && supportsTokenCost ? self.tokenError(for: provider) : nil,
             account: account?.info ?? (isLive && metadata.usesAccountFallback
@@ -146,7 +135,6 @@ extension UsageStore {
             resetTimeDisplayStyle: self.settings.resetTimeDisplayStyle,
             tokenCostUsageEnabled: self.settings.isCostUsageEffectivelyEnabled(for: provider),
             tokenCostIsRefreshing: !isSettings && self.tokenCostRefreshIsActive(for: provider),
-            codexLocalSessionCostLedgerEnabled: self.settings.codexLocalSessionCostLedgerEnabled,
             // Settings exposes available costs regardless of the menu's display style.
             costSummaryInlineEnabled: isSettings || self.settings.costSummaryShowsInline(for: provider),
             tokenCostMenuSectionEnabled: isSettings
@@ -183,7 +171,6 @@ extension UsageStore {
     private func menuCardSessionEquivalentForecast(
         provider: UsageProvider,
         snapshot: UsageSnapshot?,
-        codexProjection: CodexConsumerProjection?,
         account: UsageMenuCardContext.Account?,
         now: Date) -> SessionEquivalentForecast?
     {
@@ -191,16 +178,6 @@ extension UsageStore {
             account.historySelection ?? snapshot.map {
                 self.planUtilizationHistorySelection(for: provider, snapshotOverride: $0)
             } ?? .unavailable
-        }
-        if let session = codexProjection?.rateWindow(for: .session),
-           let weekly = codexProjection?.rateWindow(for: .weekly)
-        {
-            return self.sessionEquivalentForecast(
-                provider: provider,
-                sessionWindow: session,
-                weeklyWindow: weekly,
-                historySelection: historySelection,
-                now: now)
         }
         guard let snapshot,
               let windows = self.sessionEquivalentWindows(provider: provider, snapshot: snapshot)

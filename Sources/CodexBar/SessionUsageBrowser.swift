@@ -35,19 +35,6 @@ struct SessionUsageBrowser: View {
     @State private var sort = SessionUsagePresentation.Sort.activity
     @State private var ascending = false
     @State private var selectedSessionID: String?
-    @State private var requestDetails: (key: DetailKey, turns: [CostUsageSessionTurn])?
-    @State private var loadingDetails = false
-    @State private var detailError: CostUsageSessionDetailError?
-
-    private struct DetailKey: Hashable {
-        let source: CostUsageSessionDetailSource?
-        let sessionID: String?
-        let lastActivity: Date?
-        let costUSD: Double?
-        let range: Range<Date>?
-        let timeZone: String
-    }
-
     init(context: SessionUsageBrowserContext, hidePersonalInfo: Bool, selectedSessionID: String? = nil) {
         self.context = context
         self.hidePersonalInfo = hidePersonalInfo
@@ -64,26 +51,7 @@ struct SessionUsageBrowser: View {
     }
 
     private var selectedSession: CostUsageSessionBreakdown? {
-        guard let session = self.sessions.first(where: { $0.sessionID == self.selectedSessionID }) ?? self.sessions
-            .first
-        else { return nil }
-        guard let details = self.requestDetails, details.key == self.detailKey(for: session)
-        else { return session }
-        return session.withRequestDetails(details.turns)
-    }
-
-    private var detailKey: DetailKey {
-        self.detailKey(for: self.selectedSession)
-    }
-
-    private func detailKey(for session: CostUsageSessionBreakdown?) -> DetailKey {
-        DetailKey(
-            source: session?.requestDetailSource,
-            sessionID: session?.sessionID,
-            lastActivity: session?.lastActivity,
-            costUSD: session?.costUSD,
-            range: self.context.activityRange,
-            timeZone: self.context.timeZone.identifier)
+        self.sessions.first(where: { $0.sessionID == self.selectedSessionID }) ?? self.sessions.first
     }
 
     var body: some View {
@@ -158,35 +126,6 @@ struct SessionUsageBrowser: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .task(id: self.detailKey) { await self.loadSelectedDetails() }
-        .onDisappear { self.requestDetails = nil }
-    }
-
-    private func loadSelectedDetails() async {
-        guard !Task.isCancelled else { return }
-        self.requestDetails = nil
-        self.detailError = nil
-        self.loadingDetails = false
-        guard let session = self.selectedSession, let source = session.requestDetailSource,
-              let range = self.context.activityRange else { return }
-        let key = self.detailKey(for: session)
-        self.loadingDetails = true
-        do {
-            let details = try await CostUsageSessionDetailLoader.load(
-                source: source,
-                lastActivity: session.lastActivity,
-                range: range,
-                timeZone: self.context.timeZone)
-            try Task.checkCancellation()
-            self.requestDetails = (key, details)
-            self.loadingDetails = false
-        } catch is CancellationError {
-            // Selection changes cancel queued/in-flight work and release the previous result.
-        } catch {
-            guard !Task.isCancelled else { return }
-            self.detailError = error as? CostUsageSessionDetailError ?? .unavailable
-            self.loadingDetails = false
-        }
     }
 
     private func sessionRow(_ session: CostUsageSessionBreakdown) -> some View {
@@ -272,14 +211,7 @@ struct SessionUsageBrowser: View {
                         "Messages sharing a turn cannot be priced separately."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                if self.loadingDetails {
-                    ProgressView().controlSize(.small)
-                } else if let error = self.detailError {
-                    Text(L(error == .limitExceeded
-                            ? "Request details exceed the limit."
-                            : "Request details are unavailable. Refresh usage and try again."))
-                        .font(.callout).foregroundStyle(.secondary)
-                } else if session.turns.isEmpty {
+                if session.turns.isEmpty {
                     Text(L("No turn-level usage records are available."))
                         .font(.callout)
                         .foregroundStyle(.secondary)

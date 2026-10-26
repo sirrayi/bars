@@ -73,16 +73,14 @@ struct MenuBarSpendCountdownRefreshTests {
         if let metadata = ProviderRegistry.shared.metadata[.claude] {
             settings.setProviderEnabled(provider: .claude, metadata: metadata, enabled: true)
         }
-        let fetcher = UsageFetcher(environment: [:])
         let store = UsageStore(
-            fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())

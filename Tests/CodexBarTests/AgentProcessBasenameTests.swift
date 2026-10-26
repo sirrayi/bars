@@ -65,21 +65,6 @@ struct AgentProcessBasenameTests {
     }
 
     @Test
-    func `non bun dialect checks do not materialize arguments`() {
-        var argumentReads = 0
-        func arguments() -> [String] {
-            argumentReads += 1
-            return ["/opt/omp"]
-        }
-        for _ in 0..<2500 {
-            #expect(AgentPSOutputParser.piDialect(executableBasename: "node", arguments: arguments()) == nil)
-        }
-        #expect(argumentReads == 0)
-        #expect(AgentPSOutputParser.piDialect(executableBasename: "bun", arguments: arguments()) == .omp)
-        #expect(argumentReads == 1)
-    }
-
-    @Test
     func `parser has no filesystem probing URL constructors`() throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
             .deletingLastPathComponent()
@@ -104,17 +89,12 @@ struct AgentProcessBasenameTests {
     @Test
     func `agent classification preserves argv and portable command behavior`() {
         let commands = [
-            ["node", "/opt/pi/index.js"], ["bun", "/opt/omp"], ["bun", "/opt/omp/"],
-            ["bun", "/opt/omp bundle/tool"], ["bun", "/opt/agent tools/omp"], ["bun", "--help", "omp"],
-            ["bun", "./omp"], ["bun", ""], ["bun", "."], ["bun", ".."], ["bun", "~"],
-            ["pi"], ["pi/"], ["PI"], ["./pi", "--session-dir", "/project with spaces"],
-            ["omp", "--profile", "work"], ["../bin/omp/"], ["omp", "--version"],
-            ["codex", "exec"], ["./codex/", "exec"], ["codex", "app-server"], ["codex", "--help"],
-            ["claude"], ["claude", "--version"], ["claude-code-acp"],
+            ["node", "/opt/pi/index.js"], ["bun", "/opt/omp"], ["pi"], ["omp", "--profile", "work"],
+            ["codex", "exec"], ["./codex/", "exec"], ["codex", "app-server"],
+            ["claude"], ["claude", "--version"], ["claude-code-acp"], ["CLAUDE"], ["./claude/"],
             ["/Applications/Claude.app/Contents/MacOS/Claude"],
             ["/Users/test/Library/Application Support/Claude/claude-code/claude", "--resume"],
             ["disclaimer", "/Users/test/Library/Application Support/Claude/claude-code/claude", "--resume"],
-            ["/Applications/ChatGPT.app/Contents/Resources/codex", "app-server"],
             ["/"], [""], ["~"], ["~/"], ["."], [".."], ["/foo/."], ["/foo/.."], [],
         ]
         for arguments in commands {
@@ -127,37 +107,13 @@ struct AgentProcessBasenameTests {
                     arguments: preservesArguments ? arguments : nil)
                 let expected = Self.legacyClassification(record)
                 #expect(record.executableBasename == expected.basename)
-                #expect(AgentPSOutputParser.piDialect(for: record) == expected.dialect)
                 #expect(AgentPSOutputParser.provider(for: record) == expected.provider)
-                if preservesArguments {
-                    #expect(AgentPSOutputParser.piDialect(arguments: arguments) == expected.dialect)
-                }
             }
         }
     }
 
     @Test
-    func `preserved Pi arguments cannot be reclassified by a Claude path`() {
-        let cases: [([String], AgentSession.Dialect)] = [
-            (["pi", "Application", "Support/Claude/claude-code/claude"], .pi),
-            (["bun", "Application", "Support/Claude/claude-code/claude", "omp"], .omp),
-        ]
-        for (arguments, dialect) in cases {
-            let command = arguments.joined(separator: " ")
-            let record = AgentProcessRecord(pid: 1, ppid: 0, startedAt: nil, command: command, arguments: arguments)
-            #expect(record.executableBasename == arguments[0])
-            #expect(AgentPSOutputParser.piDialect(for: record) == dialect)
-            #expect(AgentPSOutputParser.piDialect(arguments: arguments) == dialect)
-            #expect(AgentPSOutputParser.provider(for: record) == .pi)
-
-            let fallback = AgentProcessRecord(pid: 1, ppid: 0, startedAt: nil, command: command)
-            #expect(fallback.executableBasename == "claude")
-            #expect(AgentPSOutputParser.provider(for: fallback) == .claude)
-        }
-    }
-
-    @Test
-    func `agent selection retains ordering helpers wrappers and app servers`() {
+    func `agent selection retains ordering helpers wrappers and desktop sessions`() {
         let commands = [
             "node /opt/pi/index.js", "bun /opt/omp", "pi/", "./omp/", "codex exec", "claude",
             "omp --version", "bun omp --help", "codex app-server", "claude --help",
@@ -168,42 +124,25 @@ struct AgentProcessBasenameTests {
         let records = commands.enumerated().map { index, command in
             AgentProcessRecord(pid: Int32(index + 1), ppid: index == 12 ? 12 : 0, startedAt: nil, command: command)
         }
-        #expect(AgentPSOutputParser.agentProcesses(from: records).map(\.pid) == [2, 3, 4, 5, 6, 13])
+        #expect(AgentPSOutputParser.agentProcesses(from: records).map(\.pid) == [6, 13])
     }
 
     /// Frozen pre-optimization classifier, kept as the equivalence oracle for awkward argv boundaries.
     private static func legacyClassification(_ record: AgentProcessRecord) -> (
-        basename: String, dialect: AgentSession.Dialect?, provider: AgentSession.Provider?)
+        basename: String, provider: AgentSession.Provider?)
     {
         let arguments = record.arguments ?? record.command.split(whereSeparator: \.isWhitespace).map(String.init)
         var basename = URL(fileURLWithPath: arguments.first ?? "").lastPathComponent
         if basename != "disclaimer", record.command.contains("Application Support/Claude/claude-code/claude") {
             basename = AgentSession.Provider.claude.rawValue
         }
-        let first = URL(fileURLWithPath: basename).lastPathComponent.lowercased()
-        let dialect: AgentSession.Dialect? = switch first {
-        case "pi": .pi
-        case "omp": .omp
-        case "bun": arguments.dropFirst().contains {
-                URL(fileURLWithPath: $0).lastPathComponent.lowercased() == "omp"
-            } ? .omp : nil
-        default: nil
-        }
-        let provider: AgentSession.Provider? = if let direct = AgentSession.Provider(rawValue: basename.lowercased()),
-                                                  direct != .pi
-        {
+        let provider: AgentSession.Provider? = if let direct = AgentSession.Provider(rawValue: basename.lowercased()) {
             direct
         } else if basename.lowercased() == "disclaimer" {
             .claude
-        } else if dialect != nil,
-                  !["--help", "--version", "--smoke-test", "__omp_worker_"].contains(where: {
-                      record.command.lowercased().contains($0)
-                  })
-        {
-            .pi
         } else {
             nil
         }
-        return (basename, dialect, provider)
+        return (basename, provider)
     }
 }

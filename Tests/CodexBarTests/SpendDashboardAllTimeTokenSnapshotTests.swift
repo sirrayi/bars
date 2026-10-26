@@ -22,7 +22,7 @@ struct SpendDashboardAllTimeTokenSnapshotTests {
         store._setTokenSnapshotForTesting(
             Self.snapshot(days: [recentDay], historyDays: 30, now: now),
             provider: provider)
-        store._test_tokenUsageSnapshotLoaderOverride = { _, _, _, _, historyDays in
+        store._test_tokenUsageSnapshotLoaderOverride = { _, _, _, historyDays in
             receivedHistoryDays.append(historyDays)
             return Self.snapshot(days: [oldDay, recentDay], historyDays: historyDays, now: now)
         }
@@ -63,7 +63,6 @@ struct SpendDashboardAllTimeTokenSnapshotTests {
             settings.setProviderEnabled(provider: candidate, metadata: metadata, enabled: candidate == provider)
         }
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,

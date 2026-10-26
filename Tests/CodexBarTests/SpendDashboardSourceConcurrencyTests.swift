@@ -23,183 +23,6 @@ struct SpendDashboardSourceConcurrencyTests {
         #expect(snapshot.last30DaysCostUSD == 5)
     }
 
-    @Test(CodexCredentialFixtures())
-    func `Codex batch revalidates completed and failed accounts after later scans`() async throws {
-        let root = CodexCredentialFixtures.root
-            .appendingPathComponent("SpendDashboardSourceConcurrencyTests-auth-\(UUID().uuidString)", isDirectory: true)
-        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: root) }
-
-        let completed = try Self.makeAccount(id: "completed", root: root)
-        let failed = try Self.makeAccount(id: "failed", root: root)
-        let later = try Self.makeAccount(id: "later", root: root)
-        let completedSnapshot = Self.input(cost: 1).snapshot
-        let laterSnapshot = Self.input(cost: 2).snapshot
-        let gate = SpendDashboardPendingLoads<CostUsageTokenSnapshot>()
-        defer { gate.close() }
-        let request = SpendDashboardLoadRequest(
-            configuration: SpendDashboardConfiguration(
-                costUsageEnabled: true,
-                providerIDs: [UsageProvider.codex.rawValue],
-                codexAccountIdentities: [completed, failed, later].map { "\($0.id)|\($0.cacheIdentity)" }),
-            capturedInputs: [],
-            unavailableSourceIDs: [],
-            codexRequests: [completed, failed, later],
-            now: Date(timeIntervalSince1970: 1_784_179_200),
-            force: true)
-
-        let loadTask = Task {
-            await SpendDashboardSource.load(request, codexSnapshotLoader: { context in
-                switch context.account.id {
-                case completed.id:
-                    completedSnapshot
-                case failed.id:
-                    throw SpendDashboardSyntheticError.failed
-                default:
-                    try await gate.load()
-                }
-            })
-        }
-        defer { loadTask.cancel() }
-        try await gate.waitForPendingCount(1)
-        let replacementAuth = Data("{\"profile\":\"replacement-owner\"}".utf8)
-        try replacementAuth.write(
-            to: CodexAuthFingerprint.authFileURL(homePath: completed.homePath),
-            options: .atomic)
-        try replacementAuth.write(
-            to: CodexAuthFingerprint.authFileURL(homePath: failed.homePath),
-            options: .atomic)
-        gate.resume(returning: laterSnapshot)
-
-        let result = await loadTask.value
-        #expect(result.inputs.map(\.id) == ["codex:later"])
-        #expect(result.failedSourceIDs == ["codex:completed", "codex:failed"])
-        #expect(result.invalidatedSourceIDs == ["codex:completed", "codex:failed"])
-    }
-
-    @Test
-    func `Codex ownership change retains failed unchanged sibling only`() async throws {
-        let gate = SpendDashboardResultBatchGate()
-        defer { gate.close() }
-        let initial = SpendDashboardConfiguration(
-            costUsageEnabled: true,
-            providerIDs: [UsageProvider.codex.rawValue],
-            codexAccountIdentities: ["a|owner-a", "b|owner-b"])
-        let replacement = SpendDashboardConfiguration(
-            costUsageEnabled: true,
-            providerIDs: [UsageProvider.codex.rawValue],
-            codexAccountIdentities: ["a|owner-a-replacement", "b|owner-b"])
-        let requestSequence = SpendDashboardRequestSequence([
-            .init(configuration: initial),
-            .init(configuration: replacement),
-        ])
-        let controller = SpendDashboardController(
-            requestBuilder: { mode in await requestSequence.next(mode: mode) },
-            loader: { request in await gate.load(request) })
-
-        controller.update(configuration: initial)
-        try await gate.waitForPendingCount(1)
-        gate.resume(result: SpendDashboardLoadResult(
-            inputs: [
-                Self.input(id: "codex:a", cost: 3),
-                Self.input(id: "codex:b", cost: 5),
-            ],
-            failedSourceIDs: []))
-        try await Self.waitUntil { !controller.isRefreshing }
-        #expect(controller.model.groups.first?.totalCost == 8)
-
-        controller.update(configuration: replacement)
-        try await gate.waitForPendingCount(1)
-        #expect(controller.model.groups.first?.totalCost == 5)
-        #expect(Set(controller.model.groups.flatMap(\.providers).map(\.id)) == ["codex:b"])
-        gate.resume(result: SpendDashboardLoadResult(
-            inputs: [],
-            failedSourceIDs: ["codex:a", "codex:b"]))
-        try await Self.waitUntil { !controller.isRefreshing }
-
-        #expect(controller.model.groups.first?.totalCost == 5)
-        #expect(Set(controller.model.groups.flatMap(\.providers).map(\.id)) == ["codex:b"])
-        #expect(controller.failedSourceCount == 2)
-    }
-
-    @Test
-    func `Codex removal relabels retained failed account from second to first`() async throws {
-        let gate = SpendDashboardResultBatchGate()
-        defer { gate.close() }
-        let requestGate = SpendDashboardPendingLoads<Void>()
-        defer { requestGate.close() }
-        let initialRequests = [
-            Self.scanRequest(id: "a", displayName: "Codex · #1"),
-            Self.scanRequest(id: "b", displayName: "Codex · #2"),
-            Self.scanRequest(id: "c", displayName: "Codex · #3"),
-        ]
-        let replacementRequests = [
-            Self.scanRequest(id: "b", displayName: "Codex · #1"),
-            Self.scanRequest(id: "c", displayName: "Codex · #2"),
-        ]
-        let initial = SpendDashboardConfiguration(
-            costUsageEnabled: true,
-            providerIDs: [UsageProvider.codex.rawValue],
-            codexAccountIdentities: ["a|owner-a", "b|owner-b", "c|owner-c"],
-            codexAccountDisplayNames: [
-                "codex:a": "Codex · #1",
-                "codex:b": "Codex · #2",
-                "codex:c": "Codex · #3",
-            ])
-        let replacement = SpendDashboardConfiguration(
-            costUsageEnabled: true,
-            providerIDs: [UsageProvider.codex.rawValue],
-            codexAccountIdentities: ["b|owner-b", "c|owner-c"],
-            codexAccountDisplayNames: [
-                "codex:b": "Codex · #1",
-                "codex:c": "Codex · #2",
-            ])
-        let requestSequence = SpendDashboardRequestSequence(
-            [
-                .init(configuration: initial, codexRequests: initialRequests),
-                .init(configuration: replacement, codexRequests: replacementRequests),
-            ],
-            suspendAt: 1,
-            gate: requestGate)
-        let controller = SpendDashboardController(
-            requestBuilder: { mode in await requestSequence.next(mode: mode) },
-            loader: { request in await gate.load(request) })
-
-        controller.update(configuration: initial)
-        try await gate.waitForPendingCount(1)
-        gate.resume(result: SpendDashboardLoadResult(
-            inputs: [
-                Self.input(id: "codex:a", cost: 3, displayName: "Codex · #1"),
-                Self.input(id: "codex:b", cost: 5, displayName: "Codex · #2"),
-                Self.input(id: "codex:c", cost: 7, displayName: "Codex · #3"),
-            ],
-            failedSourceIDs: []))
-        try await Self.waitUntil { !controller.isRefreshing }
-
-        controller.update(configuration: replacement)
-        let pendingRows = try #require(controller.model.groups.first?.providers)
-        #expect(Dictionary(uniqueKeysWithValues: pendingRows.map { ($0.id, $0.displayName) }) == [
-            "codex:b": "Codex · #1",
-            "codex:c": "Codex · #2",
-        ])
-        try await requestGate.waitForPendingCount(1)
-        #expect(gate.pendingCount == 0)
-        requestGate.resume()
-        try await gate.waitForPendingCount(1)
-        gate.resume(result: SpendDashboardLoadResult(
-            inputs: [Self.input(id: "codex:c", cost: 8, displayName: "Codex · #2")],
-            failedSourceIDs: ["codex:b"]))
-        try await Self.waitUntil { !controller.isRefreshing }
-
-        let finalRows = try #require(controller.model.groups.first?.providers)
-        #expect(Dictionary(uniqueKeysWithValues: finalRows.map { ($0.id, $0.displayName) }) == [
-            "codex:b": "Codex · #1",
-            "codex:c": "Codex · #2",
-        ])
-        #expect(finalRows.first { $0.id == "codex:b" }?.totalCost == 5)
-        #expect(controller.failedSourceCount == 1)
-    }
-
     @Test
     func `request revision captured before coalesced update cannot publish stale inputs`() async throws {
         let requestGate = SpendDashboardPendingLoads<Void>()
@@ -208,13 +31,11 @@ struct SpendDashboardSourceConcurrencyTests {
         let initial = SpendDashboardConfiguration(
             costUsageEnabled: true,
             providerIDs: [UsageProvider.claude.rawValue],
-            codexAccountIdentities: [],
             sourceOwnershipFingerprints: ["claude:owner"],
             sourceRevisions: ["R"])
         let replacement = SpendDashboardConfiguration(
             costUsageEnabled: true,
             providerIDs: [UsageProvider.claude.rawValue],
-            codexAccountIdentities: [],
             sourceOwnershipFingerprints: ["claude:owner"],
             sourceRevisions: ["R+1"])
         let requestSequence = SpendDashboardRequestSequence(
@@ -247,56 +68,18 @@ struct SpendDashboardSourceConcurrencyTests {
     }
 
     @Test
-    func `force adopts builder published revision without losing Codex scan intent`() async throws {
-        let recorder = SpendDashboardRequestRecorder()
-        let initial = SpendDashboardConfiguration(
-            costUsageEnabled: true,
-            providerIDs: [UsageProvider.codex.rawValue, UsageProvider.claude.rawValue],
-            codexAccountIdentities: ["account|owner"],
-            sourceOwnershipFingerprints: ["claude:owner"],
-            sourceRevisions: ["R"])
-        let replacement = SpendDashboardConfiguration(
-            costUsageEnabled: true,
-            providerIDs: [UsageProvider.codex.rawValue, UsageProvider.claude.rawValue],
-            codexAccountIdentities: ["account|owner"],
-            sourceOwnershipFingerprints: ["claude:owner"],
-            sourceRevisions: ["R+1"])
-        let requestSequence = SpendDashboardRequestSequence([
-            .init(configuration: replacement, capturedInputs: [Self.input(provider: .claude, cost: 2)]),
-            .init(configuration: replacement, capturedInputs: [Self.input(provider: .claude, cost: 2)]),
-        ])
-        let controller = SpendDashboardController(
-            requestBuilder: { mode in await requestSequence.next(mode: mode) },
-            loader: { request in
-                await recorder.record(request)
-                return SpendDashboardLoadResult(inputs: request.capturedInputs, failedSourceIDs: [])
-            })
-
-        controller.update(configuration: initial, force: true)
-        try await Self.waitUntil { !controller.isRefreshing }
-
-        #expect(controller.configuration == replacement)
-        #expect(controller.generation == 2)
-        #expect(controller.model.groups.first?.totalCost == 2)
-        #expect(requestSequence.modes == [.forceRefresh, .captureOnly])
-        #expect(await recorder.forces == [true])
-    }
-
-    @Test
     func `forced builder owner mismatch reruns replacement builder and rejects cached request`() async throws {
         let requestGate = SpendDashboardPendingLoads<Void>()
         defer { requestGate.close() }
         let recorder = SpendDashboardRequestRecorder()
         let initial = SpendDashboardConfiguration(
             costUsageEnabled: true,
-            providerIDs: [UsageProvider.codex.rawValue, UsageProvider.claude.rawValue],
-            codexAccountIdentities: ["account|owner"],
+            providerIDs: [UsageProvider.opencode.rawValue, UsageProvider.claude.rawValue],
             sourceOwnershipFingerprints: ["claude:owner-one"],
             sourceRevisions: ["R"])
         let replacement = SpendDashboardConfiguration(
             costUsageEnabled: true,
-            providerIDs: [UsageProvider.codex.rawValue, UsageProvider.claude.rawValue],
-            codexAccountIdentities: ["account|owner"],
+            providerIDs: [UsageProvider.opencode.rawValue, UsageProvider.claude.rawValue],
             sourceOwnershipFingerprints: ["claude:owner-two"],
             sourceRevisions: ["R+1"])
         let cachedInput = Self.input(provider: .claude, cost: 1)
@@ -343,20 +126,18 @@ struct SpendDashboardSourceConcurrencyTests {
         let recorder = SpendDashboardRequestRecorder()
         let initial = SpendDashboardConfiguration(
             costUsageEnabled: true,
-            providerIDs: [UsageProvider.codex.rawValue, UsageProvider.claude.rawValue],
-            codexAccountIdentities: ["account|owner"],
+            providerIDs: [UsageProvider.opencode.rawValue, UsageProvider.claude.rawValue],
             sourceOwnershipFingerprints: ["claude:owner-one"],
             sourceRevisions: ["R"])
         let replacement = SpendDashboardConfiguration(
             costUsageEnabled: true,
-            providerIDs: [UsageProvider.codex.rawValue, UsageProvider.claude.rawValue],
-            codexAccountIdentities: ["account|owner"],
+            providerIDs: [UsageProvider.opencode.rawValue, UsageProvider.claude.rawValue],
             sourceOwnershipFingerprints: ["claude:owner-two"],
             sourceRevisions: ["R+1"])
-        let replacementInput = Self.input(provider: .codex, cost: 4)
+        let replacementInput = Self.input(provider: .opencode, cost: 4)
         let requestSequence = SpendDashboardRequestSequence(
             [
-                .init(configuration: initial, capturedInputs: [Self.input(provider: .codex, cost: 1)]),
+                .init(configuration: initial, capturedInputs: [Self.input(provider: .opencode, cost: 1)]),
                 .init(configuration: replacement, capturedInputs: [replacementInput]),
                 .init(configuration: replacement, capturedInputs: [replacementInput]),
             ],
@@ -390,14 +171,12 @@ struct SpendDashboardSourceConcurrencyTests {
         defer { loaderGate.close() }
         let initial = SpendDashboardConfiguration(
             costUsageEnabled: true,
-            providerIDs: [UsageProvider.codex.rawValue, UsageProvider.claude.rawValue],
-            codexAccountIdentities: ["account|owner"],
+            providerIDs: [UsageProvider.opencode.rawValue, UsageProvider.claude.rawValue],
             sourceOwnershipFingerprints: ["claude:owner-one"],
             sourceRevisions: ["R"])
         let replacement = SpendDashboardConfiguration(
             costUsageEnabled: true,
-            providerIDs: [UsageProvider.codex.rawValue, UsageProvider.claude.rawValue],
-            codexAccountIdentities: ["account|owner"],
+            providerIDs: [UsageProvider.opencode.rawValue, UsageProvider.claude.rawValue],
             sourceOwnershipFingerprints: ["claude:owner-two"],
             sourceRevisions: ["R+1"])
         let requestSequence = SpendDashboardRequestSequence([
@@ -405,7 +184,7 @@ struct SpendDashboardSourceConcurrencyTests {
             .init(configuration: replacement),
             .init(
                 configuration: replacement,
-                capturedInputs: [Self.input(provider: .codex, cost: 5)]),
+                capturedInputs: [Self.input(provider: .opencode, cost: 5)]),
         ])
         let controller = SpendDashboardController(
             requestBuilder: { mode in await requestSequence.next(mode: mode) },
@@ -423,13 +202,13 @@ struct SpendDashboardSourceConcurrencyTests {
         loaderGate.resume(
             at: 1,
             result: SpendDashboardLoadResult(
-                inputs: [Self.input(provider: .codex, cost: 5)],
+                inputs: [Self.input(provider: .opencode, cost: 5)],
                 failedSourceIDs: []))
         try await Self.waitUntil { !controller.isRefreshing }
         loaderGate.resume(
             at: 0,
             result: SpendDashboardLoadResult(
-                inputs: [Self.input(provider: .codex, cost: 99)],
+                inputs: [Self.input(provider: .opencode, cost: 99)],
                 failedSourceIDs: []))
         await Task.yield()
 
@@ -444,13 +223,11 @@ struct SpendDashboardSourceConcurrencyTests {
         defer { loaderGate.close() }
         let initial = SpendDashboardConfiguration(
             costUsageEnabled: true,
-            providerIDs: [UsageProvider.codex.rawValue],
-            codexAccountIdentities: ["same"],
+            providerIDs: [UsageProvider.opencode.rawValue],
             sourceRevisions: ["first"])
         let replacement = SpendDashboardConfiguration(
             costUsageEnabled: true,
-            providerIDs: [UsageProvider.codex.rawValue],
-            codexAccountIdentities: ["same"],
+            providerIDs: [UsageProvider.opencode.rawValue],
             sourceRevisions: ["second"])
         let controllerBox = SpendDashboardControllerBox()
         let controller = SpendDashboardController(
@@ -460,7 +237,6 @@ struct SpendDashboardSourceConcurrencyTests {
                     configuration: configuration,
                     capturedInputs: [],
                     unavailableSourceIDs: [],
-                    codexRequests: [],
                     now: Date(timeIntervalSince1970: 1_784_179_200),
                     force: mode.forcesLoader)
             },
@@ -480,12 +256,12 @@ struct SpendDashboardSourceConcurrencyTests {
 
         loaderGate.resume(
             result: SpendDashboardLoadResult(
-                inputs: [Self.input(provider: .codex, cost: 7)],
+                inputs: [Self.input(provider: .opencode, cost: 7)],
                 failedSourceIDs: []))
         try await loaderGate.waitForPendingCount(1)
         loaderGate.resume(
             result: SpendDashboardLoadResult(
-                inputs: [Self.input(provider: .codex, cost: 7)],
+                inputs: [Self.input(provider: .opencode, cost: 7)],
                 failedSourceIDs: []))
         try await Self.waitUntil { !controller.isRefreshing }
 
@@ -494,170 +270,9 @@ struct SpendDashboardSourceConcurrencyTests {
         #expect(controller.model.groups.first?.totalCost == 7)
     }
 
-    @Test
-    func `ordinary in flight same owner revision churn preserves live load after suspended cached prefill`()
-        async throws
-    {
-        let cachedGate = SpendDashboardResultBatchGate()
-        defer { cachedGate.close() }
-        let loaderGate = SpendDashboardResultBatchGate()
-        defer { loaderGate.close() }
-        let initial = SpendDashboardConfiguration(
-            costUsageEnabled: true,
-            providerIDs: [UsageProvider.codex.rawValue],
-            codexAccountIdentities: ["same|owner-same"],
-            sourceRevisions: ["first"])
-        let replacement = SpendDashboardConfiguration(
-            costUsageEnabled: true,
-            providerIDs: [UsageProvider.codex.rawValue],
-            codexAccountIdentities: ["same|owner-same"],
-            sourceRevisions: ["second"])
-        let controllerBox = SpendDashboardControllerBox()
-        let controller = SpendDashboardController(
-            requestBuilder: { mode in
-                let configuration = controllerBox.controller?.configuration ?? initial
-                return SpendDashboardLoadRequest(
-                    configuration: configuration,
-                    capturedInputs: [],
-                    unavailableSourceIDs: [],
-                    codexRequests: [Self.scanRequest(id: "same", displayName: "Codex")],
-                    now: Date(timeIntervalSince1970: 1_784_179_200),
-                    force: mode.forcesLoader)
-            },
-            cachedLoader: { request in await cachedGate.load(request) },
-            loader: { request in await loaderGate.load(request) })
-        controllerBox.controller = controller
-
-        controller.update(configuration: initial)
-        try await cachedGate.waitForPendingCount(1)
-        let inFlightGeneration = controller.generation
-        #expect(controller.isRefreshing)
-
-        // Revision churn arrives while cached prefill is suspended.
-        controller.update(configuration: replacement)
-        #expect(controller.generation == inFlightGeneration)
-        #expect(controller.configuration == replacement)
-
-        // Resume cached prefill with stale initial configuration result.
-        cachedGate.resume(
-            result: SpendDashboardLoadResult(
-                inputs: [Self.input(id: "codex:same", cost: 3)],
-                failedSourceIDs: []))
-
-        // Ensure live load is still executed rather than aborting the task early.
-        try await loaderGate.waitForPendingCount(1)
-        loaderGate.resume(
-            result: SpendDashboardLoadResult(
-                inputs: [Self.input(id: "codex:same", cost: 12)],
-                failedSourceIDs: []))
-
-        // Reconciliation pass for remaining drift if needed.
-        try await Self.waitUntil { !controller.isRefreshing || loaderGate.pendingCount > 0 }
-        if loaderGate.pendingCount > 0 {
-            loaderGate.resume(
-                result: SpendDashboardLoadResult(
-                    inputs: [Self.input(id: "codex:same", cost: 12)],
-                    failedSourceIDs: []))
-        }
-
-        try await Self.waitUntil { !controller.isRefreshing }
-        #expect(controller.configuration == replacement)
-        #expect(controller.model.groups.first?.totalCost == 12)
-    }
-
-    @Test(CodexCredentialFixtures())
-    func `Codex concurrent loads restore configured order when completing out of order`() async throws {
-        let root = CodexCredentialFixtures.root
-            .appendingPathComponent(
-                "SpendDashboardSourceConcurrencyTests-order-\(UUID().uuidString)",
-                isDirectory: true)
-        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: root) }
-
-        let first = try Self.makeAccount(id: "first", root: root)
-        let second = try Self.makeAccount(id: "second", root: root)
-        // Equal cost so providerRows tie-breaker is input order, making completion order visible.
-        let firstSnapshot = Self.input(cost: 5).snapshot
-        let secondSnapshot = Self.input(cost: 5).snapshot
-        let request = SpendDashboardLoadRequest(
-            configuration: SpendDashboardConfiguration(
-                costUsageEnabled: true,
-                providerIDs: [UsageProvider.codex.rawValue],
-                codexAccountIdentities: [first, second].map { "\($0.id)|\($0.cacheIdentity)" }),
-            capturedInputs: [],
-            unavailableSourceIDs: [],
-            codexRequests: [first, second],
-            now: Date(timeIntervalSince1970: 1_784_179_200),
-            force: true)
-
-        let secondSnapshotLoaded = SpendDashboardTestSignal<Void>()
-        let gateFirst = SpendDashboardPendingLoads<CostUsageTokenSnapshot>()
-        defer { gateFirst.close() }
-        let gateSecond = SpendDashboardPendingLoads<CostUsageTokenSnapshot>()
-        defer { gateSecond.close() }
-        let loadTask = Task {
-            await SpendDashboardSource.load(
-                request,
-                codexSnapshotLoader: { context in
-                    switch context.account.id {
-                    case first.id:
-                        try await gateFirst.load()
-                    case second.id:
-                        try await gateSecond.load()
-                    default:
-                        fatalError("unexpected account \(context.account.id)")
-                    }
-                },
-                codexActivityLoader: { context in
-                    if context.account.id == second.id {
-                        await secondSnapshotLoaded.resolve(.success(()))
-                    }
-                    return nil
-                })
-        }
-        defer { loadTask.cancel() }
-        // Wait until both gates are suspended, then resume second before first.
-        try await gateFirst.waitForPendingCount(1)
-        try await gateSecond.waitForPendingCount(1)
-        gateSecond.resume(returning: secondSnapshot)
-        // Activity loading follows snapshot loading; first must still be blocked at that boundary.
-        try await secondSnapshotLoaded.wait()
-        #expect(gateFirst.isSuspended)
-        gateFirst.resume(returning: firstSnapshot)
-        let final = await loadTask.value
-        // Inputs should be in configured order [first, second], not completion order.
-        #expect(final.inputs.map(\.id) == ["codex:first", "codex:second"])
-    }
-
-    private static func makeAccount(id: String, root: URL) throws -> CodexSpendScanRequest {
-        let home = root.appendingPathComponent(id, isDirectory: true)
-        try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
-        let auth = Data("{\"profile\":\"\(id)-owner\"}".utf8)
-        try auth.write(to: CodexAuthFingerprint.authFileURL(homePath: home.path), options: .atomic)
-        return CodexSpendScanRequest(
-            id: id,
-            displayName: "Codex · \(id)",
-            source: .profileHome(path: home.path),
-            homePath: home.path,
-            authFingerprint: CodexAuthFingerprint.fingerprint(data: auth),
-            authFileWasReadable: true,
-            cacheIdentity: "\(id)-cache")
-    }
-
-    private static func scanRequest(id: String, displayName: String) -> CodexSpendScanRequest {
-        CodexSpendScanRequest(
-            id: id,
-            displayName: displayName,
-            source: .profileHome(path: "/synthetic/\(id)"),
-            homePath: "/synthetic/\(id)",
-            authFingerprint: nil,
-            authFileWasReadable: false,
-            cacheIdentity: "\(id)-cache")
-    }
-
     private static func input(
         id: String? = nil,
-        provider: UsageProvider = .codex,
+        provider: UsageProvider = .opencode,
         cost: Double,
         displayName: String? = nil) -> SpendDashboardModel.ProviderInput
     {
@@ -680,7 +295,7 @@ struct SpendDashboardSourceConcurrencyTests {
             id: id,
             provider: provider,
             displayName: displayName ?? provider.rawValue,
-            modelProviderName: provider == .codex ? "Codex" : nil,
+            modelProviderName: nil,
             snapshot: snapshot)
     }
 
@@ -808,16 +423,10 @@ private final class SpendDashboardRequestSequence {
     struct Item {
         let configuration: SpendDashboardConfiguration
         let capturedInputs: [SpendDashboardModel.ProviderInput]
-        let codexRequests: [CodexSpendScanRequest]
 
-        init(
-            configuration: SpendDashboardConfiguration,
-            capturedInputs: [SpendDashboardModel.ProviderInput] = [],
-            codexRequests: [CodexSpendScanRequest] = [])
-        {
+        init(configuration: SpendDashboardConfiguration, capturedInputs: [SpendDashboardModel.ProviderInput] = []) {
             self.configuration = configuration
             self.capturedInputs = capturedInputs
-            self.codexRequests = codexRequests
         }
     }
 
@@ -849,7 +458,6 @@ private final class SpendDashboardRequestSequence {
             configuration: item.configuration,
             capturedInputs: item.capturedInputs,
             unavailableSourceIDs: [],
-            codexRequests: item.codexRequests,
             now: Date(timeIntervalSince1970: 1_784_179_200),
             force: mode.forcesLoader)
     }

@@ -9,11 +9,11 @@
     },
     {
       "codexActiveSource" : {
-        "homePath" : "\/Users\/fixture\/.codex-work",
+        "homePath" : "\/Users\/fixture\/.claude-work",
         "kind" : "liveSystem"
       },
       "codexProfileHomePaths" : [
-        "\/Users\/fixture\/.codex-work",
+        "\/Users\/fixture\/.claude-work",
         "\/tmp\/codex-profile"
       ],
       "id" : "codex"

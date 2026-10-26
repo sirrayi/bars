@@ -35,8 +35,8 @@ struct StatusMenuSwitcherLayoutTests {
     @Test
     func `quota bars do not offset inline switcher content`() throws {
         let view = ProviderSwitcherView(
-            providers: [.codex, .devin],
-            selected: .provider(.codex),
+            providers: [.opencode, .devin],
+            selected: .provider(.opencode),
             includesOverview: true,
             width: 300,
             showsIcons: true,
@@ -74,8 +74,8 @@ struct StatusMenuSwitcherLayoutTests {
     @Test
     func `integrated quota indicator selects its provider`() {
         let view = ProviderSwitcherView(
-            providers: [.codex, .devin],
-            selected: .provider(.codex),
+            providers: [.opencode, .devin],
+            selected: .provider(.opencode),
             includesOverview: true,
             width: 300,
             showsIcons: true,
@@ -91,7 +91,7 @@ struct StatusMenuSwitcherLayoutTests {
         try CodexBarLocalizationOverride.$appLanguage.withValue("tr") {
             for width in stride(from: CGFloat(280), through: CGFloat(330), by: 1) {
                 let view = ProviderSwitcherView(
-                    providers: [.codex, .devin],
+                    providers: [.opencode, .devin],
                     selected: .overview,
                     includesOverview: true,
                     width: width,

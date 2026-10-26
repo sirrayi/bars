@@ -313,13 +313,13 @@ struct SettingsStoreTests {
         let suite = "SettingsStoreTests-merged-overview-invalid-raw-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
-        defaults.set(["codex", "INVALID PROVIDER", "claude", "codex"], forKey: "mergedOverviewSelectedProviders")
+        defaults.set(["opencode", "INVALID PROVIDER", "claude", "opencode"], forKey: "mergedOverviewSelectedProviders")
         let configStore = testConfigStore(suiteName: suite)
         let store = SettingsStore(
             userDefaults: defaults,
             configStore: configStore)
 
-        #expect(store.mergedOverviewSelectedProviders == [.codex, .claude])
+        #expect(store.mergedOverviewSelectedProviders == [.opencode, .claude])
     }
 
     @Test
@@ -450,16 +450,16 @@ struct SettingsStoreTests {
             configStore: configStore)
         store.quotaWarningThresholds = [50, 20]
 
-        #expect(store.resolvedQuotaWarningThresholds(provider: .codex, window: .session) == [50, 20])
-        #expect(store.explicitQuotaWarningThresholds(provider: .codex, window: .session) == nil)
-        store.setQuotaWarningThresholds(provider: .codex, window: .session, thresholds: [10])
-        #expect(store.explicitQuotaWarningThresholds(provider: .codex, window: .session) == [10])
-        #expect(store.resolvedQuotaWarningThresholds(provider: .codex, window: .session) == [10])
-        #expect(store.resolvedQuotaWarningThresholds(provider: .codex, window: .weekly) == [50, 20])
+        #expect(store.resolvedQuotaWarningThresholds(provider: .opencode, window: .session) == [50, 20])
+        #expect(store.explicitQuotaWarningThresholds(provider: .opencode, window: .session) == nil)
+        store.setQuotaWarningThresholds(provider: .opencode, window: .session, thresholds: [10])
+        #expect(store.explicitQuotaWarningThresholds(provider: .opencode, window: .session) == [10])
+        #expect(store.resolvedQuotaWarningThresholds(provider: .opencode, window: .session) == [10])
+        #expect(store.resolvedQuotaWarningThresholds(provider: .opencode, window: .weekly) == [50, 20])
 
-        store.setQuotaWarningThresholds(provider: .codex, window: .session, thresholds: nil)
-        #expect(store.explicitQuotaWarningThresholds(provider: .codex, window: .session) == nil)
-        #expect(store.resolvedQuotaWarningThresholds(provider: .codex, window: .session) == [50, 20])
+        store.setQuotaWarningThresholds(provider: .opencode, window: .session, thresholds: nil)
+        #expect(store.explicitQuotaWarningThresholds(provider: .opencode, window: .session) == nil)
+        #expect(store.resolvedQuotaWarningThresholds(provider: .opencode, window: .session) == [50, 20])
     }
 
     @Test
@@ -472,17 +472,17 @@ struct SettingsStoreTests {
             userDefaults: defaults,
             configStore: configStore)
         store.quotaWarningThresholds = [50, 20]
-        store.setQuotaWarningOverride(provider: .codex, window: .session, thresholds: [70, 30], enabled: true)
-        let staleEditorThresholds = store.resolvedQuotaWarningThresholds(provider: .codex, window: .session)
+        store.setQuotaWarningOverride(provider: .opencode, window: .session, thresholds: [70, 30], enabled: true)
+        let staleEditorThresholds = store.resolvedQuotaWarningThresholds(provider: .opencode, window: .session)
 
-        store.setQuotaWarningOverride(provider: .codex, window: .session, thresholds: nil, enabled: nil)
+        store.setQuotaWarningOverride(provider: .opencode, window: .session, thresholds: nil, enabled: nil)
         store.setQuotaWarningThresholdsIfOverridden(
-            provider: .codex,
+            provider: .opencode,
             window: .session,
             thresholds: staleEditorThresholds)
 
-        #expect(store.hasQuotaWarningOverride(provider: .codex, window: .session) == false)
-        #expect(store.resolvedQuotaWarningThresholds(provider: .codex, window: .session) == [50, 20])
+        #expect(store.hasQuotaWarningOverride(provider: .opencode, window: .session) == false)
+        #expect(store.resolvedQuotaWarningThresholds(provider: .opencode, window: .session) == [50, 20])
     }
 
     @Test
@@ -495,20 +495,20 @@ struct SettingsStoreTests {
             userDefaults: defaults,
             configStore: configStore)
         store.quotaWarningThresholds = [50, 20]
-        store.setQuotaWarningOverride(provider: .codex, window: .session, thresholds: nil, enabled: true)
+        store.setQuotaWarningOverride(provider: .opencode, window: .session, thresholds: nil, enabled: true)
 
-        let resolvedEditorThresholds = store.resolvedQuotaWarningThresholds(provider: .codex, window: .session)
+        let resolvedEditorThresholds = store.resolvedQuotaWarningThresholds(provider: .opencode, window: .session)
         store.setQuotaWarningThresholdsIfOverridden(
-            provider: .codex,
+            provider: .opencode,
             window: .session,
             thresholds: resolvedEditorThresholds)
 
-        let sessionConfig = store.providerConfig(for: .codex)?.quotaWarnings?.session
+        let sessionConfig = store.providerConfig(for: .opencode)?.quotaWarnings?.session
         #expect(sessionConfig?.enabled == true)
         #expect(sessionConfig?.thresholds == nil)
 
         store.quotaWarningThresholds = [80, 40]
-        #expect(store.resolvedQuotaWarningThresholds(provider: .codex, window: .session) == [80, 40])
+        #expect(store.resolvedQuotaWarningThresholds(provider: .opencode, window: .session) == [80, 40])
     }
 
     @Test
@@ -526,8 +526,8 @@ struct SettingsStoreTests {
 
         #expect(store.quotaWarningThresholds(.session) == [25])
         #expect(store.quotaWarningThresholds(.weekly) == [75, 10])
-        #expect(store.resolvedQuotaWarningThresholds(provider: .codex, window: .session) == [25])
-        #expect(store.resolvedQuotaWarningThresholds(provider: .codex, window: .weekly) == [75, 10])
+        #expect(store.resolvedQuotaWarningThresholds(provider: .opencode, window: .session) == [25])
+        #expect(store.resolvedQuotaWarningThresholds(provider: .opencode, window: .weekly) == [75, 10])
     }
 
     @Test
@@ -541,17 +541,17 @@ struct SettingsStoreTests {
             configStore: configStore)
 
         store.setQuotaWarningWindowEnabled(.weekly, enabled: false)
-        #expect(store.quotaWarningEnabled(provider: .codex, window: .weekly) == false)
+        #expect(store.quotaWarningEnabled(provider: .opencode, window: .weekly) == false)
 
-        store.setQuotaWarningWindowEnabled(provider: .codex, window: .weekly, enabled: true)
-        store.setQuotaWarningWindowEnabled(provider: .codex, window: .session, enabled: false)
-        #expect(store.quotaWarningEnabled(provider: .codex, window: .weekly) == true)
-        #expect(store.quotaWarningEnabled(provider: .codex, window: .session) == false)
-        #expect(store.hasQuotaWarningOverride(provider: .codex, window: .weekly) == true)
-        #expect(store.hasQuotaWarningOverride(provider: .codex, window: .session) == true)
+        store.setQuotaWarningWindowEnabled(provider: .opencode, window: .weekly, enabled: true)
+        store.setQuotaWarningWindowEnabled(provider: .opencode, window: .session, enabled: false)
+        #expect(store.quotaWarningEnabled(provider: .opencode, window: .weekly) == true)
+        #expect(store.quotaWarningEnabled(provider: .opencode, window: .session) == false)
+        #expect(store.hasQuotaWarningOverride(provider: .opencode, window: .weekly) == true)
+        #expect(store.hasQuotaWarningOverride(provider: .opencode, window: .session) == true)
 
-        store.setQuotaWarningWindowEnabled(provider: .codex, window: .weekly, enabled: nil)
-        #expect(store.quotaWarningEnabled(provider: .codex, window: .weekly) == false)
+        store.setQuotaWarningWindowEnabled(provider: .opencode, window: .weekly, enabled: nil)
+        #expect(store.quotaWarningEnabled(provider: .opencode, window: .weekly) == false)
     }
 
     @Test
@@ -578,8 +578,6 @@ struct SettingsStoreTests {
         let store = SettingsStore(
             userDefaults: defaults,
             configStore: configStore)
-
-        #expect(store.codexUsageDataSource == .auto)
     }
 
     @Test
@@ -644,7 +642,7 @@ struct SettingsStoreTests {
         defer { NotificationCenter.default.removeObserver(token) }
 
         store.setProviderOrder(Array(store.orderedProviders().reversed()))
-        store.codexUsageDataSource = .cli
+        store.claudeUsageDataSource = .cli
 
         #expect(impacts.get() == [false, true])
     }
@@ -669,7 +667,7 @@ struct SettingsStoreTests {
         #expect(store.orderedProviders() == reordered.providers.map(\.id))
 
         var changed = store.configSnapshot
-        let codexIndex = try #require(changed.providers.firstIndex(where: { $0.id == .codex }))
+        let codexIndex = try #require(changed.providers.firstIndex(where: { $0.id == .opencode }))
         changed.providers[codexIndex].source = .cli
         store.applyExternalConfig(changed, reason: "provider-source", affectsBackgroundWork: false)
 
@@ -688,34 +686,8 @@ struct SettingsStoreTests {
             userDefaults: defaults,
             configStore: configStore)
 
-        #expect(store.openAIWebAccessEnabled == false)
         #expect(defaults.bool(forKey: "openAIWebAccessEnabled") == false)
-        #expect(store.openAIWebBatterySaverEnabled == false)
         #expect(defaults.bool(forKey: "openAIWebBatterySaverEnabled") == false)
-        #expect(store.codexCookieSource == .off)
-    }
-
-    @Test
-    func `infers open AI web access enabled for legacy configured codex cookies`() throws {
-        let suite = "SettingsStoreTests-openai-web-legacy-\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: suite))
-        defer { defaults.removePersistentDomain(forName: suite) }
-        defaults.removeObject(forKey: "openAIWebAccessEnabled")
-        defaults.set(false, forKey: "debugDisableKeychainAccess")
-        let configStore = testConfigStore(suiteName: suite)
-        try configStore.save(CodexBarConfig(providers: [
-            ProviderConfig(id: .codex, cookieSource: .auto),
-        ]))
-
-        let store = SettingsStore(
-            userDefaults: defaults,
-            configStore: configStore)
-
-        #expect(store.openAIWebAccessEnabled == true)
-        #expect(defaults.bool(forKey: "openAIWebAccessEnabled") == true)
-        #expect(store.openAIWebBatterySaverEnabled == false)
-        #expect(defaults.bool(forKey: "openAIWebBatterySaverEnabled") == false)
-        #expect(store.codexCookieSource == .auto)
     }
 
     @Test
@@ -724,66 +696,17 @@ struct SettingsStoreTests {
         let defaults = try #require(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
         defaults.removeObject(forKey: "openAIWebAccessEnabled")
-        defaults.set(false, forKey: "openAIWebAccess")
         defaults.set(false, forKey: "debugDisableKeychainAccess")
         let configStore = testConfigStore(suiteName: suite)
         try configStore.save(CodexBarConfig(providers: [
-            ProviderConfig(id: .codex, cookieSource: .auto),
+            ProviderConfig(id: .opencode, cookieSource: .auto),
         ]))
 
         let store = SettingsStore(
             userDefaults: defaults,
             configStore: configStore)
 
-        #expect(store.openAIWebAccessEnabled == false)
         #expect(defaults.bool(forKey: "openAIWebAccessEnabled") == false)
-    }
-
-    @Test
-    func `infers open AI web access enabled for legacy codex config with implicit auto cookies`() throws {
-        let suite = "SettingsStoreTests-openai-web-legacy-implicit-auto-\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: suite))
-        defer { defaults.removePersistentDomain(forName: suite) }
-        defaults.removeObject(forKey: "openAIWebAccessEnabled")
-        defaults.set(false, forKey: "debugDisableKeychainAccess")
-        let configStore = testConfigStore(suiteName: suite)
-        try configStore.save(CodexBarConfig(providers: [
-            ProviderConfig(id: .codex),
-        ]))
-
-        let store = SettingsStore(
-            userDefaults: defaults,
-            configStore: configStore)
-
-        #expect(store.openAIWebAccessEnabled == true)
-        #expect(defaults.bool(forKey: "openAIWebAccessEnabled") == true)
-        #expect(store.openAIWebBatterySaverEnabled == false)
-        #expect(defaults.bool(forKey: "openAIWebBatterySaverEnabled") == false)
-        #expect(store.codexCookieSource == .auto)
-    }
-
-    @Test
-    func `disabling open AI web access turns codex cookie source off`() throws {
-        let suite = "SettingsStoreTests-openai-web-toggle-\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: suite))
-        defer { defaults.removePersistentDomain(forName: suite) }
-        defaults.set(false, forKey: "debugDisableKeychainAccess")
-        let configStore = testConfigStore(suiteName: suite)
-
-        let store = SettingsStore(
-            userDefaults: defaults,
-            configStore: configStore)
-
-        store.codexCookieSource = .auto
-        #expect(store.codexCookieSource == .auto)
-
-        store.openAIWebAccessEnabled = false
-        #expect(store.codexCookieSource == .off)
-        #expect(defaults.bool(forKey: "openAIWebAccessEnabled") == false)
-
-        store.openAIWebAccessEnabled = true
-        #expect(store.codexCookieSource == .auto)
-        #expect(defaults.bool(forKey: "openAIWebAccessEnabled") == true)
     }
 
     @Test
@@ -798,42 +721,7 @@ struct SettingsStoreTests {
             userDefaults: defaults,
             configStore: configStore)
 
-        #expect(store.openAIWebBatterySaverEnabled == false)
-
-        store.openAIWebBatterySaverEnabled = false
         #expect(defaults.bool(forKey: "openAIWebBatterySaverEnabled") == false)
-
-        store.openAIWebAccessEnabled = true
-        #expect(store.openAIWebBatterySaverEnabled == false)
-    }
-
-    @Test
-    func `codex spark usage visibility defaults on persists and refreshes only menus`() async throws {
-        let suite = "SettingsStoreTests-codex-spark-usage-visible-\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: suite))
-        defer { defaults.removePersistentDomain(forName: suite) }
-        let configStore = testConfigStore(suiteName: suite)
-        let store = SettingsStore(
-            userDefaults: defaults,
-            configStore: configStore)
-
-        #expect(store.codexSparkUsageVisible)
-        let backgroundRevision = store.backgroundWorkSettingsRevision
-        let menuDidChange = ObservationFlag()
-        withObservationTracking {
-            _ = store.menuObservationToken
-        } onChange: {
-            menuDidChange.set()
-        }
-        store.codexSparkUsageVisible = false
-        try? await Task.sleep(nanoseconds: 50_000_000)
-        #expect(store.backgroundWorkSettingsRevision == backgroundRevision)
-        #expect(menuDidChange.get())
-
-        let reloaded = SettingsStore(
-            userDefaults: defaults,
-            configStore: configStore)
-        #expect(reloaded.codexSparkUsageVisible == false)
     }
 
     @Test
@@ -1010,37 +898,12 @@ struct SettingsStoreTests {
         let didChange = ObservationFlag()
 
         withObservationTracking {
-            _ = store.codexCookieSource
+            _ = store.claudeCookieSource
         } onChange: {
             didChange.set()
         }
 
-        store.codexCookieSource = .manual
-        try? await Task.sleep(nanoseconds: 50_000_000)
-
-        #expect(didChange.get() == true)
-    }
-
-    @Test
-    func `menu observation token updates on codex active source change`() async throws {
-        let suite = "SettingsStoreTests-observation-codex-active-source-\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: suite))
-        defer { defaults.removePersistentDomain(forName: suite) }
-        let configStore = testConfigStore(suiteName: suite)
-
-        let store = SettingsStore(
-            userDefaults: defaults,
-            configStore: configStore)
-
-        let didChange = ObservationFlag()
-
-        withObservationTracking {
-            _ = store.menuObservationToken
-        } onChange: {
-            didChange.set()
-        }
-
-        store.codexActiveSource = .liveSystem
+        store.claudeCookieSource = .manual
         try? await Task.sleep(nanoseconds: 50_000_000)
 
         #expect(didChange.get() == true)

@@ -28,7 +28,7 @@ struct MenuBarLayoutV5PersistenceTests {
 
         let layout = MenuBarLayout(lines: [[.icon, .progressBar(window: .session)]])
         settings.setMenuBarLayout(layout, for: nil)
-        settings.setMenuBarLayout(layout, for: .codex)
+        settings.setMenuBarLayout(layout, for: .opencode)
         let keys = ["menuBarLayoutV5", "menuBarLayoutV4", "menuBarLayoutOverridesV5", "menuBarLayoutOverridesV4"]
         let before = keys.map { defaults.data(forKey: $0) }
         settings.menuBarLayoutSize = .large
@@ -40,7 +40,7 @@ struct MenuBarLayoutV5PersistenceTests {
         #expect(projected.lines == [[.icon, .percent(window: .session)]])
         let returned = testSettingsStore(suiteName: "typography-return", userDefaults: defaults)
         #expect(returned.menuBarLayout == layout)
-        #expect(returned.menuBarLayoutOverrides[.codex] == layout)
+        #expect(returned.menuBarLayoutOverrides[.opencode] == layout)
         #expect(returned.menuBarLayoutSize == .large)
         #expect(returned.menuBarLayoutMonospacedDigits)
     }
@@ -60,7 +60,7 @@ struct MenuBarLayoutV5PersistenceTests {
         var rule = MenuBarLayoutConditional.makeDefault()
         rule.thenToken = .progressBar(window: .scopedWeekly)
         settings.setMenuBarLayout(layout, for: nil)
-        settings.setMenuBarLayout(layout, for: .codex)
+        settings.setMenuBarLayout(layout, for: .opencode)
         settings.setMenuBarLayout(layout, for: .claude)
         settings.menuBarLayoutConditionals = [rule]
         let decoder = JSONDecoder()
@@ -75,7 +75,7 @@ struct MenuBarLayoutV5PersistenceTests {
         ])
         let overrides = try decoder.decode([String: V4Layout].self, from: #require(
             defaults.data(forKey: "menuBarLayoutOverridesV4")))
-        #expect(overrides["codex"] == strict)
+        #expect(overrides["opencode"] == strict)
         let strictRules = try decoder.decode([V4Rule].self, from: #require(
             defaults.data(forKey: "menuBarLayoutConditionalsV4")))
         #expect(strictRules.first?.thenToken == .percent(window: .scopedWeekly))
@@ -85,26 +85,26 @@ struct MenuBarLayoutV5PersistenceTests {
         olderRule.thenToken = .percent(window: .scopedWeekly)
         try self.saveV4(
             layout: projected,
-            overrides: ["codex": projected, "claude": projected],
+            overrides: ["opencode": projected, "claude": projected],
             rules: [olderRule],
             defaults: defaults)
         #expect(defaults.data(forKey: "menuBarLayoutV5") == full)
         #expect(defaults.data(forKey: "menuBarLayoutConditionalsV5") == fullRules)
         let returned = testSettingsStore(suiteName: "progress-return", userDefaults: defaults)
         #expect(returned.menuBarLayout == layout)
-        #expect(returned.menuBarLayoutOverrides[.codex] == layout)
+        #expect(returned.menuBarLayoutOverrides[.opencode] == layout)
         #expect(returned.menuBarLayoutConditionals == [rule])
 
         let edited = MenuBarLayout(lines: [[.usageBar]])
         olderRule.thenToken = .usageBar
         try self.saveV4(
             layout: edited,
-            overrides: ["codex": edited, "claude": projected],
+            overrides: ["opencode": edited, "claude": projected],
             rules: [olderRule],
             defaults: defaults)
         let editedReturn = testSettingsStore(suiteName: "progress-edited-return", userDefaults: defaults)
         #expect(editedReturn.menuBarLayout == edited)
-        #expect(editedReturn.menuBarLayoutOverrides[.codex] == edited)
+        #expect(editedReturn.menuBarLayoutOverrides[.opencode] == edited)
         #expect(editedReturn.menuBarLayoutOverrides[.claude] == layout)
         #expect(editedReturn.menuBarLayoutConditionals == [olderRule])
     }

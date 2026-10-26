@@ -11,7 +11,7 @@ struct SpendDashboardSessionRowTests {
         let snapshot = Self.sessionInput(sessions: [Self.session(id: "all-history", cost: 1, tokens: 10)])
             .snapshot.reporting(.allTime)
         let model = SpendDashboardModel.build(
-            inputs: [.init(id: "codex", provider: .codex, displayName: "Codex", snapshot: snapshot)],
+            inputs: [.init(id: "codex", provider: .opencode, displayName: "Codex", snapshot: snapshot)],
             requestedDays: 30,
             now: Self.now,
             calendar: calendar)
@@ -72,7 +72,7 @@ struct SpendDashboardSessionRowTests {
             updatedAt: secondDay.addingTimeInterval(3600))
         for selectedDay in [nil, firstDay, secondDay] {
             let model = SpendDashboardModel.build(
-                inputs: [.init(id: "codex", provider: .codex, displayName: "Codex", snapshot: snapshot)],
+                inputs: [.init(id: "codex", provider: .opencode, displayName: "Codex", snapshot: snapshot)],
                 requestedDays: 2,
                 now: snapshot.updatedAt,
                 calendar: calendar,
@@ -81,7 +81,6 @@ struct SpendDashboardSessionRowTests {
             let context = try #require(SpendSessionRows(group: group, hidePersonalInfo: false).context(for: "codex"))
             #expect(context.activityRange == firstDay..<end)
             #expect(context.sessions.first { $0.sessionID == "both-days" }?.totalTokens == 300)
-            #expect(context.sessions.first { $0.sessionID == "both-days" }?.turnPerformanceSamples.count == 2)
             #expect(context.sessions.first { $0.sessionID == "first-day-only" }?.totalTokens == 100)
             let format = Date.FormatStyle(
                 date: .abbreviated,
@@ -105,7 +104,7 @@ struct SpendDashboardSessionRowTests {
         let model = SpendDashboardModel.build(
             inputs: [
                 .init(id: "claude-account", provider: .claude, displayName: "Claude", snapshot: snapshot),
-                .init(id: "codex-account", provider: .codex, displayName: "Codex", snapshot: snapshot),
+                .init(id: "codex-account", provider: .opencode, displayName: "Codex", snapshot: snapshot),
             ],
             requestedDays: 90,
             now: Self.now,
@@ -172,7 +171,7 @@ struct SpendDashboardSessionRowTests {
             rank: 1,
             sessionID: "019f79b9-1790-7921-8d6f-258a1e92b191",
             sourceID: "codex",
-            provider: .codex,
+            provider: .opencode,
             title: "private thread name",
             projectName: "private-project",
             projectPath: "/Users/example/Projects/private-project",
@@ -202,7 +201,7 @@ struct SpendDashboardSessionRowTests {
             rank: 1,
             sessionID: "019f79b9-1790-7921-8d6f-258a1e92b191",
             sourceID: "codex",
-            provider: .codex,
+            provider: .opencode,
             title: nil,
             projectName: nil,
             projectPath: nil,
@@ -266,7 +265,7 @@ struct SpendDashboardSessionRowTests {
         let first = Self.sessionInput(sessions: sessions)
         let second = SpendDashboardModel.ProviderInput(
             id: "codex-second",
-            provider: .codex,
+            provider: .opencode,
             displayName: "Codex second",
             snapshot: first.snapshot)
         for inputs in [[first, second], [second, first]] {
@@ -319,7 +318,7 @@ struct SpendDashboardSessionRowTests {
     private static func sessionInput(sessions: [CostUsageSessionBreakdown]) -> SpendDashboardModel.ProviderInput {
         SpendDashboardModel.ProviderInput(
             id: "codex",
-            provider: .codex,
+            provider: .opencode,
             displayName: "Codex",
             snapshot: CostUsageTokenSnapshot(
                 sessionTokens: nil,

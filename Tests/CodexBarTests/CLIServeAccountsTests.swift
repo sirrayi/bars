@@ -8,7 +8,6 @@ struct CLIServeAccountsTests {
     func `empty account set encodes as an empty list`() throws {
         let payload = CLIServeAccountDiscovery.makePayload(
             config: CodexBarConfig(providers: []),
-            managedCodexAccounts: [],
             identityMode: .full)
 
         #expect(payload.schemaVersion == 1)
@@ -21,7 +20,6 @@ struct CLIServeAccountsTests {
     @Test
     func `wire payload excludes credential and internal storage fields and values`() throws {
         let tokenID = UUID()
-        let managedID = UUID()
         let token = Self.tokenAccount(
             id: tokenID,
             label: "safe label",
@@ -38,14 +36,9 @@ struct CLIServeAccountsTests {
                 cookieHeader: "TOP-SECRET-COOKIE",
                 tokenAccounts: ProviderTokenAccountData(version: 1, accounts: [token], activeIndex: 0)),
         ])
-        let managed = Self.managedAccount(
-            id: managedID,
-            authFingerprint: "credential-derived-fingerprint",
-            managedHomePath: "/Users/private/managed-home")
 
         let payload = CLIServeAccountDiscovery.makePayload(
             config: config,
-            managedCodexAccounts: [managed],
             identityMode: .full)
         let data = try JSONEncoder().encode(payload)
         let json = try #require(String(data: data, encoding: .utf8))
@@ -59,7 +52,6 @@ struct CLIServeAccountsTests {
         }
         for forbiddenValue in [
             "TOP-SECRET", "private-login", "private-org", "private-workspace", "private-entitlement",
-            "credential-derived-fingerprint", "/Users/private/managed-home",
         ] {
             #expect(!json.contains(forbiddenValue))
         }
@@ -68,7 +60,6 @@ struct CLIServeAccountsTests {
     @Test
     func `redacted identity hides email local parts in identity and fallback labels`() throws {
         let tokenID = UUID()
-        let managedID = UUID()
         let config = CodexBarConfig(providers: [
             ProviderConfig(
                 id: .claude,
@@ -77,27 +68,20 @@ struct CLIServeAccountsTests {
                     accounts: [Self.tokenAccount(id: tokenID, label: "token.user@example.com", token: "secret")],
                     activeIndex: 0)),
         ])
-        let managed = Self.managedAccount(id: managedID, workspaceLabel: nil)
 
         let payload = CLIServeAccountDiscovery.makePayload(
             config: config,
-            managedCodexAccounts: [managed],
             identityMode: .redacted)
 
         #expect(payload.accounts.first { $0.provider == "claude" }?
             .label == "Account \(tokenID.uuidString.lowercased())")
-        let codex = try #require(payload.accounts.first { $0.provider == "codex" })
-        #expect(codex.label == "Account \(managedID.uuidString.lowercased())")
-        #expect(codex.identity?.accountEmail == "redacted@example.com")
         let json = try #require(String(data: JSONEncoder().encode(payload), encoding: .utf8))
         #expect(!json.contains("token.user"))
-        #expect(!json.contains("managed@"))
     }
 
     @Test
     func `redacted labels use opaque account placeholders while full labels remain unchanged`() throws {
         let tokenID = try #require(UUID(uuidString: "11111111-2222-3333-4444-555555555555"))
-        let managedID = try #require(UUID(uuidString: "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE"))
         let config = CodexBarConfig(providers: [
             ProviderConfig(
                 id: .claude,
@@ -108,27 +92,20 @@ struct CLIServeAccountsTests {
                     ],
                     activeIndex: 0)),
         ])
-        let managed = Self.managedAccount(id: managedID, workspaceLabel: "Personal Workspace")
 
         let redacted = CLIServeAccountDiscovery.makePayload(
             config: config,
-            managedCodexAccounts: [managed],
             identityMode: .redacted)
         let full = CLIServeAccountDiscovery.makePayload(
             config: config,
-            managedCodexAccounts: [managed],
             identityMode: .full)
 
         #expect(redacted.accounts.first { $0.id == "token-account:claude:\(tokenID.uuidString.lowercased())" }?.label
             == "Account \(tokenID.uuidString.lowercased())")
-        #expect(redacted.accounts.first { $0.id == "codex-managed:\(managedID.uuidString.lowercased())" }?.label
-            == "Account \(managedID.uuidString.lowercased())")
         #expect(!redacted.accounts
-            .contains { $0.label.contains("Alice Smith") || $0.label.contains("Personal Workspace") })
+            .contains { $0.label.contains("Alice Smith") })
         #expect(full.accounts.first { $0.id == "token-account:claude:\(tokenID.uuidString.lowercased())" }?
             .label == "Alice Smith")
-        #expect(full.accounts.first { $0.id == "codex-managed:\(managedID.uuidString.lowercased())" }?
-            .label == "Personal Workspace")
     }
 
     @Test
@@ -144,7 +121,6 @@ struct CLIServeAccountsTests {
         ])
         let payload = CLIServeAccountDiscovery.makePayload(
             config: config,
-            managedCodexAccounts: [],
             identityMode: .full)
         let wireID = "token-account:claude:\(accountID.uuidString.lowercased())"
 
@@ -188,24 +164,5 @@ struct CLIServeAccountsTests {
             organizationID: organizationID,
             workspaceID: workspaceID,
             seatCreditEntitlement: seatCreditEntitlement)
-    }
-
-    private static func managedAccount(
-        id: UUID,
-        workspaceLabel: String? = "Example Workspace",
-        authFingerprint: String? = "fingerprint",
-        managedHomePath: String = "/synthetic/managed-home") -> ManagedCodexAccount
-    {
-        ManagedCodexAccount(
-            id: id,
-            email: "managed@example.com",
-            providerAccountID: "provider-account",
-            workspaceLabel: workspaceLabel,
-            workspaceAccountID: "workspace-account",
-            authFingerprint: authFingerprint,
-            managedHomePath: managedHomePath,
-            createdAt: 1,
-            updatedAt: 2,
-            lastAuthenticatedAt: 3)
     }
 }

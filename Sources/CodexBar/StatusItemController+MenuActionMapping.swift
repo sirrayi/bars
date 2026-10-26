@@ -9,15 +9,10 @@ extension StatusItemController {
         case .dashboard: (#selector(self.openDashboard), nil)
         case .statusPage: (#selector(self.openStatusPage), nil)
         case .changelog: (#selector(self.openChangelog), nil)
-        case .addCodexAccount: (#selector(self.addManagedCodexAccountFromMenu(_:)), nil)
         case let .addProviderAccount(provider): (#selector(self.runSwitchAccount(_:)), provider.rawValue)
-        case let .requestCodexSystemPromotion(managedAccountID):
-            (#selector(self.requestCodexSystemPromotionFromMenu(_:)), managedAccountID.uuidString)
         case let .switchAccount(provider): (#selector(self.runSwitchAccount(_:)), provider.rawValue)
         case let .openTerminal(command): (#selector(self.openTerminalCommand(_:)), command)
         case let .loginToProvider(url): (#selector(self.openLoginToProvider(_:)), url)
-        case .openCodexWorkspaces, .openOpenAILiveUsage:
-            self.windowMenuAction(for: action)
         case .settings: (#selector(self.showSettingsGeneral), nil)
         case let .providerSettings(provider): (#selector(self.showProviderSettings(_:)), provider.rawValue)
         case .about: (#selector(self.showSettingsAbout), nil)
@@ -26,22 +21,5 @@ extension StatusItemController {
         case let .focusAgentSession(session, remoteHost):
             (#selector(self.focusAgentSession(_:)), [session.id, remoteHost ?? ""])
         }
-    }
-
-    func windowMenuAction(for action: MenuDescriptor.MenuAction) -> (Selector, String) {
-        switch action {
-        case .openCodexWorkspaces:
-            (#selector(self.openCodexWorkspaces(_:)), CodexWorkspacesWindowIdentity.menuItem)
-        default:
-            preconditionFailure("Expected a window menu action")
-        }
-    }
-
-    func codexAddAccountSubtitle() -> String? {
-        if self.settings.hasUnreadableManagedCodexAccountStore {
-            return L("Managed account storage unavailable")
-        }
-        guard self.managedCodexAccountCoordinator.isAuthenticatingManagedAccount else { return nil }
-        return L("Managed Codex login in progress…")
     }
 }

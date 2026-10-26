@@ -37,8 +37,8 @@ struct WidgetAccountSnapshotTests {
         let snapshot = self.snapshot(first: self.entry(left: 15), second: nil)
         #expect(snapshot.selectingAccount("removed", for: .claude).entries.isEmpty)
         #expect(snapshot.selectingAccount("claude/token:personal", for: .claude).entries.isEmpty)
-        let other = snapshot.selectingAccount("claude/token:work", for: .codex)
-        #expect(!other.entries.contains { $0.provider == .codex })
+        let other = snapshot.selectingAccount("claude/token:work", for: .opencode)
+        #expect(!other.entries.contains { $0.provider == .opencode })
         #expect(other.entries.first?.provider == .claude)
     }
 
@@ -196,11 +196,13 @@ struct WidgetAccountPublicationTests {
             suiteName: "WidgetAccountPublicationTests", userDefaults: InMemoryUserDefaults())
         settings.providerDetectionCompleted = true
         settings.setProviderEnabled(provider: .claude, metadata: ProviderDefaults.metadata[.claude]!, enabled: true)
-        settings.setProviderEnabled(provider: .codex, metadata: ProviderDefaults.metadata[.codex]!, enabled: false)
+        settings.setProviderEnabled(
+            provider: .opencode,
+            metadata: ProviderDefaults.metadata[.opencode]!,
+            enabled: false)
         settings.addTokenAccount(provider: .claude, label: "Work", token: "fixture-token-work")
         settings.addTokenAccount(provider: .claude, label: "Personal", token: "fixture-token-personal")
         return (settings, UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,

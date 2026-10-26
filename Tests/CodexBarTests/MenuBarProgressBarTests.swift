@@ -12,8 +12,8 @@ struct MenuBarProgressBarTests {
 
         let encoded = try JSONEncoder().encode(sessionBar)
         #expect(try JSONDecoder().decode(MenuBarLayoutToken.self, from: encoded) == sessionBar)
-        #expect(sessionBar.editorLabel(provider: .codex) == L("%@ %@", L("Session"), L("menu_bar_layout_token_bar")))
-        #expect(weeklyBar.editorLabel(provider: .codex) == L("%@ %@", L("Weekly"), L("menu_bar_layout_token_bar")))
+        #expect(sessionBar.editorLabel(provider: .claude) == L("%@ %@", L("Session"), L("menu_bar_layout_token_bar")))
+        #expect(weeklyBar.editorLabel(provider: .claude) == L("%@ %@", L("Weekly"), L("menu_bar_layout_token_bar")))
         #expect(MenuBarLayoutPreset.barsStacked.layout == MenuBarLayout(lines: [
             [.progressBar(window: .session), .windowResetCountdown(window: .session)],
             [.progressBar(window: .weekly), .windowResetCountdown(window: .weekly)],

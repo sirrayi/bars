@@ -6,17 +6,15 @@ import Testing
 private actor AgentSessionScanHarness {
     struct Call: Equatable, Sendable {
         let includeFileOnlySessions: Bool
-        let includeRolloutActivity: Bool
     }
 
     private var calls: [Call] = []
     private var continuations: [Int: CheckedContinuation<[AgentSession], Never>] = [:]
     private var callWaiters: [(count: Int, continuation: CheckedContinuation<Void, Never>)] = []
 
-    func scan(includeFileOnlySessions: Bool, includeRolloutActivity: Bool) async -> [AgentSession] {
+    func scan(includeFileOnlySessions: Bool) async -> [AgentSession] {
         let index = self.calls.count
-        self.calls.append(Call(
-            includeFileOnlySessions: includeFileOnlySessions, includeRolloutActivity: includeRolloutActivity))
+        self.calls.append(Call(includeFileOnlySessions: includeFileOnlySessions))
         self.resumeSatisfiedWaiters()
         return await withCheckedContinuation { continuation in
             self.continuations[index] = continuation
@@ -234,8 +232,8 @@ struct AgentSessionsStoreSchedulerTests {
         await scan.waitForCallCount(2)
 
         #expect(await scan.recordedCalls() == [
-            .init(includeFileOnlySessions: false, includeRolloutActivity: true),
-            .init(includeFileOnlySessions: true, includeRolloutActivity: false),
+            .init(includeFileOnlySessions: false),
+            .init(includeFileOnlySessions: true),
         ])
         #expect(store.localSessions.isEmpty)
         #expect(store.latestLocalActivityAt == nil)
@@ -334,7 +332,7 @@ struct AgentSessionsStoreSchedulerTests {
         let spy = AgentSessionRefreshSpy()
         let store = AgentSessionsStore(
             settings: settings,
-            localScan: { includeFiles, _ in await .init(sessions: spy.scan(includeFileOnlySessions: includeFiles)) },
+            localScan: { includeFiles in await spy.scan(includeFileOnlySessions: includeFiles) },
             remoteHostDiscovery: { Issue.record("Local-only mode must not discover hosts"); return [] },
             remoteFetch: { await spy.fetch(hosts: $0) })
         store.start()
@@ -382,9 +380,9 @@ struct AgentSessionsStoreSchedulerTests {
         let spy = AgentSessionRefreshSpy()
         let store = AgentSessionsStore(
             settings: settings,
-            localScan: { _, _ in .init() },
+            localScan: { _ in [] },
             remoteHostDiscovery: {
-                _ = await discovery.scan(includeFileOnlySessions: false, includeRolloutActivity: false)
+                _ = await discovery.scan(includeFileOnlySessions: false)
                 return ["never.example.invalid"]
             },
             remoteFetch: { await spy.fetch(hosts: $0) })
@@ -405,10 +403,9 @@ struct AgentSessionsStoreSchedulerTests {
     {
         AgentSessionsStore(
             settings: settings,
-            localScan: { includeFileOnlySessions, includeRolloutActivity in
-                guard let scan else { return .init() }
-                return await .init(sessions: scan.scan(
-                    includeFileOnlySessions: includeFileOnlySessions, includeRolloutActivity: includeRolloutActivity))
+            localScan: { includeFileOnlySessions in
+                guard let scan else { return [] }
+                return await scan.scan(includeFileOnlySessions: includeFileOnlySessions)
             },
             remoteHostDiscovery: { [] },
             remoteFetch: { hosts in
@@ -423,8 +420,8 @@ struct AgentSessionsStoreSchedulerTests {
     {
         AgentSessionsStore(
             settings: settings,
-            localScan: { includeFileOnlySessions, _ in
-                await .init(sessions: spy.scan(includeFileOnlySessions: includeFileOnlySessions))
+            localScan: { includeFileOnlySessions in
+                await spy.scan(includeFileOnlySessions: includeFileOnlySessions)
             },
             remoteHostDiscovery: { [] },
             remoteFetch: { hosts in
@@ -446,7 +443,7 @@ struct AgentSessionsStoreSchedulerTests {
     private static func session(id: String, activity: Date?) -> AgentSession {
         AgentSession(
             id: id,
-            provider: .codex,
+            provider: .claude,
             source: .cli,
             state: .active,
             pid: 42,

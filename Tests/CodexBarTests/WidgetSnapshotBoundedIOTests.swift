@@ -17,7 +17,7 @@ struct WidgetSnapshotBoundedIOTests {
         let loaded = WidgetSnapshotStore.load(from: url, timeout: 2.0)
 
         #expect(loaded?.entries.isEmpty == true)
-        #expect(loaded?.enabledProviders == [.codex])
+        #expect(loaded?.enabledProviders == [.claude])
         #expect(loaded?.usageBarsShowUsed == true)
         #expect(loaded?.generatedAt == snapshot.generatedAt)
     }
@@ -99,7 +99,7 @@ struct WidgetSnapshotBoundedIOTests {
     private static func snapshot() -> WidgetSnapshot {
         WidgetSnapshot(
             entries: [],
-            enabledProviders: [.codex],
+            enabledProviders: [.claude],
             usageBarsShowUsed: true,
             generatedAt: Date(timeIntervalSince1970: 1_700_000_000))
     }

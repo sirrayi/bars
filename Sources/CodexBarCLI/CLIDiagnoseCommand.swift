@@ -37,7 +37,6 @@ extension CodexBarCLI {
         let verbose = values.flags.contains("verbose")
         let outputPath = values.options["output"]?.last
         let browserDetection = BrowserDetection()
-        let baseFetcher = UsageFetcher()
 
         let tokenSelection = TokenAccountCLISelection(label: nil, index: nil, allAccounts: false)
         let tokenContext: TokenAccountCLIContext
@@ -56,7 +55,6 @@ extension CodexBarCLI {
             await diagnostics.append(Self.makeDiagnosticExport(
                 provider: provider,
                 tokenContext: tokenContext,
-                baseFetcher: baseFetcher,
                 browserDetection: browserDetection,
                 verbose: verbose))
         }
@@ -107,7 +105,6 @@ extension CodexBarCLI {
     private static func makeDiagnosticExport(
         provider: UsageProvider,
         tokenContext: TokenAccountCLIContext,
-        baseFetcher: UsageFetcher,
         browserDetection: BrowserDetection,
         verbose: Bool) async -> ProviderDiagnosticExport
     {
@@ -115,18 +112,13 @@ extension CodexBarCLI {
         let env = tokenContext.environment(
             base: ProcessInfo.processInfo.environment,
             provider: provider,
-            account: account,
-            codexActiveSourceOverride: nil)
-        let settings = tokenContext.settingsSnapshot(
-            for: provider,
-            account: account,
-            codexActiveSourceOverride: nil)
+            account: account)
+        let settings = tokenContext.settingsSnapshot(for: provider, account: account)
         let preferredSourceMode = tokenContext.preferredSourceMode(for: provider)
         let sourceMode = tokenContext.effectiveSourceMode(
             base: preferredSourceMode,
             provider: provider,
             account: account)
-        let fetcher = tokenContext.fetcher(base: baseFetcher, provider: provider, env: env)
         let fetchContext = ProviderFetchContext(
             runtime: .cli,
             sourceMode: sourceMode,
@@ -137,7 +129,6 @@ extension CodexBarCLI {
             verbose: verbose,
             env: env,
             settings: settings,
-            fetcher: fetcher,
             claudeFetcher: ClaudeUsageFetcher(browserDetection: browserDetection),
             browserDetection: browserDetection,
             selectedTokenAccountID: account?.id,

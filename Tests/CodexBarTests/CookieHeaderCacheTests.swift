@@ -13,7 +13,7 @@ struct CookieHeaderCacheTests {
         KeychainCacheStore.setTestStoreForTesting(true)
         defer { KeychainCacheStore.setTestStoreForTesting(false) }
 
-        let provider: UsageProvider = .codex
+        let provider: UsageProvider = .opencode
         let storedAt = Date(timeIntervalSince1970: 0)
         CookieHeaderCache.store(
             provider: provider,
@@ -118,7 +118,7 @@ struct CookieHeaderCacheTests {
         KeychainCacheStore.setTestStoreForTesting(true)
         defer { KeychainCacheStore.setTestStoreForTesting(false) }
 
-        let provider: UsageProvider = .codex
+        let provider: UsageProvider = .opencode
         let accountA = UUID()
         let accountB = UUID()
 
@@ -149,7 +149,7 @@ struct CookieHeaderCacheTests {
         KeychainCacheStore.setTestStoreForTesting(true)
         defer { KeychainCacheStore.setTestStoreForTesting(false) }
 
-        let provider: UsageProvider = .codex
+        let provider: UsageProvider = .opencode
         let profileA = CookieHeaderCache.Scope.profileHome("/tmp/codex-profile-a")
         let profileB = CookieHeaderCache.Scope.profileHome("/tmp/codex-profile-b")
         CookieHeaderCache.store(
@@ -179,7 +179,7 @@ struct CookieHeaderCacheTests {
         KeychainCacheStore.setTestStoreForTesting(true)
         defer { KeychainCacheStore.setTestStoreForTesting(false) }
 
-        let provider: UsageProvider = .codex
+        let provider: UsageProvider = .opencode
 
         CookieHeaderCache.store(
             provider: provider,
@@ -277,7 +277,7 @@ struct CookieHeaderCacheTests {
         let legacyBase = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         CookieHeaderCache.withLegacyBaseURLOverrideForTesting(legacyBase) {
-            let provider: UsageProvider = .codex
+            let provider: UsageProvider = .opencode
             let storedAt = Date(timeIntervalSince1970: 0)
             let entry = CookieHeaderCache.Entry(
                 cookieHeader: "auth=legacy",
@@ -309,7 +309,7 @@ struct CookieHeaderCacheTests {
         let legacyBase = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         CookieHeaderCache.withLegacyBaseURLOverrideForTesting(legacyBase) {
-            let provider: UsageProvider = .codex
+            let provider: UsageProvider = .opencode
             let legacyURL = legacyBase.appendingPathComponent("\(provider.rawValue)-cookie.json")
             CookieHeaderCache.store(
                 CookieHeaderCache.Entry(
@@ -336,7 +336,7 @@ struct CookieHeaderCacheTests {
         let legacyBase = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         CookieHeaderCache.withLegacyBaseURLOverrideForTesting(legacyBase) {
-            let provider: UsageProvider = .codex
+            let provider: UsageProvider = .opencode
             let legacyURL = legacyBase.appendingPathComponent("\(provider.rawValue)-cookie.json")
             CookieHeaderCache.store(
                 CookieHeaderCache.Entry(
@@ -374,7 +374,7 @@ struct CookieHeaderCacheTests {
         let legacyBase = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         CookieHeaderCache.withLegacyBaseURLOverrideForTesting(legacyBase) {
-            let provider: UsageProvider = .codex
+            let provider: UsageProvider = .opencode
             let key = KeychainCacheStore.Key.cookie(provider: provider.instanceID)
             KeychainCacheStore.store(key: key, entry: WrongEntry(value: "not-a-cookie-entry"))
 
@@ -397,7 +397,7 @@ struct CookieHeaderCacheTests {
         let legacyBase = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         CookieHeaderCache.withLegacyBaseURLOverrideForTesting(legacyBase) {
-            let provider: UsageProvider = .codex
+            let provider: UsageProvider = .opencode
             let accountID = UUID()
             CookieHeaderCache.store(provider: provider, cookieHeader: "auth=global", sourceLabel: "Chrome")
             CookieHeaderCache.store(
@@ -434,7 +434,7 @@ struct CookieHeaderCacheTests {
         CookieHeaderCache.resetDisplayCacheForTesting()
         defer { CookieHeaderCache.resetDisplayCacheForTesting() }
 
-        let provider: UsageProvider = .codex
+        let provider: UsageProvider = .opencode
         CookieHeaderCache.store(provider: provider, cookieHeader: "auth=abc", sourceLabel: "Chrome")
 
         #expect(CookieHeaderCache.loadForDisplay(provider: provider)?.cookieHeader == "auth=abc")
@@ -453,7 +453,7 @@ struct CookieHeaderCacheTests {
         CookieHeaderCache.resetDisplayCacheForTesting()
         defer { CookieHeaderCache.resetDisplayCacheForTesting() }
 
-        let provider: UsageProvider = .codex
+        let provider: UsageProvider = .opencode
         #expect(CookieHeaderCache.loadForDisplay(provider: provider) == nil)
 
         KeychainCacheStore.store(
@@ -476,7 +476,7 @@ struct CookieHeaderCacheTests {
         let legacyBase = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         try await CookieHeaderCache.withLegacyBaseURLOverrideForTesting(legacyBase) {
-            let provider: UsageProvider = .codex
+            let provider: UsageProvider = .opencode
             CookieHeaderCache.store(
                 CookieHeaderCache.Entry(
                     cookieHeader: "auth=legacy-display",
@@ -509,7 +509,7 @@ struct CookieHeaderCacheTests {
         let legacyBase = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         CookieHeaderCache.withLegacyBaseURLOverrideForTesting(legacyBase) {
-            let provider: UsageProvider = .codex
+            let provider: UsageProvider = .opencode
             CookieHeaderCache.store(
                 CookieHeaderCache.Entry(
                     cookieHeader: "auth=legacy-display",
@@ -534,20 +534,20 @@ struct CookieHeaderCacheTests {
             DispatchQueue.concurrentPerform(iterations: 5000) { index in
                 if index.isMultiple(of: 3) {
                     CookieHeaderCache.withLegacyBaseURLOverrideForTesting(legacyBases[index % legacyBases.count]) {
-                        _ = CookieHeaderCache.legacyURLForTesting(provider: .codex)
+                        _ = CookieHeaderCache.legacyURLForTesting(provider: .opencode)
                     }
                 } else if index.isMultiple(of: 5) {
                     CookieHeaderCache.withLegacyBaseURLOverrideForTesting(nil) {
-                        _ = CookieHeaderCache.legacyURLForTesting(provider: .codex)
+                        _ = CookieHeaderCache.legacyURLForTesting(provider: .opencode)
                     }
                 } else {
-                    _ = CookieHeaderCache.legacyURLForTesting(provider: .codex)
+                    _ = CookieHeaderCache.legacyURLForTesting(provider: .opencode)
                 }
             }
 
             #expect(
-                CookieHeaderCache.legacyURLForTesting(provider: .codex)
-                    == legacyBases[0].appendingPathComponent("codex-cookie.json"))
+                CookieHeaderCache.legacyURLForTesting(provider: .opencode)
+                    == legacyBases[0].appendingPathComponent("opencode-cookie.json"))
         }
     }
 
@@ -559,7 +559,7 @@ struct CookieHeaderCacheTests {
         CookieHeaderCache.resetDisplayCacheForTesting()
         defer { CookieHeaderCache.resetDisplayCacheForTesting() }
         try await CookieHeaderCache.withDisplayUnavailableRetryIntervalOverrideForTesting(0.05) {
-            let provider: UsageProvider = .codex
+            let provider: UsageProvider = .opencode
             KeychainCacheStore.store(
                 key: .cookie(provider: provider.instanceID),
                 entry: CookieHeaderCache.Entry(
@@ -594,7 +594,7 @@ struct CookieHeaderCacheTests {
         CookieHeaderCache.resetDisplayCacheForTesting()
         defer { CookieHeaderCache.resetDisplayCacheForTesting() }
 
-        let provider: UsageProvider = .codex
+        let provider: UsageProvider = .opencode
         _ = CookieHeaderCache.beginDisplayReadGenerationForTesting(provider: provider)
         CookieHeaderCache.store(provider: provider, cookieHeader: "auth=concurrent", sourceLabel: "Chrome")
 
@@ -609,7 +609,7 @@ struct CookieHeaderCacheTests {
         CookieHeaderCache.resetDisplayCacheForTesting()
         defer { CookieHeaderCache.resetDisplayCacheForTesting() }
 
-        let provider: UsageProvider = .codex
+        let provider: UsageProvider = .opencode
         CookieHeaderCache.store(provider: provider, cookieHeader: "auth=old", sourceLabel: "Chrome")
         #expect(CookieHeaderCache.loadForDisplay(provider: provider)?.cookieHeader == "auth=old")
 
@@ -637,7 +637,7 @@ struct CookieHeaderCacheTests {
             let legacyBase = FileManager.default.temporaryDirectory
                 .appendingPathComponent(UUID().uuidString, isDirectory: true)
             CookieHeaderCache.withLegacyBaseURLOverrideForTesting(legacyBase) {
-                let provider: UsageProvider = .codex
+                let provider: UsageProvider = .opencode
                 CookieHeaderCache.store(
                     CookieHeaderCache.Entry(
                         cookieHeader: "auth=legacy",
@@ -682,7 +682,7 @@ struct CookieHeaderCacheTests {
         let legacyBase = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         CookieHeaderCache.withLegacyBaseURLOverrideForTesting(legacyBase) {
-            let provider: UsageProvider = .codex
+            let provider: UsageProvider = .opencode
             CookieHeaderCache.store(
                 CookieHeaderCache.Entry(
                     cookieHeader: "auth=legacy",
@@ -707,7 +707,7 @@ struct CookieHeaderCacheTests {
         CookieHeaderCache.resetDisplayCacheForTesting()
         defer { CookieHeaderCache.resetDisplayCacheForTesting() }
 
-        let provider: UsageProvider = .codex
+        let provider: UsageProvider = .opencode
         CookieHeaderCache.store(provider: provider, cookieHeader: "auth=first", sourceLabel: "Chrome")
         #expect(CookieHeaderCache.loadForDisplay(provider: provider)?.cookieHeader == "auth=first")
 
@@ -725,7 +725,7 @@ struct CookieHeaderCacheTests {
         CookieHeaderCache.resetDisplayCacheForTesting()
         defer { CookieHeaderCache.resetDisplayCacheForTesting() }
 
-        let provider: UsageProvider = .codex
+        let provider: UsageProvider = .opencode
         CookieHeaderCache.store(provider: provider, cookieHeader: "auth=old", sourceLabel: "Chrome")
         #expect(CookieHeaderCache.loadForDisplay(provider: provider)?.cookieHeader == "auth=old")
 
@@ -750,7 +750,7 @@ struct CookieHeaderCacheTests {
         CookieHeaderCache.resetDisplayCacheForTesting()
         defer { CookieHeaderCache.resetDisplayCacheForTesting() }
 
-        let provider: UsageProvider = .codex
+        let provider: UsageProvider = .opencode
         CookieHeaderCache.store(provider: provider, cookieHeader: "auth=secret", sourceLabel: "Chrome")
         #expect(CookieHeaderCache.loadForDisplay(provider: provider)?.cookieHeader == "auth=secret")
 
@@ -774,7 +774,7 @@ struct CookieHeaderCacheTests {
         CookieHeaderCache.resetDisplayCacheForTesting()
         defer { CookieHeaderCache.resetDisplayCacheForTesting() }
 
-        let provider: UsageProvider = .codex
+        let provider: UsageProvider = .opencode
         CookieHeaderCache.store(provider: provider, cookieHeader: "auth=secret", sourceLabel: "Chrome")
         #expect(CookieHeaderCache.loadForDisplay(provider: provider)?.cookieHeader == "auth=secret")
 
@@ -797,7 +797,7 @@ struct CookieHeaderCacheTests {
         CookieHeaderCache.resetDisplayCacheForTesting()
         defer { CookieHeaderCache.resetDisplayCacheForTesting() }
 
-        let provider: UsageProvider = .codex
+        let provider: UsageProvider = .opencode
         KeychainCacheStore.store(
             key: .cookie(provider: provider.instanceID),
             entry: CookieHeaderCache.Entry(
@@ -826,7 +826,7 @@ struct CookieHeaderCacheTests {
         CookieHeaderCache.resetDisplayCacheForTesting()
         defer { CookieHeaderCache.resetDisplayCacheForTesting() }
         try await CookieHeaderCache.withDisplayStalenessIntervalOverrideForTesting(0) {
-            let provider: UsageProvider = .codex
+            let provider: UsageProvider = .opencode
             KeychainCacheStore.store(
                 key: .cookie(provider: provider.instanceID),
                 entry: CookieHeaderCache.Entry(

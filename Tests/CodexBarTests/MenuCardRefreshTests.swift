@@ -34,7 +34,7 @@ struct MenuCardRefreshTests {
     @Test
     func `background refresh keeps quota timing current`() throws {
         let updatedAt = Date(timeIntervalSince1970: 1_800_000_000)
-        for provider in [UsageProvider.claude, .codex] {
+        for provider in [UsageProvider.claude] {
             let snapshot = UsageSnapshot(
                 primary: RateWindow(
                     usedPercent: 21,

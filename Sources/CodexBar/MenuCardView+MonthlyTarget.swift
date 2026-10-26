@@ -21,7 +21,6 @@ extension UsageMenuCardView.Model {
             case "primary": snapshot.primary
             case "secondary": snapshot.secondary
             case "tertiary": snapshot.tertiary
-            case "monthly": input.codexProjection?.rateWindow(for: .monthly) ?? extra
             default: extra
             }
             guard let window, !window.isSyntheticPlaceholder,

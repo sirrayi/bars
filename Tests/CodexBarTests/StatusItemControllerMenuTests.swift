@@ -192,13 +192,12 @@ struct StatusItemControllerMenuTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let updater = RecordingUpdater()
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: updater,
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)

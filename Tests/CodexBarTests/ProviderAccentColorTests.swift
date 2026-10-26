@@ -48,36 +48,36 @@ struct ProviderAccentColorTests {
     @Test
     func `accent color survives a config round trip`() throws {
         let config = CodexBarConfig(providers: [
-            ProviderConfig(id: .codex, enabled: true, accentColor: "#60BA7E"),
+            ProviderConfig(id: .opencode, enabled: true, accentColor: "#60BA7E"),
         ])
 
         let data = try JSONEncoder().encode(config)
         let decoded = try JSONDecoder().decode(CodexBarConfig.self, from: data)
 
-        #expect(decoded.providerConfig(for: .codex)?.accentColor == "#60BA7E")
+        #expect(decoded.providerConfig(for: .opencode)?.accentColor == "#60BA7E")
     }
 
     @Test
     func `a config without an accent color decodes as no override`() throws {
-        let json = #"{"version":1,"providers":[{"id":"codex","enabled":true}]}"#
+        let json = #"{"version":1,"providers":[{"id":"opencode","enabled":true}]}"#
         let data = try #require(json.data(using: .utf8))
 
         let decoded = try JSONDecoder().decode(CodexBarConfig.self, from: data)
 
-        #expect(decoded.providerConfig(for: .codex)?.accentColor == nil)
+        #expect(decoded.providerConfig(for: .opencode)?.accentColor == nil)
         #expect(ProviderAccentColors.overrides(in: decoded).isEmpty)
     }
 
     @Test
     func `the mirrored payload round trips through its string encoding`() {
         let overrides: [ProviderInstanceID: ProviderColor] = [
-            .codex: ProviderColor(hex: 0x60BA7E),
+            .opencode: ProviderColor(hex: 0x60BA7E),
             .claude: ProviderColor(hex: 0xD97757),
         ]
 
         let encoded = ProviderAccentColors.encode(overrides)
 
-        #expect(encoded["codex"] == "#60BA7E")
+        #expect(encoded["opencode"] == "#60BA7E")
         #expect(encoded["claude"] == "#D97757")
         #expect(ProviderAccentColors.decode(encoded) == overrides)
     }
@@ -85,21 +85,21 @@ struct ProviderAccentColorTests {
     @Test
     func `the mirrored payload drops unknown providers and bad colors`() {
         let decoded = ProviderAccentColors.decode([
-            "codex": "#60BA7E",
+            "opencode": "#60BA7E",
             "claude": "not-a-color",
             "": "#FFFFFF",
         ])
 
-        #expect(decoded == [.codex: ProviderColor(hex: 0x60BA7E)])
+        #expect(decoded == [.opencode: ProviderColor(hex: 0x60BA7E)])
     }
 
     @Test
     func `sync carries the accent override to another Mac`() throws {
-        let local = ProviderConfig(id: .codex, enabled: true, accentColor: "#60BA7E")
+        let local = ProviderConfig(id: .opencode, enabled: true, accentColor: "#60BA7E")
 
         let payload = ProviderIntentPayload(config: local)
         let applied = try payload.applying(
-            to: ProviderConfig(id: .codex),
+            to: ProviderConfig(id: .opencode),
             secretFields: [:],
             canEnable: { _, _ in true })
 
@@ -109,10 +109,10 @@ struct ProviderAccentColorTests {
 
     @Test
     func `sync clears the accent override when the sending Mac cleared it`() throws {
-        let payload = ProviderIntentPayload(config: ProviderConfig(id: .codex, enabled: true))
+        let payload = ProviderIntentPayload(config: ProviderConfig(id: .opencode, enabled: true))
 
         let applied = try payload.applying(
-            to: ProviderConfig(id: .codex, accentColor: "#60BA7E"),
+            to: ProviderConfig(id: .opencode, accentColor: "#60BA7E"),
             secretFields: [:],
             canEnable: { _, _ in true })
 
@@ -125,13 +125,13 @@ struct ProviderAccentColorTests {
     func `a client that predates accent colors cannot erase an override`() throws {
         // A payload from an older Mac carries no accentColor key at all.
         let legacy = #"""
-        {"schemaVersion":1,"provider":"codex","enabled":true}
+        {"schemaVersion":1,"provider":"opencode","enabled":true}
         """#
         let data = try #require(legacy.data(using: .utf8))
         let payload = try JSONDecoder().decode(ProviderIntentPayload.self, from: data)
 
         let applied = try payload.applying(
-            to: ProviderConfig(id: .codex, accentColor: "#60BA7E"),
+            to: ProviderConfig(id: .opencode, accentColor: "#60BA7E"),
             secretFields: [:],
             canEnable: { _, _ in true })
 

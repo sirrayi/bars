@@ -62,13 +62,13 @@ enum MenuBarLayoutNativeProof {
 
         private func refresh() {
             guard let item, let button = item.button else { return }
-            // Provider-specific by design: synthetic Codex data reproduces the reported text-only layout.
+            // Synthetic Claude data reproduces the reported text-only layout.
             let data = MenuBarLayoutRenderData(
-                provider: .codex,
+                provider: .claude,
                 iconKey: "synthetic-layout-proof",
-                providerName: "Codex",
+                providerName: "Claude",
                 accountLabel: nil,
-                laneLabels: MenuBarLayoutLaneLabels(provider: .codex, snapshot: nil),
+                laneLabels: MenuBarLayoutLaneLabels(provider: .claude, snapshot: nil),
                 primary: nil,
                 secondary: nil,
                 tertiary: nil,

@@ -15,8 +15,8 @@ struct MenuBarExtraMetricPickerTests {
                 #expect(labels.contains(title))
             }
         }
-        #expect(!MenuBarPercentWindowPreference.available(for: .codex)
-            .map { $0.label(for: .codex) }.contains("Grok Bot"))
+        #expect(!MenuBarPercentWindowPreference.available(for: .opencode)
+            .map { $0.label(for: .opencode) }.contains("Grok Bot"))
     }
 
     @Test

@@ -15,14 +15,12 @@ struct DeferredMenuInteractionRefreshTailTests {
         settings.refreshFrequency = .manual
         settings.statusChecksEnabled = false
         settings.costUsageEnabled = true
-        settings.openAIWebAccessEnabled = false
-        settings.codexCookieSource = .off
         for provider in UsageProvider.allCases {
             guard let metadata = ProviderRegistry.shared.metadata[provider] else { continue }
             settings.setProviderEnabled(
                 provider: provider,
                 metadata: metadata,
-                enabled: provider == .codex)
+                enabled: provider == .claude)
         }
 
         let isolatedRoot = FileManager.default.temporaryDirectory
@@ -30,11 +28,8 @@ struct DeferredMenuInteractionRefreshTailTests {
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         let environment = [
             "HOME": isolatedRoot.path,
-            "CODEX_HOME": isolatedRoot.appendingPathComponent(".codex", isDirectory: true).path,
         ]
-        let fetcher = UsageFetcher(environment: environment)
         let store = UsageStore(
-            fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -42,19 +37,15 @@ struct DeferredMenuInteractionRefreshTailTests {
         let tokenTail = DeferredMenuRefreshTokenTailBlocker()
         var providerRefreshCount = 0
         store._test_providerRefreshOverride = { provider in
-            guard provider == .codex else { return }
+            guard provider == .claude else { return }
             providerRefreshCount += 1
         }
-        store._test_codexCreditsLoaderOverride = {
-            CreditsSnapshot(remaining: 25, events: [], updatedAt: Date())
-        }
         store._test_tokenUsageRefreshOverride = { provider, force in
-            guard provider == .codex, force else { return }
+            guard provider == .claude, force else { return }
             await tokenTail.run()
         }
         defer {
             store._test_providerRefreshOverride = nil
-            store._test_codexCreditsLoaderOverride = nil
             store._test_tokenUsageRefreshOverride = nil
         }
 
@@ -90,7 +81,7 @@ struct DeferredMenuInteractionRefreshTailTests {
 
         // The follow-up automatic refresh should not start another token-cost tail.
         settings.costUsageEnabled = false
-        controller.deferMenuInteractionRefreshIfNeeded(providers: [.codex])
+        controller.deferMenuInteractionRefreshIfNeeded(providers: [.claude])
         for _ in 0..<3 {
             controller.scheduleDeferredMenuInteractionRefreshIfNeeded(delay: .zero)
             try? await Task.sleep(for: .milliseconds(30))
@@ -98,7 +89,7 @@ struct DeferredMenuInteractionRefreshTailTests {
 
         #expect(deferredRefreshCount == 0)
         #expect(providerRefreshCount == 1)
-        #expect(controller.deferredMenuInteractionRefreshProviders == [.codex])
+        #expect(controller.deferredMenuInteractionRefreshProviders == [.claude])
         #expect(controller.deferredMenuInteractionRefreshTask != nil)
 
         await tokenTail.release()

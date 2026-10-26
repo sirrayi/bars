@@ -116,7 +116,7 @@ struct CLICardsClaudeSwapTests {
             hasExplicitAccountSelection: true,
             sourceModeOverride: nil))
         #expect(!CLIClaudeSwapCards.isEligible(
-            provider: .codex,
+            provider: .devin,
             integrationEnabled: true,
             hasExplicitAccountSelection: false,
             sourceModeOverride: nil))

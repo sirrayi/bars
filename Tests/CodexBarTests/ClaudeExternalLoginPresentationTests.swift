@@ -43,7 +43,6 @@ struct ClaudeExternalLoginPresentationTests {
                 webExtrasEnabled: false,
                 cookieSource: .manual,
                 manualCookieHeader: "sessionKey=sk-ant-synthetic-session")),
-            fetcher: UsageFetcher(environment: environment),
             claudeFetcher: StubCLI(usage: usage),
             browserDetection: BrowserDetection(cacheTTL: 0))
         let changed = ClaudeOAuthCredentialsError.credentialsChanged(Date(timeIntervalSince1970: 1_700_000_000))

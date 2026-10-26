@@ -12,7 +12,6 @@ final class ClaudeWeeklyLabelsNativeProofTests: XCTestCase {
             throw XCTSkip("Set CODEXBAR_WEEKLY_LABEL_PROOF_DIRECTORY for signed synthetic UI proof")
         }
         guard environment["CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS"] == "1",
-              environment[CodexCredentialFileAccess.isolationEnvironmentKey] == "1",
               environment["CODEXBAR_TEST_SESSION_FILE_ISOLATION"] == "1",
               environment["CODEXBAR_ALLOW_TEST_KEYCHAIN_ACCESS"] != "1"
         else { return XCTFail("Native proof requires credential and session isolation") }

@@ -73,18 +73,20 @@ struct StatusItemControllerSplitLifecycleTests {
                 settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: false)
             }
         }
-        try settings.setProviderEnabled(provider: .codex, metadata: #require(registry.metadata[.codex]), enabled: true)
+        try settings.setProviderEnabled(
+            provider: .opencode,
+            metadata: #require(registry.metadata[.opencode]),
+            enabled: true)
         try settings.setProviderEnabled(
             provider: .claude,
             metadata: #require(registry.metadata[.claude]),
             enabled: true)
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -99,15 +101,13 @@ struct StatusItemControllerSplitLifecycleTests {
         controllerSettings.statusChecksEnabled = false
         controllerSettings.refreshFrequency = .manual
 
-        let fetcher = UsageFetcher()
         let store = UsageStore(
-            fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: controllerSettings)
         let controller = StatusItemController(
             store: store,
             settings: controllerSettings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting(),
@@ -121,9 +121,9 @@ struct StatusItemControllerSplitLifecycleTests {
         #expect(controllerSettings.orderedProviders() == reorderedProviders)
         #expect(controllerSettings.backgroundWorkSettingsRevision == initialBackgroundRevision)
 
-        sourceSettings.codexUsageDataSource = .cli
+        sourceSettings.claudeUsageDataSource = .cli
 
-        #expect(controllerSettings.codexUsageDataSource == .cli)
+        #expect(controllerSettings.claudeUsageDataSource == .cli)
         #expect(controllerSettings.backgroundWorkSettingsRevision == initialBackgroundRevision + 1)
     }
 
@@ -132,9 +132,9 @@ struct StatusItemControllerSplitLifecycleTests {
         let (settings, controller) = try self.makeSplitController()
         defer { controller.releaseStatusItemsForTesting() }
 
-        #expect(controller.statusItems[.codex] != nil)
+        #expect(controller.statusItems[.opencode] != nil)
         #expect(controller.statusItems[.claude] != nil)
-        #expect(controller.expectedVisibleStatusItemAutosaveNames == ["codexbar-codex", "codexbar-claude"])
+        #expect(controller.expectedVisibleStatusItemAutosaveNames == ["codexbar-opencode", "codexbar-claude"])
 
         settings.mergeIcons = true
         controller.handleProviderConfigChange(reason: "test")
@@ -149,12 +149,12 @@ struct StatusItemControllerSplitLifecycleTests {
         let (settings, controller) = try self.makeSplitController()
         defer { controller.releaseStatusItemsForTesting() }
 
-        let menus = try [UsageProvider.codex, .claude].map { provider in
+        let menus = try [UsageProvider.opencode, .claude].map { provider in
             try #require(controller.providerMenus[provider.instanceID])
         }
         let keys = menus.map(ObjectIdentifier.init)
         for (menu, key) in zip(menus, keys) {
-            controller.menuProviders[key] = .codex
+            controller.menuProviders[key] = .opencode
             controller.menuReadinessSignatures[key] = "readiness"
             controller.menuIdentitySignatures[key] = "identity"
             controller.menuSession.markFresh(key)
@@ -174,7 +174,7 @@ struct StatusItemControllerSplitLifecycleTests {
             _ = controller.openMenuRebuildRequests.replaceRequest(for: key)
             controller.openMenuRebuildsClosingHostedSubviewMenus.insert(key)
             controller.highlightedMenuItems[key] = NSMenuItem(title: "Highlighted", action: nil, keyEquivalent: "")
-            controller.nativeHighlightDeferredMenuRebuilds[key] = .init(provider: .codex)
+            controller.nativeHighlightDeferredMenuRebuilds[key] = .init(provider: .opencode)
             controller.pendingMenuBaselineResyncs.insert(key)
         }
 
@@ -206,7 +206,7 @@ struct StatusItemControllerSplitLifecycleTests {
         let (settings, controller) = try self.makeSplitController()
         defer { controller.releaseStatusItemsForTesting() }
 
-        let codexButton = try #require(controller.statusItems[.codex]?.button)
+        let codexButton = try #require(controller.statusItems[.opencode]?.button)
         #expect(codexButton.image != nil)
         #expect(!self.containsHostingView(codexButton))
 
@@ -223,14 +223,14 @@ struct StatusItemControllerSplitLifecycleTests {
         let (_, controller) = try self.makeSplitController()
         defer { controller.releaseStatusItemsForTesting() }
 
-        let codexButton = try #require(controller.statusItems[.codex]?.button)
+        let codexButton = try #require(controller.statusItems[.opencode]?.button)
         let claudeButton = try #require(controller.statusItems[.claude]?.button)
 
         #expect(controller.statusItem.autosaveName == "codexbar-merged")
-        #expect(controller.statusItems[.codex]?.autosaveName == "codexbar-codex")
+        #expect(controller.statusItems[.opencode]?.autosaveName == "codexbar-opencode")
         #expect(controller.statusItems[.claude]?.autosaveName == "codexbar-claude")
         #expect(controller.statusItem.button?.accessibilityIdentifier() == "CodexBar.StatusItem")
-        #expect(codexButton.accessibilityIdentifier() == "CodexBar.StatusItem.codex")
+        #expect(codexButton.accessibilityIdentifier() == "CodexBar.StatusItem.opencode")
         #expect(claudeButton.accessibilityIdentifier() == "CodexBar.StatusItem.claude")
         #expect(controller.statusItem.button?.accessibilityTitle() == "CodexBar")
         #expect(codexButton.accessibilityTitle() == "CodexBar")
@@ -243,7 +243,7 @@ struct StatusItemControllerSplitLifecycleTests {
     @Test
     func `status item identity returns stable autosave names`() {
         #expect(StatusItemController.StatusItemIdentity.merged.autosaveName == "codexbar-merged")
-        #expect(StatusItemController.StatusItemIdentity.provider(.codex).autosaveName == "codexbar-codex")
+        #expect(StatusItemController.StatusItemIdentity.provider(.opencode).autosaveName == "codexbar-opencode")
         #expect(StatusItemController.StatusItemIdentity.provider(.claude).autosaveName == "codexbar-claude")
     }
 
@@ -325,11 +325,11 @@ struct StatusItemControllerSplitLifecycleTests {
         defer { defaults.removePersistentDomain(forName: suite) }
         defaults.set(42, forKey: "NSStatusItem Preferred Position Item-0")
         defaults.set(11298, forKey: "NSStatusItem Preferred Position Item-1")
-        let key = MenuBarStatusItemPlacementPreflight.preferredPositionKey(autosaveName: "codexbar-codex")
+        let key = MenuBarStatusItemPlacementPreflight.preferredPositionKey(autosaveName: "codexbar-opencode")
 
         #expect(MenuBarStatusItemPlacementPreflight.prepare(
             defaults: defaults,
-            autosaveName: "codexbar-codex",
+            autosaveName: "codexbar-opencode",
             legacyDefaultItemIndex: 1,
             maximumPreferredPosition: 3000))
 
@@ -345,11 +345,11 @@ struct StatusItemControllerSplitLifecycleTests {
         defaults.removePersistentDomain(forName: suite)
         defer { defaults.removePersistentDomain(forName: suite) }
         defaults.set(42, forKey: "NSStatusItem Preferred Position Item-0")
-        let key = MenuBarStatusItemPlacementPreflight.preferredPositionKey(autosaveName: "codexbar-codex")
+        let key = MenuBarStatusItemPlacementPreflight.preferredPositionKey(autosaveName: "codexbar-opencode")
 
         #expect(!MenuBarStatusItemPlacementPreflight.prepare(
             defaults: defaults,
-            autosaveName: "codexbar-codex",
+            autosaveName: "codexbar-opencode",
             legacyDefaultItemIndex: 1))
 
         #expect(defaults.object(forKey: key) == nil)
@@ -364,11 +364,11 @@ struct StatusItemControllerSplitLifecycleTests {
         defer { defaults.removePersistentDomain(forName: suite) }
         defaults.set(42, forKey: "NSStatusItem Preferred Position Item-0")
         defaults.set(58, forKey: "NSStatusItem Preferred Position Item-1")
-        let key = MenuBarStatusItemPlacementPreflight.preferredPositionKey(autosaveName: "codexbar-codex")
+        let key = MenuBarStatusItemPlacementPreflight.preferredPositionKey(autosaveName: "codexbar-opencode")
 
         #expect(!MenuBarStatusItemPlacementPreflight.prepare(
             defaults: defaults,
-            autosaveName: "codexbar-codex",
+            autosaveName: "codexbar-opencode",
             legacyDefaultItemIndex: 1))
 
         #expect(defaults.object(forKey: key) == nil)
@@ -443,7 +443,7 @@ struct StatusItemControllerSplitLifecycleTests {
         let suite = "StatusItemControllerSplitLifecycleTests-placement-nonfinite-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
-        let key = MenuBarStatusItemPlacementPreflight.preferredPositionKey(autosaveName: "codexbar-codex")
+        let key = MenuBarStatusItemPlacementPreflight.preferredPositionKey(autosaveName: "codexbar-opencode")
         let legacyKey = MenuBarStatusItemPlacementPreflight.preferredPositionKey(autosaveName: "Item-1")
         let unrelatedKey = MenuBarStatusItemPlacementPreflight.preferredPositionKey(autosaveName: "Item-0")
         defaults.set(position, forKey: key)
@@ -453,7 +453,7 @@ struct StatusItemControllerSplitLifecycleTests {
 
         #expect(MenuBarStatusItemPlacementPreflight.prepare(
             defaults: defaults,
-            autosaveName: "codexbar-codex",
+            autosaveName: "codexbar-opencode",
             legacyDefaultItemIndex: 1,
             maximumPreferredPosition: maximumPreferredPosition))
 
@@ -538,7 +538,7 @@ struct StatusItemControllerSplitLifecycleTests {
             autosaveName: "codexbar-claude") == false)
         #expect(MenuBarStatusItemDefaultsRepair.visibilityDefault(
             defaults: defaults,
-            autosaveName: "codexbar-codex") == nil)
+            autosaveName: "codexbar-opencode") == nil)
     }
 
     @Test
@@ -546,19 +546,19 @@ struct StatusItemControllerSplitLifecycleTests {
         let (_, controller) = try self.makeSplitController()
         defer { controller.releaseStatusItemsForTesting() }
 
-        let oldCodexItem = try #require(controller.statusItems[.codex])
+        let oldCodexItem = try #require(controller.statusItems[.opencode])
         let oldClaudeItem = try #require(controller.statusItems[.claude])
         let oldCodexButton = try #require(oldCodexItem.button)
 
         controller.refreshExistingStatusItemsForVisibilityRecovery()
 
-        let newCodexItem = try #require(controller.statusItems[.codex])
+        let newCodexItem = try #require(controller.statusItems[.opencode])
         let newClaudeItem = try #require(controller.statusItems[.claude])
         #expect(newCodexItem === oldCodexItem)
         #expect(newClaudeItem === oldClaudeItem)
         #expect(newCodexItem.button === oldCodexButton)
-        #expect(newCodexItem.autosaveName == "codexbar-codex")
-        #expect(newCodexItem.button?.accessibilityIdentifier() == "CodexBar.StatusItem.codex")
+        #expect(newCodexItem.autosaveName == "codexbar-opencode")
+        #expect(newCodexItem.button?.accessibilityIdentifier() == "CodexBar.StatusItem.opencode")
     }
 
     @Test
@@ -602,13 +602,13 @@ struct StatusItemControllerSplitLifecycleTests {
         let (_, controller) = try self.makeSplitController()
         defer { controller.releaseStatusItemsForTesting() }
 
-        let oldCodexItem = try #require(controller.statusItems[.codex])
+        let oldCodexItem = try #require(controller.statusItems[.opencode])
         controller.recreateStatusItemsForVisibilityRecovery()
 
-        let newCodexItem = try #require(controller.statusItems[.codex])
+        let newCodexItem = try #require(controller.statusItems[.opencode])
         #expect(newCodexItem !== oldCodexItem)
-        #expect(newCodexItem.autosaveName == "codexbar-codex")
-        #expect(newCodexItem.button?.accessibilityIdentifier() == "CodexBar.StatusItem.codex")
+        #expect(newCodexItem.autosaveName == "codexbar-opencode")
+        #expect(newCodexItem.button?.accessibilityIdentifier() == "CodexBar.StatusItem.opencode")
     }
 
     @Test

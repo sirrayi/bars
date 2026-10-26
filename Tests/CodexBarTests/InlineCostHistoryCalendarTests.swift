@@ -35,7 +35,7 @@ struct InlineCostHistoryCalendarTests {
         #expect(points.map { $0.hoverDetail?.tokenCount } == [100, 0, 100, 100])
     }
 
-    @Test(arguments: [UsageProvider.codex, .claude, .pi])
+    @Test(arguments: [UsageProvider.claude])
     func `incomplete history retains unknown missing days`(provider: UsageProvider) throws {
         let snapshot = try InlineCostCalendarFixture.snapshot(
             now: InlineCostCalendarFixture.now(),
@@ -47,7 +47,7 @@ struct InlineCostHistoryCalendarTests {
         #expect(points.map { $0.hoverDetail?.tokenCount } == [100, nil, 100, 100])
     }
 
-    @Test(arguments: [UsageProvider.claude, .pi])
+    @Test(arguments: [UsageProvider.claude])
     func `local history providers preserve calendar slots and unpriced days`(provider: UsageProvider) throws {
         let snapshot = try InlineCostCalendarFixture.snapshot(
             now: InlineCostCalendarFixture.now(), days: 4, covered: true)
@@ -244,29 +244,6 @@ struct InlineCostHistoryCalendarTests {
             previousPoints: points,
             points: Array(points.dropFirst())) == nil)
     }
-
-    @Test
-    func `native bounded scan keeps unknown dates until catch up completes`() async throws {
-        let (partial, covered) = try await InlineCostCalendarFixture.scannedSnapshots()
-        let calendar = try InlineCostCalendarFixture.calendar("UTC")
-        #expect(!partial.daily.isEmpty)
-        #expect(!partial.historyCoverageIsEstablished)
-        let pendingPoints = try InlineCostCalendarFixture.model(partial, calendar: calendar).points
-        #expect(pendingPoints.count == 4)
-        #expect(pendingPoints[0].value != nil)
-        #expect(pendingPoints[1].value == nil)
-        #expect(pendingPoints[2].value == nil)
-        #expect(pendingPoints[3].value == nil)
-
-        #expect(covered.historyCoverageIsEstablished)
-        let points = try InlineCostCalendarFixture.model(covered, calendar: calendar).points
-        #expect(points.map(\.id) == pendingPoints.map(\.id))
-        #expect(points[0].value == pendingPoints[0].value)
-        #expect(points[1].value == 0)
-        #expect(points[2].value == nil)
-        #expect((points[3].value ?? 0) > 0)
-        #expect(covered.last30DaysTokens == 3_000_000)
-    }
 }
 
 enum InlineCostCalendarFixture {
@@ -303,7 +280,7 @@ enum InlineCostCalendarFixture {
 
     static func model(
         _ snapshot: CostUsageTokenSnapshot,
-        provider: UsageProvider = .codex,
+        provider: UsageProvider = .claude,
         calendar: Calendar = .current,
         now: Date? = nil) throws
         -> InlineUsageDashboardModel
@@ -336,65 +313,6 @@ enum InlineCostCalendarFixture {
         calendar.timeZone = try XCTUnwrap(TimeZone(identifier: identifier))
         return calendar
     }
-
-    static func scannedSnapshots(historyDays: Int = 4) async throws
-    -> (CostUsageTokenSnapshot, CostUsageTokenSnapshot) {
-        let env = try CostUsageTestEnvironment()
-        defer { env.cleanup() }
-        let calendar = try Self.calendar("UTC")
-        let now = try XCTUnwrap(ISO8601DateFormatter().date(from: "2026-08-24T18:00:00Z"))
-        func write(day: Int, model: String) throws {
-            let date = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 8, day: day, hour: 12)))
-            _ = try env.writeCodexSessionFile(day: date, filename: "fixture-\(day).jsonl", contents: env.jsonl([
-                ["type": "turn_context", "timestamp": env.isoString(for: date), "payload": ["model": model]],
-                [
-                    "type": "event_msg", "timestamp": env.isoString(for: date.addingTimeInterval(1)),
-                    "payload": ["type": "token_count", "info": [
-                        "model": model,
-                        "last_token_usage": ["input_tokens": 1_000_000, "cached_input_tokens": 0, "output_tokens": 0],
-                    ]],
-                ],
-            ]))
-        }
-        try write(day: 21, model: "openai/gpt-5.4")
-        try write(day: 23, model: "fictional-unpriced-calendar-model")
-        var options = CostUsageScanner.Options(
-            codexSessionsRoot: env.codexSessionsRoot,
-            cacheRoot: env.cacheRoot,
-            codexTraceDatabaseURL: env.root.appendingPathComponent("missing.sqlite"))
-        options.calendar = calendar
-        options.refreshMinIntervalSeconds = 0
-        _ = try await CostUsageFetcher.loadTokenSnapshot(
-            provider: .codex,
-            environment: [:],
-            now: now,
-            historyDays: historyDays,
-            allowPricingRefresh: false,
-            includePiSessions: false,
-            scannerOptions: options)
-        try write(day: 24, model: "openai/gpt-5.4")
-        options.maxCodexSessionFileBytes = 1
-        options.maxCodexScanBytesPerRefresh = 1
-        let partial = try await CostUsageFetcher.loadTokenSnapshot(
-            provider: .codex,
-            environment: [:],
-            now: now.addingTimeInterval(1),
-            historyDays: historyDays,
-            allowPricingRefresh: false,
-            includePiSessions: false,
-            scannerOptions: options)
-        options.maxCodexSessionFileBytes = 0
-        options.maxCodexScanBytesPerRefresh = 0
-        let covered = try await CostUsageFetcher.loadTokenSnapshot(
-            provider: .codex,
-            environment: [:],
-            now: now.addingTimeInterval(2),
-            historyDays: historyDays,
-            allowPricingRefresh: false,
-            includePiSessions: false,
-            scannerOptions: options)
-        return (partial, covered)
-    }
 }
 
 @MainActor
@@ -413,16 +331,6 @@ final class InlineCostHistoryScreenshotTests: XCTestCase {
                 let model = try InlineCostCalendarFixture.model(snapshot)
                 models.append(("calendar-\(days)-\(covered ? "covered" : "partial")", model))
             }
-        }
-        let calendar = try InlineCostCalendarFixture.calendar("UTC")
-        for days in [1, 4, 30, 365] {
-            let (partial, covered) = try await InlineCostCalendarFixture.scannedSnapshots(historyDays: days)
-            if !partial.daily.isEmpty {
-                try models.append((
-                    "native-\(days)-partial",
-                    InlineCostCalendarFixture.model(partial, calendar: calendar)))
-            }
-            try models.append(("native-\(days)-covered", InlineCostCalendarFixture.model(covered, calendar: calendar)))
         }
         for (stem, model) in models {
             for dark in [false, true] {

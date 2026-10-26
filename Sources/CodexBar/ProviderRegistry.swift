@@ -21,7 +21,6 @@ struct ProviderRegistry {
     func specs(
         settings: SettingsStore,
         metadata: [UsageProvider: ProviderMetadata],
-        codexFetcher: UsageFetcher,
         claudeFetcher: any ClaudeUsageFetching,
         browserDetection: BrowserDetection,
         environmentBase: [String: String] = ProcessInfo.processInfo.environment) -> [UsageProvider: ProviderSpec]
@@ -52,7 +51,6 @@ struct ProviderRegistry {
                         provider: provider,
                         settings: settings,
                         tokenOverride: nil)
-                    let fetcher = Self.makeFetcher(base: codexFetcher, provider: provider, env: env)
                     let verbose = settings.isVerboseLoggingEnabled
                     return ProviderFetchContext(
                         runtime: .app,
@@ -69,7 +67,6 @@ struct ProviderRegistry {
                         verbose: verbose,
                         env: env,
                         settings: snapshot,
-                        fetcher: fetcher,
                         claudeFetcher: claudeFetcher,
                         browserDetection: browserDetection,
                         selectedTokenAccountID: account?.id,
@@ -125,16 +122,14 @@ struct ProviderRegistry {
     @MainActor
     static func makeSettingsSnapshot(
         settings: SettingsStore,
-        tokenOverride: TokenAccountOverride?,
-        codexActiveSourceOverride: CodexActiveSource? = nil) -> ProviderSettingsSnapshot
+        tokenOverride: TokenAccountOverride?) -> ProviderSettingsSnapshot
     {
         var builder = ProviderSettingsSnapshotBuilder(
             debugMenuEnabled: settings.debugMenuEnabled,
             debugKeepCLISessionsAlive: settings.debugKeepCLISessionsAlive)
         let context = ProviderSettingsSnapshotContext(
             settings: settings,
-            tokenOverride: tokenOverride,
-            codexActiveSourceOverride: codexActiveSourceOverride)
+            tokenOverride: tokenOverride)
         for implementation in ProviderCatalog.all {
             let registration = ProviderDescriptorRegistry.descriptor(for: implementation.id)
                 .settingsSection
@@ -156,47 +151,16 @@ struct ProviderRegistry {
         base: [String: String],
         provider: UsageProvider,
         settings: SettingsStore,
-        tokenOverride: TokenAccountOverride?,
-        codexActiveSourceOverride: CodexActiveSource? = nil) -> [String: String]
+        tokenOverride: TokenAccountOverride?) -> [String: String]
     {
         let account = ProviderTokenAccountSelection.selectedAccount(
             provider: provider,
             settings: settings,
             override: tokenOverride)
-        var env = ProviderEnvironmentResolver.resolve(
+        return ProviderEnvironmentResolver.resolve(
             base: base,
             provider: provider,
             config: settings.providerConfig(for: provider),
             selectedAccount: account)
-        // Codex account routing scopes remote account fetches such as identity, plan,
-        // quotas, and dashboard data. Token-cost/session history is intentionally handled
-        // separately because it is provider-level local telemetry from this Mac's Codex sessions,
-        // not account-owned remote state.
-        // Provider-specific by design: managed Codex account selection scopes the fetcher's CODEX_HOME.
-        if provider == .codex {
-            let codexActiveSource = codexActiveSourceOverride ?? settings.codexResolvedActiveSource
-            if let managedHomePath = settings.managedCodexRemoteHomePath(
-                forActiveSource: codexActiveSource)
-            {
-                env = CodexHomeScope.scopedEnvironment(base: env, codexHome: managedHomePath)
-            } else if let liveHomePath = settings.liveSystemCodexHomePath(
-                forActiveSource: codexActiveSource)
-            {
-                env = CodexHomeScope.scopedEnvironment(base: env, codexHome: liveHomePath)
-            } else if let profileHomePath = settings.profileCodexHomePath(
-                forActiveSource: codexActiveSource)
-            {
-                env = CodexHomeScope.scopedEnvironment(base: env, codexHome: profileHomePath)
-            }
-        }
-        return env
-    }
-
-    static func makeFetcher(base: UsageFetcher, provider: UsageProvider, env: [String: String])
-        -> UsageFetcher
-    {
-        // Provider-specific by design: a Codex account scope needs a fetcher rebuilt with its selected CODEX_HOME.
-        guard provider == .codex else { return base }
-        return UsageFetcher(environment: env)
     }
 }

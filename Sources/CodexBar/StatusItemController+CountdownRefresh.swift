@@ -59,14 +59,6 @@ extension StatusItemController {
         }
         delays += self.menuBarPaceRefreshDelays(providers: providers, now: now)
 
-        if self.menuBarObservesCodexReset(providers: providers) {
-            let projection = self.store.codexConsumerProjection(surface: .menuBar, now: now)
-            if let resetAt = projection.nextMenuBarStateChangeAt {
-                delays.append(max(
-                    Self.menuBarCountdownRefreshEpsilon,
-                    resetAt.timeIntervalSince(now) + Self.menuBarCountdownRefreshEpsilon))
-            }
-        }
         guard let delay = delays.min() else { return }
 
         self.menuBarCountdownRefreshTask = Task { @MainActor [weak self] in
@@ -161,22 +153,6 @@ extension StatusItemController {
             return [self.primaryProviderForUnifiedIcon()].compactMap(\.firstPartyProvider)
         }
         return UsageProvider.allCases.filter(self.isVisible)
-    }
-
-    private func menuBarObservesCodexReset(providers: [UsageProvider]) -> Bool {
-        guard !self.menuBarUsageSource(for: .codex).isFleet else { return false }
-        if providers.contains(.codex) {
-            return true
-        }
-        guard self.stackedMergeIconProvidersIfActive() == nil,
-              self.shouldMergeIcons, self.settings.unifiedIconSource == .highestUsage
-        else {
-            return false
-        }
-        let activeProviders = self.store.enabledFirstPartyProvidersForDisplay()
-        return self.settings.resolvedMergedOverviewProviders(
-            activeProviders: self.overviewProviderIDs(enabledProviders: activeProviders),
-            maxVisibleProviders: SettingsStore.mergedOverviewProviderLimit).contains(.codex)
     }
 
     nonisolated static func menuBarPaceRefreshDelay(window: RateWindow, now: Date) -> TimeInterval? {

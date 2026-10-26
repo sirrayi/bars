@@ -297,7 +297,6 @@ struct UsageMenuCardView: View {
                         TokenUsageSectionContent(
                             provider: liveModel.provider,
                             tokenUsage: tokenUsage,
-                            showsCodexHint: liveModel.inlineUsageDashboard == nil,
                             lineFont: .footnote)
                     }
                 }
@@ -505,7 +504,6 @@ private struct CopyIconButton: View {
 private struct TokenUsageSectionContent: View {
     let provider: UsageProvider
     let tokenUsage: UsageMenuCardView.Model.TokenUsageSection
-    let showsCodexHint: Bool
     let lineFont: Font
     @Environment(\.menuItemHighlighted) private var isHighlighted
 
@@ -537,8 +535,7 @@ private struct TokenUsageSectionContent: View {
                     .font(self.lineFont)
                     .lineLimit(1)
             }
-            if self.provider != .codex || self.showsCodexHint,
-               let hint = self.tokenUsage.hintLine,
+            if let hint = self.tokenUsage.hintLine,
                !hint.isEmpty
             {
                 Text(hint)
@@ -882,7 +879,6 @@ extension UsageMenuCardView.Model {
         let creditsText = PersonalInfoRedactor.redactEmails(in: rawCreditsText, isEnabled: input.hidePersonalInfo)
         let creditsProgressPercent = Self.creditsProgressPercent(credits: input.credits)
         let creditsScaleText = Self.creditsScaleText(credits: input.credits)
-        let codexCreditLimitDetail = Self.codexCreditLimitDetail(credits: input.credits, now: input.now)
         let isClaudeAdminAPI = input.snapshot?.loginMethod(for: input.provider) == "Admin API"
         let extraUsageCost = Self.resolvedProviderCost(input: input)
         let extraUsageSnapshot = extraUsageCost.map { cost in
@@ -964,11 +960,11 @@ extension UsageMenuCardView.Model {
             inlineUsageDashboard: inlineUsageDashboard,
             creditsText: creditsText,
             creditsRemaining: input.credits?.displayRemaining,
-            creditsShowProgress: input.credits?.hasWorkspaceBalance != true,
+            creditsShowProgress: true,
             creditsProgressPercent: creditsProgressPercent,
             creditsScaleText: creditsScaleText,
-            creditsHintText: codexCreditLimitDetail ?? redacted.creditsHintText,
-            creditsHintCopyText: codexCreditLimitDetail ?? redacted.creditsHintCopyText,
+            creditsHintText: redacted.creditsHintText,
+            creditsHintCopyText: redacted.creditsHintCopyText,
             limitResetCredits: Self.limitResetCredits(input: input),
             cloudCredits: Self.cloudCreditsSection(input: input),
             providerCost: providerCost,
@@ -978,16 +974,7 @@ extension UsageMenuCardView.Model {
     }
 
     private static func resolvedProviderCost(input: Input) -> ProviderCostSnapshot? {
-        // Provider-specific by design: Codex extra credits come from member credit snapshots, not USD spend.
-        if input.provider == .codex {
-            if let projected = input.codexProjection?.extraUsageCost {
-                return projected
-            }
-            if let fromCredits = CodexExtraUsageCost.providerCost(from: input.credits) {
-                return fromCredits
-            }
-        }
-        return input.snapshot?.providerCost
+        input.snapshot?.providerCost
     }
 
     private static func email(from input: Input) -> String {
@@ -1033,11 +1020,7 @@ extension UsageMenuCardView.Model {
     }
 
     private static func planDisplay(_ text: String, for provider: UsageProvider) -> String {
-        let cleaned = if provider == .codex {
-            CodexPlanFormatting.displayName(text) ?? UsageFormatter.cleanPlanName(text)
-        } else {
-            UsageFormatter.cleanPlanName(text)
-        }
+        let cleaned = UsageFormatter.cleanPlanName(text)
         return cleaned.isEmpty ? text : cleaned
     }
 
@@ -1113,12 +1096,7 @@ extension UsageMenuCardView.Model {
         var metrics: [Metric] = []
         let percentStyle: PercentStyle = input.usageBarsShowUsed ? .used : .left
         let labels = Self.rateWindowLabels(input: input, snapshot: snapshot)
-        if input.provider == .codex, let codexProjection = input.codexProjection {
-            metrics.append(contentsOf: Self.codexRateMetrics(
-                input: input,
-                projection: codexProjection,
-                percentStyle: percentStyle))
-        } else if let primary = snapshot.primary?.measured {
+        if let primary = snapshot.primary?.measured {
             metrics.append(Self.primaryMetric(
                 input: input,
                 primary: primary,
@@ -1129,7 +1107,7 @@ extension UsageMenuCardView.Model {
                 percentStyle: percentStyle,
                 title: labels.primary))
         }
-        if input.provider != .codex, let weekly = snapshot.secondary {
+        if let weekly = snapshot.secondary {
             metrics.append(Self.secondaryMetric(
                 input: input,
                 weekly: weekly,
@@ -1161,26 +1139,6 @@ extension UsageMenuCardView.Model {
             input: input,
             percentStyle: percentStyle))
 
-        if let codexProjection = input.codexProjection,
-           codexProjection.supplementalMetrics.contains(.codeReview),
-           let remaining = codexProjection.remainingPercent(for: .codeReview)
-        {
-            let percent = input.usageBarsShowUsed ? (100 - remaining) : remaining
-            let resetText = codexProjection.limitWindow(for: .codeReview).flatMap {
-                Self.resetText(for: $0, style: input.resetTimeDisplayStyle, now: input.now)
-            }
-            metrics.append(Metric(
-                id: "code-review",
-                title: L("Code review"),
-                percent: Self.clamped(percent),
-                percentStyle: percentStyle,
-                resetText: resetText,
-                detailText: nil,
-                detailLeftText: nil,
-                detailRightText: nil,
-                pacePercent: nil,
-                paceOnTop: true))
-        }
         return Self.blockingQuotaMetrics(metrics, input: input, snapshot: snapshot)
     }
 

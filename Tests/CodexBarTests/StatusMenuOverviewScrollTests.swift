@@ -68,9 +68,7 @@ struct StatusMenuOverviewScrollTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        let fetcher = UsageFetcher(environment: [:])
         let store = UsageStore(
-            fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -459,7 +457,7 @@ struct StatusMenuOverviewScrollTests {
         let switcherItem = NSMenuItem()
         switcherItem.isEnabled = false
         switcherItem.view = ProviderSwitcherView(
-            providers: [.codex, .claude],
+            providers: [.opencode, .claude],
             selected: .overview,
             includesOverview: true,
             width: 320,

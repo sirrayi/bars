@@ -84,13 +84,6 @@ struct SettingsPersistenceContractTests {
         settings.spendDashboardHiddenSourceIDs = ["b", "a"]
         #expect(settings.costUsageSettingsRevision == revision + 2)
 
-        settings.hideNativeCodexCostWhenOpenCodexPresent = true
-        #expect(settings.costUsageSettingsRevision == revision + 3)
-        defaults.removeObject(forKey: "hideNativeCodexCostWhenOpenCodexPresent")
-        settings.hideNativeCodexCostWhenOpenCodexPresent = true
-        #expect(settings.costUsageSettingsRevision == revision + 3)
-        #expect(defaults.bool(forKey: "hideNativeCodexCostWhenOpenCodexPresent"))
-
         let backgroundRevision = settings.backgroundWorkSettingsRevision
         settings.statusChecksEnabled = settings.statusChecksEnabled
         #expect(settings.backgroundWorkSettingsRevision == backgroundRevision + 1)

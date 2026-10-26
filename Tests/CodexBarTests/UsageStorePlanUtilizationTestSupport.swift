@@ -61,10 +61,4 @@ extension UsageStore {
     nonisolated static func _legacyClaudePlanUtilizationEmailAccountKeyForTesting(snapshot: UsageSnapshot) -> String? {
         self.legacyClaudePlanUtilizationEmailAccountKey(snapshot: snapshot)
     }
-
-    nonisolated static func _codexLegacyPlanUtilizationEmailHashKeyForTesting(
-        normalizedEmail: String) -> String
-    {
-        self.codexLegacyPlanUtilizationEmailHashKey(for: normalizedEmail)
-    }
 }

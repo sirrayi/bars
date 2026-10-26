@@ -52,11 +52,8 @@ extension SettingsStore {
         _ = self.menuBarLayoutGap
         _ = self.menuBarLayoutVerticalAdjustment
         _ = self.costUsageEnabled
-        _ = self.codexLocalSessionCostLedgerEnabled
         _ = self.costUsageHistoryDays
         _ = self.costUsageBucketTimeZoneIdentifier
-        _ = self.openCodexUsageLogsEnabled
-        _ = self.hideNativeCodexCostWhenOpenCodexPresent
         _ = self.spendDashboardHiddenSourceIDs
         _ = self.costComparisonPeriodsEnabled
         _ = self.costSummaryDisplayStyle
@@ -72,9 +69,6 @@ extension SettingsStore {
         _ = self.showOptionalCreditsAndExtraUsage
         _ = self.claudeDailyRoutinesUsageVisible
         _ = self.claudeModelScopedWeeklyUsageVisible
-        _ = self.codexSparkUsageVisible
-        _ = self.openAIWebAccessEnabled
-        _ = self.openAIWebBatterySaverEnabled
         _ = self.backgroundWorkLowPowerModePreference
         _ = self.providerStorageFootprintsEnabled
         _ = self.stayAwakeEnabled
@@ -86,10 +80,7 @@ extension SettingsStore {
         _ = self.iCloudSyncEnabled
         _ = self.iCloudSyncSnapshotsEnabled
         _ = self.iCloudSyncShowFleetAccounts
-        _ = self.codexUsageDataSource
-        _ = self.codexActiveSource
         _ = self.claudeUsageDataSource
-        _ = self.codexCookieSource
         _ = self.claudeCookieSource
         _ = self.opencodeCookieSource
         _ = self.opencodegoCookieSource
@@ -101,7 +92,6 @@ extension SettingsStore {
         _ = self.mergeIconStackedTopProviderRaw
         _ = self.mergeIconStackedBottomProviderRaw
         _ = self.mergedOverviewSelectedProviders
-        _ = self.codexCookieHeader
         _ = self.claudeCookieHeader
         _ = self.opencodeCookieHeader
         _ = self.opencodeWorkspaceID

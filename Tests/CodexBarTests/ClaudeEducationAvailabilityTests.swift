@@ -22,7 +22,6 @@ struct ClaudeEducationAvailabilityTests {
             verbose: false,
             env: [:],
             settings: nil,
-            fetcher: UsageFetcher(environment: [:]),
             claudeFetcher: ClaudeUsageFetcher(browserDetection: browserDetection),
             browserDetection: browserDetection)
 
@@ -58,7 +57,6 @@ struct ClaudeEducationAvailabilityTests {
                     }
 
                     let store = UsageStore(
-                        fetcher: UsageFetcher(environment: [:]),
                         browserDetection: BrowserDetection(cacheTTL: 0),
                         settings: settings,
                         startupBehavior: .testing,

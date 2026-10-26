@@ -57,7 +57,7 @@ struct MenuBarLayoutRendererTests {
         #expect(unavailable.accessibilityLabel == L("%@ unavailable", L("Session")))
     }
 
-    @Test(arguments: [UsageProvider.codex, .claude], [false, true])
+    @Test(arguments: [UsageProvider.opencode, .claude], [false, true])
     func `provider weekly lane token renders without a window prefix`(provider: UsageProvider, showUsed: Bool) {
         let token = MenuBarLayoutToken.lanePercent(lane: .secondary)
         #expect(MenuBarLayoutPaletteTokens.usage(provider: provider, snapshot: nil).contains(token))
@@ -77,7 +77,7 @@ struct MenuBarLayoutRendererTests {
         let icon = NSImage(size: NSSize(width: 16, height: 16))
         let data = self.data()
         let expected: [(MenuBarLayoutToken, String)] = [
-            (.providerName, "Codex"),
+            (.providerName, "OpenCode"),
             (.accountLabel, "user@example.com"),
             (.percent(window: .session), "5h 25%"),
             (.percent(window: .weekly), "W 60%"),
@@ -378,11 +378,11 @@ struct MenuBarLayoutRendererTests {
     func `pace token stays a placeholder while siblings keep rendering`() {
         let renderer = MenuBarLayoutRenderer()
         let data = MenuBarLayoutRenderData(
-            provider: .codex,
+            provider: .opencode,
             iconKey: "codex",
-            providerName: "Codex",
+            providerName: "OpenCode",
             accountLabel: nil,
-            laneLabels: MenuBarLayoutLaneLabels(provider: .codex, snapshot: nil),
+            laneLabels: MenuBarLayoutLaneLabels(provider: .opencode, snapshot: nil),
             primary: nil,
             secondary: nil,
             tertiary: nil,
@@ -471,7 +471,7 @@ struct MenuBarLayoutRendererTests {
         }
         #expect(output.attributedTitle.string == "\(explicitSpace ? " " : "\u{2009}")5h 25%\nW 60%")
         #expect(!output.attributedTitle.string.contains("\u{FFFC}"))
-        let expectedAccessibility = "\(L("%@ icon", "Codex")), \(L("Session")) 25%, "
+        let expectedAccessibility = "\(L("%@ icon", "OpenCode")), \(L("Session")) 25%, "
             + "\(L("menu_bar_layout_line", 2)), \(L("Weekly")) 60%"
         #expect(output.accessibilityLabel == expectedAccessibility)
         let bounds = output.attributedTitle.boundingRect(
@@ -567,7 +567,7 @@ struct MenuBarLayoutRendererTests {
         let topOptions = self.options(size: size, forceStackedStyle: true)
         let top = renderer.render(
             layout: MenuBarLayout(lines: [[.percent(window: .automatic)]]),
-            data: self.data(automaticUsedPercent: 69, provider: .codex),
+            data: self.data(automaticUsedPercent: 69, provider: .opencode),
             icon: nil,
             options: topOptions)
         let bottom = renderer.render(
@@ -579,7 +579,7 @@ struct MenuBarLayoutRendererTests {
         let composed = MenuBarLayoutRenderer.composeStackedProviderRows(
             top: top,
             bottom: bottom,
-            topProviderName: "Codex",
+            topProviderName: "OpenCode",
             bottomProviderName: "Claude")
         let bounds = composed.attributedTitle.boundingRect(
             with: NSSize(width: 200, height: CGFloat.greatestFiniteMagnitude),
@@ -589,7 +589,7 @@ struct MenuBarLayoutRendererTests {
         #expect(composed.accessibilityLabel.contains(L("menu_bar_layout_line", 2)))
         // Neither row's layout includes the icon or provider-name token, so the composed label is the
         // only place a provider is ever named — VoiceOver would otherwise hear two anonymous percentages.
-        #expect(composed.accessibilityLabel.contains("Codex"))
+        #expect(composed.accessibilityLabel.contains("OpenCode"))
         #expect(composed.accessibilityLabel.contains("Claude"))
         #expect(composed.leadingIcon == nil)
         #expect(composed.statusImage?.isTemplate == true)
@@ -601,15 +601,15 @@ struct MenuBarLayoutRendererTests {
         let renderer = MenuBarLayoutRenderer()
         let layout = MenuBarLayout(lines: [[.percent(window: .automatic)]])
         let options = self.options(appearanceName: appearance, forceStackedStyle: true)
-        let top = renderer.render(layout: layout, data: self.data(provider: .codex), icon: nil, options: options)
+        let top = renderer.render(layout: layout, data: self.data(provider: .opencode), icon: nil, options: options)
         let before = renderer.render(
             layout: layout, data: self.data(automaticUsedPercent: 10, provider: .claude), icon: nil, options: options)
         let after = renderer.render(
             layout: layout, data: self.data(automaticUsedPercent: 90, provider: .claude), icon: nil, options: options)
         let beforeTitle = MenuBarLayoutRenderer.composeStackedProviderRows(
-            top: top, bottom: before, topProviderName: "Codex", bottomProviderName: "Claude")
+            top: top, bottom: before, topProviderName: "OpenCode", bottomProviderName: "Claude")
         let afterTitle = MenuBarLayoutRenderer.composeStackedProviderRows(
-            top: top, bottom: after, topProviderName: "Codex", bottomProviderName: "Claude")
+            top: top, bottom: after, topProviderName: "OpenCode", bottomProviderName: "Claude")
         #expect(beforeTitle.attributedTitle.string == "50%\n10%")
         #expect(afterTitle.attributedTitle.string == "50%\n90%")
         #expect(beforeTitle.accessibilityLabel != afterTitle.accessibilityLabel)
@@ -627,7 +627,7 @@ struct MenuBarLayoutRendererTests {
 
         let top = renderer.render(
             layout: MenuBarLayout(lines: [[.percent(window: .automatic)]]),
-            data: self.data(automaticUsedPercent: 69, provider: .codex),
+            data: self.data(automaticUsedPercent: 69, provider: .opencode),
             icon: nil,
             options: options)
         let bottom = renderer.render(
@@ -640,14 +640,14 @@ struct MenuBarLayoutRendererTests {
         let composed = MenuBarLayoutRenderer.composeStackedProviderRows(
             top: top,
             bottom: bottom,
-            topProviderName: "Codex",
+            topProviderName: "OpenCode",
             bottomProviderName: "Claude")
 
         // No stray blank row or vertical offset — the emptied row is dropped, not stacked as a blank line.
         #expect(composed.attributedTitle.string == "69%")
         #expect(!composed.attributedTitle.string.contains("\n"))
         // The surviving row still gets its provider named, even though only one row made it through.
-        #expect(composed.accessibilityLabel == "Codex, \(top.accessibilityLabel)")
+        #expect(composed.accessibilityLabel == "OpenCode, \(top.accessibilityLabel)")
     }
 
     @Test
@@ -887,7 +887,7 @@ struct MenuBarLayoutRendererTests {
                     icon: icon,
                     options: options)
                 let composed = MenuBarLayoutRenderer.composeStackedProviderRows(
-                    top: row, bottom: row, topProviderName: "Codex", bottomProviderName: "Claude")
+                    top: row, bottom: row, topProviderName: "OpenCode", bottomProviderName: "Claude")
                 let composedBounds = composed.attributedTitle.boundingRect(
                     with: NSSize(width: 200, height: CGFloat.greatestFiniteMagnitude),
                     options: [.usesLineFragmentOrigin, .usesFontLeading])
@@ -1047,7 +1047,7 @@ struct MenuBarLayoutRendererTests {
     func `progress bar renders a graphical attachment with a window label`(window: PercentWindow) throws {
         let renderer = MenuBarLayoutRenderer()
         let token = MenuBarLayoutToken.progressBar(window: window)
-        #expect(MenuBarLayoutPaletteTokens.usage(provider: .codex, snapshot: nil).contains(token))
+        #expect(MenuBarLayoutPaletteTokens.usage(provider: .opencode, snapshot: nil).contains(token))
         let output = renderer.render(
             layout: MenuBarLayout(lines: [[token]]),
             data: self.data(),
@@ -1130,11 +1130,11 @@ struct MenuBarLayoutRendererTests {
             resetsAt: nil,
             resetDescription: "Friday at 10:00"))
         let data = MenuBarLayoutRenderData(
-            provider: .codex,
+            provider: .opencode,
             iconKey: "codex",
-            providerName: "Codex",
+            providerName: "OpenCode",
             accountLabel: nil,
-            laneLabels: MenuBarLayoutLaneLabels(provider: .codex, snapshot: nil),
+            laneLabels: MenuBarLayoutLaneLabels(provider: .opencode, snapshot: nil),
             primary: nil,
             secondary: nil,
             tertiary: nil,
@@ -1203,7 +1203,7 @@ struct MenuBarLayoutRendererTests {
 
         #expect(output.leadingIcon != nil)
         #expect(output.attributedTitle.attribute(.attachment, at: 0, effectiveRange: nil) == nil)
-        #expect(output.accessibilityLabel.contains(L("%@ icon", "Codex")))
+        #expect(output.accessibilityLabel.contains(L("%@ icon", "OpenCode")))
     }
 
     @Test
@@ -2172,11 +2172,11 @@ struct MenuBarLayoutRendererTests {
 
     private static var missingData: MenuBarLayoutRenderData {
         MenuBarLayoutRenderData(
-            provider: .codex,
+            provider: .opencode,
             iconKey: "missing",
             providerName: nil,
             accountLabel: nil,
-            laneLabels: MenuBarLayoutLaneLabels(provider: .codex, snapshot: nil),
+            laneLabels: MenuBarLayoutLaneLabels(provider: .opencode, snapshot: nil),
             primary: nil,
             secondary: nil,
             tertiary: nil,
@@ -2198,7 +2198,7 @@ struct MenuBarLayoutRendererTests {
 
     func data(
         automaticUsedPercent: Double = 50,
-        provider: UsageProvider = .codex,
+        provider: UsageProvider = .opencode,
         laneLabels: MenuBarLayoutLaneLabels? = nil,
         automaticResetAt: Date? = nil,
         automaticText: String? = nil,
@@ -2549,7 +2549,7 @@ extension MenuBarLayoutRendererTests {
         let bottom = renderer.render(
             layout: layout, data: self.data(provider: .claude), icon: icon, options: options)
         let output = MenuBarLayoutRenderer.composeStackedProviderRows(
-            top: top, bottom: bottom, topProviderName: "Codex", bottomProviderName: "Claude")
+            top: top, bottom: bottom, topProviderName: "OpenCode", bottomProviderName: "Claude")
         let image = try #require(output.statusImage)
         #expect(image.isTemplate)
         #expect(image.size.height == 22)
@@ -2579,7 +2579,7 @@ extension MenuBarLayoutRendererTests {
         let top = renderer.render(layout: layout, data: self.data(), icon: icon, options: options)
         func compose(_ bottom: MenuBarLayoutRenderedTitle) -> MenuBarLayoutRenderedTitle {
             MenuBarLayoutRenderer.composeStackedProviderRows(
-                top: top, bottom: bottom, topProviderName: "Codex", bottomProviderName: "Claude")
+                top: top, bottom: bottom, topProviderName: "OpenCode", bottomProviderName: "Claude")
         }
         let colored = renderer.render(
             layout: layout,

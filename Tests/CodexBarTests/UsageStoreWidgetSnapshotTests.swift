@@ -6,51 +6,6 @@ import Testing
 @MainActor
 struct UsageStoreWidgetSnapshotTests {
     @Test
-    func `widget snapshot preserves raw Codex windows for timeline projection`() async throws {
-        let suite = "UsageStoreWidgetSnapshotTests-codex-weekly-cap"
-        let defaults = try #require(UserDefaults(suiteName: suite))
-        defaults.removePersistentDomain(forName: suite)
-
-        let settings = SettingsStore(
-            userDefaults: defaults,
-            configStore: testConfigStore(suiteName: suite))
-        settings.statusChecksEnabled = false
-
-        let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
-            browserDetection: BrowserDetection(cacheTTL: 0),
-            settings: settings)
-        let now = Date()
-        store._setSnapshotForTesting(
-            UsageSnapshot(
-                primary: RateWindow(
-                    usedPercent: 1,
-                    windowMinutes: 300,
-                    resetsAt: now.addingTimeInterval(1800),
-                    resetDescription: nil),
-                secondary: RateWindow(
-                    usedPercent: 100,
-                    windowMinutes: 10080,
-                    resetsAt: now.addingTimeInterval(3600),
-                    resetDescription: nil),
-                updatedAt: now.addingTimeInterval(-7200)),
-            provider: .codex)
-
-        var widgetSnapshots: [WidgetSnapshot] = []
-        store._test_widgetSnapshotSaveOverride = { widgetSnapshots.append($0) }
-        defer { store._test_widgetSnapshotSaveOverride = nil }
-
-        store.persistWidgetSnapshot(reason: "codex-weekly-cap-test")
-        await store.widgetSnapshotPersistTask?.value
-
-        let entry = try #require(widgetSnapshots.last?.entries.first { $0.provider == .codex })
-        #expect(entry.usageRows?.map(\.id) == ["session", "weekly"])
-        #expect(entry.usageRows?.compactMap(\.percentLeft) == [99, 0])
-        #expect(entry.usageRows?.first?.window?.usedPercent == 1)
-        #expect(entry.usageRows?.last?.window?.resetsAt == now.addingTimeInterval(3600))
-    }
-
-    @Test
     func `widget snapshot includes known Claude model scoped weekly quotas only when enabled`() async throws {
         let suite = "UsageStoreWidgetSnapshotTests-claude-model-scoped-weekly-rows"
         let defaults = try #require(UserDefaults(suiteName: suite))
@@ -62,7 +17,6 @@ struct UsageStoreWidgetSnapshotTests {
         settings.statusChecksEnabled = false
 
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         let snapshot = UsageSnapshot(
@@ -129,7 +83,6 @@ struct UsageStoreWidgetSnapshotTests {
         settings.claudeModelScopedWeeklyUsageVisible = true
 
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         let updatedAt = Date(timeIntervalSince1970: 1_800_000_000)
@@ -214,7 +167,6 @@ struct UsageStoreWidgetSnapshotTests {
         settings.statusChecksEnabled = false
 
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         let updatedAt = Date(timeIntervalSince1970: 1_800_000_000)
@@ -233,11 +185,11 @@ struct UsageStoreWidgetSnapshotTests {
                 secondary: nil,
                 updatedAt: updatedAt,
                 identity: ProviderIdentitySnapshot(
-                    providerID: .codex,
+                    providerID: .opencode,
                     accountEmail: nil,
                     accountOrganization: nil,
                     loginMethod: nil)),
-            provider: .codex)
+            provider: .opencode)
 
         var widgetSnapshots: [WidgetSnapshot] = []
         store._test_widgetSnapshotSaveOverride = { widgetSnapshots.append($0) }
@@ -267,7 +219,6 @@ struct UsageStoreWidgetSnapshotTests {
         settings.statusChecksEnabled = false
 
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         let quotaUpdatedAt = Date(timeIntervalSince1970: 1_800_000_000)
@@ -414,7 +365,6 @@ struct UsageStoreWidgetSnapshotTests {
         settings.statusChecksEnabled = false
 
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         let updatedAt = Date(timeIntervalSince1970: 1_800_000_000)
@@ -473,7 +423,6 @@ struct UsageStoreWidgetSnapshotVisibilityTests {
         settings.showOptionalCreditsAndExtraUsage = showsExtraUsage
 
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         let updatedAt = Date(timeIntervalSince1970: 1_800_000_000)
@@ -518,7 +467,6 @@ struct UsageStoreWidgetSnapshotVisibilityTests {
         settings.statusChecksEnabled = false
 
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         let entryUpdatedAt = Date(timeIntervalSince1970: 1_800_000_000)

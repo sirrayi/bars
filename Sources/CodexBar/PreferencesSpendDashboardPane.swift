@@ -97,29 +97,11 @@ func spendDashboardHourlyChartAccessibilityValue(hourCount: Int, serviceCount: I
     }
 }
 
-func codexCostCatchUpProgressText(_ activity: CodexCostCatchUpActivity) -> String {
-    if activity.totalBytes > 0 {
-        let processed = ByteCountFormatter.string(
-            fromByteCount: activity.processedBytes,
-            countStyle: .file)
-        let total = ByteCountFormatter.string(
-            fromByteCount: activity.totalBytes,
-            countStyle: .file)
-        return "\(processed) / \(total)"
-    }
-    if activity.totalFiles > 0 {
-        return "\(codexBarLocalizedInteger(activity.completedFiles)) / "
-            + codexBarLocalizedInteger(activity.totalFiles)
-    }
-    return L("Loading…")
-}
-
 @MainActor
 struct SpendDashboardPane: View {
     @Bindable var settings: SettingsStore
     @Bindable var store: UsageStore
     @State private var isVisible = false
-    @State private var userSelectedBackground = false
     @State private var isDataControlsExpanded = true
     @State private var detailSelections: [String: SpendDashboardDetailSection] = [:]
     @State private var sessionNavigation = SessionUsageNavigation.shared
@@ -148,7 +130,6 @@ struct SpendDashboardPane: View {
                     self.header
                     SpendTimeZoneControls(settings: self.settings)
                     self.refreshStatus
-                    self.codexCostCatchUpPanel
                     self.content
                     self.dataControls
                 }
@@ -160,31 +141,12 @@ struct SpendDashboardPane: View {
             self.isVisible = true
             self.controller.update(configuration: self.configuration)
             self.controller.refreshIfStale()
-            if !self.controller.isRefreshing {
-                self.synchronizeCodexCostCatchUp()
-            }
         }
         .onChange(of: self.configuration) { _, configuration in
             self.controller.update(configuration: configuration)
         }
-        .onChange(of: self.configuration.codexAccountIdentities) { _, _ in
-            if self.isVisible, !self.controller.isRefreshing {
-                self.synchronizeCodexCostCatchUp()
-            }
-        }
-        .onChange(of: self.configuration.costUsageEnabled) { _, _ in
-            if self.isVisible, !self.controller.isRefreshing {
-                self.synchronizeCodexCostCatchUp()
-            }
-        }
-        .onChange(of: self.controller.isRefreshing) { _, isRefreshing in
-            if self.isVisible, !isRefreshing {
-                self.synchronizeCodexCostCatchUp()
-            }
-        }
         .onDisappear {
             self.isVisible = false
-            self.synchronizeCodexCostCatchUp()
         }
         .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in
             self.controller.refreshDateWindow()
@@ -206,11 +168,6 @@ struct SpendDashboardPane: View {
         self.store.sharedSpendDashboardController()
     }
 
-    private var detailCurrency: String {
-        let preferred = self.controller.configuration?.preferredCurrencyCode ?? "auto"
-        return preferred == "auto" ? "USD" : preferred
-    }
-
     private func detailSelection(for currency: String) -> Binding<SpendDashboardDetailSection> {
         Binding(get: { self.detailSelections[currency] ?? .providers }, set: { self.detailSelections[currency] = $0 })
     }
@@ -230,7 +187,7 @@ struct SpendDashboardPane: View {
                 .layoutPriority(1)
                 Spacer(minLength: 0)
                 Button {
-                    self.store.refreshSpendDashboard(accounts: self.codexSpendScanRequests)
+                    self.controller.refresh()
                 } label: {
                     if self.controller.isRefreshing {
                         ProgressView().controlSize(.small)
@@ -273,167 +230,7 @@ struct SpendDashboardPane: View {
     }
 
     @ViewBuilder
-    private var codexCostCatchUpPanel: some View {
-        if let activity = self.store.spendDashboardCodexCostCatchUpActivity,
-           activity.phase != .complete
-        {
-            SpendDashboardPanel {
-                VStack(alignment: .leading, spacing: 10) {
-                    HStack(spacing: 8) {
-                        Label(
-                            self.codexCostCatchUpTitle(activity),
-                            systemImage: activity.phase == .paused ? "pause.circle" : "externaldrive")
-                            .font(.headline)
-                        Spacer()
-                        Text(codexCostCatchUpProgressText(activity))
-                            .font(.caption.monospacedDigit())
-                            .foregroundStyle(.secondary)
-                    }
-
-                    if let progress = activity.fractionCompleted {
-                        ProgressView(value: progress)
-                    } else if activity.phase == .indexing {
-                        ProgressView()
-                            .controlSize(.small)
-                    }
-
-                    if let staleSnapshotUpdatedAt = activity.staleSnapshotUpdatedAt {
-                        HStack(spacing: 6) {
-                            Label(L("stale data"), systemImage: "clock.badge.exclamationmark")
-                            Text(L(
-                                "Updated relative %@",
-                                staleSnapshotUpdatedAt.relativeDescription()))
-                        }
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(.orange)
-                    }
-
-                    Text(self.codexCostCatchUpDetail(activity))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-
-                    HStack {
-                        if activity.pauseReason == .user
-                            || activity.pauseReason == .noProgress
-                            || self.codexCostCatchUpHasError(activity)
-                        {
-                            Button(L("Refresh")) {
-                                self.startCodexCostCatchUp(mode: .automatic)
-                            }
-                        } else if activity.mode == .automatic {
-                            Button(L("Finish now")) {
-                                self.startCodexCostCatchUp(mode: .accelerated)
-                            }
-                        } else {
-                            Button(L("Continue in background")) {
-                                self.userSelectedBackground = true
-                                self.startCodexCostCatchUp(mode: .automatic)
-                            }
-                        }
-
-                        if activity.pauseReason != .user,
-                           activity.pauseReason != .noProgress,
-                           !self.codexCostCatchUpHasError(activity)
-                        {
-                            Button(L("Cancel")) {
-                                self.store.stopSpendDashboardCodexCostCatchUp()
-                            }
-                        }
-                    }
-                    .controlSize(.small)
-                }
-            }
-        }
-    }
-
-    private func codexCostCatchUpHasError(_ activity: CodexCostCatchUpActivity) -> Bool {
-        if case .error = activity.pauseReason {
-            return true
-        }
-        return false
-    }
-
-    private func synchronizeCodexCostCatchUp() {
-        guard self.isVisible else {
-            self.userSelectedBackground = false
-            self.store.synchronizeSpendDashboardCodexCostCatchUp(
-                accounts: self.codexSpendScanRequests,
-                preferredMode: .automatic)
-            return
-        }
-        let preferredMode: CodexCostCatchUpMode? = self.userSelectedBackground ? nil : .accelerated
-        self.store.synchronizeSpendDashboardCodexCostCatchUp(
-            accounts: self.codexSpendScanRequests,
-            preferredMode: preferredMode)
-    }
-
-    private func startCodexCostCatchUp(mode: CodexCostCatchUpMode) {
-        if mode == .accelerated {
-            self.userSelectedBackground = false
-        }
-        self.store.startSpendDashboardCodexCostCatchUpIfNeeded(
-            accounts: self.codexSpendScanRequests,
-            mode: mode)
-    }
-
-    private var codexSpendScanRequests: [CodexSpendScanRequest] {
-        guard self.configuration.costUsageEnabled,
-              self.configuration.providerIDs.contains(UsageProvider.codex.rawValue)
-        else { return [] }
-        return SpendDashboardSource.codexRequests(settings: self.settings, store: self.store)
-    }
-
-    private func codexCostCatchUpTitle(_ activity: CodexCostCatchUpActivity) -> String {
-        let prefix = L("Local estimated history")
-        switch activity.phase {
-        case .indexing:
-            return "\(prefix) · \(L("Refreshing"))"
-        case .paused:
-            return "\(prefix) · \(L("Inactive"))"
-        case .complete:
-            return "\(prefix) · \(L("Done"))"
-        }
-    }
-
-    private func codexCostCatchUpDetail(_ activity: CodexCostCatchUpActivity) -> String {
-        switch activity.pauseReason {
-        case .lowPower:
-            L("Battery Saver")
-        case .thermal, .user:
-            L("Inactive")
-        case .noProgress:
-            L("Error")
-        case let .error(message):
-            L("cost_status_error", L("Cost"), message)
-        case nil:
-            L("Estimated from local Codex logs for the selected account.")
-        }
-    }
-
-    @ViewBuilder
     private var content: some View {
-        if self.settings.costUsageEnabled,
-           let configuration = self.controller.configuration,
-           let currency = spendDashboardCodexDetailPlaceholderCurrency(
-               configuration: configuration,
-               currencyCodes: self.controller.model.groups.map(\.currencyCode))
-        {
-            SpendDashboardDetailPanel(
-                group: .init(
-                    currencyCode: currency,
-                    providers: [],
-                    models: [],
-                    dailyPoints: [],
-                    totalTokens: nil,
-                    totalCost: nil,
-                    coveredDayCount: 0,
-                    chartDomain: Date.distantPast...Date.distantPast,
-                    modelHistoryCompleteness: .incomplete,
-                    timeZone: self.controller.configuration?.bucketCalendar.timeZone ?? .current),
-                hidePersonalInfo: self.settings.hidePersonalInfo,
-                supportsCodexDetails: true,
-                selection: self.detailSelection(for: currency))
-        }
         if !self.settings.costUsageEnabled {
             SpendDashboardPanel {
                 ContentUnavailableView {
@@ -460,8 +257,6 @@ struct SpendDashboardPane: View {
                     requestedDays: self.controller.model.requestedDays,
                     hidePersonalInfo: self.settings.hidePersonalInfo,
                     detailSelection: self.detailSelection(for: group.id),
-                    supportsCodexDetails: self.controller.configuration?.supportsCodexDetails == true
-                        && (group.currencyCode == "USD" || group.currencyCode == self.detailCurrency),
                     onSelectDay: { self.controller.selectDay($0) },
                     onClearSelectedDay: {
                         self.controller.selectDay(nil)
@@ -510,16 +305,6 @@ struct SpendDashboardPane: View {
                 .toggleStyle(.switch)
                 .controlSize(.small)
             if self.settings.costUsageEnabled {
-                Toggle(L("Include OpenCodex usage logs"), isOn: self.$settings.openCodexUsageLogsEnabled)
-                    .toggleStyle(.switch)
-                    .controlSize(.small)
-                if self.settings.openCodexUsageLogsEnabled {
-                    Toggle(
-                        L("Hide native Codex when OpenCodex is present"),
-                        isOn: self.$settings.hideNativeCodexCostWhenOpenCodexPresent)
-                        .toggleStyle(.switch)
-                        .controlSize(.small)
-                }
                 if !self.controller.model.groups.isEmpty {
                     SpendDashboardSourceFilter(settings: self.settings, model: self.controller.model)
                 }
@@ -611,29 +396,19 @@ enum SpendDashboardDetailSection: Hashable, Identifiable {
     }
 }
 
-func spendDashboardCodexDetailPlaceholderCurrency(
-    configuration: SpendDashboardConfiguration,
-    currencyCodes: [String]) -> String?
-{
-    guard configuration.supportsCodexDetails else { return nil }
-    let currency = configuration.preferredCurrencyCode == "auto" ? "USD" : configuration.preferredCurrencyCode
-    return currencyCodes.contains("USD") || currencyCodes.contains(currency) ? nil : currency
-}
-
 func spendDashboardAvailableDetailSections(
     hasProjects: Bool,
     hasSessions: Bool,
-    hasChats: Bool = false,
-    supportsCodexDetails: Bool = false) -> [SpendDashboardDetailSection]
+    hasChats: Bool = false) -> [SpendDashboardDetailSection]
 {
     var sections: [SpendDashboardDetailSection] = [.providers]
-    if supportsCodexDetails || hasProjects {
+    if hasProjects {
         sections.append(.projects)
     }
-    if supportsCodexDetails || hasChats {
+    if hasChats {
         sections.append(.chats)
     }
-    if supportsCodexDetails || hasSessions {
+    if hasSessions {
         sections.append(.sessions)
     }
     return sections
@@ -689,7 +464,6 @@ struct SpendDashboardCurrencySection: View {
     let onClearSelectedDay: (() -> Void)?
     let onSelectDay: ((Date) -> Void)?
     let detailSelection: Binding<SpendDashboardDetailSection>?
-    let supportsCodexDetails: Bool
     @State private var selectedDetailSection: SpendDashboardDetailSection
     @State private var selectedTrendSection: SpendDashboardTrendSection
 
@@ -700,13 +474,11 @@ struct SpendDashboardCurrencySection: View {
         initialDetailSection: SpendDashboardDetailSection = .providers,
         initialTrendSection: SpendDashboardTrendSection? = nil,
         detailSelection: Binding<SpendDashboardDetailSection>? = nil,
-        supportsCodexDetails: Bool = false,
         onSelectDay: ((Date) -> Void)? = nil,
         onClearSelectedDay: (() -> Void)? = nil)
     {
         self.group = group
         self.detailSelection = detailSelection
-        self.supportsCodexDetails = supportsCodexDetails
         self.requestedDays = requestedDays
         self.hidePersonalInfo = hidePersonalInfo
         self.onClearSelectedDay = onClearSelectedDay
@@ -734,7 +506,6 @@ struct SpendDashboardCurrencySection: View {
             SpendDashboardDetailPanel(
                 group: self.group,
                 hidePersonalInfo: self.hidePersonalInfo,
-                supportsCodexDetails: self.supportsCodexDetails,
                 selection: self.detailSelection ?? self.$selectedDetailSection)
             SpendDashboardTrendPanel(
                 group: self.group,
@@ -751,7 +522,6 @@ struct SpendDashboardCurrencySection: View {
 private struct SpendDashboardDetailPanel: View {
     let group: SpendDashboardModel.CurrencyGroup
     let hidePersonalInfo: Bool
-    var supportsCodexDetails = false
     @Binding var selection: SpendDashboardDetailSection
 
     var body: some View {
@@ -795,8 +565,7 @@ private struct SpendDashboardDetailPanel: View {
         spendDashboardAvailableDetailSections(
             hasProjects: self.group.projects.contains { !$0.isProjectless },
             hasSessions: !self.group.sessions.isEmpty,
-            hasChats: self.group.projects.contains(where: \.isProjectless),
-            supportsCodexDetails: self.supportsCodexDetails)
+            hasChats: self.group.projects.contains(where: \.isProjectless))
     }
 
     private var activeSection: SpendDashboardDetailSection {
@@ -1241,7 +1010,6 @@ struct SpendDashboardExportPayload: Encodable, Sendable {
     struct Provider: Encodable, Sendable {
         let id: String
         let displayName: String
-        let sourceKind: String
         let totalTokens: Int?
         let totalCost: Double?
         let incompleteRequestCount: Int?
@@ -1277,7 +1045,6 @@ struct SpendDashboardExportPayload: Encodable, Sendable {
                         Provider(
                             id: $0.id,
                             displayName: $0.displayName,
-                            sourceKind: $0.sourceKind.rawValue,
                             totalTokens: $0.totalTokens,
                             totalCost: $0.totalCost,
                             incompleteRequestCount: $0.incompleteRequestCount > 0 ? $0.incompleteRequestCount : nil,
@@ -1425,18 +1192,12 @@ func spendDashboardGroupTokenText(_ group: SpendDashboardModel.CurrencyGroup) ->
     return group.hasPartialTokens ? "~\(formatted)" : formatted
 }
 
-private func spendDashboardIncludesLocalHistory(_ group: SpendDashboardModel.CurrencyGroup) -> Bool {
-    group.providers.contains { $0.sourceKind == .localHistory }
-}
-
-func spendDashboardProviderCountTitle(_ group: SpendDashboardModel.CurrencyGroup) -> String {
-    spendDashboardIncludesLocalHistory(group) ? L("Sources") : L("Subscriptions")
+func spendDashboardProviderCountTitle(_: SpendDashboardModel.CurrencyGroup) -> String {
+    L("Subscriptions")
 }
 
 func spendDashboardPartialSourceCoverageText(_ group: SpendDashboardModel.CurrencyGroup) -> String {
-    let template = spendDashboardIncludesLocalHistory(group)
-        ? "%d of %d sources have spend" : "%d of %d subscriptions have spend"
-    return L(template, group.pricedProviderCount, group.providers.count)
+    L("%d of %d subscriptions have spend", group.pricedProviderCount, group.providers.count)
 }
 
 func spendDashboardHistoryCaption(

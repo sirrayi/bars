@@ -146,17 +146,17 @@ struct CodexBarWidgetProviderTests {
     }
 
     @Test
-    func `supported providers fall back to codex when snapshot is empty`() {
+    func `supported providers fall back to claude when snapshot is empty`() {
         let snapshot = WidgetSnapshot(entries: [], enabledProviders: [], generatedAt: Date())
 
-        #expect(CodexBarSwitcherTimelineProvider.supportedProviders(from: snapshot) == [.codex])
+        #expect(CodexBarSwitcherTimelineProvider.supportedProviders(from: snapshot) == [.claude])
     }
 
     @Test
     func `codex weekly only widget rows omit session`() {
         let now = Date(timeIntervalSince1970: 1_700_000_000)
         let entry = WidgetSnapshot.ProviderEntry(
-            provider: .codex,
+            provider: .opencode,
             updatedAt: now,
             primary: nil,
             secondary: RateWindow(usedPercent: 25, windowMinutes: 10080, resetsAt: nil, resetDescription: nil),
@@ -174,31 +174,10 @@ struct CodexBarWidgetProviderTests {
     }
 
     @Test
-    func `codex widget usage rows keep code review separate from rate rows`() {
-        let now = Date(timeIntervalSince1970: 1_700_000_000)
-        let entry = WidgetSnapshot.ProviderEntry(
-            provider: .codex,
-            updatedAt: now,
-            primary: RateWindow(usedPercent: 10, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
-            secondary: RateWindow(usedPercent: 25, windowMinutes: 10080, resetsAt: nil, resetDescription: nil),
-            tertiary: nil,
-            creditsRemaining: nil,
-            codeReviewRemainingPercent: 60,
-            tokenUsage: nil,
-            dailyUsage: [])
-
-        let rows = WidgetUsageRow.rows(for: entry)
-
-        #expect(rows.map(\.title) == ["Session", "Weekly"])
-        #expect(rows.count == 2)
-        #expect(!rows.contains { $0.title == "Code review" })
-    }
-
-    @Test
     func `widget usage rows prefer projected rows over legacy slots`() {
         let now = Date(timeIntervalSince1970: 1_700_000_000)
         let entry = WidgetSnapshot.ProviderEntry(
-            provider: .codex,
+            provider: .opencode,
             updatedAt: now,
             primary: RateWindow(usedPercent: 10, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
             secondary: RateWindow(usedPercent: 25, windowMinutes: 10080, resetsAt: nil, resetDescription: nil),
@@ -217,95 +196,34 @@ struct CodexBarWidgetProviderTests {
     }
 
     @Test
-    func `codex widget session cap lifts at weekly reset without a new snapshot`() {
-        let now = Date(timeIntervalSince1970: 1_800_000_000)
-        let weeklyReset = now.addingTimeInterval(3600)
-        let sessionWindow = RateWindow(
-            usedPercent: 1,
-            windowMinutes: 300,
-            resetsAt: now.addingTimeInterval(1800),
-            resetDescription: nil)
-        let weeklyWindow = RateWindow(
-            usedPercent: 100,
-            windowMinutes: 10080,
-            resetsAt: weeklyReset,
-            resetDescription: nil)
-        let entry = WidgetSnapshot.ProviderEntry(
-            provider: .codex,
-            updatedAt: now.addingTimeInterval(-7200),
-            primary: sessionWindow,
-            secondary: weeklyWindow,
-            tertiary: nil,
-            usageRows: [
-                WidgetSnapshot.WidgetUsageRowSnapshot(
-                    id: "session",
-                    title: "Session",
-                    percentLeft: 99,
-                    window: sessionWindow),
-                WidgetSnapshot.WidgetUsageRowSnapshot(
-                    id: "weekly",
-                    title: "Weekly",
-                    percentLeft: 0,
-                    window: weeklyWindow),
-            ],
-            creditsRemaining: nil,
-            codeReviewRemainingPercent: nil,
-            tokenUsage: nil,
-            dailyUsage: [])
-
-        let capped = WidgetUsageRow.rows(for: entry, now: now)
-        let reset = WidgetUsageRow.rows(for: entry, now: weeklyReset)
-
-        #expect(capped.map(\.percentLeft) == [0, 0])
-        #expect(reset.map(\.percentLeft) == [99, 0])
-    }
-
-    @Test
-    func `widget configuration intents default to codex and credits`() {
+    func `widget configuration intents default to claude and credits`() {
         let providerIntent = ProviderSelectionIntent()
         let compactIntent = CompactMetricSelectionIntent()
         let burnIntent = BurnDownSelectionIntent()
         let combinedBurnIntent = BurnProviderSelectionIntent()
 
-        #expect(providerIntent.provider == .codex)
-        #expect(compactIntent.provider == .codex)
+        #expect(providerIntent.provider == .claude)
+        #expect(compactIntent.provider == .claude)
         #expect(compactIntent.metric == .credits)
-        #expect(burnIntent.provider == .codex)
+        #expect(burnIntent.provider == .claude)
         #expect(burnIntent.window == .session)
-        #expect(combinedBurnIntent.provider == .codex)
+        #expect(combinedBurnIntent.provider == .claude)
     }
 
     @Test
     func `burn down uses an exact provider entry`() {
         let snapshot = Self.burnSnapshot(provider: .claude, primaryUsed: 20, secondaryUsed: 30)
 
-        #expect(BurnDownState(snapshot: snapshot, provider: .codex, selection: .session) == nil)
+        #expect(BurnDownState(snapshot: snapshot, provider: .opencode, selection: .session) == nil)
         #expect(BurnDownState(snapshot: snapshot, provider: .claude, selection: .session) != nil)
-    }
-
-    @Test
-    func `codex exhausted weekly cap blocks the session chart until weekly reset`() throws {
-        let weeklyReset = Date(timeIntervalSince1970: 1_800_000_000)
-        let snapshot = Self.burnSnapshot(
-            provider: .codex,
-            primaryUsed: 80,
-            secondaryUsed: 100,
-            primaryReset: weeklyReset.addingTimeInterval(-3600),
-            secondaryReset: weeklyReset)
-        let state = try #require(BurnDownState(snapshot: snapshot, provider: .codex, selection: .session))
-
-        #expect(state.secondaryGloballyCapsPrimary)
-        #expect(state.primaryWindow?.remainingPercent == 0)
-        #expect(state.blankPrimaryChart)
-        #expect(state.selectedResetOverride == weeklyReset)
     }
 
     @Test
     func `burn down preview includes session and weekly windows`() throws {
         let snapshot = WidgetPreviewData.snapshot()
 
-        let session = try #require(BurnDownState(snapshot: snapshot, provider: .codex, selection: .session))
-        let weekly = try #require(BurnDownState(snapshot: snapshot, provider: .codex, selection: .weekly))
+        let session = try #require(BurnDownState(snapshot: snapshot, provider: .claude, selection: .session))
+        let weekly = try #require(BurnDownState(snapshot: snapshot, provider: .claude, selection: .weekly))
 
         #expect(session.selectedWindow?.windowMinutes == 300)
         #expect(weekly.selectedWindow?.windowMinutes == 10080)
@@ -313,8 +231,8 @@ struct CodexBarWidgetProviderTests {
 
     @Test
     func `burn down selection does not fall back to another window`() throws {
-        let weeklyOnly = Self.burnSnapshot(provider: .codex, primaryUsed: nil, secondaryUsed: 30)
-        let sessionOnly = Self.burnSnapshot(provider: .codex, primaryUsed: 20, secondaryUsed: nil)
+        let weeklyOnly = Self.burnSnapshot(provider: .opencode, primaryUsed: nil, secondaryUsed: 30)
+        let sessionOnly = Self.burnSnapshot(provider: .opencode, primaryUsed: 20, secondaryUsed: nil)
         let weeklyStoredInPrimary = Self.burnSnapshot(
             provider: .claude,
             primaryUsed: 30,
@@ -323,19 +241,19 @@ struct CodexBarWidgetProviderTests {
 
         let weeklyOnlySession = try #require(BurnDownState(
             snapshot: weeklyOnly,
-            provider: .codex,
+            provider: .opencode,
             selection: .session))
         let weeklyOnlyWeekly = try #require(BurnDownState(
             snapshot: weeklyOnly,
-            provider: .codex,
+            provider: .opencode,
             selection: .weekly))
         let sessionOnlySession = try #require(BurnDownState(
             snapshot: sessionOnly,
-            provider: .codex,
+            provider: .opencode,
             selection: .session))
         let sessionOnlyWeekly = try #require(BurnDownState(
             snapshot: sessionOnly,
-            provider: .codex,
+            provider: .opencode,
             selection: .weekly))
         let weeklyPrimarySession = try #require(BurnDownState(
             snapshot: weeklyStoredInPrimary,
@@ -358,14 +276,14 @@ struct CodexBarWidgetProviderTests {
     func `expired weekly reset no longer blocks the session chart`() throws {
         let now = Date(timeIntervalSince1970: 1_700_000_000)
         let snapshot = Self.burnSnapshot(
-            provider: .codex,
+            provider: .opencode,
             primaryUsed: 20,
             secondaryUsed: 100,
             primaryReset: now.addingTimeInterval(300),
             secondaryReset: now.addingTimeInterval(-1))
         let state = try #require(BurnDownState(
             snapshot: snapshot,
-            provider: .codex,
+            provider: .opencode,
             selection: .session,
             now: now))
 
@@ -419,13 +337,13 @@ struct CodexBarWidgetProviderTests {
     func `burn down refreshes immediately after the earliest future reset`() {
         let now = Date(timeIntervalSince1970: 1_700_000_000)
         let snapshot = Self.burnSnapshot(
-            provider: .codex,
+            provider: .opencode,
             primaryUsed: 20,
             secondaryUsed: 30,
             primaryReset: now.addingTimeInterval(360),
             secondaryReset: now.addingTimeInterval(420))
 
-        #expect(BurnDownRefreshSchedule.nextRefresh(snapshot: snapshot, provider: .codex, now: now)
+        #expect(BurnDownRefreshSchedule.nextRefresh(snapshot: snapshot, provider: .opencode, now: now)
             == now.addingTimeInterval(361))
     }
 
@@ -433,13 +351,13 @@ struct CodexBarWidgetProviderTests {
     func `burn down refresh clamps to minimum interval`() {
         let now = Date(timeIntervalSince1970: 1_700_000_000)
         let snapshot = Self.burnSnapshot(
-            provider: .codex,
+            provider: .opencode,
             primaryUsed: 20,
             secondaryUsed: 30,
             primaryReset: now.addingTimeInterval(60),
             secondaryReset: now.addingTimeInterval(120))
 
-        #expect(BurnDownRefreshSchedule.nextRefresh(snapshot: snapshot, provider: .codex, now: now)
+        #expect(BurnDownRefreshSchedule.nextRefresh(snapshot: snapshot, provider: .opencode, now: now)
             == now.addingTimeInterval(300))
     }
 
@@ -455,7 +373,7 @@ struct CodexBarWidgetProviderTests {
         let fallback = now.addingTimeInterval(30 * 60)
 
         #expect(BurnDownRefreshSchedule.nextRefresh(snapshot: snapshot, provider: .claude, now: now) == fallback)
-        #expect(BurnDownRefreshSchedule.nextRefresh(snapshot: snapshot, provider: .codex, now: now) == fallback)
+        #expect(BurnDownRefreshSchedule.nextRefresh(snapshot: snapshot, provider: .opencode, now: now) == fallback)
     }
 
     private static func burnSnapshot(
@@ -494,39 +412,6 @@ struct CodexBarWidgetProviderTests {
 }
 
 extension CodexBarWidgetProviderTests {
-    @Test
-    func `compact cost labels retain billing disclosure without baking in a stale age`() {
-        let entryUpdatedAt = Date()
-        let staleToken = WidgetSnapshot.TokenUsageSummary(
-            sessionCostUSD: 1.25,
-            sessionTokens: 4200,
-            last30DaysCostUSD: 12.50,
-            last30DaysTokens: 42000,
-            updatedAt: entryUpdatedAt.addingTimeInterval(-45 * 60))
-        let entry = WidgetSnapshot.ProviderEntry(
-            provider: .codex,
-            updatedAt: entryUpdatedAt,
-            primary: nil,
-            secondary: nil,
-            tertiary: nil,
-            creditsRemaining: nil,
-            codeReviewRemainingPercent: nil,
-            tokenUsage: staleToken,
-            dailyUsage: [])
-        let todayMetric = CompactMetricFormatter.display(for: entry, metric: .todayCost)
-        let historyMetric = CompactMetricFormatter.display(for: entry, metric: .last30DaysCost)
-
-        #expect(todayMetric.label == "Today API est. · not billed")
-        #expect(historyMetric.label == "30d API est. · not billed")
-        #expect(CompactMetricFormatter.costMetricLabel("7d", provider: .codex) == "7d API est. · not billed")
-        #expect(CompactMetricFormatter.costMetricLabel("90d", provider: .codex) == "90d API est. · not billed")
-        #expect(CompactMetricFormatter.costMetricLabel("This month", provider: .codex) ==
-            "This month API est. · not billed")
-        #expect(CompactMetricFormatter.costMetricLabel(
-            "This month API est. · not billed",
-            provider: .codex) == "This month API est. · not billed")
-    }
-
     @Test
     func `usage history chart mode requires every point to expose cost`() {
         let costPoints = [

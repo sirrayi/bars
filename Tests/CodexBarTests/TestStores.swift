@@ -185,7 +185,6 @@ func testSettingsStore(
     return SettingsStore(
         userDefaults: defaults,
         configStore: configStore,
-        codexCookieStore: InMemoryCookieHeaderStore(),
         claudeCookieStore: InMemoryCookieHeaderStore(),
         opencodeCookieStore: InMemoryCookieHeaderStore(),
         tokenAccountStore: tokenAccountStore,
@@ -219,7 +218,6 @@ func testStatusBar() -> NSStatusBar {
 func withStatusItemControllerForTesting<T>(
     store: UsageStore,
     settings: SettingsStore,
-    fetcher: UsageFetcher,
     account: AccountInfo? = nil,
     statusBar: NSStatusBar = .system,
     operation: (StatusItemController) throws -> T) rethrows -> T
@@ -240,7 +238,6 @@ func withStatusItemControllerForTesting<T>(
 func withStatusItemControllerForTesting<T>(
     store: UsageStore,
     settings: SettingsStore,
-    fetcher: UsageFetcher,
     account: AccountInfo? = nil,
     statusBar: NSStatusBar = .system,
     operation: (StatusItemController) async throws -> T) async rethrows -> T

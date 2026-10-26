@@ -109,7 +109,6 @@ struct DashboardReportedCostTests {
                 status: nil,
                 usage: UsageSnapshot(primary: nil, secondary: nil, costUsage: history, updatedAt: self.now),
                 credits: nil,
-                openaiDashboard: nil,
                 error: nil)],
             costPayloads: local.map { [$0] } ?? [],
             config: CodexBarConfig(providers: [ProviderConfig(id: provider.instanceID, enabled: true)]),

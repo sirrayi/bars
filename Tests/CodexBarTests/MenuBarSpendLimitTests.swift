@@ -17,7 +17,6 @@ struct MenuBarSpendLimitTests {
         settings.refreshFrequency = .manual
         settings.showOptionalCreditsAndExtraUsage = showOptionalCreditsAndExtraUsage
         return UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing)
@@ -66,49 +65,6 @@ struct MenuBarSpendLimitTests {
             for: .claude,
             snapshot: self.snapshot(self.monthlyBudget(limit: 0)),
             now: self.now) == nil)
-    }
-
-    @Test
-    func `Codex credit caps resolve through the consumer projection as non monetary`() throws {
-        let store = self.makeStore()
-        defer { store.stopSharedSpendDashboardPublication() }
-        let cap = ProviderCostSnapshot(
-            used: 200,
-            limit: 1000,
-            currencyCode: CodexExtraUsageCost.currencyCode,
-            period: "Monthly credit limit",
-            resetsAt: self.now.addingTimeInterval(3 * 24 * 60 * 60),
-            updatedAt: self.now)
-        store._setSnapshotForTesting(self.snapshot(cap), provider: .codex)
-        // Learned Codex pacing must not turn a cap with no period into a fabricated weekly pace.
-        store.settings.historicalTrackingEnabled = true
-
-        let limit = try #require(store.spendLimit(for: .codex, snapshot: self.snapshot(cap), now: self.now))
-        let spend = store.menuBarLayoutSpend(provider: .codex, snapshot: self.snapshot(cap), now: self.now)
-
-        #expect(!limit.cost.isMonetary)
-        #expect(limit.window.usedPercent == 20)
-        // A credit cap reports no period, so there is nothing to score pace against.
-        #expect(limit.window.windowMinutes == nil)
-        #expect(spend.pace == nil)
-        #expect(spend.currencySymbol.isEmpty)
-        #expect(spend.amount == nil)
-        #expect(spend.budget == nil)
-    }
-
-    @Test
-    func `a Codex credit balance without a cap never becomes a budget`() {
-        let store = self.makeStore()
-        defer { store.stopSharedSpendDashboardPublication() }
-        let balanceOnly = ProviderCostSnapshot(
-            used: 0,
-            limit: 0,
-            currencyCode: CodexExtraUsageCost.currencyCode,
-            balance: 42,
-            balanceUpdatedAt: self.now,
-            updatedAt: self.now)
-
-        #expect(store.spendLimit(for: .codex, snapshot: self.snapshot(balanceOnly), now: self.now) == nil)
     }
 
     @Test

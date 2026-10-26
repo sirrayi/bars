@@ -12,7 +12,7 @@ struct SpendStackedBarChartTests {
     {
         SpendDashboardModel.DailyPoint(
             sourceID: sourceID,
-            provider: .codex,
+            provider: .claude,
             providerName: sourceID,
             day: day,
             cost: stackEnd - stackStart,

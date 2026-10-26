@@ -35,7 +35,7 @@ final class ProviderUsageItemVisibilityScreenshotRenderTests: XCTestCase {
             userDefaults: InMemoryUserDefaults(),
             config: CodexBarConfig(providers: [
                 ProviderConfig(
-                    id: .codex,
+                    id: .claude,
                     enabled: true,
                     hiddenUsageItemIDs: hiddenIDs.map(\.rawValue).sorted()),
             ]))
@@ -47,7 +47,7 @@ final class ProviderUsageItemVisibilityScreenshotRenderTests: XCTestCase {
 
             Form {
                 ProviderUsageItemVisibilitySettingsView(
-                    provider: .codex,
+                    provider: .claude,
                     settings: settings,
                     items: rawModel.usageItemDescriptors)
             }
@@ -81,7 +81,7 @@ final class ProviderUsageItemVisibilityScreenshotRenderTests: XCTestCase {
             self.metric(id: "codex-spark-weekly", title: "Codex Spark Weekly", percent: 0),
         ]
         return UsageMenuCardView.Model(
-            provider: .codex,
+            provider: .claude,
             providerName: "Codex",
             email: "",
             subtitleText: "Updated just now",

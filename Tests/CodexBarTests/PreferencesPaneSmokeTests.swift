@@ -45,7 +45,7 @@ struct PreferencesPaneSmokeTests {
         settings.quotaWarningNotificationsEnabled = true
 
         let store = Self.makeUsageStore(settings: settings)
-        store._setErrorForTesting("Example error", provider: .codex)
+        store._setErrorForTesting("Example error", provider: .opencode)
 
         _ = GeneralPane(settings: settings).body
         _ = ICloudSyncPane(settings: settings, state: CloudSyncState()).body
@@ -58,7 +58,7 @@ struct PreferencesPaneSmokeTests {
         _ = AboutPane(
             updater: DisabledUpdaterController(),
             selection: PreferencesSelection(userDefaults: InMemoryUserDefaults())).body
-        _ = SettingsSidebarView(settings: settings, store: store, selection: .constant(.provider(.codex))).body
+        _ = SettingsSidebarView(settings: settings, store: store, selection: .constant(.provider(.opencode))).body
     }
 
     @Test
@@ -367,18 +367,18 @@ struct PreferencesPaneSmokeTests {
         settings.setQuotaWarningThresholds(.session, thresholds: [50, 20])
         settings.setQuotaWarningThresholds(.weekly, thresholds: [80, 40])
 
-        _ = ProviderQuotaWarningSettingsView(provider: .codex, settings: settings).body
+        _ = ProviderQuotaWarningSettingsView(provider: .opencode, settings: settings).body
 
-        settings.setQuotaWarningOverride(provider: .codex, window: .session, thresholds: [70, 30], enabled: true)
-        settings.setQuotaWarningOverride(provider: .codex, window: .weekly, thresholds: [60, 10], enabled: false)
+        settings.setQuotaWarningOverride(provider: .opencode, window: .session, thresholds: [70, 30], enabled: true)
+        settings.setQuotaWarningOverride(provider: .opencode, window: .weekly, thresholds: [60, 10], enabled: false)
 
-        _ = ProviderQuotaWarningSettingsView(provider: .codex, settings: settings).body
+        _ = ProviderQuotaWarningSettingsView(provider: .opencode, settings: settings).body
 
-        #expect(settings.hasQuotaWarningOverride(provider: .codex, window: .session))
-        #expect(settings.hasQuotaWarningOverride(provider: .codex, window: .weekly))
-        #expect(settings.quotaWarningEnabled(provider: .codex, window: .session))
-        #expect(!settings.quotaWarningEnabled(provider: .codex, window: .weekly))
-        #expect(settings.resolvedQuotaWarningThresholds(provider: .codex, window: .weekly) == [60, 10])
+        #expect(settings.hasQuotaWarningOverride(provider: .opencode, window: .session))
+        #expect(settings.hasQuotaWarningOverride(provider: .opencode, window: .weekly))
+        #expect(settings.quotaWarningEnabled(provider: .opencode, window: .session))
+        #expect(!settings.quotaWarningEnabled(provider: .opencode, window: .weekly))
+        #expect(settings.resolvedQuotaWarningThresholds(provider: .opencode, window: .weekly) == [60, 10])
     }
 
     @Test
@@ -386,10 +386,10 @@ struct PreferencesPaneSmokeTests {
         let settings = Self.makeSettingsStore(suite: "PreferencesPaneSmokeTests-provider-quota-warning-disabled")
         settings.quotaWarningNotificationsEnabled = true
         settings.quotaWarningMarkersVisible = true
-        settings.setQuotaWarningOverride(provider: .codex, window: .session, thresholds: [70, 30], enabled: true)
-        settings.setQuotaWarningOverride(provider: .codex, window: .weekly, thresholds: [60, 10], enabled: false)
+        settings.setQuotaWarningOverride(provider: .opencode, window: .session, thresholds: [70, 30], enabled: true)
+        settings.setQuotaWarningOverride(provider: .opencode, window: .weekly, thresholds: [60, 10], enabled: false)
 
-        let view = ProviderQuotaWarningSettingsView(provider: .codex, settings: settings)
+        let view = ProviderQuotaWarningSettingsView(provider: .opencode, settings: settings)
         let inheritedView = ProviderQuotaWarningSettingsView(provider: .claude, settings: settings)
         #expect(view.controlsEnabled)
         #expect(view.overrideMode(for: .session) == .custom)
@@ -409,8 +409,8 @@ struct PreferencesPaneSmokeTests {
         #expect(view.overrideMode(for: .weekly) == .off)
         #expect(inheritedView.overrideMode(for: .session) == .global)
         #expect(inheritedView.overrideMode(for: .weekly) == .global)
-        #expect(settings.explicitQuotaWarningThresholds(provider: .codex, window: .session) == [70, 30])
-        #expect(settings.explicitQuotaWarningThresholds(provider: .codex, window: .weekly) == [60, 10])
+        #expect(settings.explicitQuotaWarningThresholds(provider: .opencode, window: .session) == [70, 30])
+        #expect(settings.explicitQuotaWarningThresholds(provider: .opencode, window: .weekly) == [60, 10])
 
         CodexBarLocalizationOverride.$appLanguage.withValue("en") {
             #expect(view.footerText == "Quota warning notifications are disabled globally. " +
@@ -449,48 +449,48 @@ struct PreferencesPaneSmokeTests {
         settings.setQuotaWarningWindowEnabled(.session, enabled: true)
         settings.setQuotaWarningThresholds(.session, thresholds: [50, 20])
 
-        let view = ProviderQuotaWarningSettingsView(provider: .codex, settings: settings)
+        let view = ProviderQuotaWarningSettingsView(provider: .opencode, settings: settings)
         let mode = view.overrideModeBinding(for: .session)
 
         #expect(mode.wrappedValue == .global)
 
         mode.wrappedValue = .custom
         #expect(mode.wrappedValue == .custom)
-        #expect(settings.hasQuotaWarningOverride(provider: .codex, window: .session))
-        #expect(settings.quotaWarningEnabled(provider: .codex, window: .session))
-        #expect(settings.providerConfig(for: .codex)?.quotaWarnings?.session?.thresholds == nil)
-        #expect(settings.resolvedQuotaWarningThresholds(provider: .codex, window: .session) == [50, 20])
+        #expect(settings.hasQuotaWarningOverride(provider: .opencode, window: .session))
+        #expect(settings.quotaWarningEnabled(provider: .opencode, window: .session))
+        #expect(settings.providerConfig(for: .opencode)?.quotaWarnings?.session?.thresholds == nil)
+        #expect(settings.resolvedQuotaWarningThresholds(provider: .opencode, window: .session) == [50, 20])
         #expect(view.shouldCommitThresholdEditorOnDisappear(for: .session))
 
-        settings.setQuotaWarningThresholds(provider: .codex, window: .session, thresholds: [70, 30])
+        settings.setQuotaWarningThresholds(provider: .opencode, window: .session, thresholds: [70, 30])
         mode.wrappedValue = .off
         #expect(mode.wrappedValue == .off)
-        #expect(settings.hasQuotaWarningOverride(provider: .codex, window: .session))
-        #expect(!settings.quotaWarningEnabled(provider: .codex, window: .session))
-        #expect(settings.resolvedQuotaWarningThresholds(provider: .codex, window: .session) == [70, 30])
+        #expect(settings.hasQuotaWarningOverride(provider: .opencode, window: .session))
+        #expect(!settings.quotaWarningEnabled(provider: .opencode, window: .session))
+        #expect(settings.resolvedQuotaWarningThresholds(provider: .opencode, window: .session) == [70, 30])
         #expect(view.shouldCommitThresholdEditorOnDisappear(for: .session))
 
         mode.wrappedValue = .custom
         #expect(mode.wrappedValue == .custom)
-        #expect(settings.quotaWarningEnabled(provider: .codex, window: .session))
-        #expect(settings.explicitQuotaWarningThresholds(provider: .codex, window: .session) == [70, 30])
-        #expect(settings.resolvedQuotaWarningThresholds(provider: .codex, window: .session) == [70, 30])
+        #expect(settings.quotaWarningEnabled(provider: .opencode, window: .session))
+        #expect(settings.explicitQuotaWarningThresholds(provider: .opencode, window: .session) == [70, 30])
+        #expect(settings.resolvedQuotaWarningThresholds(provider: .opencode, window: .session) == [70, 30])
 
         mode.wrappedValue = .global
         #expect(mode.wrappedValue == .global)
-        #expect(!settings.hasQuotaWarningOverride(provider: .codex, window: .session))
-        #expect(settings.quotaWarningEnabled(provider: .codex, window: .session))
-        #expect(settings.resolvedQuotaWarningThresholds(provider: .codex, window: .session) == [50, 20])
+        #expect(!settings.hasQuotaWarningOverride(provider: .opencode, window: .session))
+        #expect(settings.quotaWarningEnabled(provider: .opencode, window: .session))
+        #expect(settings.resolvedQuotaWarningThresholds(provider: .opencode, window: .session) == [50, 20])
         #expect(!view.shouldCommitThresholdEditorOnDisappear(for: .session))
 
         mode.wrappedValue = .custom
-        #expect(settings.providerConfig(for: .codex)?.quotaWarnings?.session?.thresholds == nil)
+        #expect(settings.providerConfig(for: .opencode)?.quotaWarnings?.session?.thresholds == nil)
 
         mode.wrappedValue = .off
-        let disabledInheritedConfig = settings.providerConfig(for: .codex)?.quotaWarnings?.session
+        let disabledInheritedConfig = settings.providerConfig(for: .opencode)?.quotaWarnings?.session
         #expect(disabledInheritedConfig?.enabled == false)
         #expect(disabledInheritedConfig?.thresholds == nil)
-        #expect(settings.resolvedQuotaWarningThresholds(provider: .codex, window: .session) == [50, 20])
+        #expect(settings.resolvedQuotaWarningThresholds(provider: .opencode, window: .session) == [50, 20])
         #expect(view.shouldCommitThresholdEditorOnDisappear(for: .session))
     }
 
@@ -633,7 +633,6 @@ struct PreferencesPaneSmokeTests {
         return SettingsStore(
             userDefaults: defaults,
             configStore: configStore,
-            codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
             opencodeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore())
@@ -641,7 +640,6 @@ struct PreferencesPaneSmokeTests {
 
     private static func makeUsageStore(settings: SettingsStore) -> UsageStore {
         UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
     }

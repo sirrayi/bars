@@ -36,7 +36,6 @@ struct ClaudeOAuthFetchStrategyAvailabilityTests {
             verbose: false,
             env: env,
             settings: settings,
-            fetcher: UsageFetcher(environment: env),
             claudeFetcher: StubClaudeFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0))
     }

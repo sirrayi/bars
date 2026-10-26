@@ -15,7 +15,6 @@ struct UsageStorePathDebugTests {
             userDefaults: defaults,
             configStore: configStore)
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .full)
@@ -40,7 +39,6 @@ struct UsageStorePathDebugTests {
             configStore: configStore)
         settings.addTokenAccount(provider: .deepseek, label: "Primary", token: "sk-deepseek-test")
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,

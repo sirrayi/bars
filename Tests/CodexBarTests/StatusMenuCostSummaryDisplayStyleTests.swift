@@ -14,15 +14,13 @@ extension StatusMenuTests {
             settings.statusChecksEnabled = false
             settings.refreshFrequency = .manual
             settings.mergeIcons = true
-            settings.selectedMenuProvider = .codex
+            settings.selectedMenuProvider = .claude
             settings.costUsageEnabled = true
             settings.costSummaryDisplayStyle = style
 
-            enableTestProviders([.codex], settings: settings)
+            enableTestProviders([.claude], settings: settings)
 
-            let fetcher = UsageFetcher()
             let store = UsageStore(
-                fetcher: fetcher,
                 browserDetection: BrowserDetection(cacheTTL: 0),
                 settings: settings)
             store._setTokenSnapshotForTesting(
@@ -42,20 +40,20 @@ extension StatusMenuTests {
                             modelBreakdowns: nil),
                     ],
                     updatedAt: Date()),
-                provider: .codex)
+                provider: .claude)
 
             let controller = StatusItemController(
                 store: store,
                 settings: settings,
-                account: fetcher.loadAccountInfo(),
+                account: AccountInfo(email: nil, plan: nil),
                 updater: DisabledUpdaterController(),
                 preferencesSelection: PreferencesSelection(),
                 statusBar: self.makeStatusBarForTesting())
             defer { controller.releaseStatusItemsForTesting() }
 
-            let model = try #require(controller.menuCardModel(for: .codex))
+            let model = try #require(controller.menuCardModel(for: .claude))
             let providerDetailModel = ProvidersPane(settings: settings, store: store)
-                ._test_menuCardModel(for: .codex)
+                ._test_menuCardModel(for: .claude)
             let menu = controller.makeMenu()
             controller.menuWillOpen(menu)
 

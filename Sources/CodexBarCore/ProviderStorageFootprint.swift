@@ -113,17 +113,9 @@ public struct ProviderStorageRecommendation: Sendable, Equatable, Identifiable {
     }
 
     public static func recommendations(for footprint: ProviderStorageFootprint) -> [ProviderStorageRecommendation] {
-        // Provider-specific by design: Codex and Claude publish different component names and cleanup consequences.
-        let candidates: [ProviderStorageRecommendation] = footprint.components.compactMap { component in
-            switch footprint.provider {
-            case .claude:
-                self.claudeRecommendation(for: component)
-            case .codex:
-                self.codexRecommendation(for: component, roots: footprint.paths)
-            default:
-                nil
-            }
-        }
+        // Provider-specific by design: only Claude publishes component names with known cleanup consequences.
+        guard footprint.provider == .claude else { return [] }
+        let candidates = footprint.components.compactMap { self.claudeRecommendation(for: $0) }
 
         return candidates.sorted { lhs, rhs in
             if lhs.sortPriority == rhs.sortPriority {
@@ -202,68 +194,6 @@ public struct ProviderStorageRecommendation: Sendable, Equatable, Identifiable {
         }
     }
 
-    private static func codexRecommendation(
-        for component: ProviderStorageFootprint.Component,
-        roots: [String])
-        -> ProviderStorageRecommendation?
-    {
-        guard self.path(component.path, isContainedIn: roots) else { return nil }
-
-        return switch component.name {
-        case "sessions":
-            self.make(
-                provider: .codex,
-                component: component,
-                title: "Manual cleanup: sessions",
-                consequence: "Clearing removes past Codex session history.",
-                priority: 10)
-        case "archived_sessions":
-            self.make(
-                provider: .codex,
-                component: component,
-                title: "Manual cleanup: archived sessions",
-                consequence: "Clearing removes archived Codex session history.",
-                priority: 20)
-        case "cache", "caches", "Cache", "Caches":
-            self.make(
-                provider: .codex,
-                component: component,
-                title: "Manual cleanup: cache",
-                consequence: "Clearing removes provider-owned cached data.",
-                priority: 30)
-        case "log", "logs", "debug":
-            self.make(
-                provider: .codex,
-                component: component,
-                title: "Manual cleanup: logs",
-                consequence: "Clearing removes local diagnostic logs.",
-                priority: 40)
-        case let name where name.hasPrefix("logs_") && name.hasSuffix(".sqlite"):
-            self.make(
-                provider: .codex,
-                component: component,
-                title: "Manual cleanup: logs",
-                consequence: "Clearing removes local diagnostic logs.",
-                priority: 40)
-        case "file-history":
-            self.make(
-                provider: .codex,
-                component: component,
-                title: "Manual cleanup: file history",
-                consequence: "Clearing removes local edit checkpoint history.",
-                priority: 50)
-        case "paste-cache", "image-cache", "session-env", "shell-snapshots", "shell_snapshots", "tmp", "temp", ".tmp":
-            self.make(
-                provider: .codex,
-                component: component,
-                title: "Manual cleanup: temporary data",
-                consequence: "Clearing removes local temporary provider data.",
-                priority: 60)
-        default:
-            nil
-        }
-    }
-
     private static func make(
         provider: UsageProvider,
         component: ProviderStorageFootprint.Component,
@@ -281,42 +211,37 @@ public struct ProviderStorageRecommendation: Sendable, Equatable, Identifiable {
             consequence: consequence,
             sortPriority: priority)
     }
-
-    private static func path(_ path: String, isContainedIn roots: [String]) -> Bool {
-        let standardizedPath = URL(fileURLWithPath: path).standardizedFileURL.path
-        return roots.contains { root in
-            let standardizedRoot = URL(fileURLWithPath: root, isDirectory: true).standardizedFileURL.path
-            return standardizedPath == standardizedRoot || standardizedPath.hasPrefix(standardizedRoot + "/")
-        }
-    }
 }
 
 public enum ProviderStoragePathCatalog {
     public static func candidatePaths(
         for provider: UsageProvider,
         environment: [String: String],
-        managedCodexAccounts: [ManagedCodexAccount] = [],
         fileManager: FileManager = .default)
         -> [String]
     {
-        let home = fileManager.homeDirectoryForCurrentUser
+        let home = environment["HOME"].flatMap { $0.isEmpty ? nil : URL(fileURLWithPath: $0, isDirectory: true) }
+            ?? fileManager.homeDirectoryForCurrentUser
 
         func homePath(_ relativePath: String) -> String {
             home.appendingPathComponent(relativePath, isDirectory: true).path
         }
 
         let candidates: [String] = switch provider {
-        case .codex:
-            [CodexHomeScope.ambientHomeURL(env: environment, fileManager: fileManager).path] +
-                managedCodexAccounts.map(\.managedHomePath)
         case .claude:
-            [
-                homePath(".claude"),
-                homePath(".config/claude"),
-                home
-                    .appendingPathComponent("Library/Application Support/CodexBar/ClaudeProbe", isDirectory: true)
-                    .path,
-            ]
+            // Match Claude Code's profile boundary: an explicit CLAUDE_CONFIG_DIR replaces both default roots.
+            if environment[ClaudeConfigPaths.configDirectoryEnvironmentKey]?.isEmpty ?? true {
+                [
+                    homePath(".claude"),
+                    homePath(".config/claude"),
+                    homePath("Library/Application Support/CodexBar/ClaudeProbe"),
+                ]
+            } else {
+                [
+                    ClaudeConfigPaths.configRoot(environment: environment).path,
+                    homePath("Library/Application Support/CodexBar/ClaudeProbe"),
+                ]
+            }
         case .opencode, .opencodego:
             [
                 homePath(".config/opencode"),

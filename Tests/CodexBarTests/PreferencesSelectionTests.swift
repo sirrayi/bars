@@ -38,10 +38,10 @@ struct PreferencesSelectionTests {
         #expect(PreferencesSelection(userDefaults: defaults).pane == .general)
 
         let selection = PreferencesSelection(userDefaults: defaults)
-        selection.pane = .provider(.codex)
-        #expect(defaults.string(forKey: PreferencesSelection.paneDefaultsKey) == "provider:codex")
+        selection.pane = .provider(.opencode)
+        #expect(defaults.string(forKey: PreferencesSelection.paneDefaultsKey) == "provider:opencode")
         let restored = PreferencesSelection(userDefaults: defaults)
-        #expect(restored.pane == .provider(.codex))
+        #expect(restored.pane == .provider(.opencode))
         #expect(!restored.canGoBack)
         #expect(!restored.canGoForward)
     }

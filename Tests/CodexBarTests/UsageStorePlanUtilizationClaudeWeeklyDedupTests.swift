@@ -229,33 +229,6 @@ extension UsageStorePlanUtilizationTests {
         #expect(state.recoveryAboveThresholdCount == nil)
         #expect(!state.pendingLowConfirmation)
     }
-
-    @Test
-    func `legacy weekly states migrate Claude recovery and discard ambiguous Codex evidence`() throws {
-        let suiteName = "ClaudeWeeklyResetDedupLowMigration-\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: suiteName))
-        defer { defaults.removePersistentDomain(forName: suiteName) }
-
-        let data = Data(
-            """
-            {
-              "claude:legacy-low": {"wasAboveThreshold":false,"lastObservedAt":0},
-              "codex:legacy-low": {"wasAboveThreshold":false,"lastObservedAt":0},
-              "codex:version-one": {
-                "wasAboveThreshold":true,
-                "lastObservedAt":0,
-                "codexWeeklyEvidenceVersion":1
-              }
-            }
-            """.utf8)
-        defaults.set(data, forKey: "weeklyLimitResetDetectorStates")
-
-        let states = UsageStore.loadWeeklyLimitResetDetectorStates(from: defaults)
-
-        #expect(states["claude:legacy-low"]?.recoveryAboveThresholdCount == 0)
-        #expect(states["codex:legacy-low"] == nil)
-        #expect(states["codex:version-one"] == nil)
-    }
 }
 
 private func claudeWeeklyDedupSnapshot(

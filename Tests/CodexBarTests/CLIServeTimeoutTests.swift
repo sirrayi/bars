@@ -652,7 +652,7 @@ struct CLIServeTimeoutTests {
 
         let first = Task {
             await CodexBarCLI.serveCollectCostPayloads(
-                providers: [.claude, .codex],
+                providers: [.claude, .opencode],
                 context: firstContext)
             { provider in
                 if provider == .claude {
@@ -667,7 +667,7 @@ struct CLIServeTimeoutTests {
         await clock.fireAll()
         let firstPayload = await first.value
 
-        #expect(firstPayload.map(\.provider) == ["claude", "codex"])
+        #expect(firstPayload.map(\.provider) == ["claude", "opencode"])
         #expect(firstPayload[0].error?.message == "claude cost refresh timed out")
         #expect(firstPayload[1].error == nil)
 

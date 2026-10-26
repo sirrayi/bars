@@ -13,23 +13,22 @@ struct StatusItemAnimationSignatureTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .opencode
         settings.menuBarShowsBrandIconWithPercent = false
 
         let registry = ProviderRegistry.shared
-        if let codexMeta = registry.metadata[.codex] {
-            settings.setProviderEnabled(provider: .codex, metadata: codexMeta, enabled: true)
+        if let codexMeta = registry.metadata[.opencode] {
+            settings.setProviderEnabled(provider: .opencode, metadata: codexMeta, enabled: true)
         }
         if let claudeMeta = registry.metadata[.claude] {
             settings.setProviderEnabled(provider: .claude, metadata: claudeMeta, enabled: true)
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
@@ -40,7 +39,7 @@ struct StatusItemAnimationSignatureTests {
                 primary: RateWindow(usedPercent: 23, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 secondary: nil,
                 updatedAt: Date()),
-            provider: .codex)
+            provider: .opencode)
 
         controller.applyIcon(phase: nil)
         let button = try #require(controller.statusItem.button)
@@ -61,23 +60,22 @@ struct StatusItemAnimationSignatureTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .opencode
         settings.menuBarShowsBrandIconWithPercent = true
         settings.menuBarHighContrastOnInactiveDisplays = true
         settings.menuBarDisplayMode = .percent
         settings.usageBarsShowUsed = false
 
         let registry = ProviderRegistry.shared
-        if let codexMeta = registry.metadata[.codex] {
-            settings.setProviderEnabled(provider: .codex, metadata: codexMeta, enabled: true)
+        if let codexMeta = registry.metadata[.opencode] {
+            settings.setProviderEnabled(provider: .opencode, metadata: codexMeta, enabled: true)
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
@@ -87,9 +85,9 @@ struct StatusItemAnimationSignatureTests {
             primary: RateWindow(usedPercent: 23, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
             secondary: nil,
             updatedAt: Date())
-        store._setSnapshotForTesting(snapshot, provider: .codex)
+        store._setSnapshotForTesting(snapshot, provider: .opencode)
 
-        let displayText = try #require(controller.menuBarDisplayText(for: .codex, snapshot: snapshot))
+        let displayText = try #require(controller.menuBarDisplayText(for: .opencode, snapshot: snapshot))
         let expectedTitle = StatusItemController.buttonTitle(displayText, hasImage: true)
         controller.applyIcon(phase: nil)
         let button = try #require(controller.statusItem.button)
@@ -146,21 +144,20 @@ struct StatusItemAnimationSignatureTests {
         settings.statusChecksEnabled = true
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .opencode
         settings.menuBarShowsBrandIconWithPercent = false
 
         let registry = ProviderRegistry.shared
-        let codexMeta = try #require(registry.metadata[.codex])
+        let codexMeta = try #require(registry.metadata[.opencode])
         let claudeMeta = try #require(registry.metadata[.claude])
-        settings.setProviderEnabled(provider: .codex, metadata: codexMeta, enabled: true)
+        settings.setProviderEnabled(provider: .opencode, metadata: codexMeta, enabled: true)
         settings.setProviderEnabled(provider: .claude, metadata: claudeMeta, enabled: true)
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
@@ -170,7 +167,7 @@ struct StatusItemAnimationSignatureTests {
             primary: RateWindow(usedPercent: 50, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
             secondary: nil,
             updatedAt: Date())
-        store._setSnapshotForTesting(snapshot, provider: .codex)
+        store._setSnapshotForTesting(snapshot, provider: .opencode)
         store._setSnapshotForTesting(snapshot, provider: .claude)
         store.statuses[.claude] = ProviderStatus(
             indicator: .major,
@@ -179,8 +176,8 @@ struct StatusItemAnimationSignatureTests {
 
         controller.applyIcon(phase: nil)
 
-        #expect(controller.primaryProviderForUnifiedIcon() == .codex)
-        #expect(controller.lastAppliedMergedIconRenderSignature?.contains("provider=codex") == true)
+        #expect(controller.primaryProviderForUnifiedIcon() == .opencode)
+        #expect(controller.lastAppliedMergedIconRenderSignature?.contains("provider=opencode") == true)
         #expect(controller.lastAppliedMergedIconRenderSignature?.contains("status=none") == true)
 
         settings.selectedMenuProvider = .claude
@@ -201,14 +198,12 @@ struct StatusItemAnimationSignatureTests {
         settings.menuBarShowsHighestUsage = true
 
         let registry = ProviderRegistry.shared
-        let codexMeta = try #require(registry.metadata[.codex])
+        let codexMeta = try #require(registry.metadata[.opencode])
         let claudeMeta = try #require(registry.metadata[.claude])
-        settings.setProviderEnabled(provider: .codex, metadata: codexMeta, enabled: true)
+        settings.setProviderEnabled(provider: .opencode, metadata: codexMeta, enabled: true)
         settings.setProviderEnabled(provider: .claude, metadata: claudeMeta, enabled: true)
 
-        let fetcher = UsageFetcher()
         let store = UsageStore(
-            fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         settings.setMergedOverviewProviderSelection(
@@ -218,7 +213,7 @@ struct StatusItemAnimationSignatureTests {
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
@@ -229,7 +224,7 @@ struct StatusItemAnimationSignatureTests {
                 primary: RateWindow(usedPercent: 25, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 secondary: nil,
                 updatedAt: Date()),
-            provider: .codex)
+            provider: .opencode)
         store._setSnapshotForTesting(
             UsageSnapshot(
                 primary: RateWindow(usedPercent: 80, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
@@ -238,7 +233,7 @@ struct StatusItemAnimationSignatureTests {
             provider: .claude)
 
         #expect(store.providerWithHighestUsage()?.provider == .claude)
-        #expect(controller.primaryProviderForUnifiedIcon() == .codex)
+        #expect(controller.primaryProviderForUnifiedIcon() == .opencode)
     }
 
     @Test(arguments: [nil, 100.0] as [Double?])
@@ -255,14 +250,12 @@ struct StatusItemAnimationSignatureTests {
         settings.mergedMenuLastSelectedWasOverview = false
 
         let registry = ProviderRegistry.shared
-        let codexMeta = try #require(registry.metadata[.codex])
+        let codexMeta = try #require(registry.metadata[.opencode])
         let claudeMeta = try #require(registry.metadata[.claude])
-        settings.setProviderEnabled(provider: .codex, metadata: codexMeta, enabled: true)
+        settings.setProviderEnabled(provider: .opencode, metadata: codexMeta, enabled: true)
         settings.setProviderEnabled(provider: .claude, metadata: claudeMeta, enabled: true)
 
-        let fetcher = UsageFetcher()
         let store = UsageStore(
-            fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         settings.setMergedOverviewProviderSelection(
@@ -272,7 +265,7 @@ struct StatusItemAnimationSignatureTests {
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
@@ -288,7 +281,7 @@ struct StatusItemAnimationSignatureTests {
                         resetDescription: nil),
                     secondary: nil,
                     updatedAt: Date()),
-                provider: .codex)
+                provider: .opencode)
         }
         store._setSnapshotForTesting(
             UsageSnapshot(
@@ -297,8 +290,8 @@ struct StatusItemAnimationSignatureTests {
                 updatedAt: Date()),
             provider: .claude)
 
-        #expect(store.providerWithHighestUsage(candidateProviders: [.codex]) == nil)
-        #expect(controller.primaryProviderForUnifiedIcon() == .codex)
+        #expect(store.providerWithHighestUsage(candidateProviders: [.opencode]) == nil)
+        #expect(controller.primaryProviderForUnifiedIcon() == .opencode)
     }
 
     @Test
@@ -312,19 +305,17 @@ struct StatusItemAnimationSignatureTests {
         settings.selectedMenuProvider = .claude
 
         let registry = ProviderRegistry.shared
-        let codexMeta = try #require(registry.metadata[.codex])
+        let codexMeta = try #require(registry.metadata[.opencode])
         let claudeMeta = try #require(registry.metadata[.claude])
-        settings.setProviderEnabled(provider: .codex, metadata: codexMeta, enabled: true)
+        settings.setProviderEnabled(provider: .opencode, metadata: codexMeta, enabled: true)
         settings.setProviderEnabled(provider: .claude, metadata: claudeMeta, enabled: true)
 
-        let fetcher = UsageFetcher()
         let store = UsageStore(
-            fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         let activeProviders = store.enabledProvidersForDisplay()
         settings.setMergedOverviewProviderSelection(
-            provider: .codex,
+            provider: .opencode,
             isSelected: false,
             activeProviders: activeProviders)
         settings.setMergedOverviewProviderSelection(
@@ -334,7 +325,7 @@ struct StatusItemAnimationSignatureTests {
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
@@ -354,16 +345,15 @@ struct StatusItemAnimationSignatureTests {
         settings.mergeIcons = false
         settings.menuBarShowsBrandIconWithPercent = false
 
-        if let codexMeta = ProviderRegistry.shared.metadata[.codex] {
-            settings.setProviderEnabled(provider: .codex, metadata: codexMeta, enabled: true)
+        if let codexMeta = ProviderRegistry.shared.metadata[.opencode] {
+            settings.setProviderEnabled(provider: .opencode, metadata: codexMeta, enabled: true)
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
@@ -374,14 +364,14 @@ struct StatusItemAnimationSignatureTests {
                 primary: RateWindow(usedPercent: 25, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 secondary: nil,
                 updatedAt: Date()),
-            provider: .codex)
+            provider: .opencode)
 
-        #expect(controller.applyIcon(for: .codex, phase: nil) == false)
-        let button = try #require(controller.statusItems[.codex]?.button)
+        #expect(controller.applyIcon(for: .opencode, phase: nil) == false)
+        let button = try #require(controller.statusItems[.opencode]?.button)
         button.title = " stale"
         button.imagePosition = .imageLeft
 
-        #expect(controller.applyIcon(for: .codex, phase: nil) == true)
+        #expect(controller.applyIcon(for: .opencode, phase: nil) == true)
         #expect(button.title.isEmpty)
         #expect(button.imagePosition == .imageOnly)
 
@@ -390,8 +380,8 @@ struct StatusItemAnimationSignatureTests {
                 primary: RateWindow(usedPercent: 50, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
                 secondary: nil,
                 updatedAt: Date()),
-            provider: .codex)
+            provider: .opencode)
 
-        #expect(controller.applyIcon(for: .codex, phase: nil) == false)
+        #expect(controller.applyIcon(for: .opencode, phase: nil) == false)
     }
 }

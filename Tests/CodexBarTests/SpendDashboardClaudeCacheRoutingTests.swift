@@ -33,8 +33,7 @@ struct SpendDashboardClaudeCacheRoutingTests {
                 environment: [:],
                 now: fixture.now,
                 historyDays: days,
-                allowPricingRefresh: false,
-                includePiSessions: false)
+                allowPricingRefresh: false)
         }
         settings.costUsageEnabled = true
         settings.costUsageHistoryDays = 30
@@ -43,10 +42,9 @@ struct SpendDashboardClaudeCacheRoutingTests {
             settings.setProviderEnabled(
                 provider: provider,
                 metadata: metadata,
-                enabled: provider == .claude || provider == .pi)
+                enabled: provider == .claude)
         }
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             costUsageFetcher: costFetcher,
             settings: settings,
@@ -59,9 +57,7 @@ struct SpendDashboardClaudeCacheRoutingTests {
             provider: .claude,
             force: false,
             now: fixture.now,
-            codexHomePath: nil,
-            historyDays: 30,
-            includePiSessions: false)
+            historyDays: 30)
         #expect(menu.snapshot.last30DaysTokens == 10)
         let regularURL = CostUsageClaudeCacheIO.cacheFileURL(provider: .claude, cacheRoot: fixture.env.cacheRoot)
         let regularData = try Data(contentsOf: regularURL)

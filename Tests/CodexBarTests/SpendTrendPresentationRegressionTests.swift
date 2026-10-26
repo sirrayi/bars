@@ -21,7 +21,7 @@ struct SpendTrendPresentationRegressionTests {
             SpendDashboardModel.ProviderRow(
                 id: "partial",
                 rank: 0,
-                provider: .codex,
+                provider: .claude,
                 displayName: "Partial source",
                 totalTokens: nil,
                 totalCost: 4,
@@ -30,7 +30,7 @@ struct SpendTrendPresentationRegressionTests {
             SpendDashboardModel.ProviderRow(
                 id: "complete",
                 rank: 1,
-                provider: .codex,
+                provider: .claude,
                 displayName: "Complete source",
                 totalTokens: 0,
                 totalCost: 3,
@@ -142,7 +142,7 @@ struct SpendTrendPresentationRegressionTests {
         } ?? []
         return SpendDashboardModel.ProviderInput(
             id: id,
-            provider: .codex,
+            provider: .claude,
             displayName: "Synthetic \(id)",
             snapshot: CostUsageTokenSnapshot(
                 sessionTokens: nil,

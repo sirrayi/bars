@@ -60,8 +60,6 @@ struct CostUsageClaudeFragmentTests {
             size: 1,
             days: [string: [string: [number, -number, Int.max]]],
             parsedBytes: 1,
-            lastModel: string,
-            sessionId: string,
             claudeRows: number.isMultiple(of: 7) ? nil : [row])
     }
 
@@ -90,19 +88,6 @@ struct CostUsageClaudeFragmentTests {
             }
             cache.usage.roots = step.isMultiple(of: 3) ? nil : [path: Int64.min]
             cache.sourceFileIDs = [path: Self.strings[(index + 1) % Self.strings.count]]
-            let numbers = [1e-200, -1.25, 1e200, -0.0, Double.leastNonzeroMagnitude]
-            let report = CostUsageDailyReport(
-                data: [.init(
-                    date: path,
-                    inputTokens: nil,
-                    outputTokens: nil,
-                    totalTokens: nil,
-                    costUSD: numbers[step % numbers.count],
-                    modelsUsed: nil,
-                    modelBreakdowns: nil)],
-                summary: nil)
-            cache.usage.codexPreviousReport = step.isMultiple(of: 2) ? nil : CostUsageCodexPreviousReport(
-                report: report, cache: cache.usage, reportSinceKey: path, reportUntilKey: path)
             var current: [Data: Data] = [:]
             for (key, file) in cache.usage.files {
                 try current[self.encoder.encode(key)] = try self.encoder.encode(file)

@@ -176,12 +176,12 @@ extension MenuBarLayoutRendererTests {
 
     private func resetData(weekly: RateWindow?) -> MenuBarLayoutRenderData {
         MenuBarLayoutRenderData(
-            provider: .codex,
+            provider: .claude,
             iconKey: "codex",
             providerName: "Codex",
             accountLabel: nil,
             laneLabels: MenuBarLayoutLaneLabels(
-                provider: .codex,
+                provider: .claude,
                 snapshot: nil),
             primary: nil,
             secondary: nil,
@@ -233,7 +233,7 @@ extension MenuBarLayoutRendererTests {
             for (index, token) in MenuBarLayoutPaletteTokens.time.prefix(6).enumerated() {
                 let y = CGFloat(250 - index * 40)
                 NSAttributedString(
-                    string: token.editorLabel(provider: .codex),
+                    string: token.editorLabel(provider: .claude),
                     attributes: labelAttributes)
                     .draw(at: NSPoint(
                         x: 24,

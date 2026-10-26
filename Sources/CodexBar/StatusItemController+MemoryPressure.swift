@@ -27,14 +27,13 @@ extension StatusItemController {
         let cacheEntry = CachedMergedSwitcherMenuContent(
             requiredMenuContentVersion: self.menuSession.contentVersion,
             menuWidth: 300,
-            codexAccountDisplay: nil,
             tokenAccountDisplay: nil,
             localizationSignature: self.menuLocalizationSignature(),
             items: [])
         self.menuCardHeightCache[
             MenuCardHeightCacheKey(
                 id: "debug-memory-pressure-card",
-                scope: UsageProvider.codex.rawValue,
+                scope: UsageProvider.claude.rawValue,
                 width: 30000,
                 textScale: Self.menuCardHeightTextScaleToken(),
                 fingerprint: "debug-memory-pressure"),
@@ -42,7 +41,7 @@ extension StatusItemController {
         self.measuredStandardMenuWidthCache["debug-memory-pressure-width"] = 300
         self.mergedSwitcherContentCaches[ObjectIdentifier(menu)] = [
             .overview: cacheEntry,
-            .provider(.codex): cacheEntry,
+            .provider(.claude): cacheEntry,
         ]
         self.menuCardViewRecyclePool["debug-memory-pressure-card"] = NSView()
     }

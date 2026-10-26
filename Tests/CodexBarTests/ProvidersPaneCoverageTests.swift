@@ -97,8 +97,8 @@ struct ProvidersPaneCoverageTests {
     func `settings pane titles cover app panes and providers`() {
         #expect(SettingsPane.general.title == L("tab_general"))
         #expect(SettingsPane.about.title == L("tab_about"))
-        #expect(!SettingsPane.provider(.codex).title.isEmpty)
-        #expect(SettingsPane.provider(.codex) != SettingsPane.provider(.claude))
+        #expect(!SettingsPane.provider(.devin).title.isEmpty)
+        #expect(SettingsPane.provider(.devin) != SettingsPane.provider(.claude))
     }
 
     @Test
@@ -145,57 +145,9 @@ struct ProvidersPaneCoverageTests {
     }
 
     @Test
-    func `codex provider preview follows spark visibility`() {
-        let settings = Self.makeSettingsStore(suite: "ProvidersPaneCoverageTests-codex-spark-preview")
-        let store = Self.makeUsageStore(settings: settings)
-        let now = Date()
-        store._setSnapshotForTesting(
-            UsageSnapshot(
-                primary: RateWindow(usedPercent: 20, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
-                secondary: RateWindow(
-                    usedPercent: 30,
-                    windowMinutes: 10080,
-                    resetsAt: nil,
-                    resetDescription: nil),
-                extraRateWindows: [
-                    NamedRateWindow(
-                        id: CodexAdditionalRateLimitMapper.sparkWindowID,
-                        title: "Codex Spark 5-hour",
-                        window: RateWindow(
-                            usedPercent: 40,
-                            windowMinutes: 300,
-                            resetsAt: now.addingTimeInterval(1800),
-                            resetDescription: nil)),
-                    NamedRateWindow(
-                        id: "codex-other-limit",
-                        title: "Other Codex limit",
-                        window: RateWindow(
-                            usedPercent: 30,
-                            windowMinutes: 1440,
-                            resetsAt: now.addingTimeInterval(3600),
-                            resetDescription: nil)),
-                ],
-                updatedAt: now),
-            provider: .codex)
-        let pane = ProvidersPane(settings: settings, store: store)
-
-        #expect(pane._test_menuCardModel(for: .codex).metrics.contains {
-            $0.id == CodexAdditionalRateLimitMapper.sparkWindowID
-        })
-
-        settings.setUsageItemVisible(
-            false,
-            itemID: .metric(CodexAdditionalRateLimitMapper.sparkWindowID),
-            for: .codex)
-        let hiddenModel = pane._test_menuCardModel(for: .codex)
-        #expect(!hiddenModel.metrics.contains { $0.id == CodexAdditionalRateLimitMapper.sparkWindowID })
-        #expect(hiddenModel.metrics.contains { $0.id == "codex-other-limit" })
-    }
-
-    @Test
     func `provider detail plan row keeps plan label for non open router`() {
         Self.withEnglishLocalization {
-            let row = ProviderDetailView<EmptyView>.planRow(provider: .codex, planText: "Pro")
+            let row = ProviderDetailView.planRow(provider: .devin, planText: "Pro")
 
             #expect(row?.label == "Plan")
             #expect(row?.value == "Pro")
@@ -217,7 +169,7 @@ struct ProvidersPaneCoverageTests {
             pacePercent: nil,
             paceOnTop: false)
 
-        #expect(ProviderDetailView<EmptyView>.metricInlinePresentation(metric) == .status("Unavailable"))
+        #expect(ProviderDetailView.metricInlinePresentation(metric) == .status("Unavailable"))
     }
 
     @Test
@@ -234,7 +186,7 @@ struct ProvidersPaneCoverageTests {
             pacePercent: nil,
             paceOnTop: false)
 
-        #expect(ProviderDetailView<EmptyView>.metricInlinePresentation(metric) == .progress)
+        #expect(ProviderDetailView.metricInlinePresentation(metric) == .progress)
     }
 
     @Test
@@ -269,52 +221,6 @@ struct ProvidersPaneCoverageTests {
         #expect(picker?.trailingActions.first?.isVisible?() == false)
     }
 
-    @Test(CodexCredentialFixtures())
-    func `codex providers pane uses managed account fallback instead of ambient account`() throws {
-        let settings = Self.makeSettingsStore(suite: "ProvidersPaneCoverageTests-codex-managed-fallback")
-        let ambientHome = CodexCredentialFixtures.root.appendingPathComponent(
-            UUID().uuidString,
-            isDirectory: true)
-        let managedHome = CodexCredentialFixtures.root.appendingPathComponent(
-            UUID().uuidString,
-            isDirectory: true)
-        defer {
-            try? FileManager.default.removeItem(at: ambientHome)
-            try? FileManager.default.removeItem(at: managedHome)
-        }
-
-        try Self.writeCodexAuthFile(homeURL: ambientHome, email: "ambient@example.com", plan: "plus")
-        try Self.writeCodexAuthFile(homeURL: managedHome, email: "managed@example.com", plan: "enterprise")
-        let managedAccountID = UUID()
-        settings.codexActiveSource = .managedAccount(id: managedAccountID)
-        settings._test_activeManagedCodexAccount = ManagedCodexAccount(
-            id: managedAccountID,
-            email: "managed@example.com",
-            managedHomePath: managedHome.path,
-            createdAt: 1,
-            updatedAt: 2,
-            lastAuthenticatedAt: 2)
-
-        let store = UsageStore(
-            fetcher: UsageFetcher(environment: ["CODEX_HOME": ambientHome.path]),
-            browserDetection: BrowserDetection(cacheTTL: 0),
-            settings: settings,
-            startupBehavior: .testing)
-        store._setSnapshotForTesting(
-            UsageSnapshot(
-                primary: RateWindow(usedPercent: 12, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
-                secondary: RateWindow(usedPercent: 34, windowMinutes: 10080, resetsAt: nil, resetDescription: nil),
-                updatedAt: Date(),
-                identity: nil),
-            provider: .codex)
-
-        let pane = ProvidersPane(settings: settings, store: store)
-        let model = pane._test_menuCardModel(for: .codex)
-
-        #expect(model.email == "managed@example.com")
-        #expect(model.planText == "Enterprise")
-    }
-
     private static func makeSettingsStore(suite: String) -> SettingsStore {
         let defaults = UserDefaults(suiteName: suite)!
         defaults.removePersistentDomain(forName: suite)
@@ -323,7 +229,6 @@ struct ProvidersPaneCoverageTests {
         return SettingsStore(
             userDefaults: defaults,
             configStore: configStore,
-            codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
             opencodeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore())
@@ -331,7 +236,6 @@ struct ProvidersPaneCoverageTests {
 
     private static func makeUsageStore(settings: SettingsStore) -> UsageStore {
         UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
     }

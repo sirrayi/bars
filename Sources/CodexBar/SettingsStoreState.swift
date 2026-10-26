@@ -56,11 +56,8 @@ struct SettingsDefaultsState {
     var menuBarLayoutGapRaw: String
     var menuBarLayoutVerticalAdjustment: Int
     var costUsageEnabled: Bool
-    var codexLocalSessionCostLedgerEnabled: Bool
     var costReportingPeriod: CostReportingPeriod
     var costUsageBucketTimeZoneIdentifier: String
-    var openCodexUsageLogsEnabled: Bool
-    var hideNativeCodexCostWhenOpenCodexPresent: Bool
     var spendDashboardHiddenSourceIDs: [String]
     var costComparisonPeriodsEnabled: Bool
     var costSummaryDisplayStyleRaw: String
@@ -77,10 +74,6 @@ struct SettingsDefaultsState {
     var showOptionalCreditsAndExtraUsage: Bool
     var claudeDailyRoutinesUsageVisible: Bool
     var claudeModelScopedWeeklyUsageVisible: Bool
-    var codexSparkUsageVisible: Bool
-    var codexExternalOAuthSourcesAllowed: Bool
-    var openAIWebAccessEnabled: Bool
-    var openAIWebBatterySaverEnabled: Bool
     var backgroundWorkLowPowerModePreference: LowPowerModePreference
     var providerStorageFootprintsEnabled: Bool
     var jetbrainsIDEBasePath: String

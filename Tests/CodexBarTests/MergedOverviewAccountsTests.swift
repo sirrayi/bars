@@ -64,7 +64,7 @@ struct MergedOverviewAccountsTests {
                 }
             }
             #expect(MergedOverviewRow.providerID(from: rows[0].id) == .claude)
-            #expect(MergedOverviewRow.providerID(from: "codex") == .codex)
+            #expect(MergedOverviewRow.providerID(from: "opencode") == .opencode)
 
             store.claudeSwapAccountSnapshots = fixture.accounts.map { account in
                 ProviderAccountUsageSnapshot(
@@ -80,31 +80,6 @@ struct MergedOverviewAccountsTests {
             let tcrRows = store.mergedOverviewRows(for: [.claude])
             #expect(tcrRows.count == fixture.accounts.count)
             #expect(tcrRows.allSatisfy { $0.accountID?.hasPrefix("tcr:") == true })
-        }
-    }
-}
-
-@MainActor
-extension CodexAccountScopedRefreshTests {
-    @Test
-    func `merged overview retains every cached managed account without borrowing live usage`() async throws {
-        try await self.withSelectedAccountRetentionFixture(sameEmail: true, count: 8) { store, _, accounts in
-            store.settings.mergedOverviewAllAccounts = true
-            store.codexAccountSnapshots.removeAll { $0.id == accounts[7].id }
-            store.snapshots[.codex] = store.codexAccountSnapshots.first?.snapshot
-            let selected = store.settings.codexActiveSource
-            let rows = store.mergedOverviewRows(for: [.codex])
-            #expect(rows.count == 8)
-            #expect(Set(rows.compactMap { $0.model?.email }).count == 8)
-            #expect(Set(rows.compactMap(\.accountID)) == Set(accounts.map(\.id)))
-            let missing = try #require(rows.first { $0.accountID == accounts[7].id })
-            #expect(missing.model?.metrics.isEmpty == true)
-            #expect(store.settings.codexActiveSource == selected)
-            #expect(store.refreshingProviders.isEmpty)
-            store.settings.hidePersonalInfo = true
-            let privateRows = store.mergedOverviewRows(for: [.codex])
-            #expect(Set(privateRows.compactMap { $0.model?.email }).count == 8)
-            #expect(privateRows.allSatisfy { $0.model?.email.contains("@") == false })
         }
     }
 }

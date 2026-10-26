@@ -17,7 +17,7 @@ struct StatusMenuCostMenuCardTests {
             errorCopyText: nil)
 
         let visibleLines = StatusItemController.costMenuVisibleDetailLines(
-            provider: .codex,
+            provider: .claude,
             tokenUsage: tokenUsage,
             hasSubmenu: true)
         #expect(visibleLines == [])
@@ -42,13 +42,12 @@ struct StatusMenuCostMenuCardTests {
             errorCopyText: nil)
 
         let visibleLines = StatusItemController.costMenuVisibleDetailLines(
-            provider: .codex,
+            provider: .claude,
             tokenUsage: tokenUsage,
             hasSubmenu: false)
         #expect(visibleLines == [
             "Today: $74.83 - 87M tokens",
             "Last 30 days: $4,279.64 - 5.7B tokens",
-            "Costs are estimated from local usage.",
             "Cost refresh failed.",
         ])
 
@@ -57,7 +56,6 @@ struct StatusMenuCostMenuCardTests {
             visibleDetailLines: visibleLines)
         #expect(fallbackTitle.string.contains("Today: $74.83 - 87M tokens"))
         #expect(fallbackTitle.string.contains("Last 30 days: $4,279.64 - 5.7B tokens"))
-        #expect(fallbackTitle.string.contains("Costs are estimated from local usage."))
         #expect(fallbackTitle.string.contains("Cost refresh failed."))
     }
 
@@ -70,7 +68,7 @@ struct StatusMenuCostMenuCardTests {
             errorLine: "Cost refresh failed.",
             errorCopyText: nil)
 
-        #expect(StatusItemController.costMenuTooltipLines(provider: .codex, tokenUsage: tokenUsage) == [
+        #expect(StatusItemController.costMenuTooltipLines(provider: .claude, tokenUsage: tokenUsage) == [
             "Today: $1.00",
             "Last 30 days: $9.00",
             "Costs are estimated from local usage.",
@@ -87,15 +85,13 @@ struct StatusMenuCostMenuCardTests {
     @Test
     func `cost menu with history submenu omits native tooltip`() {
         let settings = self.makeSettings()
-        let fetcher = UsageFetcher()
         let store = UsageStore(
-            fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -125,15 +121,13 @@ struct StatusMenuCostMenuCardTests {
         defer { StatusItemController.menuCardRenderingEnabled = previousRendering }
 
         let settings = self.makeSettings()
-        let fetcher = UsageFetcher()
         let store = UsageStore(
-            fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -175,8 +169,8 @@ struct StatusMenuCostMenuCardTests {
         tokenUsage: UsageMenuCardView.Model.TokenUsageSection) -> UsageMenuCardView.Model
     {
         UsageMenuCardView.Model(
-            provider: .codex,
-            providerName: "Codex",
+            provider: .claude,
+            providerName: "Claude",
             email: "user@example.com",
             subtitleText: "Updated now",
             subtitleStyle: .info,

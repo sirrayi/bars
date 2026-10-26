@@ -40,8 +40,6 @@ struct WidgetLocalizationTests {
                 #expect(WidgetLaneCopy.caption(title: "Session", showUsed: true) ==
                     String(format: format, locale: locale, W("Session")))
                 #expect(W("Reset: %@", "MARKER").contains("MARKER"))
-                #expect(CompactMetricFormatter.costMetricLabel("30d API est. · not billed", provider: .codex) ==
-                    W("%@ API est. · not billed", W("%dd", 30)))
                 #expect(CompactMetricFormatter.costMetricLabel("Today", provider: .claude) ==
                     W("%@ cost", W("Today")))
                 #expect(burnFmtDuration(1500).contains("1"))
@@ -78,7 +76,7 @@ struct WidgetLocalizationTests {
             #expect(burnFmtDuration(1500) == "1d 1h")
             #expect(burnFmtDuration(61) == "1h 01m")
             #expect(burnWindowLabel(300) == "5-hour limit")
-            #expect(ProviderMarkLabel.text(for: .codex, isSelected: true) == "Codex, selected")
+            #expect(ProviderMarkLabel.text(for: .opencode, isSelected: true) == "OpenCode, selected")
         }
     }
 }

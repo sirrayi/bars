@@ -249,7 +249,6 @@ struct ClaudeWebBackgroundRecoveryTests {
                     cookieSource: .auto,
                     manualCookieHeader: nil,
                     desktopCookiesEnabled: true)),
-                fetcher: UsageFetcher(environment: [:]),
                 claudeFetcher: ClaudeUsageFetcher(browserDetection: detection),
                 browserDetection: detection)
             for token in ["sk-ant-desktop-first", "sk-ant-desktop-second"] {

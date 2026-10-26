@@ -193,30 +193,6 @@ struct CostProvenanceTests {
         #expect(month.meteredCostUSD == 4.5)
         #expect(month.provenance == .mixed)
     }
-
-    @Test
-    func `cached previous reports round-trip coverage counters`() throws {
-        let entry = CostUsageDailyReport.Entry(
-            date: "2026-07-16",
-            inputTokens: 10,
-            outputTokens: 2,
-            totalTokens: 12,
-            costUSD: nil,
-            modelsUsed: nil,
-            modelBreakdowns: nil,
-            unpricedRequestCount: 1,
-            unmeteredRequestCount: 2,
-            estimatedRequestCount: 3)
-        let cached = CostUsageCodexPreviousReport.Entry(entry)
-        let restored = cached.dailyReportValue
-        #expect(restored.unpricedRequestCount == 1)
-        #expect(restored.unmeteredRequestCount == 2)
-        #expect(restored.estimatedRequestCount == 3)
-        let data = try JSONEncoder().encode(cached)
-        let decoded = try JSONDecoder().decode(CostUsageCodexPreviousReport.Entry.self, from: data)
-        #expect(decoded.dailyReportValue.unmeteredRequestCount == 2)
-        #expect(decoded.dailyReportValue.estimatedRequestCount == 3)
-    }
 }
 
 struct CostUsageBucketTimeZoneTests {

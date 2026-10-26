@@ -111,7 +111,7 @@ final class CostUsageClaudeReportMemo: @unchecked Sendable {
         var sourceInventory: [String: CostUsageClaudeFileStamp]
         var reportKey: CostUsageClaudeReportMemoKey
         var report: CostUsageDailyReport
-        var hourly: [CostUsageCodexPreviousReport.HourlyEntry]?
+        var hourly: [CostUsageCachedReport.HourlyEntry]?
         var quotaSlices: QuotaSlices?
         var hasWindowScopedRows: Bool?
     }
@@ -128,7 +128,7 @@ final class CostUsageClaudeReportMemo: @unchecked Sendable {
             var values: [CostUsageTimedEntry] = []
             values.reserveCapacity(container.count ?? 0)
             while !container.isAtEnd {
-                let wire = try container.decode(CostUsageCodexPreviousReport.QuotaSlice.self)
+                let wire = try container.decode(CostUsageCachedReport.QuotaSlice.self)
                 #if DEBUG
                 CostUsageClaudeReportMemo.observeWireEntriesForTesting?(1)
                 #endif
@@ -140,7 +140,7 @@ final class CostUsageClaudeReportMemo: @unchecked Sendable {
         func encode(to encoder: Encoder) throws {
             var container = encoder.unkeyedContainer()
             for value in self.values {
-                let wire = CostUsageCodexPreviousReport.QuotaSlice(value)
+                let wire = CostUsageCachedReport.QuotaSlice(value)
                 #if DEBUG
                 CostUsageClaudeReportMemo.observeWireEntriesForTesting?(1)
                 #endif
@@ -240,7 +240,7 @@ final class CostUsageClaudeReportMemo: @unchecked Sendable {
             sourceInventory: [:],
             reportKey: entry.reportKey,
             report: entry.report,
-            hourly: entry.report.hourly.map(CostUsageCodexPreviousReport.HourlyEntry.init),
+            hourly: entry.report.hourly.map(CostUsageCachedReport.HourlyEntry.init),
             quotaSlices: QuotaSlices(values: entry.report.quotaSlices),
             hasWindowScopedRows: entry.hasWindowScopedRows)
         _ = try? CostUsageClaudeFragments.shared.save(

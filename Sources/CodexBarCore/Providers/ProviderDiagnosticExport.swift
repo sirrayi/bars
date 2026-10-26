@@ -310,7 +310,6 @@ public struct ProviderDiagnosticFetchAttempt: Codable, Sendable {
         case .oauth: "oauth"
         case .apiToken: "api"
         case .localProbe: "local"
-        case .webDashboard: "web"
         }
     }
 

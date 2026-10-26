@@ -189,7 +189,6 @@ struct ClaudeSyntheticPlaceholderNotificationTests {
         settings.statusChecksEnabled = false
         settings.sessionQuotaNotificationsEnabled = true
         return UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier)

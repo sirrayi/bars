@@ -48,37 +48,12 @@ struct UserFacingLocalizationCoverageTests {
                 ".value(\"Cap start\"",
                 ".value(\"Cap end\"",
             ],
-            "Sources/CodexBar/CreditsHistoryChartMenuView.swift": [
-                ".value(\"Day\"",
-                ".value(\"Credits used\"",
-                ".value(\"Cap start\"",
-                ".value(\"Cap end\"",
-                "Text(\"Total (30d):",
-                "\\(total) credits",
-                "\\(used) credits",
-            ],
             "Sources/CodexBar/PlanUtilizationHistoryChartMenuView.swift": [
                 ".value(\"Series\"",
                 ".value(\"Capacity Start\"",
                 ".value(\"Capacity End\"",
                 ".value(\"Utilization Start\"",
                 ".value(\"Utilization End\"",
-            ],
-            "Sources/CodexBar/PreferencesCodexAccountsSection.swift": [
-                "?? \"No system account\"",
-                "return \"Adding Account…\"",
-                "return \"Add Account\"",
-                "return \"Re-authenticating…\"",
-                "return \"Re-auth\"",
-                "ProviderSettingsSection(title: \"Accounts\")",
-                "Text(\"Active\")",
-                "Text(\"Choose which Codex account CodexBar should follow.\")",
-                "Text(\"Account\")",
-                "Text(\"No Codex accounts detected yet.\")",
-                "Text(\"System\")",
-                "Text(\"The default Codex account on this Mac.\")",
-                "Text(\"(System)\")",
-                "Button(\"Remove\")",
             ],
             "Sources/CodexBar/PreferencesProviderDetailView.swift": [
                 ".help(\"Refresh\")",
@@ -147,13 +122,6 @@ struct UserFacingLocalizationCoverageTests {
             ],
             "Sources/CodexBar/StatusItemController+CostMenuCard.swift": [
                 "static let costMenuTitle",
-            ],
-            "Sources/CodexBar/UsageBreakdownChartMenuView.swift": [
-                ".value(\"Day\"",
-                ".value(\"Credits used\"",
-                ".value(\"Service\"",
-                ".value(\"Cap start\"",
-                ".value(\"Cap end\"",
             ],
         ]
 

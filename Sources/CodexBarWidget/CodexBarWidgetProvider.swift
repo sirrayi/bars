@@ -4,13 +4,11 @@ import SwiftUI
 import WidgetKit
 
 enum ProviderChoice: String, AppEnum {
-    case codex
     case claude
     case devin
     case opencode
     case opencodego
     case deepseek
-    case pi
 
     static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Provider")
 
@@ -18,13 +16,11 @@ enum ProviderChoice: String, AppEnum {
     /// dictionary. WidgetProviderChoiceTests pins these titles to the descriptor registry.
     /// Provider-specific by design: AppIntents requires a compile-time provider display inventory.
     static let caseDisplayRepresentations: [ProviderChoice: DisplayRepresentation] = [
-        .codex: DisplayRepresentation(title: "Codex"),
         .claude: DisplayRepresentation(title: "Claude"),
         .devin: DisplayRepresentation(title: "Devin"),
         .opencode: DisplayRepresentation(title: "OpenCode"),
         .opencodego: DisplayRepresentation(title: "OpenCode Go"),
         .deepseek: DisplayRepresentation(title: "DeepSeek"),
-        .pi: DisplayRepresentation(title: "Pi"),
     ]
 
     var provider: UsageProvider {
@@ -55,11 +51,11 @@ struct ProviderSelectionIntent: AppIntent, WidgetConfigurationIntent {
     static let title: LocalizedStringResource = "Provider"
     static let description = IntentDescription("Select the provider to display in the widget.")
 
-    @Parameter(title: "Provider", default: .codex)
+    @Parameter(title: "Provider", default: .claude)
     var provider: ProviderChoice
 
     init() {
-        self.provider = .codex
+        self.provider = .claude
     }
 }
 
@@ -87,14 +83,14 @@ struct CompactMetricSelectionIntent: AppIntent, WidgetConfigurationIntent {
     static let title: LocalizedStringResource = "Provider + Metric"
     static let description = IntentDescription("Select the provider and metric to display.")
 
-    @Parameter(title: "Provider", default: .codex)
+    @Parameter(title: "Provider", default: .claude)
     var provider: ProviderChoice
 
     @Parameter(title: "Metric", default: .credits)
     var metric: CompactMetric
 
     init() {
-        self.provider = .codex
+        self.provider = .claude
         self.metric = .credits
     }
 }
@@ -123,7 +119,7 @@ struct CodexBarTimelineProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> CodexBarWidgetEntry {
         CodexBarWidgetEntry(
             date: Date(),
-            provider: .codex,
+            provider: .claude,
             snapshot: WidgetPreviewData.snapshot())
     }
 
@@ -154,7 +150,7 @@ struct CodexBarSwitcherTimelineProvider: TimelineProvider {
         let providers = Self.supportedProviders(from: snapshot)
         return CodexBarSwitcherEntry(
             date: Date(),
-            provider: providers.first ?? .codex,
+            provider: providers.first ?? .claude,
             availableProviders: providers,
             snapshot: snapshot)
     }
@@ -176,7 +172,7 @@ struct CodexBarSwitcherTimelineProvider: TimelineProvider {
         let snapshot = WidgetSnapshotStore.load() ?? WidgetPreviewData.emptySnapshot()
         let providers = Self.supportedProviders(from: snapshot)
         let stored = WidgetSelectionStore.loadSelectedProvider()
-        let selected = providers.first { $0.instanceID == stored } ?? providers.first ?? .codex
+        let selected = providers.first { $0.instanceID == stored } ?? providers.first ?? .claude
         if selected.instanceID != stored {
             WidgetSelectionStore.saveSelectedProvider(selected)
         }
@@ -196,7 +192,7 @@ struct CodexBarSwitcherTimelineProvider: TimelineProvider {
             }
             return provider
         }
-        return supported.isEmpty ? [.codex] : supported
+        return supported.isEmpty ? [.claude] : supported
     }
 }
 
@@ -204,7 +200,7 @@ struct CodexBarCompactTimelineProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> CodexBarCompactEntry {
         CodexBarCompactEntry(
             date: Date(),
-            provider: .codex,
+            provider: .claude,
             metric: .credits,
             snapshot: WidgetPreviewData.snapshot())
     }
@@ -254,7 +250,7 @@ enum WidgetPreviewData {
             resetsAt: now.addingTimeInterval(3 * 86400),
             resetDescription: "Resets in 3d")
         let entry = WidgetSnapshot.ProviderEntry(
-            provider: .codex,
+            provider: .claude,
             updatedAt: now,
             primary: primary,
             secondary: secondary,

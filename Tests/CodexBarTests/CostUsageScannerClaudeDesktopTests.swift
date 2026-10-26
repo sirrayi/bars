@@ -148,7 +148,6 @@ struct CostUsageScannerClaudeDesktopTests {
         #expect(!discovered.contains(decoyProjectsRoot.standardizedFileURL))
 
         var options = CostUsageScanner.Options(
-            codexSessionsRoot: nil,
             claudeProjectsRoots: discovered,
             cacheRoot: env.cacheRoot)
         options.refreshMinIntervalSeconds = 0
@@ -201,7 +200,6 @@ struct CostUsageScannerClaudeDesktopTests {
         #expect(discovered.contains(sharedProjectsRoot.standardizedFileURL))
 
         var options = CostUsageScanner.Options(
-            codexSessionsRoot: nil,
             claudeProjectsRoots: discovered,
             cacheRoot: env.cacheRoot)
         options.refreshMinIntervalSeconds = 0

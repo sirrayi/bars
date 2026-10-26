@@ -205,7 +205,7 @@ struct UsageStorePlanUtilizationTests {
 
         let model = PlanUtilizationHistoryChartMenuView._modelSnapshotForTesting(
             histories: histories,
-            provider: .codex)
+            provider: .opencode)
 
         #expect(model.visibleSeries == ["session:300", "weekly:10080"])
         #expect(model.selectedSeries == "session:300")
@@ -231,63 +231,10 @@ struct UsageStorePlanUtilizationTests {
 
         let model = PlanUtilizationHistoryChartMenuView._modelSnapshotForTesting(
             histories: histories,
-            provider: .codex)
+            provider: .opencode)
 
         #expect(model.visibleSeries == ["session:300", "weekly:10080"])
         #expect(model.selectedSeries == "session:300")
-    }
-
-    @MainActor
-    @Test
-    func `native chart shows monthly codex tab for a thirty day primary`() {
-        let histories = [
-            planSeries(name: .monthly, windowMinutes: 43200, entries: [
-                planEntry(at: Date(timeIntervalSince1970: 1_700_000_000), usedPercent: 55),
-            ]),
-            planSeries(name: .weekly, windowMinutes: 10080, entries: [
-                planEntry(at: Date(timeIntervalSince1970: 1_700_086_400), usedPercent: 5),
-            ]),
-        ]
-        let snapshot = UsageSnapshot(
-            primary: RateWindow(usedPercent: 55, windowMinutes: 43200, resetsAt: nil, resetDescription: nil),
-            secondary: RateWindow(usedPercent: 5, windowMinutes: 10080, resetsAt: nil, resetDescription: nil),
-            updatedAt: Date(timeIntervalSince1970: 1_700_000_000))
-
-        let model = PlanUtilizationHistoryChartMenuView._modelSnapshotForTesting(
-            histories: histories,
-            provider: .codex,
-            snapshot: snapshot)
-
-        #expect(model.visibleSeries == ["weekly:10080", "monthly:43200"])
-        #expect(model.selectedSeries == "weekly:10080")
-    }
-
-    @MainActor
-    @Test
-    func `native chart folds legacy thirty day session and weekly history into monthly`() {
-        let histories = [
-            planSeries(name: .session, windowMinutes: 43200, entries: [
-                planEntry(at: Date(timeIntervalSince1970: 1_700_000_000), usedPercent: 80),
-            ]),
-            planSeries(name: .weekly, windowMinutes: 43200, entries: [
-                planEntry(at: Date(timeIntervalSince1970: 1_700_086_400), usedPercent: 70),
-            ]),
-            planSeries(name: .monthly, windowMinutes: 43200, entries: [
-                planEntry(at: Date(timeIntervalSince1970: 1_700_172_800), usedPercent: 55),
-            ]),
-        ]
-        let snapshot = UsageSnapshot(
-            primary: RateWindow(usedPercent: 55, windowMinutes: 43200, resetsAt: nil, resetDescription: nil),
-            secondary: RateWindow(usedPercent: 5, windowMinutes: 10080, resetsAt: nil, resetDescription: nil),
-            updatedAt: Date(timeIntervalSince1970: 1_700_000_000))
-
-        let model = PlanUtilizationHistoryChartMenuView._modelSnapshotForTesting(
-            histories: histories,
-            provider: .codex,
-            snapshot: snapshot)
-
-        #expect(model.visibleSeries == ["monthly:43200"])
-        #expect(model.selectedSeries == "monthly:43200")
     }
 
     @MainActor
@@ -376,7 +323,7 @@ struct UsageStorePlanUtilizationTests {
         let model = PlanUtilizationHistoryChartMenuView._modelSnapshotForTesting(
             selectedSeriesRawValue: "session:300",
             histories: histories,
-            provider: .codex,
+            provider: .opencode,
             referenceDate: thirdBoundary)
 
         #expect(model.pointCount == 3)
@@ -414,7 +361,7 @@ struct UsageStorePlanUtilizationTests {
         let model = PlanUtilizationHistoryChartMenuView._modelSnapshotForTesting(
             selectedSeriesRawValue: "session:300",
             histories: histories,
-            provider: .codex,
+            provider: .opencode,
             referenceDate: thirdBoundary)
 
         #expect(model.axisIndexes == [0])
@@ -460,7 +407,7 @@ struct UsageStorePlanUtilizationTests {
         let model = PlanUtilizationHistoryChartMenuView._modelSnapshotForTesting(
             selectedSeriesRawValue: "session:300",
             histories: histories,
-            provider: .codex,
+            provider: .opencode,
             referenceDate: fourthBoundary)
 
         #expect(model.axisIndexes == [0])
@@ -506,7 +453,7 @@ struct UsageStorePlanUtilizationTests {
         let model = PlanUtilizationHistoryChartMenuView._modelSnapshotForTesting(
             selectedSeriesRawValue: "session:300",
             histories: histories,
-            provider: .codex,
+            provider: .opencode,
             referenceDate: fourthBoundary)
 
         #expect(model.axisIndexes == [0, 10])
@@ -525,7 +472,7 @@ struct UsageStorePlanUtilizationTests {
         let detail = PlanUtilizationHistoryChartMenuView._detailLineForTesting(
             selectedSeriesRawValue: "session:300",
             histories: histories,
-            provider: .codex,
+            provider: .opencode,
             referenceDate: boundary.addingTimeInterval(-1))
 
         #expect(detail.contains("48% used"))
@@ -547,7 +494,7 @@ struct UsageStorePlanUtilizationTests {
         let detail = PlanUtilizationHistoryChartMenuView._detailLineForTesting(
             selectedSeriesRawValue: "session:300",
             histories: histories,
-            provider: .codex,
+            provider: .opencode,
             referenceDate: boundary.addingTimeInterval(5 * 60 * 60))
 
         #expect(detail.contains(": -"))
@@ -566,7 +513,7 @@ struct UsageStorePlanUtilizationTests {
         let detail = PlanUtilizationHistoryChartMenuView._detailLineForTesting(
             selectedSeriesRawValue: "session:300",
             histories: histories,
-            provider: .codex,
+            provider: .opencode,
             referenceDate: boundary.addingTimeInterval(-1))
 
         #expect(detail.contains("0% used"))
@@ -596,7 +543,7 @@ struct UsageStorePlanUtilizationTests {
         let detail = PlanUtilizationHistoryChartMenuView._detailLineForTesting(
             selectedSeriesRawValue: "session:300",
             histories: histories,
-            provider: .codex,
+            provider: .opencode,
             referenceDate: boundary.addingTimeInterval(-1))
 
         #expect(detail.contains(" am") || detail.contains(" pm"))
@@ -627,7 +574,7 @@ struct UsageStorePlanUtilizationTests {
         let detail = PlanUtilizationHistoryChartMenuView._detailLineForTesting(
             selectedSeriesRawValue: "weekly:10080",
             histories: histories,
-            provider: .codex,
+            provider: .opencode,
             referenceDate: boundary.addingTimeInterval(-1))
 
         #expect(detail.contains(" am") || detail.contains(" pm"))
@@ -649,52 +596,17 @@ struct UsageStorePlanUtilizationTests {
 
     @MainActor
     @Test
-    func `plan history records thirty day codex window as monthly series`() async {
-        let store = Self.makeStore()
-        let now = Date(timeIntervalSince1970: 1_800_000_000)
-        let snapshot = UsageSnapshot(
-            primary: RateWindow(
-                usedPercent: 55,
-                windowMinutes: 43200,
-                resetsAt: now.addingTimeInterval(24 * 86400),
-                resetDescription: nil),
-            secondary: RateWindow(
-                usedPercent: 5,
-                windowMinutes: 10080,
-                resetsAt: now.addingTimeInterval(7 * 86400),
-                resetDescription: nil),
-            updatedAt: now,
-            identity: ProviderIdentitySnapshot(
-                providerID: .codex,
-                accountEmail: "codex@example.com",
-                accountOrganization: nil,
-                loginMethod: "plus"))
-        store._setSnapshotForTesting(snapshot, provider: .codex)
-
-        await store.recordPlanUtilizationHistorySample(
-            provider: .codex,
-            snapshot: snapshot,
-            now: now)
-
-        let histories = store.planUtilizationHistory(for: .codex)
-        #expect(histories.contains { $0.name == .monthly && $0.windowMinutes == 43200 })
-        #expect(histories.contains { $0.name == .weekly && $0.windowMinutes == 10080 })
-        #expect(!histories.contains { $0.name == .session })
-    }
-
-    @MainActor
-    @Test
     func `plan history selects current account bucket`() throws {
         let store = Self.makeStore()
-        let aliceSnapshot = Self.makeSnapshot(provider: .codex, email: "alice@example.com")
-        let bobSnapshot = Self.makeSnapshot(provider: .codex, email: "bob@example.com")
+        let aliceSnapshot = Self.makeSnapshot(provider: .claude, email: "alice@example.com")
+        let bobSnapshot = Self.makeSnapshot(provider: .claude, email: "bob@example.com")
         let aliceKey = try #require(
             UsageStore._planUtilizationAccountKeyForTesting(
-                provider: .codex,
+                provider: .claude,
                 snapshot: aliceSnapshot))
         let bobKey = try #require(
             UsageStore._planUtilizationAccountKeyForTesting(
-                provider: .codex,
+                provider: .claude,
                 snapshot: bobSnapshot))
 
         let bootstrap = planSeries(name: .session, windowMinutes: 300, entries: [
@@ -707,22 +619,22 @@ struct UsageStorePlanUtilizationTests {
             planEntry(at: Date(timeIntervalSince1970: 1_700_086_400), usedPercent: 50),
         ])
 
-        store.planUtilizationHistory[.codex] = PlanUtilizationHistoryBuckets(
+        store.planUtilizationHistory[.claude] = PlanUtilizationHistoryBuckets(
             unscoped: [bootstrap],
             accounts: [
                 aliceKey: [aliceWeekly],
                 bobKey: [bobWeekly],
             ])
 
-        store._setSnapshotForTesting(aliceSnapshot, provider: .codex)
-        let aliceHistory = store.planUtilizationHistory(for: .codex)
-        #expect(store.planUtilizationHistory[.codex]?.preferredAccountKey == aliceKey)
+        store._setSnapshotForTesting(aliceSnapshot, provider: .claude)
+        let aliceHistory = store.planUtilizationHistory(for: .claude)
+        #expect(store.planUtilizationHistory[.claude]?.preferredAccountKey == aliceKey)
         #expect(aliceHistory == [aliceWeekly])
-        #expect(store.planUtilizationHistory[.codex]?.unscoped == [bootstrap])
+        #expect(store.planUtilizationHistory[.claude]?.unscoped == [bootstrap])
 
-        store._setSnapshotForTesting(bobSnapshot, provider: .codex)
-        let bobHistory = store.planUtilizationHistory(for: .codex)
-        #expect(store.planUtilizationHistory[.codex]?.preferredAccountKey == bobKey)
+        store._setSnapshotForTesting(bobSnapshot, provider: .claude)
+        let bobHistory = store.planUtilizationHistory(for: .claude)
+        #expect(store.planUtilizationHistory[.claude]?.preferredAccountKey == bobKey)
         #expect(bobHistory == [bobWeekly])
     }
 
@@ -753,26 +665,26 @@ struct UsageStorePlanUtilizationTests {
     @Test
     func `plan utilization menu stays visible with stored snapshot even during refresh`() throws {
         let store = Self.makeStore()
-        let codexSnapshot = Self.makeSnapshot(provider: .codex, email: "alice@example.com")
+        let codexSnapshot = Self.makeSnapshot(provider: .opencode, email: "alice@example.com")
         let codexKey = try #require(
             UsageStore._planUtilizationAccountKeyForTesting(
-                provider: .codex,
+                provider: .opencode,
                 snapshot: codexSnapshot))
         let weekly = planSeries(name: .weekly, windowMinutes: 10080, entries: [
             planEntry(at: Date(timeIntervalSince1970: 1_700_000_000), usedPercent: 64),
         ])
-        store.planUtilizationHistory[.codex] = PlanUtilizationHistoryBuckets(
+        store.planUtilizationHistory[.opencode] = PlanUtilizationHistoryBuckets(
             preferredAccountKey: codexKey,
             accounts: [
                 codexKey: [weekly],
             ])
-        store.refreshingProviders.insert(.codex)
-        store._setSnapshotForTesting(codexSnapshot, provider: .codex)
+        store.refreshingProviders.insert(.opencode)
+        store._setSnapshotForTesting(codexSnapshot, provider: .opencode)
 
-        #expect(!store.shouldShowRefreshingMenuCard(for: .codex))
-        #expect(!store.shouldHidePlanUtilizationMenuItem(for: .codex))
-        let histories = store.planUtilizationHistory(for: .codex)
-        #expect(store.planUtilizationHistory[.codex]?.preferredAccountKey == codexKey)
+        #expect(!store.shouldShowRefreshingMenuCard(for: .opencode))
+        #expect(!store.shouldHidePlanUtilizationMenuItem(for: .opencode))
+        let histories = store.planUtilizationHistory(for: .opencode)
+        #expect(store.planUtilizationHistory[.opencode]?.preferredAccountKey == codexKey)
         #expect(histories == [weekly])
     }
 
@@ -780,11 +692,11 @@ struct UsageStorePlanUtilizationTests {
     @Test
     func `codex plan utilization menu hides during provider only refresh without snapshot`() {
         let store = Self.makeStore()
-        store.refreshingProviders.insert(.codex)
-        store._setSnapshotForTesting(nil, provider: .codex)
+        store.refreshingProviders.insert(.opencode)
+        store._setSnapshotForTesting(nil, provider: .opencode)
 
-        #expect(store.shouldShowRefreshingMenuCard(for: .codex))
-        #expect(store.shouldHidePlanUtilizationMenuItem(for: .codex))
+        #expect(store.shouldShowRefreshingMenuCard(for: .opencode))
+        #expect(store.shouldHidePlanUtilizationMenuItem(for: .opencode))
     }
 
     @MainActor
@@ -806,18 +718,18 @@ struct UsageStorePlanUtilizationTests {
                 resetDescription: "7d"),
             updatedAt: Date(),
             identity: ProviderIdentitySnapshot(
-                providerID: .codex,
+                providerID: .claude,
                 accountEmail: "alice@example.com",
                 accountOrganization: nil,
                 loginMethod: "plus"))
-        store._setSnapshotForTesting(snapshot, provider: .codex)
+        store._setSnapshotForTesting(snapshot, provider: .claude)
 
         await store.recordPlanUtilizationHistorySample(
-            provider: .codex,
+            provider: .claude,
             snapshot: snapshot,
             now: Date(timeIntervalSince1970: 1_700_000_000))
 
-        let histories = store.planUtilizationHistory(for: .codex)
+        let histories = store.planUtilizationHistory(for: .claude)
         #expect(findSeries(histories, name: .session, windowMinutes: 300)?.entries.last?.usedPercent == 100)
         #expect(findSeries(histories, name: .session, windowMinutes: 300)?.entries.last?.resetsAt == primaryReset)
         #expect(findSeries(histories, name: .weekly, windowMinutes: 10080)?.entries.last?.usedPercent == 0)
@@ -841,57 +753,20 @@ struct UsageStorePlanUtilizationTests {
                 resetDescription: nil),
             updatedAt: Date(),
             identity: ProviderIdentitySnapshot(
-                providerID: .codex,
+                providerID: .claude,
                 accountEmail: "alice@example.com",
                 accountOrganization: nil,
                 loginMethod: "plus"))
-        store._setSnapshotForTesting(snapshot, provider: .codex)
+        store._setSnapshotForTesting(snapshot, provider: .claude)
 
         await store.recordPlanUtilizationHistorySample(
-            provider: .codex,
+            provider: .claude,
             snapshot: snapshot,
             now: Date(timeIntervalSince1970: 1_700_000_000))
 
-        let histories = store.planUtilizationHistory(for: .codex)
+        let histories = store.planUtilizationHistory(for: .claude)
         #expect(findSeries(histories, name: .session, windowMinutes: 0) == nil)
         #expect(findSeries(histories, name: .weekly, windowMinutes: 10080)?.entries.last?.usedPercent == 44)
-    }
-
-    @MainActor
-    @Test
-    func `record plan history keeps semantic codex lanes when durations drift`() async {
-        let store = Self.makeStore()
-        let primaryReset = Date(timeIntervalSince1970: 1_710_000_000)
-        let secondaryReset = Date(timeIntervalSince1970: 1_710_086_400)
-        let snapshot = UsageSnapshot(
-            primary: RateWindow(
-                usedPercent: 18,
-                windowMinutes: 360,
-                resetsAt: primaryReset,
-                resetDescription: "6h"),
-            secondary: RateWindow(
-                usedPercent: 42,
-                windowMinutes: 11040,
-                resetsAt: secondaryReset,
-                resetDescription: "7.67d"),
-            updatedAt: Date(),
-            identity: ProviderIdentitySnapshot(
-                providerID: .codex,
-                accountEmail: "alice@example.com",
-                accountOrganization: nil,
-                loginMethod: "plus"))
-        store._setSnapshotForTesting(snapshot, provider: .codex)
-
-        await store.recordPlanUtilizationHistorySample(
-            provider: .codex,
-            snapshot: snapshot,
-            now: Date(timeIntervalSince1970: 1_700_000_000))
-
-        let histories = store.planUtilizationHistory(for: .codex)
-        #expect(findSeries(histories, name: .session, windowMinutes: 360)?.entries.last?.usedPercent == 18)
-        #expect(findSeries(histories, name: .session, windowMinutes: 360)?.entries.last?.resetsAt == primaryReset)
-        #expect(findSeries(histories, name: .weekly, windowMinutes: 11040)?.entries.last?.usedPercent == 42)
-        #expect(findSeries(histories, name: .weekly, windowMinutes: 11040)?.entries.last?.resetsAt == secondaryReset)
     }
 
     @MainActor
@@ -961,8 +836,8 @@ struct UsageStorePlanUtilizationTests {
     @Test
     func `concurrent plan history writes coalesce within single hour bucket per series`() async throws {
         let store = Self.makeStore()
-        let snapshot = Self.makeSnapshot(provider: .codex, email: "alice@example.com")
-        store._setSnapshotForTesting(snapshot, provider: .codex)
+        let snapshot = Self.makeSnapshot(provider: .claude, email: "alice@example.com")
+        store._setSnapshotForTesting(snapshot, provider: .claude)
         let calendar = Calendar(identifier: .gregorian)
         let hourStart = try #require(calendar.date(from: DateComponents(
             timeZone: TimeZone(secondsFromGMT: 0),
@@ -980,14 +855,14 @@ struct UsageStorePlanUtilizationTests {
             for writeTime in writeTimes {
                 group.addTask {
                     await store.recordPlanUtilizationHistorySample(
-                        provider: .codex,
+                        provider: .claude,
                         snapshot: snapshot,
                         now: writeTime)
                 }
             }
         }
 
-        let histories = try #require(store.planUtilizationHistory[.codex]?.accounts.values.first)
+        let histories = try #require(store.planUtilizationHistory[.claude]?.accounts.values.first)
         #expect(findSeries(histories, name: .session, windowMinutes: 300)?.entries.count == 1)
         #expect(findSeries(histories, name: .weekly, windowMinutes: 10080)?.entries.count == 1)
     }
@@ -999,7 +874,7 @@ struct UsageStorePlanUtilizationTests {
         let directoryURL = root
             .appendingPathComponent("com.steipete.codexbar", isDirectory: true)
             .appendingPathComponent("history", isDirectory: true)
-        let providerURL = directoryURL.appendingPathComponent("codex.json")
+        let providerURL = directoryURL.appendingPathComponent("opencode.json")
         let store = PlanUtilizationHistoryStore(directoryURL: directoryURL)
         try FileManager.default.createDirectory(
             at: directoryURL,
@@ -1025,7 +900,7 @@ struct UsageStorePlanUtilizationTests {
         let directoryURL = root
             .appendingPathComponent("com.steipete.codexbar", isDirectory: true)
             .appendingPathComponent("history", isDirectory: true)
-        let providerURL = directoryURL.appendingPathComponent("codex.json")
+        let providerURL = directoryURL.appendingPathComponent("opencode.json")
         let store = PlanUtilizationHistoryStore(directoryURL: directoryURL)
         try FileManager.default.createDirectory(
             at: directoryURL,
@@ -1063,7 +938,7 @@ struct UsageStorePlanUtilizationTests {
         try encoder.encode(document).write(to: providerURL, options: Data.WritingOptions.atomic)
 
         let loaded = store.load()
-        let loadedBuckets = try #require(loaded[.codex])
+        let loadedBuckets = try #require(loaded[.opencode])
         #expect(loadedBuckets.unscoped == [validUnscoped])
         #expect(loadedBuckets.accounts == ["alice": [validAccount]])
 
@@ -1103,10 +978,10 @@ struct UsageStorePlanUtilizationTests {
             ])
         buckets.setSessionEquivalentWindowPairIdentity("session:standard|weekly:standard", for: "alice")
 
-        store.save([.codex: buckets])
+        store.save([.opencode: buckets])
         let loaded = store.load()
 
-        #expect(loaded == [.codex: buckets])
+        #expect(loaded == [.opencode: buckets])
     }
 
     @Test
@@ -1116,17 +991,17 @@ struct UsageStorePlanUtilizationTests {
         let directoryURL = root
             .appendingPathComponent("com.steipete.codexbar", isDirectory: true)
             .appendingPathComponent("history", isDirectory: true)
-        let providerURL = directoryURL.appendingPathComponent("codex.json")
+        let providerURL = directoryURL.appendingPathComponent("opencode.json")
         let store = PlanUtilizationHistoryStore(directoryURL: directoryURL)
         let buckets = Self.persistedBuckets(usedPercent: 12)
 
-        store.save([.codex: buckets])
+        store.save([.opencode: buckets])
         try FileManager.default.setAttributes(
             [.modificationDate: Date(timeIntervalSince1970: 1_600_000_000)],
             ofItemAtPath: providerURL.path)
         let before = try Self.persistedFileState(at: providerURL)
 
-        store.save([.codex: buckets])
+        store.save([.opencode: buckets])
         let after = try Self.persistedFileState(at: providerURL)
 
         #expect(after == before)
@@ -1139,26 +1014,26 @@ struct UsageStorePlanUtilizationTests {
         let directoryURL = root
             .appendingPathComponent("com.steipete.codexbar", isDirectory: true)
             .appendingPathComponent("history", isDirectory: true)
-        let codexURL = directoryURL.appendingPathComponent("codex.json")
+        let codexURL = directoryURL.appendingPathComponent("opencode.json")
         let claudeURL = directoryURL.appendingPathComponent("claude.json")
         let store = PlanUtilizationHistoryStore(directoryURL: directoryURL)
         let initialCodex = Self.persistedBuckets(usedPercent: 12)
         let changedCodex = Self.persistedBuckets(usedPercent: 64)
         let claude = Self.persistedBuckets(usedPercent: 37)
 
-        store.save([.codex: initialCodex, .claude: claude])
+        store.save([.opencode: initialCodex, .claude: claude])
         try FileManager.default.setAttributes(
             [.modificationDate: Date(timeIntervalSince1970: 1_600_000_000)],
             ofItemAtPath: claudeURL.path)
         let codexBefore = try Self.persistedFileState(at: codexURL)
         let claudeBefore = try Self.persistedFileState(at: claudeURL)
 
-        store.save([.codex: changedCodex, .claude: claude])
+        store.save([.opencode: changedCodex, .claude: claude])
 
         let loaded = store.load()
         let codexAfter = try Self.persistedFileState(at: codexURL)
         let claudeAfter = try Self.persistedFileState(at: claudeURL)
-        #expect(loaded[.codex] == changedCodex)
+        #expect(loaded[.opencode] == changedCodex)
         #expect(loaded[.claude] == claude)
         #expect(codexAfter.data != codexBefore.data)
         #expect(claudeAfter == claudeBefore)
@@ -1171,10 +1046,10 @@ struct UsageStorePlanUtilizationTests {
         let directoryURL = root
             .appendingPathComponent("com.steipete.codexbar", isDirectory: true)
             .appendingPathComponent("history", isDirectory: true)
-        let providerURL = directoryURL.appendingPathComponent("codex.json")
+        let providerURL = directoryURL.appendingPathComponent("opencode.json")
         let store = PlanUtilizationHistoryStore(directoryURL: directoryURL)
 
-        store.save([.codex: Self.persistedBuckets(usedPercent: 12)])
+        store.save([.opencode: Self.persistedBuckets(usedPercent: 12)])
         #expect(FileManager.default.fileExists(atPath: providerURL.path))
 
         store.save([:])
@@ -1189,7 +1064,7 @@ struct UsageStorePlanUtilizationTests {
         let directoryURL = root
             .appendingPathComponent("com.steipete.codexbar", isDirectory: true)
             .appendingPathComponent("history", isDirectory: true)
-        let providerURL = directoryURL.appendingPathComponent("codex.json")
+        let providerURL = directoryURL.appendingPathComponent("opencode.json")
         let store = PlanUtilizationHistoryStore(directoryURL: directoryURL)
         let buckets = Self.persistedBuckets(usedPercent: 12)
         let malformed = Data("{not-json".utf8)
@@ -1198,11 +1073,11 @@ struct UsageStorePlanUtilizationTests {
             withIntermediateDirectories: true)
         try malformed.write(to: providerURL)
 
-        store.save([.codex: buckets])
+        store.save([.opencode: buckets])
         let rewritten = try Data(contentsOf: providerURL)
 
         #expect(rewritten != malformed)
-        #expect(store.load() == [.codex: buckets])
+        #expect(store.load() == [.opencode: buckets])
     }
 }
 
@@ -1257,34 +1132,20 @@ extension UsageStorePlanUtilizationTests {
         let configStore = testConfigStore(suiteName: suiteName)
         let planHistoryStore = testPlanUtilizationHistoryStore(suiteName: suiteName)
         let temporaryRoot = FileManager.default.temporaryDirectory.standardizedFileURL.path
-        let managedStoreURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("\(suiteName)-managed-codex-accounts.json")
         precondition(configStore.fileURL.standardizedFileURL.path.hasPrefix(temporaryRoot))
         precondition(configStore.fileURL.standardizedFileURL != CodexBarConfigStore.defaultURL().standardizedFileURL)
         if let historyURL = planHistoryStore.directoryURL?.standardizedFileURL {
             precondition(historyURL.path.hasPrefix(temporaryRoot))
-        }
-        let managedStore = FileManagedCodexAccountStore(fileURL: managedStoreURL)
-        try? FileManager.default.removeItem(at: managedStoreURL)
-        do {
-            try managedStore.storeAccounts(ManagedCodexAccountSet(
-                version: FileManagedCodexAccountStore.currentVersion,
-                accounts: []))
-        } catch {
-            fatalError("Failed to seed isolated managed Codex account store: \(error)")
         }
         let isolatedSettings = SettingsStore(
             userDefaults: defaults,
             configStore: configStore,
             tokenAccountStore: InMemoryTokenAccountStore())
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: isolatedSettings,
             planUtilizationHistoryStore: planHistoryStore,
             startupBehavior: .testing)
-        isolatedSettings._test_managedCodexAccountStoreURL = managedStoreURL
-        isolatedSettings.codexActiveSource = .liveSystem
         // Cancel the background plan-utilization decode so it cannot race the
         // explicit empty assignment below. Production paths still load on the
         // utility queue; this only short-circuits the test setup.

@@ -38,7 +38,7 @@ struct StatusMenuSwitcherTrackingTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .claude
         settings.mergedMenuLastSelectedWasOverview = false
 
         let registry = ProviderRegistry.shared
@@ -47,15 +47,14 @@ struct StatusMenuSwitcherTrackingTests {
             settings.setProviderEnabled(
                 provider: provider,
                 metadata: metadata,
-                enabled: provider == .codex || provider == .claude)
+                enabled: provider == .claude || provider == .opencode)
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system,
@@ -77,7 +76,7 @@ struct StatusMenuSwitcherTrackingTests {
         defer { controller._test_openMenuRebuildObserver = nil }
 
         #expect(controller.handleProviderSwitcherTrackingEvent(mouseDown, menu: menu))
-        #expect(settings.selectedMenuProvider == .codex)
+        #expect(settings.selectedMenuProvider == .claude)
         #expect(controller.providerSwitcherPointerInteractionMenuID == ObjectIdentifier(menu))
         #expect(controller.pendingProviderSwitcherPointerRebuild == nil)
 
@@ -87,7 +86,7 @@ struct StatusMenuSwitcherTrackingTests {
         #expect(rebuildCount == 0)
 
         #expect(controller.handleProviderSwitcherTrackingEvent(mouseUp, menu: menu))
-        #expect(settings.selectedMenuProvider == .claude)
+        #expect(settings.selectedMenuProvider == .opencode)
         for _ in 0..<100 where rebuildCount == 0 {
             await Task.yield()
             try? await Task.sleep(for: .milliseconds(5))
@@ -112,7 +111,7 @@ struct StatusMenuSwitcherTrackingTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
+        settings.selectedMenuProvider = .claude
         settings.mergedMenuLastSelectedWasOverview = false
 
         let registry = ProviderRegistry.shared
@@ -121,15 +120,14 @@ struct StatusMenuSwitcherTrackingTests {
             settings.setProviderEnabled(
                 provider: provider,
                 metadata: metadata,
-                enabled: provider == .codex || provider == .claude)
+                enabled: provider == .claude || provider == .opencode)
         }
 
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system,
@@ -152,7 +150,7 @@ struct StatusMenuSwitcherTrackingTests {
 
         #expect(controller.handleProviderSwitcherTrackingEvent(mouseDown, menu: menu))
         #expect(controller.handleProviderSwitcherTrackingEvent(mouseUpElsewhere, menu: menu))
-        #expect(settings.selectedMenuProvider == .codex)
+        #expect(settings.selectedMenuProvider == .claude)
         #expect(rebuildCount == 0)
         #expect(controller.providerSwitcherPointerInteractionMenuID == nil)
         #expect(controller.pendingProviderSwitcherPointerRebuild == nil)
@@ -165,14 +163,12 @@ struct StatusMenuSwitcherTrackingTests {
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
 
-        let fetcher = UsageFetcher()
         let controller = StatusItemController(
             store: UsageStore(
-                fetcher: fetcher,
                 browserDetection: BrowserDetection(cacheTTL: 0),
                 settings: settings),
             settings: settings,
-            account: fetcher.loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: .system)
@@ -180,8 +176,8 @@ struct StatusMenuSwitcherTrackingTests {
 
         let menu = NSMenu()
         let switcher = ProviderSwitcherView(
-            providers: [.codex, .claude],
-            selected: .provider(.codex),
+            providers: [.claude, .opencode],
+            selected: .provider(.claude),
             includesOverview: true,
             width: 320,
             showsIcons: false,

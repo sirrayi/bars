@@ -195,7 +195,7 @@ struct WidgetTokenOwnerTests {
         #expect(snapshots[1].identity?.widgetAccountOwnerID == "verified-owner")
         let decoded = try JSONDecoder().decode(ProviderIdentitySnapshot.self, from: encoded[1])
         #expect(decoded.widgetAccountOwnerID == nil)
-        #expect(snapshots[1].identity?.scoped(to: UsageProvider.codex).widgetAccountOwnerID == nil)
+        #expect(snapshots[1].identity?.scoped(to: UsageProvider.opencode).widgetAccountOwnerID == nil)
     }
 
     @Test
@@ -254,7 +254,6 @@ struct WidgetTokenOwnerTests {
         settings.accountWidgetsEnabled = true
         settings.addTokenAccount(provider: .claude, label: "Private Work", token: "fixture-token-work")
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -329,7 +328,6 @@ struct WidgetTokenOwnerTests {
 
         settings.hidePersonalInfo = true
         let restarted = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,

@@ -169,8 +169,6 @@ extension UsageMenuCardView.Model {
     }
 
     static func creditsProgressPercent(credits: CreditsSnapshot?) -> Double? {
-        guard credits?.hasWorkspaceBalance != true else { return nil }
-        if let limit = credits?.codexCreditLimit { return limit.remainingPercent }
         guard let balance = credits?.displayRemaining, let scale = self.fallbackCreditsScale(credits: credits) else {
             return nil
         }
@@ -178,10 +176,6 @@ extension UsageMenuCardView.Model {
     }
 
     static func creditsScaleText(credits: CreditsSnapshot?) -> String? {
-        guard credits?.hasWorkspaceBalance != true else { return nil }
-        if let limit = credits?.codexCreditLimit {
-            return L("of %@", UsageFormatter.creditsNumberString(from: limit.limit))
-        }
         guard let scale = self.fallbackCreditsScale(credits: credits) else { return nil }
         let number = Int(exactly: scale).map(UsageFormatter.tokenCountString)
             ?? UsageFormatter.creditsNumberString(from: scale)
@@ -190,21 +184,8 @@ extension UsageMenuCardView.Model {
 
     private static func fallbackCreditsScale(credits: CreditsSnapshot?) -> Double? {
         guard let balance = credits?.displayRemaining, balance.isFinite else { return nil }
-        let maximum = max(balance, credits?.codexCreditLimit?.limit ?? 0)
-        let exponent = maximum > 0 ? floor(log10(maximum)) + 1 : 0
+        let exponent = balance > 0 ? floor(log10(balance)) + 1 : 0
         return min(Double.greatestFiniteMagnitude, pow(10, exponent))
-    }
-
-    static func codexCreditLimitDetail(credits: CreditsSnapshot?, now: Date) -> String? {
-        guard credits?.hasWorkspaceBalance != true else { return nil }
-        guard let limit = credits?.codexCreditLimit else { return nil }
-        var parts = [
-            L("%@ used", UsageFormatter.creditsNumberString(from: limit.used)),
-        ]
-        if let resetsAt = limit.resetsAt {
-            parts.append(L("resets %@", UsageFormatter.resetDescription(from: resetsAt, now: now)))
-        }
-        return parts.joined(separator: " · ")
     }
 
     static func tokenUsageSection(

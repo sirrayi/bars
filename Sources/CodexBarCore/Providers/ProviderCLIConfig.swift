@@ -28,7 +28,6 @@ public struct ProviderCLIConfig: Sendable {
     public let versionDetector: (@Sendable (BrowserDetection) -> String?)?
     public let supportsCostCommand: Bool
     public let prefersBinaryLocatorForWhich: Bool
-    public let ttyStatusCommand: String?
     public let ttyLaunch: ProviderTTYLaunchConfig?
     private let browserSupportExemption: BrowserSupportExemption
 
@@ -39,7 +38,6 @@ public struct ProviderCLIConfig: Sendable {
         versionDetector: (@Sendable (BrowserDetection) -> String?)?,
         supportsCostCommand: Bool = false,
         prefersBinaryLocatorForWhich: Bool = false,
-        ttyStatusCommand: String? = nil,
         ttyLaunch: ProviderTTYLaunchConfig? = nil,
         browserSupportExemption: @escaping BrowserSupportExemption = { _, _, _ in false })
     {
@@ -49,7 +47,6 @@ public struct ProviderCLIConfig: Sendable {
         self.versionDetector = versionDetector
         self.supportsCostCommand = supportsCostCommand
         self.prefersBinaryLocatorForWhich = prefersBinaryLocatorForWhich
-        self.ttyStatusCommand = ttyStatusCommand
         self.ttyLaunch = ttyLaunch
         self.browserSupportExemption = browserSupportExemption
     }

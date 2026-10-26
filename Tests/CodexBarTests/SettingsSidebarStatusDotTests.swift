@@ -106,13 +106,12 @@ struct SettingsSidebarStatusDotTests {
         let settings = testSettingsStore(suiteName: #function, userDefaults: InMemoryUserDefaults())
         settings.statusChecksEnabled = true
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
             environmentBase: [:])
         let renderer = ImageRenderer(content: SettingsSidebarProviderRow(
-            provider: .codex,
+            provider: .claude,
             store: store,
             isEnabled: .constant(true))
             .frame(width: 240)

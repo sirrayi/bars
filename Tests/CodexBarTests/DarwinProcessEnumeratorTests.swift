@@ -48,7 +48,7 @@ struct DarwinProcessEnumeratorTests {
         #expect(DarwinProcessEnumerator.parseProcArgs2Arguments(data) == [
             "/usr/local/bin/omp", "", "--profile", "work",
         ])
-        #expect(DarwinProcessEnumerator.parseProcArgs2Environment(data) == [
+        #expect(DarwinProcessEnumerator.parseProcArgs2Environment(data, names: ["HOME", "OMP_PROFILE"]) == [
             "HOME": "/synthetic/home", "OMP_PROFILE": "work",
         ])
         #expect(DarwinProcessEnumerator.parseProcArgs2Arguments(data)?.contains("HOME=/synthetic/home") == false)
@@ -57,16 +57,16 @@ struct DarwinProcessEnumeratorTests {
     @Test
     func `proc args selector environment distinguishes omitted empty and truncated evidence`() {
         let empty = Self.procArgsData(arguments: ["pi"])
-        #expect(DarwinProcessEnumerator.parseProcArgs2Environment(empty) == nil)
+        #expect(DarwinProcessEnumerator.parseProcArgs2Environment(empty, names: ["HOME", "OMP_PROFILE"]) == nil)
         var paddedEmpty = empty
         paddedEmpty.append(contentsOf: [0, 0])
-        #expect(DarwinProcessEnumerator.parseProcArgs2Environment(paddedEmpty) == nil)
+        #expect(DarwinProcessEnumerator.parseProcArgs2Environment(paddedEmpty, names: ["HOME", "OMP_PROFILE"]) == nil)
         let knownEmpty = Self.procArgsData(arguments: ["pi"], environment: ["UNRELATED=value"])
-        #expect(DarwinProcessEnumerator.parseProcArgs2Environment(knownEmpty) == [:])
+        #expect(DarwinProcessEnumerator.parseProcArgs2Environment(knownEmpty, names: ["HOME", "OMP_PROFILE"]) == [:])
         var truncated = Self.procArgsData(arguments: ["pi"], environment: ["HOME=/synthetic/home"])
         truncated.removeLast()
         #expect(DarwinProcessEnumerator.parseProcArgs2Arguments(truncated) == ["pi"])
-        #expect(DarwinProcessEnumerator.parseProcArgs2Environment(truncated) == nil)
+        #expect(DarwinProcessEnumerator.parseProcArgs2Environment(truncated, names: ["HOME", "OMP_PROFILE"]) == nil)
     }
 
     @Test
@@ -74,7 +74,7 @@ struct DarwinProcessEnumeratorTests {
         var data = Self.procArgsData(arguments: ["pi"], environment: ["HOME=/synthetic/process"])
         data.append(0)
         data.append(contentsOf: "HOME=/synthetic/apple-vector\0ptr_munge=ignored\0".utf8)
-        #expect(DarwinProcessEnumerator.parseProcArgs2Environment(data) == [
+        #expect(DarwinProcessEnumerator.parseProcArgs2Environment(data, names: ["HOME", "OMP_PROFILE"]) == [
             "HOME": "/synthetic/process",
         ])
     }
@@ -165,7 +165,7 @@ struct DarwinProcessEnumeratorTests {
         let record = try #require(LocalAgentSessionScanner.darwinProcessRecord(
             pid: 4242,
             bsdInfo: { _ in (ppid: 1, startTime: Date(timeIntervalSince1970: 1_700_000_000)) },
-            processArguments: { _ in (arguments: ["claude"], piSelectorEnvironment: nil) },
+            processArguments: { _ in ["claude"] },
             executablePath: { _ in nil }))
 
         #expect(record.command == "claude")
@@ -211,18 +211,6 @@ struct DarwinProcessEnumeratorTests {
         let record = try #require(LocalAgentSessionScanner.darwinProcessRecord(pid: pid))
         #expect(AgentPSOutputParser.agentProcesses(from: [record]).map(\.pid) == [pid])
         #expect(AgentPSOutputParser.provider(for: record) == .claude)
-    }
-
-    @Test
-    func `deleted executable cannot establish trusted chatgpt app server identity`() {
-        #expect(!ChatGPTCodexProcessTrust.isTrusted(
-            4242,
-            executablePath: { _ in nil },
-            processIsTrusted: { _ in
-                Issue.record("Missing executable path must fail before signature validation")
-                return true
-            },
-            appIsTrusted: { _ in true }))
     }
 
     @Test

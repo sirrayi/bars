@@ -348,7 +348,6 @@ struct ClaudeOAuthUpgradeCompatibilityTests {
         settings.claudeUsageDataSource = sourceMode == .oauth ? .oauth : .auto
         settings.statusChecksEnabled = false
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: environment),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -1016,7 +1015,6 @@ struct ClaudeOAuthUpgradeCompatibilityTests {
             verbose: baseContext.verbose,
             env: baseContext.env,
             settings: baseContext.settings,
-            fetcher: baseContext.fetcher,
             claudeFetcher: baseContext.claudeFetcher,
             browserDetection: baseContext.browserDetection,
             selectedTokenAccountID: UUID())
@@ -1066,7 +1064,6 @@ struct ClaudeOAuthUpgradeCompatibilityTests {
             verbose: appContext.verbose,
             env: appContext.env,
             settings: appContext.settings,
-            fetcher: appContext.fetcher,
             claudeFetcher: appContext.claudeFetcher,
             browserDetection: appContext.browserDetection)
         let descriptor = ProviderDescriptorRegistry.descriptor(for: .claude)
@@ -1177,7 +1174,6 @@ struct ClaudeOAuthUpgradeCompatibilityTests {
         let specs = ProviderRegistry.shared.specs(
             settings: settings,
             metadata: ProviderRegistry.shared.metadata,
-            codexFetcher: UsageFetcher(environment: environment),
             claudeFetcher: UnexpectedClaudeFetcher(),
             browserDetection: browserDetection,
             environmentBase: environment)

@@ -8,14 +8,12 @@ struct MemoryPressureCacheTrimSummary: Equatable {
     var menuWidths = 0
     var mergedSwitcherSelections = 0
     var recycledMenuCardViews = 0
-    var openAIWebDebugLines = 0
 
     var total: Int {
         self.menuCardHeights +
             self.menuWidths +
             self.mergedSwitcherSelections +
-            self.recycledMenuCardViews +
-            self.openAIWebDebugLines
+            self.recycledMenuCardViews
     }
 
     var metadata: [String: String] {
@@ -24,7 +22,6 @@ struct MemoryPressureCacheTrimSummary: Equatable {
             "menuWidths": "\(self.menuWidths)",
             "mergedSwitcherSelections": "\(self.mergedSwitcherSelections)",
             "recycledMenuCardViews": "\(self.recycledMenuCardViews)",
-            "openAIWebDebugLines": "\(self.openAIWebDebugLines)",
             "total": "\(self.total)",
         ]
     }
@@ -34,7 +31,6 @@ struct MemoryPressureCacheTrimSummary: Equatable {
         self.menuWidths += other.menuWidths
         self.mergedSwitcherSelections += other.mergedSwitcherSelections
         self.recycledMenuCardViews += other.recycledMenuCardViews
-        self.openAIWebDebugLines += other.openAIWebDebugLines
     }
 }
 
@@ -123,20 +119,6 @@ final class MemoryPressureMonitor {
             "normal"
         }
         self.logger.warning("System memory pressure", metadata: ["level": level])
-        #if DEBUG
-        let cachedWebViewsBefore = OpenAIDashboardFetcher.cachedWebViewCountForTesting()
-        #endif
-        OpenAIDashboardFetcher.evictIdleCachedWebViews()
-        #if DEBUG
-        let cachedWebViewsAfter = OpenAIDashboardFetcher.cachedWebViewCountForTesting()
-        self.logger.info(
-            "Memory pressure OpenAI webview cache",
-            metadata: [
-                "before": "\(cachedWebViewsBefore)",
-                "after": "\(cachedWebViewsAfter)",
-                "evicted": "\(max(0, cachedWebViewsBefore - cachedWebViewsAfter))",
-            ])
-        #endif
         let trimSummary = self.trimAppCaches()
         if trimSummary.total > 0 {
             self.logger.info("Trimmed app caches for memory pressure", metadata: trimSummary.metadata)

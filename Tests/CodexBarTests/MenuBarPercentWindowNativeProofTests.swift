@@ -19,7 +19,7 @@ final class MenuBarPercentWindowNativeProofTests: XCTestCase {
         let defaults = InMemoryUserDefaults(values: ["debugDisableKeychainAccess": true])
         let config = CodexBarConfigStore(fileURL: output.appendingPathComponent("config.json"))
         try config.save(CodexBarConfig(providers: UsageProvider.allCases.map {
-            ProviderConfig(id: $0.instanceID, enabled: $0 == .codex || $0 == .claude)
+            ProviderConfig(id: $0.instanceID, enabled: $0 == .opencode || $0 == .claude)
         }))
         let settings = Self.settings(defaults: defaults, config: config)
         defer { settings.configFileWatcher?.stop() }
@@ -38,7 +38,7 @@ final class MenuBarPercentWindowNativeProofTests: XCTestCase {
         window.isReleasedWhenClosed = false
         window.contentView = NSHostingView(rootView: Form {
             Text("Codex").font(.headline)
-            ProviderMenuBarPercentWindowSettingsView(provider: .codex, settings: settings)
+            ProviderMenuBarPercentWindowSettingsView(provider: .opencode, settings: settings)
             Text("Claude").font(.headline)
             ProviderMenuBarPercentWindowSettingsView(provider: .claude, settings: settings)
         }.formStyle(.grouped).frame(width: 620, height: 380))
@@ -61,7 +61,7 @@ final class MenuBarPercentWindowNativeProofTests: XCTestCase {
                 "pid": String(ProcessInfo.processInfo.processIdentifier),
                 "window": String(window.windowNumber),
                 "codex": MenuBarPercentWindowPreference.current(
-                    in: settings.menuBarLayoutResolution(for: .codex).layout)?.id ?? "custom",
+                    in: settings.menuBarLayoutResolution(for: .opencode).layout)?.id ?? "custom",
                 "claude": MenuBarPercentWindowPreference.current(
                     in: settings.menuBarLayoutResolution(for: .claude).layout)?.id ?? "custom",
             ]
@@ -75,14 +75,14 @@ final class MenuBarPercentWindowNativeProofTests: XCTestCase {
         }
         XCTAssertTrue(FileManager.default.fileExists(atPath: done), "Native proof timed out")
         XCTAssertEqual(MenuBarPercentWindowPreference.current(
-            in: settings.menuBarLayoutResolution(for: .codex).layout), .weekly)
+            in: settings.menuBarLayoutResolution(for: .opencode).layout), .weekly)
         XCTAssertEqual(MenuBarPercentWindowPreference.current(
             in: settings.menuBarLayoutResolution(for: .claude).layout), .automatic)
         let reloaded = Self.settings(defaults: defaults, config: config)
         defer { reloaded.configFileWatcher?.stop() }
         XCTAssertEqual(
-            reloaded.menuBarLayoutResolution(for: .codex).layout,
-            settings.menuBarLayoutResolution(for: .codex).layout)
+            reloaded.menuBarLayoutResolution(for: .opencode).layout,
+            settings.menuBarLayoutResolution(for: .opencode).layout)
         XCTAssertEqual(reloaded.menuBarIconStyle, .iconAndPercent)
     }
 
@@ -90,7 +90,6 @@ final class MenuBarPercentWindowNativeProofTests: XCTestCase {
         SettingsStore(
             userDefaults: defaults,
             configStore: config,
-            codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
             opencodeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore(),

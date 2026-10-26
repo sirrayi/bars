@@ -214,7 +214,7 @@ struct PredictivePaceWarningTests {
                 window: .session,
                 resetWindow: self.resetWindow(minutes: 300, resetsAt: 1_780_000_000)),
             PredictivePaceWarningStateKey(
-                provider: .codex,
+                provider: .opencode,
                 accountDiscriminator: "account-a",
                 window: .session,
                 resetWindow: self.resetWindow(minutes: 300, resetsAt: 1_780_000_000)),
@@ -239,12 +239,12 @@ struct PredictivePaceWarningTests {
     @Test
     func `reset time jitter follows the same risk episode without repeating`() {
         let firstKey = PredictivePaceWarningStateKey(
-            provider: .codex,
+            provider: .opencode,
             accountDiscriminator: "account-a",
             window: .session,
             resetWindow: self.resetWindow(minutes: 300, resetsAt: 1_780_000_000))
         let correctedKey = PredictivePaceWarningStateKey(
-            provider: .codex,
+            provider: .opencode,
             accountDiscriminator: "account-a",
             window: .session,
             resetWindow: self.resetWindow(minutes: 300, resetsAt: 1_780_000_120))
@@ -382,28 +382,6 @@ struct PredictivePaceWarningTests {
         let secondStore = self.makeStore(settings: settings, notifier: secondNotifier)
         secondStore.handlePredictivePaceWarningTransitions(provider: .claude, snapshot: snapshot)
         #expect(secondNotifier.predictivePosts.count == 1)
-    }
-
-    @Test
-    func `store posts for Codex session and weekly risk`() {
-        let now = Date(timeIntervalSince1970: 1_780_000_000)
-        let settings = self.makeSettings(suiteName: "PredictivePaceWarningTests-codex-store")
-        settings.predictivePaceWarningNotificationsEnabled = true
-        let notifier = NotifierSpy()
-        let store = self.makeStore(settings: settings, notifier: notifier)
-
-        let atRisk = self.snapshot(
-            now: now,
-            sessionUsed: 80,
-            weeklyUsed: 90,
-            accountEmail: "codex@example.com",
-            provider: .codex)
-        store.handlePredictivePaceWarningTransitions(provider: .codex, snapshot: atRisk)
-        store.handlePredictivePaceWarningTransitions(provider: .codex, snapshot: atRisk)
-
-        #expect(notifier.predictivePosts.map(\.event.window) == [.session, .weekly])
-        #expect(notifier.predictivePosts.allSatisfy { $0.provider == .codex })
-        #expect(notifier.predictivePosts.allSatisfy { $0.event.accountDisplayName == "codex@example.com" })
     }
 
     @Test
@@ -664,7 +642,6 @@ struct PredictivePaceWarningTests {
 
     private func makeStore(settings: SettingsStore, notifier: NotifierSpy) -> UsageStore {
         UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             sessionQuotaNotifier: notifier)
@@ -675,7 +652,6 @@ struct PredictivePaceWarningTests {
             result: .success(ProviderFetchResult(
                 usage: snapshot,
                 credits: nil,
-                dashboard: nil,
                 sourceLabel: "oauth",
                 strategyID: "claude-oauth",
                 strategyKind: .oauth,

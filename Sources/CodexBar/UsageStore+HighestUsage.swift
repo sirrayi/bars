@@ -19,16 +19,9 @@ extension UsageStore {
             guard self.isEnabled(provider) || source.isFleet,
                   let snapshot = source.snapshot else { continue }
             let automatic = self.settings.menuBarMetricPreference(for: provider, snapshot: snapshot) == .automatic
-            // Provider-specific by design: Codex projection retains source pace slots after lane reclassification.
-            let selection: AutomaticQuotaSelection.Selection? = if provider == .codex, automatic, !source.isFleet {
-                self.codexConsumerProjection(
-                    surface: .menuBar,
-                    snapshotOverride: snapshot,
-                    now: now).automaticMenuBarSelection()
-            } else if let window = self.menuBarMetricWindowForHighestUsage(
+            let selection: AutomaticQuotaSelection.Selection? = if let window = self.menuBarMetricWindowForHighestUsage(
                 provider: provider,
                 snapshot: snapshot,
-                includeLocalDerivedData: !source.isFleet,
                 now: now)
             {
                 AutomaticQuotaSelection.selection(
@@ -48,7 +41,6 @@ extension UsageStore {
                 provider: provider,
                 snapshot: snapshot,
                 metricPercent: percent,
-                includeLocalDerivedData: !source.isFleet,
                 now: now)
             else {
                 continue
@@ -66,13 +58,9 @@ extension UsageStore {
     private func menuBarMetricWindowForHighestUsage(
         provider: UsageProvider,
         snapshot: UsageSnapshot,
-        includeLocalDerivedData: Bool,
         now: Date) -> RateWindow?
     {
         let effectivePreference = self.settings.menuBarMetricPreference(for: provider, snapshot: snapshot)
-        if includeLocalDerivedData, provider == .codex {
-            return self.codexMenuBarMetricWindow(snapshot: snapshot, now: now)
-        }
         return MenuBarMetricWindowResolver.rateWindow(
             preference: effectivePreference,
             provider: provider,
@@ -85,27 +73,18 @@ extension UsageStore {
         provider: UsageProvider,
         snapshot: UsageSnapshot,
         metricPercent: Double,
-        includeLocalDerivedData: Bool,
         now: Date)
         -> Bool
     {
         let effectivePreference = self.settings.menuBarMetricPreference(for: provider, snapshot: snapshot)
         guard metricPercent >= 100 else { return false }
         // Provider-specific by design: exclusion mirrors each provider's multi-lane resolver and optional quotas.
-        if provider == .codex || provider == .claude, effectivePreference == .primaryAndSecondary {
-            if provider == .codex,
-               self.codexConsumerProjection(
-                   surface: includeLocalDerivedData ? .menuBar : .overrideCard,
-                   snapshotOverride: snapshot,
-                   now: now).hasBindingWeeklyCap
-            {
-                return true
-            }
+        if provider == .claude, effectivePreference == .primaryAndSecondary {
             // A Claude spend-limit-only snapshot has no real session/weekly lanes; the metric resolves to
             // the spend-limit window, so reaching here (metricPercent >= 100) means the spend limit itself
             // is exhausted. Mirror that resolver fallback and exclude, instead of inspecting the raw 0%
             // placeholder primary that would otherwise keep it eligible.
-            if provider == .claude, MenuBarMetricWindowResolver.claudeSpendLimitWindow(snapshot: snapshot) != nil {
+            if MenuBarMetricWindowResolver.claudeSpendLimitWindow(snapshot: snapshot) != nil {
                 return true
             }
             // Ignore synthesized placeholder lanes (e.g. Claude web's null `five_hour` 0% session) so a

@@ -4,8 +4,8 @@ import Testing
 @testable import CodexBarCore
 
 struct CLICostWindowTests {
-    @Test(arguments: [false, true])
-    func `sixty day history keeps thirty day JSON totals separate`(openCodex: Bool) throws {
+    @Test
+    func `sixty day history keeps thirty day JSON totals separate`() throws {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = try #require(TimeZone(identifier: "America/Los_Angeles"))
         let now = Date(timeIntervalSince1970: 1_719_793_800)
@@ -13,7 +13,7 @@ struct CLICostWindowTests {
             let date = try #require(calendar.date(byAdding: .day, value: -offset, to: now))
             return Self.entry(CostUsageLocalDay.key(from: date, calendar: calendar), tokens: 100, cost: 1)
         }
-        let object = try Self.json(Self.snapshot(rows: rows, tokens: 6000, cost: 60, days: 60), openCodex: openCodex)
+        let object = try Self.json(Self.snapshot(rows: rows, tokens: 6000, cost: 60, days: 60))
         #expect(object["last30DaysTokens"] as? Int == 3000)
         #expect(object["last30DaysCostUSD"] as? Double == 30)
         #expect(object["historyDays"] as? Int == 60)
@@ -23,8 +23,8 @@ struct CLICostWindowTests {
         #expect(totals["totalCost"] as? Double == 60)
     }
 
-    @Test(arguments: [false, true])
-    func `long history JSON uses the latest thirty local dates and preserves full totals`(openCodex: Bool) throws {
+    @Test
+    func `long history JSON uses the latest thirty local dates and preserves full totals`() throws {
         let rows = [
             Self.entry("2024-01-01", tokens: 100, cost: 1),
             Self.entry("2024-05-31", tokens: 200, cost: 2),
@@ -40,7 +40,7 @@ struct CLICostWindowTests {
             daily: rows,
             modelBreakdowns: nil)
         let snapshot = Self.snapshot(rows: rows, tokens: 1500, cost: 15, projects: [project])
-        let object = try Self.json(snapshot, openCodex: openCodex)
+        let object = try Self.json(snapshot)
         #expect(object["last30DaysTokens"] as? Int == 700)
         #expect(object["last30DaysCostUSD"] as? Double == 7)
         #expect(object["historyDays"] as? Int == 365)
@@ -48,29 +48,23 @@ struct CLICostWindowTests {
         let totals = try #require(object["totals"] as? [String: Any])
         #expect(totals["totalTokens"] as? Int == 1500)
         #expect(totals["totalCost"] as? Double == 15)
-        let projects = try #require(object["projects"] as? [[String: Any]])
-        #expect(projects.count == (openCodex ? 0 : 1))
-        if !openCodex {
-            #expect(projects.first?["totalTokens"] as? Int == 1500)
-            #expect(projects.first?["totalCost"] as? Double == 15)
-            #expect((projects.first?["daily"] as? [[String: Any]])?.count == 5)
-        }
+        #expect(object["projects"] == nil)
         #expect(snapshot.last30DaysTokens == 1500)
         #expect(snapshot.last30DaysCostUSD == 15)
     }
 
-    @Test(arguments: [false, true])
-    func `short history JSON retains legacy aggregates`(openCodex: Bool) throws {
+    @Test
+    func `short history JSON retains legacy aggregates`() throws {
         for days in [1, 7, 30] {
             let snapshot = Self.snapshot(rows: [], tokens: 123, cost: 4, days: days)
-            let object = try Self.json(snapshot, openCodex: openCodex)
+            let object = try Self.json(snapshot)
             #expect(object["last30DaysTokens"] as? Int == 123)
             #expect(object["last30DaysCostUSD"] as? Double == 4)
         }
     }
 
-    @Test(arguments: [false, true])
-    func `empty long windows require complete coverage and known amounts for zero`(openCodex: Bool) throws {
+    @Test
+    func `empty long windows require complete coverage and known amounts for zero`() throws {
         for established in [false, true] {
             for partial in [false, true] {
                 for priced in [false, true] {
@@ -81,7 +75,7 @@ struct CLICostWindowTests {
                             cost: priced ? 1 : nil,
                             established: established,
                             partial: partial)
-                        let object = try Self.json(snapshot, openCodex: openCodex)
+                        let object = try Self.json(snapshot)
                         let complete = established && !partial
                         #expect(object["last30DaysTokens"] as? Int == (complete ? 0 : nil))
                         #expect(object["last30DaysCostUSD"] as? Double == (complete && priced ? 0 : nil))
@@ -89,13 +83,13 @@ struct CLICostWindowTests {
                 }
             }
         }
-        let unknown = try Self.json(Self.snapshot(rows: [], tokens: nil, cost: nil), openCodex: openCodex)
+        let unknown = try Self.json(Self.snapshot(rows: [], tokens: nil, cost: nil))
         #expect(unknown["last30DaysTokens"] == nil)
         #expect(unknown["last30DaysCostUSD"] == nil)
     }
 
-    @Test(arguments: [false, true])
-    func `long window JSON preserves missing values known zero and checked token sums`(openCodex: Bool) throws {
+    @Test
+    func `long window JSON preserves missing values known zero and checked token sums`() throws {
         let cases: [(rows: [CostUsageDailyReport.Entry], tokens: Int?, cost: Double?)] = [
             ([Self.entry("2024-06-30", tokens: nil, cost: nil)], nil, nil),
             ([Self.entry("2024-06-30", tokens: 0, cost: 0)], 0, 0),
@@ -112,18 +106,16 @@ struct CLICostWindowTests {
         for testCase in cases {
             // Full-history aggregates must not be used as a fallback for absent or overflowing window totals.
             let snapshot = Self.snapshot(rows: testCase.rows, tokens: 999, cost: 99)
-            let object = try Self.json(snapshot, openCodex: openCodex)
+            let object = try Self.json(snapshot)
             #expect(object["last30DaysTokens"] as? Int == testCase.tokens)
             #expect(object["last30DaysCostUSD"] as? Double == testCase.cost)
         }
     }
 
-    private static func json(_ snapshot: CostUsageTokenSnapshot, openCodex: Bool) throws -> [String: Any] {
+    private static func json(_ snapshot: CostUsageTokenSnapshot) throws -> [String: Any] {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = try #require(TimeZone(identifier: "America/Los_Angeles"))
-        let payload = openCodex
-            ? CodexBarCLI.makeOpenCodexCostPayload(snapshot: snapshot, calendar: calendar)
-            : CodexBarCLI.makeCostPayload(provider: .codex, snapshot: snapshot, error: nil, calendar: calendar)
+        let payload = CodexBarCLI.makeCostPayload(provider: .claude, snapshot: snapshot, error: nil, calendar: calendar)
         return try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(payload)) as? [String: Any])
     }
 

@@ -19,7 +19,6 @@ struct DeepSeekProfileTransitionTests {
             configStore: testConfigStore(suiteName: suite))
         settings.updateProviderConfig(provider: .deepseek) { $0.source = .web }
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             environmentBase: [DeepSeekSettingsReader.apiKeyEnvironmentKey: apiKey])

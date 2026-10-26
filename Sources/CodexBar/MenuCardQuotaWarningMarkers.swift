@@ -1,18 +1,5 @@
 import CodexBarCore
 
-extension CodexConsumerProjection.RateLane {
-    var quotaWarningWindow: QuotaWarningWindow? {
-        switch self {
-        case .session:
-            .session
-        case .weekly:
-            .weekly
-        case .monthly:
-            nil
-        }
-    }
-}
-
 extension UsageMenuCardView.Model {
     static func warningMarkerPercents(thresholds: [Int]?, showUsed: Bool) -> [Double] {
         guard let thresholds, !thresholds.isEmpty else { return [] }

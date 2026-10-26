@@ -171,7 +171,6 @@ struct ClaudeOAuthTransportIdentityTests {
             verbose: false,
             env: environment,
             settings: nil,
-            fetcher: UsageFetcher(environment: environment),
             claudeFetcher: Self.fetcher(),
             browserDetection: ProviderTransportRegressionSupport
                 .browser(root: ProviderTransportRegressionFixtures.root))

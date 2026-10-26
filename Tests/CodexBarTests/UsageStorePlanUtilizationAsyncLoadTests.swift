@@ -17,85 +17,12 @@ import Testing
 struct UsageStorePlanUtilizationAsyncLoadTests {
     @MainActor
     @Test
-    func `retired history backfill preserves its waiting replacement`() async throws {
-        let suite = "UsageStorePlanUtilizationAsyncLoad-backfill-\(UUID().uuidString)"
-        let gate = PlanUtilizationHistoryLoadGate()
-        let historyStore = testPlanUtilizationHistoryStore(suiteName: suite)
-        let settings = testSettingsStore(suiteName: suite, userDefaults: InMemoryUserDefaults())
-        let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
-            browserDetection: BrowserDetection(cacheTTL: 0),
-            settings: settings,
-            planUtilizationHistoryStore: historyStore,
-            startupBehavior: .testing,
-            environmentBase: [:],
-            planUtilizationHistoryLoadGateForTesting: gate)
-        defer {
-            store._test_codexPlanHistoryBackfillWillRecord = nil
-            store._cancelPlanUtilizationHistoryLoadForTesting()
-            store.cancelCodexPlanHistoryBackfill()
-        }
-        let capturedAt = Date()
-        store.snapshots[.codex] = UsageSnapshot(
-            primary: RateWindow(usedPercent: 42, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
-            secondary: nil,
-            updatedAt: capturedAt)
-        let entered = PlanUtilizationHistoryLoadGate()
-        let timeout = Task {
-            do { try await Task.sleep(for: .seconds(5)) } catch { return }
-            entered.cancel()
-        }
-        defer { timeout.cancel() }
-        store._test_codexPlanHistoryBackfillWillRecord = { entered.open() }
-        store.scheduleCodexPlanHistoryBackfill(minimumSnapshotUpdatedAt: capturedAt)
-        guard await entered.wait() else {
-            Issue.record("History backfill did not reach recording")
-            let task = store.codexPlanHistoryBackfillTask
-            store._cancelPlanUtilizationHistoryLoadForTesting()
-            store.cancelCodexPlanHistoryBackfill()
-            await task?.value
-            return
-        }
-        let first = try #require(store.codexPlanHistoryBackfillTask)
-        store.scheduleCodexPlanHistoryBackfill(minimumSnapshotUpdatedAt: capturedAt.addingTimeInterval(3600))
-        let replacement = try #require(store.codexPlanHistoryBackfillTask)
-        gate.open()
-        await first.value
-
-        #expect(store.codexPlanHistoryBackfillTask == replacement)
-        store.cancelCodexPlanHistoryBackfill()
-        #expect(replacement.isCancelled)
-        replacement.cancel()
-        await replacement.value
-        #expect(store.codexPlanHistoryBackfillTask == nil)
-    }
-
-    @MainActor
-    @Test
-    func `cancelled backfill clears its own handle when no snapshot arrived`() async throws {
-        let settings = testSettingsStore(suiteName: "backfill-cancel", userDefaults: InMemoryUserDefaults())
-        let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
-            browserDetection: BrowserDetection(cacheTTL: 0),
-            settings: settings,
-            startupBehavior: .testing,
-            environmentBase: [:])
-        store.scheduleCodexPlanHistoryBackfill(minimumSnapshotUpdatedAt: .distantFuture)
-        let task = try #require(store.codexPlanHistoryBackfillTask)
-        task.cancel()
-        await task.value
-        #expect(store.codexPlanHistoryBackfillTask == nil)
-    }
-
-    @MainActor
-    @Test
     func `testing startup without an injected history store skips disk loading`() {
         let suiteName = "UsageStorePlanUtilizationAsyncLoad-default-test-\(UUID().uuidString)"
         let settings = Self.makeSettings(suiteName: suiteName)
         defer { UserDefaults().removePersistentDomain(forName: suiteName) }
 
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing)
@@ -111,7 +38,7 @@ struct UsageStorePlanUtilizationAsyncLoadTests {
     func `testing startup without an explicit gate skips background load`() {
         let suiteName = "UsageStorePlanUtilizationAsyncLoad-testing-\(UUID().uuidString)"
         let historyStore = testPlanUtilizationHistoryStore(suiteName: suiteName, reset: true)
-        historyStore.save([.codex: PlanUtilizationHistoryBuckets(
+        historyStore.save([.opencode: PlanUtilizationHistoryBuckets(
             preferredAccountKey: nil,
             unscoped: [planSeries(
                 name: .session,
@@ -122,7 +49,6 @@ struct UsageStorePlanUtilizationAsyncLoadTests {
         defer { UserDefaults().removePersistentDomain(forName: suiteName) }
 
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             planUtilizationHistoryStore: historyStore,
@@ -143,7 +69,6 @@ struct UsageStorePlanUtilizationAsyncLoadTests {
         defer { UserDefaults().removePersistentDomain(forName: suiteName) }
         _ = settings // silence unused
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             planUtilizationHistoryStore: historyStore,
@@ -171,12 +96,11 @@ struct UsageStorePlanUtilizationAsyncLoadTests {
             preferredAccountKey: nil,
             unscoped: [codexSeries],
             accounts: [:])
-        historyStore.save([.codex: buckets])
+        historyStore.save([.opencode: buckets])
         let settings = Self.makeSettings(suiteName: suiteName)
         defer { UserDefaults().removePersistentDomain(forName: suiteName) }
         _ = settings
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             planUtilizationHistoryStore: historyStore,
@@ -189,7 +113,7 @@ struct UsageStorePlanUtilizationAsyncLoadTests {
         await store._waitForPlanUtilizationHistoryLoadForTesting()
 
         #expect(store.planUtilizationHistoryLoaded == true)
-        #expect(store.planUtilizationHistory[.codex]?.unscoped.first?.name == .session)
+        #expect(store.planUtilizationHistory[.opencode]?.unscoped.first?.name == .session)
         // Revision must increment by exactly one when the load completes.
         #expect(store.planUtilizationHistoryRevision == revisionBeforeOpen + 1)
     }
@@ -213,7 +137,6 @@ struct UsageStorePlanUtilizationAsyncLoadTests {
         defer { UserDefaults().removePersistentDomain(forName: suiteName) }
         _ = settings
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             planUtilizationHistoryStore: historyStore,
@@ -237,7 +160,6 @@ struct UsageStorePlanUtilizationAsyncLoadTests {
         defer { UserDefaults().removePersistentDomain(forName: suiteName) }
         _ = settings
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             planUtilizationHistoryStore: historyStore,
@@ -267,7 +189,6 @@ struct UsageStorePlanUtilizationAsyncLoadTests {
         defer { UserDefaults().removePersistentDomain(forName: suiteName) }
         _ = settings
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             planUtilizationHistoryStore: historyStore,
@@ -302,12 +223,11 @@ struct UsageStorePlanUtilizationAsyncLoadTests {
             preferredAccountKey: accountKey,
             unscoped: [],
             accounts: [accountKey: [codexSession, claudeWeekly]])
-        historyStore.save([.codex: buckets, .claude: buckets])
+        historyStore.save([.opencode: buckets, .claude: buckets])
         let settings = Self.makeSettings(suiteName: suiteName)
         defer { UserDefaults().removePersistentDomain(forName: suiteName) }
         _ = settings
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             planUtilizationHistoryStore: historyStore,
@@ -318,9 +238,9 @@ struct UsageStorePlanUtilizationAsyncLoadTests {
         gate.open()
         await store._waitForPlanUtilizationHistoryLoadForTesting()
 
-        #expect(store.planUtilizationHistory[.codex]?.accounts[accountKey]?.count == 2)
+        #expect(store.planUtilizationHistory[.opencode]?.accounts[accountKey]?.count == 2)
         #expect(store.planUtilizationHistory[.claude]?.accounts[accountKey]?.count == 2)
-        #expect(store.planUtilizationHistory[.codex]?.preferredAccountKey == accountKey)
+        #expect(store.planUtilizationHistory[.opencode]?.preferredAccountKey == accountKey)
     }
 
     @MainActor
@@ -341,7 +261,6 @@ struct UsageStorePlanUtilizationAsyncLoadTests {
         let settings = Self.makeSettings(suiteName: suiteName)
         defer { UserDefaults().removePersistentDomain(forName: suiteName) }
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             planUtilizationHistoryStore: historyStore,
@@ -418,7 +337,6 @@ struct UsageStorePlanUtilizationAsyncLoadTests {
         _ = settings
 
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             planUtilizationHistoryStore: historyStore,
@@ -444,7 +362,6 @@ struct UsageStorePlanUtilizationAsyncLoadTests {
         defer { UserDefaults().removePersistentDomain(forName: suiteName) }
         _ = settings
         let store = UsageStore(
-            fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             planUtilizationHistoryStore: historyStore,

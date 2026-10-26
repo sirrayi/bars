@@ -58,7 +58,6 @@ extension StatusItemController {
             snapshot: snapshot,
             style: style,
             showUsed: self.settings.usageBarsShowUsed)
-        let creditsRemaining = self.menuBarCreditsRemainingForIcon(provider: provider, snapshot: snapshot)
         let scopedWeekly = MenuBarLayoutSemanticWindowResolver.scopedWeeklyNamedWindow(snapshot: snapshot)
         let displayText = showBrandPercent ? self.menuBarDisplayText(for: provider, snapshot: snapshot) : nil
         let layoutCostSignature = showBrandPercent
@@ -93,7 +92,6 @@ extension StatusItemController {
             "weekly=\(Self.iconSignatureValue(resolved?.secondary))",
             "scopedWeekly=\(Self.iconSignatureValue(scopedWeekly?.window.usedPercent))",
             "scopedTitle=\(scopedWeekly?.title ?? "nil")",
-            "credits=\(Self.iconSignatureValue(creditsRemaining))",
             "stale=\(self.menuBarIsStale(for: provider) ? "1" : "0")",
             "status=\(self.store.statusIndicator(for: provider).rawValue)",
             "anim=\(self.shouldAnimate(provider: provider) ? "1" : "0")",
@@ -196,11 +194,9 @@ extension StatusItemController {
             provider: provider,
             snapshot: snapshot,
             showsOptionalCredits: showsOptionalCredits)
-        let codexCredits = self.menuBarLayoutCodexCredits(provider: provider, snapshot: snapshot)
         let balanceText = MenuBarLayoutBalanceResolver.balance(
             provider: provider,
             snapshot: snapshot,
-            codexCredits: codexCredits,
             showsOptionalCredits: showsOptionalCredits)
         return [
             "text=\(balanceText ?? "nil")",

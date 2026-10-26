@@ -108,9 +108,6 @@ struct DashboardSnapshotProducer: Sendable {
             },
             collectCost: { providers, config in
                 let costFetcher = CostUsageFetcher()
-                let piSessionProcessContexts = await CodexBarCLI.piSessionProcessContextsForCost(
-                    providers: providers,
-                    includePiSessions: true)
                 return await CodexBarCLI.collectConfiguredCostPayloads(
                     providers: providers,
                     config: config,
@@ -120,14 +117,7 @@ struct DashboardSnapshotProducer: Sendable {
                         let snapshot = try await costFetcher.loadTokenSnapshot(
                             provider: provider,
                             forceRefresh: false,
-                            refreshPricingInBackground: context.costRefreshesPricingInBackground,
-                            includePiSessions: CodexBarCLI.costIncludePiSessions(
-                                provider: provider,
-                                selectedProviders: providers,
-                                groupBy: .none,
-                                format: .json,
-                                includePiSessions: true),
-                            piSessionProcessContexts: piSessionProcessContexts)
+                            refreshPricingInBackground: context.costRefreshesPricingInBackground)
                         return CodexBarCLI.makeCostPayload(provider: provider, snapshot: snapshot, error: nil)
                     } catch {
                         return CodexBarCLI.makeCostPayload(provider: provider, snapshot: nil, error: error)
@@ -136,11 +126,6 @@ struct DashboardSnapshotProducer: Sendable {
             },
             now: { Date() },
             collectAccounts: { config, provider in
-                // Provider-specific by design: Codex projects saved metadata; Claude uses its opt-in adapter.
-                if provider == .codex {
-                    return context.usage.includeAllAccounts ? nil : DashboardManagedCodexAccounts
-                        .collect(config: config)
-                }
                 // Provider-specific by design: Claude uses its opt-in subprocess adapter.
                 guard provider == .claude, CodexBarCLI.dashboardClaudeSwapIsEligible(config: config) else { return nil }
                 let path = config.providerConfig(for: .claude)?.sanitizedClaudeSwapExecutablePath ?? ""
@@ -234,7 +219,6 @@ extension CodexBarCLI {
                     startedAt: startedAt,
                     requestTimeout: timeout),
                 providerOperations: providerOperations,
-                includeAllCodexAccounts: false,
                 persistCLISessions: false),
             costCollection: ServeCostCollectionContext(
                 configFingerprint: configSnapshot.cacheToken,

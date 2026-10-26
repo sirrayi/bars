@@ -18,8 +18,6 @@ extension UsageStore {
                 let summary = try await ProviderStatusFetcher.fetchStatusSummary(from: baseURL)
                 status = summary.status
                 components = summary.components
-            } else if let productID = meta.statusWorkspaceProductID {
-                status = try await ProviderStatusFetcher.fetchWorkspaceStatus(productID: productID)
             } else {
                 return
             }

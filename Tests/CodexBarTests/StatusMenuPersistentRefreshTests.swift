@@ -87,13 +87,8 @@ private final class ManualRefreshGate {
     }
 }
 
-enum BlockingEnrichmentStage: Sendable {
-    case credits
-    case dashboard
-}
-
 @MainActor
-@Suite(.serialized, CodexCredentialFixtures())
+@Suite(.serialized)
 struct StatusMenuPersistentRefreshTests {
     private func makeSettings() -> SettingsStore {
         testSettingsStore(suiteName: "StatusMenuPersistentRefreshTests")
@@ -105,19 +100,11 @@ struct StatusMenuPersistentRefreshTests {
         account: AccountInfo? = nil) -> StatusItemController
     {
         let environment = Self.isolatedEnvironment()
-        let fetcher = UsageFetcher(environment: environment)
         let store = UsageStore(
-            fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
             environmentBase: environment)
-        if let account {
-            store.accountInfoCache[.codex] = UsageStore.AccountInfoCacheEntry(
-                account: account,
-                configRevision: settings.configRevision,
-                expiresAt: .distantFuture)
-        }
         return StatusItemController(
             store: store,
             settings: settings,
@@ -133,7 +120,7 @@ struct StatusMenuPersistentRefreshTests {
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         return [
             "HOME": root.path,
-            "CODEX_HOME": root.appendingPathComponent(".codex", isDirectory: true).path,
+            "CODEX_HOME": root.appendingPathComponent(".opencode", isDirectory: true).path,
             "XDG_CONFIG_HOME": root.appendingPathComponent(".config", isDirectory: true).path,
         ]
     }
@@ -160,7 +147,7 @@ struct StatusMenuPersistentRefreshTests {
 
         let controller = self.makeController(settings: settings)
 
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
 
         let refreshItem = try #require(menu.items.first { $0.title == "Refresh" })
@@ -187,7 +174,7 @@ struct StatusMenuPersistentRefreshTests {
 
         let controller = self.makeController(settings: settings)
         controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
         defer { controller.menuDidClose(menu) }
 
@@ -200,17 +187,17 @@ struct StatusMenuPersistentRefreshTests {
         let gate = ManualRefreshGate()
         controller._test_manualRefreshOperation = { await gate.wait() }
         #expect(try controller.handleMenuTrackingShortcutEvent(self.keyEvent("r", keyCode: 15), menu: menu))
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.opencode)] == nil {
             await Task.yield()
         }
 
-        let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
+        let task = try #require(controller.manualRefreshTasks[.provider(.opencode)])
         #expect(!refreshItem.isEnabled)
 
         gate.resume()
         await task.value
 
-        #expect(controller.manualRefreshTasks[.provider(.codex)] == nil)
+        #expect(controller.manualRefreshTasks[.provider(.opencode)] == nil)
         #expect(refreshItem.isEnabled)
     }
 
@@ -225,7 +212,7 @@ struct StatusMenuPersistentRefreshTests {
         settings.mergeIcons = false
 
         let controller = self.makeController(settings: settings, updater: UpdateReadyUpdater())
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
 
         let updateItem = try #require(menu.items.first { $0.title == "Update ready, restart now?" })
@@ -266,7 +253,7 @@ struct StatusMenuPersistentRefreshTests {
         settings.mergeIcons = false
 
         let controller = self.makeController(settings: settings)
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
 
         let refreshItem = try #require(menu.items.first { $0.title == "Refresh" })
@@ -278,7 +265,7 @@ struct StatusMenuPersistentRefreshTests {
         controller.updatePersistentRefreshItemsEnabled()
         #expect(refreshItem.isEnabled)
 
-        controller.store.refreshingProviders.insert(.codex)
+        controller.store.refreshingProviders.insert(.opencode)
         controller.updatePersistentRefreshItemsEnabled()
         #expect(!refreshItem.isEnabled)
 
@@ -295,11 +282,11 @@ struct StatusMenuPersistentRefreshTests {
         #expect(refreshItem.isEnabled)
 
         // This provider's own manual refresh does disable its row.
-        controller.manualRefreshTasks[.provider(.codex)] = Task {}
+        controller.manualRefreshTasks[.provider(.opencode)] = Task {}
         controller.updatePersistentRefreshItemsEnabled()
         #expect(!refreshItem.isEnabled)
 
-        controller.manualRefreshTasks[.provider(.codex)] = nil
+        controller.manualRefreshTasks[.provider(.opencode)] = nil
         controller.manualRefreshTasks[.provider(.claude)] = nil
         controller.updatePersistentRefreshItemsEnabled()
         #expect(refreshItem.isEnabled)
@@ -328,21 +315,21 @@ struct StatusMenuPersistentRefreshTests {
         let monitor = controller.menuCardRefreshMonitor
         let fallback = MenuCardLiveSubtitle(text: "Fallback", style: .info)
 
-        #expect(monitor.subtitle(for: .codex, fallback: fallback).style == .info)
+        #expect(monitor.subtitle(for: .opencode, fallback: fallback).style == .info)
 
-        controller.store.refreshingProviders.insert(.codex)
-        #expect(monitor.subtitle(for: .codex, fallback: fallback).style == .loading)
+        controller.store.refreshingProviders.insert(.opencode)
+        #expect(monitor.subtitle(for: .opencode, fallback: fallback).style == .loading)
 
-        controller.store.refreshingProviders.remove(.codex)
+        controller.store.refreshingProviders.remove(.opencode)
         monitor.beginManualRefresh(frozenModels: [:], provider: nil)
-        #expect(monitor.subtitle(for: .codex, fallback: fallback).style == .info)
-        controller.store.refreshingProviders.insert(.codex)
-        #expect(monitor.subtitle(for: .codex, fallback: fallback).style == .loading)
+        #expect(monitor.subtitle(for: .opencode, fallback: fallback).style == .info)
+        controller.store.refreshingProviders.insert(.opencode)
+        #expect(monitor.subtitle(for: .opencode, fallback: fallback).style == .loading)
         monitor.endManualRefresh()
-        controller.store.refreshingProviders.remove(.codex)
+        controller.store.refreshingProviders.remove(.opencode)
 
         let now = Date()
-        controller.store.snapshots[.codex] = UsageSnapshot(
+        controller.store.snapshots[.opencode] = UsageSnapshot(
             primary: RateWindow(
                 usedPercent: 10,
                 windowMinutes: nil,
@@ -350,20 +337,20 @@ struct StatusMenuPersistentRefreshTests {
                 resetDescription: nil),
             secondary: nil,
             updatedAt: now)
-        let success = monitor.subtitle(for: .codex, fallback: fallback)
+        let success = monitor.subtitle(for: .opencode, fallback: fallback)
         #expect(success.style == .info)
         #expect(success.text == UsageFormatter.updatedString(from: now, now: Date()))
 
-        controller.store.errors[.codex] = "Refresh failed"
-        let failure = monitor.subtitle(for: .codex, fallback: fallback)
+        controller.store.errors[.opencode] = "Refresh failed"
+        let failure = monitor.subtitle(for: .opencode, fallback: fallback)
         #expect(failure.style == .error)
         #expect(failure.text == "Refresh failed")
 
         monitor.beginManualRefresh(frozenModels: [:], provider: nil)
-        #expect(monitor.subtitle(for: .codex, fallback: fallback).style == .error)
-        controller.store.refreshingProviders.insert(.codex)
-        #expect(monitor.subtitle(for: .codex, fallback: fallback).style == .loading)
-        controller.store.refreshingProviders.remove(.codex)
+        #expect(monitor.subtitle(for: .opencode, fallback: fallback).style == .error)
+        controller.store.refreshingProviders.insert(.opencode)
+        #expect(monitor.subtitle(for: .opencode, fallback: fallback).style == .loading)
+        controller.store.refreshingProviders.remove(.opencode)
     }
 
     @Test
@@ -371,16 +358,16 @@ struct StatusMenuPersistentRefreshTests {
         let settings = self.makeSettings()
         let controller = self.makeController(settings: settings)
         let monitor = controller.menuCardRefreshMonitor
-        let codexModel = try #require(controller.menuCardModel(for: .codex))
+        let codexModel = try #require(controller.menuCardModel(for: .opencode))
         let fallback = MenuCardLiveSubtitle(text: "Claude idle", style: .info)
         let expectedClaude = monitor.subtitle(for: .claude, fallback: fallback)
 
-        monitor.beginManualRefresh(frozenModels: [.codex: codexModel], provider: .codex)
-        defer { monitor.endManualRefresh(for: .codex) }
+        monitor.beginManualRefresh(frozenModels: [.opencode: codexModel], provider: .opencode)
+        defer { monitor.endManualRefresh(for: .opencode) }
 
-        #expect(monitor.isManualRefreshInFlight(for: .codex))
+        #expect(monitor.isManualRefreshInFlight(for: .opencode))
         #expect(!monitor.isManualRefreshInFlight(for: .claude))
-        #expect(monitor.subtitle(for: .codex, fallback: fallback).style == .loading)
+        #expect(monitor.subtitle(for: .opencode, fallback: fallback).style == .loading)
         let actualClaude = monitor.subtitle(for: .claude, fallback: fallback)
         #expect(actualClaude.text == expectedClaude.text)
         #expect(actualClaude.style == expectedClaude.style)
@@ -433,12 +420,12 @@ struct StatusMenuPersistentRefreshTests {
     @Test
     func `refresh monitor publishes compatible core and pins it until final reconciliation`() throws {
         let settings = self.makeSettings()
-        enableTestProviders([.codex], settings: settings)
+        enableTestProviders([.opencode], settings: settings)
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         let monitor = controller.menuCardRefreshMonitor
         let now = Date(timeIntervalSince1970: 1_700_000_000)
-        controller.store.snapshots[.codex] = UsageSnapshot(
+        controller.store.snapshots[.opencode] = UsageSnapshot(
             primary: RateWindow(
                 usedPercent: 10,
                 windowMinutes: 300,
@@ -446,11 +433,11 @@ struct StatusMenuPersistentRefreshTests {
                 resetDescription: nil),
             secondary: nil,
             updatedAt: now)
-        let frozen = try #require(controller.menuCardModel(for: .codex))
-        monitor.beginManualRefresh(frozenModels: [.codex: frozen], provider: .codex)
-        defer { monitor.endManualRefresh(for: .codex) }
+        let frozen = try #require(controller.menuCardModel(for: .opencode))
+        monitor.beginManualRefresh(frozenModels: [.opencode: frozen], provider: .opencode)
+        defer { monitor.endManualRefresh(for: .opencode) }
 
-        controller.store.snapshots[.codex] = UsageSnapshot(
+        controller.store.snapshots[.opencode] = UsageSnapshot(
             primary: RateWindow(
                 usedPercent: 40,
                 windowMinutes: 300,
@@ -458,13 +445,13 @@ struct StatusMenuPersistentRefreshTests {
                 resetDescription: nil),
             secondary: nil,
             updatedAt: now.addingTimeInterval(1))
-        let core = try #require(controller.menuCardModel(for: .codex))
+        let core = try #require(controller.menuCardModel(for: .opencode))
 
-        #expect(monitor.publishResolvedModelIfCompatible(for: .codex))
-        #expect(!monitor.isManualRefreshInFlight(for: .codex))
-        #expect(monitor.model(for: .codex, fallback: frozen).metrics.map(\.percent) == core.metrics.map(\.percent))
+        #expect(monitor.publishResolvedModelIfCompatible(for: .opencode))
+        #expect(!monitor.isManualRefreshInFlight(for: .opencode))
+        #expect(monitor.model(for: .opencode, fallback: frozen).metrics.map(\.percent) == core.metrics.map(\.percent))
 
-        controller.store.snapshots[.codex] = UsageSnapshot(
+        controller.store.snapshots[.opencode] = UsageSnapshot(
             primary: RateWindow(
                 usedPercent: 40,
                 windowMinutes: 300,
@@ -476,9 +463,9 @@ struct StatusMenuPersistentRefreshTests {
                 resetsAt: now.addingTimeInterval(7200),
                 resetDescription: nil),
             updatedAt: now.addingTimeInterval(2))
-        let enriched = try #require(controller.menuCardModel(for: .codex))
-        let visibleBeforeReconciliation = monitor.model(for: .codex, fallback: frozen)
-        let visibleAfterReconciliation = monitor.model(for: .codex, fallback: enriched)
+        let enriched = try #require(controller.menuCardModel(for: .opencode))
+        let visibleBeforeReconciliation = monitor.model(for: .opencode, fallback: frozen)
+        let visibleAfterReconciliation = monitor.model(for: .opencode, fallback: enriched)
 
         #expect(visibleBeforeReconciliation.metrics.map(\.percent) == core.metrics.map(\.percent))
         #expect(visibleAfterReconciliation.metrics.map(\.percent) == enriched.metrics.map(\.percent))
@@ -493,12 +480,12 @@ struct StatusMenuPersistentRefreshTests {
     @Test
     func `refresh monitor keeps incompatible core frozen until reconciliation`() throws {
         let settings = self.makeSettings()
-        enableTestProviders([.codex], settings: settings)
+        enableTestProviders([.opencode], settings: settings)
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         let monitor = controller.menuCardRefreshMonitor
         let now = Date(timeIntervalSince1970: 1_700_000_000)
-        controller.store.snapshots[.codex] = UsageSnapshot(
+        controller.store.snapshots[.opencode] = UsageSnapshot(
             primary: RateWindow(
                 usedPercent: 15,
                 windowMinutes: 300,
@@ -506,11 +493,11 @@ struct StatusMenuPersistentRefreshTests {
                 resetDescription: nil),
             secondary: nil,
             updatedAt: now)
-        let frozen = try #require(controller.menuCardModel(for: .codex))
-        monitor.beginManualRefresh(frozenModels: [.codex: frozen], provider: .codex)
-        defer { monitor.endManualRefresh(for: .codex) }
+        let frozen = try #require(controller.menuCardModel(for: .opencode))
+        monitor.beginManualRefresh(frozenModels: [.opencode: frozen], provider: .opencode)
+        defer { monitor.endManualRefresh(for: .opencode) }
 
-        controller.store.snapshots[.codex] = UsageSnapshot(
+        controller.store.snapshots[.opencode] = UsageSnapshot(
             primary: RateWindow(
                 usedPercent: 45,
                 windowMinutes: 300,
@@ -522,18 +509,18 @@ struct StatusMenuPersistentRefreshTests {
                 resetsAt: now.addingTimeInterval(7200),
                 resetDescription: nil),
             updatedAt: now.addingTimeInterval(1))
-        let refreshed = try #require(controller.menuCardModel(for: .codex))
+        let refreshed = try #require(controller.menuCardModel(for: .opencode))
 
-        #expect(!monitor.publishResolvedModelIfCompatible(for: .codex))
-        #expect(monitor.isManualRefreshInFlight(for: .codex))
+        #expect(!monitor.publishResolvedModelIfCompatible(for: .opencode))
+        #expect(monitor.isManualRefreshInFlight(for: .opencode))
         #expect(monitor.subtitle(
-            for: .codex,
+            for: .opencode,
             fallback: MenuCardLiveSubtitle(text: "old", style: .info)).style == .loading)
-        #expect(monitor.model(for: .codex, fallback: frozen).metrics.map(\.percent) == frozen.metrics.map(\.percent))
+        #expect(monitor.model(for: .opencode, fallback: frozen).metrics.map(\.percent) == frozen.metrics.map(\.percent))
 
-        monitor.endManualRefresh(for: .codex)
-        let reconciled = monitor.model(for: .codex, fallback: refreshed)
-        #expect(!monitor.isManualRefreshInFlight(for: .codex))
+        monitor.endManualRefresh(for: .opencode)
+        let reconciled = monitor.model(for: .opencode, fallback: refreshed)
+        #expect(!monitor.isManualRefreshInFlight(for: .opencode))
         #expect(reconciled.metrics.map(\.percent) == refreshed.metrics.map(\.percent))
         if ProcessInfo.processInfo.environment["CODEXBAR_REFRESH_PROBE"] == "1" {
             print(
@@ -545,12 +532,12 @@ struct StatusMenuPersistentRefreshTests {
     @Test
     func `refresh monitor publishes compatible core error honestly`() throws {
         let settings = self.makeSettings()
-        enableTestProviders([.codex], settings: settings)
+        enableTestProviders([.opencode], settings: settings)
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         let monitor = controller.menuCardRefreshMonitor
         let now = Date(timeIntervalSince1970: 1_700_000_000)
-        controller.store.snapshots[.codex] = UsageSnapshot(
+        controller.store.snapshots[.opencode] = UsageSnapshot(
             primary: RateWindow(
                 usedPercent: 20,
                 windowMinutes: 300,
@@ -558,19 +545,19 @@ struct StatusMenuPersistentRefreshTests {
                 resetDescription: nil),
             secondary: nil,
             updatedAt: now)
-        let frozen = try #require(controller.menuCardModel(for: .codex))
-        monitor.beginManualRefresh(frozenModels: [.codex: frozen], provider: .codex)
-        defer { monitor.endManualRefresh(for: .codex) }
+        let frozen = try #require(controller.menuCardModel(for: .opencode))
+        monitor.beginManualRefresh(frozenModels: [.opencode: frozen], provider: .opencode)
+        defer { monitor.endManualRefresh(for: .opencode) }
 
-        controller.store.errors[.codex] = "Synthetic core refresh failure"
+        controller.store.errors[.opencode] = "Synthetic core refresh failure"
 
-        #expect(monitor.publishResolvedModelIfCompatible(for: .codex))
-        #expect(!monitor.isManualRefreshInFlight(for: .codex))
+        #expect(monitor.publishResolvedModelIfCompatible(for: .opencode))
+        #expect(!monitor.isManualRefreshInFlight(for: .opencode))
         let subtitle = monitor.subtitle(
-            for: .codex,
+            for: .opencode,
             fallback: MenuCardLiveSubtitle(text: "old", style: .info))
         #expect(subtitle.style == .error)
-        #expect(monitor.model(for: .codex, fallback: frozen).metrics.map(\.percent) == frozen.metrics.map(\.percent))
+        #expect(monitor.model(for: .opencode, fallback: frozen).metrics.map(\.percent) == frozen.metrics.map(\.percent))
     }
 
     @Test
@@ -578,7 +565,7 @@ struct StatusMenuPersistentRefreshTests {
         let settings = self.makeSettings()
         let controller = self.makeController(settings: settings)
         let now = Date()
-        for provider in [UsageProvider.claude, .codex] {
+        for provider in [UsageProvider.claude, .opencode] {
             controller.store.snapshots[provider.instanceID] = UsageSnapshot(
                 primary: RateWindow(
                     usedPercent: 21,
@@ -651,91 +638,6 @@ struct StatusMenuPersistentRefreshTests {
         #expect(inFlight.metrics.count == 2)
         #expect(inFlight.metrics.map(\.id) == rebuiltFallback.metrics.map(\.id))
     }
-
-    @Test
-    func `manual refresh preserves frozen quota when supplemental metric remains`() throws {
-        let settings = self.makeSettings()
-        let controller = self.makeController(
-            settings: settings,
-            account: AccountInfo(email: "test@example.com", plan: "pro"))
-        let now = Date()
-        controller.store.openAIDashboard = OpenAIDashboardSnapshot(
-            signedInEmail: "test@example.com",
-            codeReviewRemainingPercent: 88,
-            creditEvents: [],
-            dailyBreakdown: [],
-            usageBreakdown: [],
-            creditsPurchaseURL: nil,
-            updatedAt: now)
-        controller.store.openAIDashboardAttachmentAuthorized = true
-        controller.store.openAIDashboardRequiresLogin = false
-        controller.store.snapshots[.codex] = UsageSnapshot(
-            primary: RateWindow(
-                usedPercent: 21,
-                windowMinutes: 300,
-                resetsAt: now.addingTimeInterval(3600),
-                resetDescription: nil),
-            secondary: RateWindow(
-                usedPercent: 12,
-                windowMinutes: 10080,
-                resetsAt: now.addingTimeInterval(7 * 24 * 60 * 60),
-                resetDescription: nil),
-            updatedAt: now)
-        let frozen = try #require(controller.menuCardModel(for: .codex))
-        controller.menuCardRefreshMonitor.beginManualRefresh(frozenModels: [.codex: frozen])
-        controller.store.refreshingProviders.insert(.codex)
-        defer { controller.store.refreshingProviders.remove(.codex) }
-
-        controller.store.snapshots[.codex] = UsageSnapshot(
-            primary: nil,
-            secondary: nil,
-            updatedAt: now.addingTimeInterval(1))
-        let fallback = try #require(controller.menuCardModel(for: .codex))
-        let inFlight = controller.menuCardRefreshMonitor.model(for: .codex, fallback: fallback)
-
-        #expect(frozen.metrics.count == 3)
-        #expect(fallback.metrics.map(\.id) == ["code-review"])
-        #expect(inFlight.metrics.map(\.id) == frozen.metrics.map(\.id))
-        #expect(inFlight.metrics.first?.percentLabel == "79% left")
-    }
-
-    @Test
-    func `manual refresh uses fallback when empty quota gains credit content`() throws {
-        let settings = self.makeSettings()
-        let controller = self.makeController(
-            settings: settings,
-            account: AccountInfo(email: "test@example.com", plan: "pro"))
-        let now = Date()
-        controller.store.snapshots[.codex] = UsageSnapshot(
-            primary: RateWindow(
-                usedPercent: 21,
-                windowMinutes: 300,
-                resetsAt: now.addingTimeInterval(3600),
-                resetDescription: nil),
-            secondary: nil,
-            updatedAt: now)
-        let frozen = try #require(controller.menuCardModel(for: .codex))
-        controller.menuCardRefreshMonitor.beginManualRefresh(frozenModels: [.codex: frozen])
-        controller.store.refreshingProviders.insert(.codex)
-        defer { controller.store.refreshingProviders.remove(.codex) }
-
-        controller.store.snapshots[.codex] = UsageSnapshot(
-            primary: nil,
-            secondary: nil,
-            updatedAt: now.addingTimeInterval(1))
-        controller.store.credits = CreditsSnapshot(
-            remaining: 42,
-            events: [],
-            updatedAt: now.addingTimeInterval(1))
-        let fallback = try #require(controller.menuCardModel(for: .codex))
-        let inFlight = controller.menuCardRefreshMonitor.model(for: .codex, fallback: fallback)
-
-        #expect(frozen.metrics.count == 1)
-        #expect(fallback.metrics.isEmpty)
-        #expect(fallback.creditsText != nil)
-        #expect(inFlight.metrics.isEmpty)
-        #expect(inFlight.creditsText == fallback.creditsText)
-    }
 }
 
 extension StatusMenuPersistentRefreshTests {
@@ -766,34 +668,6 @@ extension StatusMenuPersistentRefreshTests {
         #expect(fallback.placeholder != nil)
         #expect(inFlight.metrics.isEmpty)
         #expect(inFlight.placeholder == fallback.placeholder)
-    }
-
-    @Test
-    func `refresh monitor updates single line credit balances`() throws {
-        let settings = self.makeSettings()
-        let controller = self.makeController(
-            settings: settings,
-            account: AccountInfo(email: "test@example.com", plan: "pro"))
-        let now = Date()
-        controller.store.snapshots[.codex] = UsageSnapshot(
-            primary: RateWindow(
-                usedPercent: 10,
-                windowMinutes: 300,
-                resetsAt: now.addingTimeInterval(3600),
-                resetDescription: nil),
-            secondary: nil,
-            updatedAt: now)
-        controller.store.credits = CreditsSnapshot(remaining: 80, events: [], updatedAt: now)
-        let fallback = try #require(controller.menuCardModel(for: .codex))
-
-        controller.store.credits = CreditsSnapshot(
-            remaining: 42,
-            events: [],
-            updatedAt: now.addingTimeInterval(1))
-        let refreshed = controller.menuCardRefreshMonitor.model(for: .codex, fallback: fallback)
-
-        #expect(refreshed.creditsRemaining == 42)
-        #expect(refreshed.creditsText != fallback.creditsText)
     }
 
     @Test
@@ -853,30 +727,12 @@ extension StatusMenuPersistentRefreshTests {
     }
 
     @Test
-    func `live subtitle preserves canonical model error filtering`() throws {
-        let settings = self.makeSettings()
-        let controller = self.makeController(
-            settings: settings,
-            account: AccountInfo(email: "test@example.com", plan: "pro"))
-        controller.store.errors[.codex] = UsageError.noRateLimitsFound.errorDescription
-        let model = try #require(controller.menuCardModel(for: .codex))
-        let fallback = MenuCardLiveSubtitle(text: "Fallback", style: .error)
-
-        let liveSubtitle = controller.menuCardRefreshMonitor.subtitle(for: .codex, fallback: fallback)
-
-        #expect(liveSubtitle.text == model.subtitleText)
-        #expect(liveSubtitle.style == model.subtitleStyle)
-        #expect(liveSubtitle.text != UsageError.noRateLimitsFound.errorDescription)
-        #expect(liveSubtitle.style != .error)
-    }
-
-    @Test
     func `override cards keep their own subtitle`() throws {
         let settings = self.makeSettings()
         let controller = self.makeController(settings: settings)
-        let liveModel = try #require(controller.menuCardModel(for: .codex))
+        let liveModel = try #require(controller.menuCardModel(for: .opencode))
         let overrideModel = try #require(controller.menuCardModel(
-            for: .codex,
+            for: .opencode,
             context: .account(.init(error: "Account unavailable"))))
 
         #expect(liveModel.usesLiveSubtitle)
@@ -895,16 +751,16 @@ extension StatusMenuPersistentRefreshTests {
                 .fittingSize.height
         }
 
-        let idleModel = try #require(controller.menuCardModel(for: .codex))
+        let idleModel = try #require(controller.menuCardModel(for: .opencode))
         let idleHeight = fittingHeight(for: idleModel)
-        controller.store.errors[.codex] = "Short error"
+        controller.store.errors[.opencode] = "Short error"
         let failureHeight = fittingHeight(for: idleModel)
 
         #expect(failureHeight == idleHeight)
 
-        let errorModel = try #require(controller.menuCardModel(for: .codex))
+        let errorModel = try #require(controller.menuCardModel(for: .opencode))
         let errorHeight = fittingHeight(for: errorModel)
-        controller.store.errors[.codex] =
+        controller.store.errors[.opencode] =
             "Refresh failed with a much longer replacement message that must not resize the tracked menu"
         let replacementErrorHeight = fittingHeight(for: errorModel)
         controller.menuCardRefreshMonitor.beginManualRefresh(frozenModels: [:], provider: nil)
@@ -912,10 +768,10 @@ extension StatusMenuPersistentRefreshTests {
 
         #expect(replacementErrorHeight == errorHeight)
         let fallback = MenuCardLiveSubtitle(text: errorModel.subtitleText, style: errorModel.subtitleStyle)
-        #expect(controller.menuCardRefreshMonitor.subtitle(for: .codex, fallback: fallback).style == .error)
-        controller.store.refreshingProviders.insert(.codex)
-        #expect(controller.menuCardRefreshMonitor.subtitle(for: .codex, fallback: fallback).style == .loading)
-        controller.store.refreshingProviders.remove(.codex)
+        #expect(controller.menuCardRefreshMonitor.subtitle(for: .opencode, fallback: fallback).style == .error)
+        controller.store.refreshingProviders.insert(.opencode)
+        #expect(controller.menuCardRefreshMonitor.subtitle(for: .opencode, fallback: fallback).style == .loading)
+        controller.store.refreshingProviders.remove(.opencode)
         #expect(retryHeight == errorHeight)
     }
 
@@ -972,11 +828,11 @@ extension StatusMenuPersistentRefreshTests {
         let settings = self.makeSettings()
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
-        enableTestProviders([.claude, .codex], settings: settings)
+        enableTestProviders([.claude, .opencode], settings: settings)
 
         let controller = self.makeController(settings: settings)
         let menu = try #require(controller.makeMenu(for: .claude) as? StatusItemMenu)
-        let codexMenu = try #require(controller.makeMenu(for: .codex) as? StatusItemMenu)
+        let codexMenu = try #require(controller.makeMenu(for: .opencode) as? StatusItemMenu)
         controller.menuWillOpen(menu)
         controller.menuWillOpen(codexMenu)
         defer {
@@ -1018,7 +874,7 @@ extension StatusMenuPersistentRefreshTests {
         let settings = self.makeSettings()
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
-        enableTestProviders([.claude, .codex], settings: settings)
+        enableTestProviders([.claude, .opencode], settings: settings)
 
         let controller = self.makeController(settings: settings)
         let menu = try #require(controller.makeMenu(for: .claude) as? StatusItemMenu)
@@ -1046,7 +902,7 @@ extension StatusMenuPersistentRefreshTests {
         let settings = self.makeSettings()
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        enableTestProviders([.claude, .codex], settings: settings)
+        enableTestProviders([.claude, .opencode], settings: settings)
         settings.mergedMenuLastSelectedWasOverview = true
 
         let controller = self.makeController(settings: settings)
@@ -1087,14 +943,14 @@ extension StatusMenuPersistentRefreshTests {
         settings.mergeIcons = false
 
         let controller = self.makeController(settings: settings)
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
         let refreshItem = try #require(menu.items.first { $0.title == "Refresh" })
         let gate = ManualRefreshGate()
 
         controller._test_manualRefreshOperation = {
             await gate.wait()
-            controller.store.errors[.codex] = "Refresh failed"
+            controller.store.errors[.opencode] = "Refresh failed"
         }
 
         controller.refreshNow()
@@ -1107,7 +963,7 @@ extension StatusMenuPersistentRefreshTests {
         #expect(controller.manualRefreshTasks[.global] == nil)
         #expect(refreshItem.isEnabled)
         let fallback = MenuCardLiveSubtitle(text: "Fallback", style: .info)
-        #expect(controller.menuCardRefreshMonitor.subtitle(for: .codex, fallback: fallback).style == .error)
+        #expect(controller.menuCardRefreshMonitor.subtitle(for: .opencode, fallback: fallback).style == .error)
     }
 
     @Test
@@ -1173,7 +1029,7 @@ extension StatusMenuPersistentRefreshTests {
         settings.mergeIcons = false
 
         let controller = self.makeController(settings: settings)
-        let menu = controller.makeMenu(for: .codex)
+        let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
 
         let refreshItem = try #require(menu.items.first { $0.title == "Refresh" })
@@ -1245,9 +1101,9 @@ extension StatusMenuPersistentRefreshTests {
 
         controller.store.refreshingProviders.insert(.claude)
         #expect(monitor.isManualRefreshInFlight)
-        #expect(!monitor.isManualRefreshInFlight(for: .codex))
+        #expect(!monitor.isManualRefreshInFlight(for: .opencode))
         #expect(monitor.isManualRefreshInFlight(for: .claude))
-        #expect(monitor.subtitle(for: .codex, fallback: fallback).style == .info)
+        #expect(monitor.subtitle(for: .opencode, fallback: fallback).style == .info)
         #expect(monitor.subtitle(for: .claude, fallback: fallback).style == .loading)
 
         controller.store.refreshingProviders.remove(.claude)
@@ -1261,9 +1117,7 @@ extension StatusMenuPersistentRefreshTests {
         let settings = self.makeSettings()
         settings.statusChecksEnabled = false
         settings.costUsageEnabled = false
-        settings.openAIWebAccessEnabled = false
-        settings.codexCookieSource = .off
-        enableTestProviders([.claude, .codex], settings: settings)
+        enableTestProviders([.claude, .opencode], settings: settings)
         let controller = self.makeController(settings: settings)
         let claudeStarted = ManualRefreshGate()
         let releaseClaude = ManualRefreshGate()
@@ -1284,9 +1138,9 @@ extension StatusMenuPersistentRefreshTests {
         }
 
         #expect(controller.store.refreshingProviders == [.claude])
-        #expect(!monitor.isManualRefreshInFlight(for: .codex))
+        #expect(!monitor.isManualRefreshInFlight(for: .opencode))
         #expect(monitor.isManualRefreshInFlight(for: .claude))
-        #expect(monitor.subtitle(for: .codex, fallback: fallback).style == .info)
+        #expect(monitor.subtitle(for: .opencode, fallback: fallback).style == .info)
         #expect(monitor.subtitle(for: .claude, fallback: fallback).style == .loading)
 
         releaseClaude.resume()
@@ -1298,9 +1152,7 @@ extension StatusMenuPersistentRefreshTests {
         let settings = self.makeSettings()
         settings.statusChecksEnabled = false
         settings.costUsageEnabled = true
-        settings.openAIWebAccessEnabled = false
-        settings.codexCookieSource = .off
-        enableTestProviders([.codex], settings: settings)
+        enableTestProviders([.claude], settings: settings)
         let controller = self.makeController(settings: settings)
         let tokenRefreshStarted = ManualRefreshGate()
         let releaseTokenRefresh = ManualRefreshGate()
@@ -1311,9 +1163,6 @@ extension StatusMenuPersistentRefreshTests {
         var tokenRefreshWasForced: Bool?
 
         controller.store._test_providerRefreshOverride = { _ in }
-        controller.store._test_codexCreditsLoaderOverride = {
-            CreditsSnapshot(remaining: 25, events: [], updatedAt: Date())
-        }
         controller.store._test_tokenUsageRefreshOverride = { _, force in
             tokenRefreshWasForced = force
             tokenRefreshStarted.resume()
@@ -1321,7 +1170,6 @@ extension StatusMenuPersistentRefreshTests {
         }
         defer {
             controller.store._test_providerRefreshOverride = nil
-            controller.store._test_codexCreditsLoaderOverride = nil
             controller.store._test_tokenUsageRefreshOverride = nil
         }
 
@@ -1342,8 +1190,8 @@ extension StatusMenuPersistentRefreshTests {
         #expect(tokenRefreshWasForced == true)
         #expect(controller.isRefreshActionInFlight(for: menu))
         #expect(!monitor.isManualRefreshInFlight)
-        #expect(!monitor.isManualRefreshInFlight(for: .codex))
-        #expect(monitor.subtitle(for: .codex, fallback: fallback).style == .info)
+        #expect(!monitor.isManualRefreshInFlight(for: .claude))
+        #expect(monitor.subtitle(for: .claude, fallback: fallback).style == .info)
 
         releaseTokenRefresh.resume()
         await manualCompletionTask.value
@@ -1353,128 +1201,11 @@ extension StatusMenuPersistentRefreshTests {
     }
 
     @Test
-    func `credit tail does not keep completed provider card refreshing`() async {
-        await self.verifyCompletedProviderCardStopsRefreshing(whileBlocking: .credits)
-    }
-
-    @Test
-    func `dashboard tail does not keep completed provider card refreshing`() async {
-        await self.verifyCompletedProviderCardStopsRefreshing(whileBlocking: .dashboard)
-    }
-
-    private func verifyCompletedProviderCardStopsRefreshing(whileBlocking stage: BlockingEnrichmentStage) async {
-        let settings = self.makeSettings()
-        settings.statusChecksEnabled = false
-        settings.costUsageEnabled = false
-        settings.openAIWebAccessEnabled = stage == .dashboard
-        settings.codexCookieSource = stage == .dashboard ? .auto : .off
-        settings._test_liveSystemCodexAccount = ObservedSystemCodexAccount(
-            email: "fixture@example.com",
-            codexHomePath: "/Users/test/.codex",
-            observedAt: Date(),
-            identity: .emailOnly(normalizedEmail: "fixture@example.com"))
-        settings.codexActiveSource = .liveSystem
-        enableTestProviders([.codex], settings: settings)
-        let account = AccountInfo(email: "fixture@example.com", plan: "pro")
-        let controller = self.makeController(settings: settings, account: account)
-        controller.store.accountInfoCache[.codex] = UsageStore.AccountInfoCacheEntry(
-            account: account,
-            configRevision: settings.configRevision,
-            expiresAt: .distantFuture)
-        let stageStarted = ManualRefreshGate()
-        let releaseStage = ManualRefreshGate()
-        defer {
-            releaseStage.resume()
-            controller.prepareForAppShutdown()
-            settings._test_liveSystemCodexAccount = nil
-        }
-        let monitor = controller.menuCardRefreshMonitor
-        let fallback = MenuCardLiveSubtitle(text: "Idle", style: .info)
-        let menu = controller.makeMenu()
-        var creditsLoaderCalls = 0
-        var dashboardLoaderCalls = 0
-
-        controller.store._test_providerRefreshOverride = { _ in }
-        controller.store._test_codexCreditsLoaderOverride = {
-            creditsLoaderCalls += 1
-            if stage == .credits, creditsLoaderCalls == 1 {
-                stageStarted.resume()
-                await releaseStage.wait()
-            }
-            return CreditsSnapshot(remaining: 25, events: [], updatedAt: Date())
-        }
-        controller.store._test_openAIDashboardLoaderOverride = { _, _, _, _ in
-            dashboardLoaderCalls += 1
-            if stage == .dashboard, dashboardLoaderCalls == 1 {
-                stageStarted.resume()
-                await releaseStage.wait()
-            }
-            return OpenAIDashboardSnapshot(
-                signedInEmail: account.email,
-                codeReviewRemainingPercent: 95,
-                creditEvents: [],
-                dailyBreakdown: [],
-                usageBreakdown: [],
-                creditsPurchaseURL: nil,
-                creditsRemaining: 25,
-                accountPlan: "Pro",
-                updatedAt: Date())
-        }
-        defer {
-            controller.store._test_providerRefreshOverride = nil
-            controller.store._test_codexCreditsLoaderOverride = nil
-            controller.store._test_openAIDashboardLoaderOverride = nil
-        }
-
-        controller.refreshNow()
-        let manualTask = controller.manualRefreshTasks[.global]
-        let didStartStage = await stageStarted.waitUntilSignaled()
-        #expect(didStartStage)
-        guard didStartStage else { return }
-        let manualCompletion = RefreshCompletionProbe()
-        let manualCompletionTask = Task {
-            await manualTask?.value
-            await manualCompletion.markCompleted()
-        }
-        let didCompleteManualRefresh = await manualCompletion.waitUntilCompleted()
-        #expect(didCompleteManualRefresh)
-        guard didCompleteManualRefresh else { return }
-        let tailTask = controller.store.forcedRefreshEnrichmentTask
-
-        #expect(!controller.store.isRefreshing)
-        #expect(controller.store.hasForcedRefreshEnrichmentInFlight)
-        #expect(controller.store.refreshingProviders.isEmpty)
-        #expect(controller.isRefreshActionInFlight(for: menu))
-        #expect(!monitor.isManualRefreshInFlight)
-        #expect(!monitor.isManualRefreshInFlight(for: .codex))
-        #expect(monitor.subtitle(for: .codex, fallback: fallback).style == .info)
-
-        releaseStage.resume()
-        await manualCompletionTask.value
-        let tailCompletion = RefreshCompletionProbe()
-        let tailCompletionTask = Task {
-            await tailTask?.value
-            await tailCompletion.markCompleted()
-        }
-        let didCompleteTail = await tailCompletion.waitUntilCompleted()
-        #expect(didCompleteTail)
-        guard didCompleteTail else { return }
-        await tailCompletionTask.value
-
-        #expect(creditsLoaderCalls >= 1)
-        #expect(dashboardLoaderCalls == (stage == .dashboard ? 1 : 0))
-        #expect(!controller.store.hasForcedRefreshEnrichmentInFlight)
-        #expect(!controller.isRefreshActionInFlight(for: menu))
-    }
-
-    @Test
     func `provider scoped refresh waits for global forced enrichment`() async {
         let settings = self.makeSettings()
         settings.statusChecksEnabled = false
         settings.costUsageEnabled = true
-        settings.openAIWebAccessEnabled = false
-        settings.codexCookieSource = .off
-        enableTestProviders([.codex], settings: settings)
+        enableTestProviders([.claude], settings: settings)
         let controller = self.makeController(settings: settings)
         let tokenRefreshStarted = ManualRefreshGate()
         let releaseTokenRefresh = ManualRefreshGate()
@@ -1485,9 +1216,6 @@ extension StatusMenuPersistentRefreshTests {
 
         controller.store._test_providerRefreshOverride = { _ in
             providerRefreshCalls += 1
-        }
-        controller.store._test_codexCreditsLoaderOverride = {
-            CreditsSnapshot(remaining: 25, events: [], updatedAt: Date())
         }
         controller.store._test_tokenUsageRefreshOverride = { _, _ in
             tokenRefreshCalls += 1
@@ -1501,7 +1229,6 @@ extension StatusMenuPersistentRefreshTests {
         }
         defer {
             controller.store._test_providerRefreshOverride = nil
-            controller.store._test_codexCreditsLoaderOverride = nil
             controller.store._test_tokenUsageRefreshOverride = nil
             controller.store._test_forcedRefreshEnrichmentWaitObserver = nil
         }
@@ -1519,7 +1246,7 @@ extension StatusMenuPersistentRefreshTests {
 
         let scopedTask = Task { @MainActor in
             await controller.performStoreRefresh(
-                for: .codex,
+                for: .claude,
                 refreshOpenMenusWhenComplete: false,
                 interaction: .userInitiated)
         }
@@ -1554,31 +1281,31 @@ extension StatusMenuPersistentRefreshTests {
 
         // The snapshot helper supplies every enabled provider even for a provider-scoped refresh.
         controller.store.snapshots[.claude] = quotaSnapshot(usedPercent: 21, updatedAt: now)
-        controller.store.snapshots[.codex] = quotaSnapshot(usedPercent: 15, updatedAt: now)
+        controller.store.snapshots[.opencode] = quotaSnapshot(usedPercent: 15, updatedAt: now)
         let claudeFrozen = try #require(controller.menuCardModel(for: .claude))
-        let codexBeforeItsRefresh = try #require(controller.menuCardModel(for: .codex))
+        let codexBeforeItsRefresh = try #require(controller.menuCardModel(for: .opencode))
         monitor.beginManualRefresh(
-            frozenModels: [.claude: claudeFrozen, .codex: codexBeforeItsRefresh],
+            frozenModels: [.claude: claudeFrozen, .opencode: codexBeforeItsRefresh],
             provider: .claude)
 
         // Each provider must freeze the card visible when its own refresh starts.
         controller.store.snapshots[.claude] = quotaSnapshot(usedPercent: 65, updatedAt: now.addingTimeInterval(1))
-        controller.store.snapshots[.codex] = quotaSnapshot(usedPercent: 42, updatedAt: now.addingTimeInterval(1))
+        controller.store.snapshots[.opencode] = quotaSnapshot(usedPercent: 42, updatedAt: now.addingTimeInterval(1))
         let claudeMidRefresh = try #require(controller.menuCardModel(for: .claude))
-        let codexFrozen = try #require(controller.menuCardModel(for: .codex))
+        let codexFrozen = try #require(controller.menuCardModel(for: .opencode))
         monitor.beginManualRefresh(
-            frozenModels: [.claude: claudeMidRefresh, .codex: codexFrozen],
-            provider: .codex)
+            frozenModels: [.claude: claudeMidRefresh, .opencode: codexFrozen],
+            provider: .opencode)
 
         let shownClaude = monitor.model(for: .claude, fallback: claudeMidRefresh)
-        let shownCodex = monitor.model(for: .codex, fallback: codexFrozen)
+        let shownCodex = monitor.model(for: .opencode, fallback: codexFrozen)
         #expect(shownClaude.metrics.first?.percentLabel == "79% left")
         #expect(shownCodex.metrics.first?.percentLabel == "58% left")
 
         // Ending Codex leaves Claude frozen; ending Claude clears it.
-        monitor.endManualRefresh(for: .codex)
+        monitor.endManualRefresh(for: .opencode)
         #expect(monitor.isManualRefreshInFlight(for: .claude))
-        #expect(!monitor.isManualRefreshInFlight(for: .codex))
+        #expect(!monitor.isManualRefreshInFlight(for: .opencode))
         monitor.endManualRefresh(for: .claude)
         #expect(!monitor.isManualRefreshInFlight(for: .claude))
     }
@@ -1588,10 +1315,10 @@ extension StatusMenuPersistentRefreshTests {
         let settings = self.makeSettings()
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
-        enableTestProviders([.claude, .codex], settings: settings)
+        enableTestProviders([.claude, .opencode], settings: settings)
 
         let controller = self.makeController(settings: settings)
-        let codexMenu = try #require(controller.makeMenu(for: .codex) as? StatusItemMenu)
+        let codexMenu = try #require(controller.makeMenu(for: .opencode) as? StatusItemMenu)
         controller.menuWillOpen(codexMenu)
         defer { controller.menuDidClose(codexMenu) }
 
@@ -1607,10 +1334,10 @@ extension StatusMenuPersistentRefreshTests {
 
         // A Codex refresh must still start rather than being blocked by the in-flight Claude one.
         controller.performPersistentRefreshAction(in: ObjectIdentifier(codexMenu))
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.opencode)] == nil {
             await Task.yield()
         }
-        let codexTask = try #require(controller.manualRefreshTasks[.provider(.codex)])
+        let codexTask = try #require(controller.manualRefreshTasks[.provider(.opencode)])
         #expect(controller.isRefreshActionInFlight(for: codexMenu))
 
         gate.resume()
@@ -1622,7 +1349,7 @@ extension StatusMenuPersistentRefreshTests {
         let settings = self.makeSettings()
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        enableTestProviders([.claude, .codex], settings: settings)
+        enableTestProviders([.claude, .opencode], settings: settings)
         settings.mergedMenuLastSelectedWasOverview = true
 
         let controller = self.makeController(settings: settings)
@@ -1652,5 +1379,24 @@ extension StatusMenuPersistentRefreshTests {
         }
         #expect(requestCount == 0)
         #expect(controller.manualRefreshTasks[.global] == nil)
+    }
+}
+
+actor RefreshCompletionProbe {
+    private(set) var isCompleted = false
+
+    func markCompleted() {
+        self.isCompleted = true
+    }
+
+    func waitUntilCompleted(timeout: Duration = .seconds(5)) async -> Bool {
+        let startedAt = ContinuousClock.now
+        while !self.isCompleted {
+            if startedAt.duration(to: .now) >= timeout {
+                return false
+            }
+            try? await Task.sleep(for: .milliseconds(50))
+        }
+        return true
     }
 }

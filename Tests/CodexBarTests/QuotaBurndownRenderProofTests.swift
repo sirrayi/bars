@@ -29,7 +29,7 @@ struct QuotaBurndownRenderProofTests {
             name: .opus,
             windowMinutes: 10080,
             entries: [.init(capturedAt: now.addingTimeInterval(-7200), usedPercent: 30, resetsAt: reset)])] : [history]
-        let provider: UsageProvider = fixture == .claude ? .claude : .codex
+        let provider: UsageProvider = fixture == .claude ? .claude : .opencode
         let view = VStack(spacing: 0) {
             if fixture != .before {
                 QuotaBurndownChartMenuView(provider: provider, histories: histories, width: 400, referenceDate: now)

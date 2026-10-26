@@ -37,7 +37,7 @@ struct ProviderWidgetAvailabilityTests {
     @Test
     func `legacy snapshot JSON without provider balance remains decodable`() throws {
         let snapshot = WidgetSnapshot(
-            entries: [Self.entry(provider: .codex, balanceText: nil)],
+            entries: [Self.entry(provider: .claude, balanceText: nil)],
             generatedAt: Date(timeIntervalSince1970: 1_700_000_000))
         let encoded = try JSONEncoder().encode(snapshot)
         let object = try JSONSerialization.jsonObject(with: encoded) as? [String: Any]
@@ -45,7 +45,7 @@ struct ProviderWidgetAvailabilityTests {
 
         #expect(entries?.first?["balanceText"] == nil)
         let decoded = try JSONDecoder().decode(WidgetSnapshot.self, from: encoded)
-        #expect(decoded.entries.first?.provider == .codex)
+        #expect(decoded.entries.first?.provider == .claude)
         #expect(decoded.entries.first?.balanceText == nil)
     }
 

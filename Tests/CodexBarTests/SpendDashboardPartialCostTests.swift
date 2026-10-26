@@ -34,26 +34,6 @@ struct SpendDashboardPartialCostTests {
     }
 
     @Test
-    func `established Codex history retains priced spend beside an unresolved long context day`() throws {
-        let snapshot = Self.snapshot(
-            entries: [
-                Self.entry(day: "2026-07-15", cost: 3, tokens: 30, model: "gpt-5.4-mini"),
-                Self.entry(day: "2026-07-16", cost: nil, tokens: 400_000, model: "gpt-5.6-sol"),
-            ],
-            last30DaysTokens: 400_030,
-            last30DaysCostUSD: 3)
-        let group = try Self.group(snapshot)
-
-        #expect(snapshot.historyCoverageIsEstablished)
-        #expect(group.totalCost == 3)
-        #expect(group.totalTokens == 400_030)
-        #expect(group.modelHistoryCompleteness == .incomplete)
-        #expect(group.models.map(\.modelName) == ["gpt-5.4-mini", "gpt-5.6-sol"])
-        #expect(group.models.map(\.totalCost) == [3, nil])
-        #expect(group.dailyPoints.map(\.cost) == [3])
-    }
-
-    @Test
     func `incomplete Codex history with an unresolved day keeps spend unavailable`() throws {
         let snapshot = Self.snapshot(
             entries: [
@@ -148,10 +128,9 @@ struct SpendDashboardPartialCostTests {
         #expect(group.modelHistoryCompleteness == .incomplete)
     }
 
-    @Test(arguments: [UsageProvider.claude, .pi])
-    func `provider hierarchy retains incomplete source and model rows beside known subtotals`(
-        provider: UsageProvider) throws
-    {
+    @Test
+    func `provider hierarchy retains incomplete source and model rows beside known subtotals`() throws {
+        let provider = UsageProvider.claude
         let pending = CostUsageDailyReport.Entry(
             date: "2026-07-16",
             inputTokens: nil,
@@ -174,8 +153,7 @@ struct SpendDashboardPartialCostTests {
                 id: "pending-source",
                 provider: provider,
                 displayName: "Pending source",
-                snapshot: Self.snapshot(entries: [pending], last30DaysTokens: nil, last30DaysCostUSD: nil),
-                sourceKind: provider == .pi ? .localHistory : .native),
+                snapshot: Self.snapshot(entries: [pending], last30DaysTokens: nil, last30DaysCostUSD: nil)),
         ])
         let breakdown = try #require(spendDashboardProviderBreakdowns(group).first)
         #expect(Set(breakdown.subscriptions.map(\.id)) == ["known-source", "pending-source"])
@@ -187,10 +165,6 @@ struct SpendDashboardPartialCostTests {
         #expect(pendingModel.totalCost == nil)
         #expect(pendingModel.totalTokens == nil)
         #expect(pendingModel.incompleteRequestCount == 2)
-        if provider == .pi {
-            #expect(breakdown.subscriptions.first { $0.id == "pending-source" }?.sourceKind == .localHistory)
-            #expect(spendDashboardProviderCountTitle(group) == L("Sources"))
-        }
     }
 
     @Test
@@ -216,7 +190,7 @@ struct SpendDashboardPartialCostTests {
     }
 
     private static func group(_ snapshot: CostUsageTokenSnapshot) throws -> SpendDashboardModel.CurrencyGroup {
-        try self.group(inputs: [.init(provider: .codex, displayName: "Codex", snapshot: snapshot)])
+        try self.group(inputs: [.init(provider: .opencode, displayName: "Codex", snapshot: snapshot)])
     }
 
     private static func group(

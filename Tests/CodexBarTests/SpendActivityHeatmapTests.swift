@@ -218,7 +218,7 @@ struct SpendActivityHeatmapTests {
         let model = SpendDashboardModel.build(
             inputs: [
                 .init(
-                    provider: .codex,
+                    provider: .opencode,
                     displayName: "Codex",
                     snapshot: snapshot,
                     tokenActivityCache: cache),
@@ -244,7 +244,7 @@ struct SpendActivityHeatmapTests {
         let model = SpendDashboardModel.build(
             inputs: [
                 .init(
-                    provider: .codex,
+                    provider: .opencode,
                     displayName: "Codex",
                     snapshot: Self.snapshot(
                         entries: [],

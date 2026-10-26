@@ -10,13 +10,11 @@ struct ProviderUsageItemVisibilityTests {
     @Test
     func `globally gated quota rows retain their explanation when unavailable`() {
         for (provider, optionalIDs) in [
-            (UsageProvider.codex, ["codex-spark", "codex-spark-weekly", "codex-extra-quota", "monthly"]),
-            (.claude, ["claude-routines"]),
+            (UsageProvider.claude, ["claude-routines"]),
         ] {
             let model = Self.model(
                 provider: provider,
-                metricIDs: ["primary", "secondary"] + optionalIDs,
-                monthlyIsSyntheticCreditLane: provider == .codex)
+                metricIDs: ["primary", "secondary"] + optionalIDs)
             let items = model.usageItemDescriptors
             #expect(items.filter(\.requiresOptionalUsage).map(\.id) == optionalIDs.map(ProviderUsageItemID.metric))
             let unavailable = Self.model(provider: provider, metricIDs: ["primary", "secondary"])
@@ -46,7 +44,6 @@ struct ProviderUsageItemVisibilityTests {
         #expect(hidden.subscriptionNotes.isEmpty)
         #expect(hidden.usageNotes == ["Usage estimate"])
         #expect(model.applyingUsageItemVisibility(hiddenItemIDs: [.claudeResetCredits]).limitResetCredits == nil)
-        #expect(model.applyingUsageItemVisibility(hiddenItemIDs: [.codexResetCredits]).limitResetCredits != nil)
         model.providerCost = .init(title: "API spend", percentUsed: nil, spendLine: "$10", percentLine: nil)
         #expect(model.applyingUsageItemVisibility(hiddenItemIDs: [.claudeExtraUsage]).providerCost != nil)
     }
@@ -55,7 +52,7 @@ struct ProviderUsageItemVisibilityTests {
     func `new visibility controls retain recognizable unavailable labels`() {
         #expect(ProviderUsageItemID.claudeResetCredits.unreportedTitle(for: .claude) == "Limit Reset Credits")
         #expect(ProviderUsageItemID.claudeExtraUsage.unreportedTitle(for: .claude) == "Extra usage")
-        #expect(ProviderUsageItemID.subscription.unreportedTitle(for: .codex) == "Plan renewal / expiry")
+        #expect(ProviderUsageItemID.subscription.unreportedTitle(for: .opencode) == "Plan renewal / expiry")
     }
 
     @Test
@@ -74,9 +71,7 @@ struct ProviderUsageItemVisibilityTests {
         let account = try #require(settings.tokenAccounts(for: .claude).first)
         let home = configStore.fileURL.deletingLastPathComponent().path
         let environment = ["HOME": home]
-        settings._test_codexReconciliationEnvironment = environment
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: environment),
             browserDetection: BrowserDetection(homeDirectory: home, cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -124,72 +119,12 @@ struct ProviderUsageItemVisibilityTests {
     }
 
     @Test
-    func `codex exposes independently selectable metrics credits and reset credits`() {
-        let model = Self.model(
-            provider: .codex,
-            metricIDs: ["primary", "secondary", "codex-spark", "codex-spark-weekly"],
-            showsCredits: true,
-            showsResetCredits: true)
-
-        #expect(model.usageItemDescriptors.map(\.id.rawValue) == [
-            "metric:primary",
-            "metric:secondary",
-            "metric:codex-spark",
-            "metric:codex-spark-weekly",
-            "section:codex-reset-credits",
-            "section:credits",
-        ])
-    }
-
-    @Test
-    func `projection can leave only codex weekly usage and reset credits`() {
-        let model = Self.model(
-            provider: .codex,
-            metricIDs: ["primary", "secondary", "codex-spark", "codex-spark-weekly"],
-            showsCredits: true,
-            showsResetCredits: true)
-        let projected = model.applyingUsageItemVisibility(hiddenItemIDs: [
-            .metric("primary"),
-            .metric("codex-spark"),
-            .metric("codex-spark-weekly"),
-            .credits,
-        ])
-
-        #expect(projected.metrics.map(\.id) == ["secondary"])
-        #expect(projected.limitResetCredits != nil)
-        #expect(projected.creditsText == nil)
-        #expect(projected.creditsRemaining == nil)
-        #expect(projected.creditsProgressPercent == nil)
-        #expect(projected.creditsScaleText == nil)
-        #expect(projected.creditsHintText == nil)
-        #expect(projected.creditsHintCopyText == nil)
-
-        // The raw model remains available to populate the settings checkboxes.
-        #expect(model.metrics.count == 4)
-        #expect(model.creditsText != nil)
-    }
-
-    @Test
-    func `codex reset credits choice appears only when available or hidden`() {
-        let model = Self.model(provider: .codex, metricIDs: ["secondary"])
-
-        #expect(model.usageItemDescriptors.map(\.id.rawValue) == ["metric:secondary"])
-
-        let descriptors = model.usageItemDescriptors(includingHidden: [.codexResetCredits])
-        #expect(descriptors.map(\.id.rawValue) == [
-            "metric:secondary",
-            "section:codex-reset-credits",
-        ])
-        #expect(descriptors.last?.title == "Limit Reset Credits (unavailable)")
-    }
-
-    @Test
     func `changing usage item visibility leaves the provider refresh revision untouched`() {
         let settings = Self.settings(
             defaults: InMemoryUserDefaults(),
             configStore: testConfigStore(
                 suiteName: "ProviderUsageItemVisibilityTests-refresh-revision-\(UUID().uuidString)"))
-        let provider = UsageProvider.codex
+        let provider = UsageProvider.opencode
         let before = settings.providerConfigRevision(for: provider)
 
         settings.setUsageItemVisible(false, itemID: .metric("primary"), for: provider)
@@ -209,7 +144,7 @@ struct ProviderUsageItemVisibilityTests {
             defaults: InMemoryUserDefaults(),
             configStore: testConfigStore(suiteName: "usage-item-observation-\(UUID().uuidString)"))
         let changed = LockIsolated(false)
-        let fetchRevision = settings.providerConfigRevision(for: .codex)
+        let fetchRevision = settings.providerConfigRevision(for: .opencode)
         let backgroundRevision = settings.backgroundWorkSettingsRevision
         withObservationTracking {
             _ = settings.menuObservationToken
@@ -217,47 +152,12 @@ struct ProviderUsageItemVisibilityTests {
             changed.setValue(true)
         }
 
-        settings.setUsageItemVisible(false, itemID: .metric("primary"), for: .codex)
+        settings.setUsageItemVisible(false, itemID: .metric("primary"), for: .opencode)
 
         #expect(changed.value)
         #expect(settings.isUsageItemVisible(.metric("primary"), for: .claude))
-        #expect(settings.providerConfigRevision(for: .codex) == fetchRevision)
+        #expect(settings.providerConfigRevision(for: .opencode) == fetchRevision)
         #expect(settings.backgroundWorkSettingsRevision == backgroundRevision)
-    }
-
-    @Test
-    func `legacy codex spark choice migrates and explicit defaults survive reload`() {
-        let suite = "ProviderUsageItemVisibilityTests-migration-\(UUID().uuidString)"
-        let defaults = InMemoryUserDefaults()
-        defaults.set(false, forKey: "codexSparkUsageVisible")
-        let configStore = testConfigStore(suiteName: suite)
-        let settings = Self.settings(defaults: defaults, configStore: configStore)
-
-        #expect(settings.hiddenUsageItemIDs(for: .codex) == [
-            .metric("codex-spark"),
-            .metric("codex-spark-weekly"),
-        ])
-
-        let backgroundRevision = settings.backgroundWorkSettingsRevision
-        settings.setUsageItemVisible(true, itemID: .metric("codex-spark-weekly"), for: .codex)
-        #expect(settings.providerConfig(for: .codex)?.hiddenUsageItemIDs == ["metric:codex-spark"])
-        #expect(settings.codexSparkUsageVisible)
-        #expect(settings.backgroundWorkSettingsRevision == backgroundRevision)
-
-        settings.setUsageItemVisible(false, itemID: .init(rawValue: "future:item"), for: .codex)
-        #expect(settings.providerConfig(for: .codex)?.hiddenUsageItemIDs == [
-            "future:item",
-            "metric:codex-spark",
-        ])
-
-        settings.restoreDefaultUsageItemVisibility(for: .codex)
-        #expect(settings.providerConfig(for: .codex)?.hiddenUsageItemIDs == [])
-        #expect(settings.codexSparkUsageVisible)
-
-        let reloaded = Self.settings(
-            defaults: defaults,
-            configStore: testConfigStore(suiteName: suite, reset: false))
-        #expect(reloaded.hiddenUsageItemIDs(for: .codex).isEmpty)
     }
 
     @Test(arguments: [true, false], [true, false])
@@ -290,7 +190,7 @@ struct ProviderUsageItemVisibilityTests {
         #expect(settings.providerConfig(for: .claude)?.claudeResetCreditsVisibilityMigrated == true)
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
-        let originalCodex = try encoder.encode(settings.providerConfig(for: .codex))
+        let originalCodex = try encoder.encode(settings.providerConfig(for: .opencode))
         let fetchRevision = settings.providerConfigRevision(for: .claude)
         let backgroundRevision = settings.backgroundWorkSettingsRevision
 
@@ -309,7 +209,7 @@ struct ProviderUsageItemVisibilityTests {
         #expect(reloaded.providerConfig(for: .claude)?.source == .web)
         #expect(reloaded.providerConfig(for: .claude)?.enabled == true)
         #expect(reloaded.providerConfig(for: .claude)?.accentColor == "#123456")
-        #expect(try encoder.encode(reloaded.providerConfig(for: .codex)) == originalCodex)
+        #expect(try encoder.encode(reloaded.providerConfig(for: .opencode)) == originalCodex)
         reloaded.setUsageItemVisible(true, itemID: .claudeResetCredits, for: .claude)
         #expect(reloaded.hiddenUsageItemIDs(for: .claude) == oldIDs.union([.subscription]))
         #expect(try configStore.load()?.providerConfig(for: .claude)?.hiddenUsageItemIDs ==
@@ -378,7 +278,6 @@ struct ProviderUsageItemVisibilityTests {
         SettingsStore(
             userDefaults: defaults,
             configStore: configStore,
-            codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
             opencodeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore(),

@@ -12,7 +12,7 @@ final class StatusMenuSwitcherLayoutNativeProofTests: XCTestCase {
         try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
         let view = ProviderSwitcherView(
             providers: [
-                .codex, .claude, .deepseek, .devin, .opencode, .opencodego, .pi,
+                .claude, .deepseek, .devin, .opencode, .opencodego,
             ],
             selected: .overview,
             includesOverview: true,

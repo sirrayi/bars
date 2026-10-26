@@ -8,61 +8,11 @@ import Testing
 // swiftlint:disable:next type_body_length
 struct CostHistoryChartMenuViewTests {
     @Test
-    func `privacy masks project and source identity without changing visible costs or grouping`() {
-        let projects = Self.makeProjects(count: 6, sourcesPerProject: 3)
-        let snapshot = Self.makeSnapshot(projects: projects)
-        let original = CostHistoryChartMenuView.renderFingerprint(from: snapshot, provider: .codex)
-        let hidden = CostHistoryChartMenuView.renderFingerprint(
-            from: snapshot, provider: .codex, hidePersonalInfo: true)
-
-        #expect(hidden != original)
-        #expect(hidden.hidePersonalInfo)
-        #expect(hidden.daily == original.daily)
-        #expect(hidden.sessions == original.sessions)
-        #expect(hidden.totalCostBitPattern == original.totalCostBitPattern)
-        #expect(hidden.projects.count == original.projects.count)
-        for (index, pair) in zip(original.projects, hidden.projects).enumerated() {
-            #expect(pair.1.name == L("Project %d", index + 1))
-            #expect(pair.1.path == nil)
-            #expect(pair.1.totalTokens == pair.0.totalTokens)
-            #expect(pair.1.totalCostBitPattern == pair.0.totalCostBitPattern)
-            #expect(pair.1.visibleSourceCount == 3)
-            #expect(pair.1.sources.count == 2)
-            for (sourceIndex, sources) in zip(pair.0.sources, pair.1.sources).enumerated() {
-                #expect(sources.1.name == L("Source %d", sourceIndex + 1))
-                #expect(sources.1.path == nil)
-                #expect(sources.1.totalTokens == sources.0.totalTokens)
-                #expect(sources.1.totalCostBitPattern == sources.0.totalCostBitPattern)
-            }
-        }
-        #expect(snapshot.projects == projects)
-        #expect(CostHistoryChartMenuView.renderFingerprint(
-            from: snapshot, provider: .codex, hidePersonalInfo: false) == original)
-    }
-
-    @Test
-    func `privacy preserves differing single sources and hides pathless names`() {
-        let samePath = Self.project(path: "/Users/example/project", sourcePath: "/Users/example/project")
-        let worktree = Self.project(path: "/Users/example/project", sourcePath: "/Users/example/worktree")
-        let snapshot = Self.makeSnapshot(projects: [samePath, worktree])
-        let hidden = CostHistoryChartMenuView.renderFingerprint(
-            from: snapshot, provider: .codex, hidePersonalInfo: true)
-        #expect(hidden.projects[0].sources.isEmpty)
-        #expect(hidden.projects[1].sources.count == 1)
-        #expect(hidden.projects[1].sources[0].path == nil)
-
-        let identity = CostHistoryIdentity(
-            name: "private-project-name", path: nil, placeholder: "Project 1", hidePersonalInfo: true)
-        #expect(identity.name == "Project 1")
-        #expect(identity.path == nil)
-    }
-
-    @Test
     func `spend project privacy preserves raw identity and numbers for every rank`() {
         for rank in 1...12 {
             let row = SpendDashboardModel.ProjectRow(
                 rank: rank,
-                provider: .codex,
+                provider: .opencode,
                 providerName: "Codex",
                 sourceID: "codex",
                 projectName: "private-project-\(rank)",
@@ -83,33 +33,13 @@ struct CostHistoryChartMenuViewTests {
     }
 
     @Test
-    func `partial Codex token history is marked refreshing until coverage completes`() {
-        #expect(CostHistoryChartMenuView._showsHistoryRefreshingForTesting(
-            provider: .codex,
-            metric: .tokens,
-            historyCoverageIsEstablished: false))
-        #expect(!CostHistoryChartMenuView._showsHistoryRefreshingForTesting(
-            provider: .codex,
-            metric: .tokens,
-            historyCoverageIsEstablished: true))
-        #expect(!CostHistoryChartMenuView._showsHistoryRefreshingForTesting(
-            provider: .codex,
-            metric: .cost,
-            historyCoverageIsEstablished: false))
-        #expect(!CostHistoryChartMenuView._showsHistoryRefreshingForTesting(
-            provider: .claude,
-            metric: .tokens,
-            historyCoverageIsEstablished: false))
-    }
-
-    @Test
     func `chart day keys remain on the injected Hong Kong local day`() throws {
         let hongKong = try #require(TimeZone(identifier: "Asia/Hong_Kong"))
         var sourceCalendar = Calendar(identifier: .buddhist)
         sourceCalendar.timeZone = hongKong
         let date = try #require(CostHistoryChartMenuView._dateFromDayKeyForTesting(
             "2026-08-14",
-            provider: .codex,
+            provider: .opencode,
             calendar: sourceCalendar))
 
         var gregorian = Calendar(identifier: .gregorian)
@@ -129,11 +59,11 @@ struct CostHistoryChartMenuViewTests {
 
         #expect(CostHistoryChartMenuView._dateFromDayKeyForTesting(
             "2026-8-14",
-            provider: .codex,
+            provider: .opencode,
             calendar: calendar) == nil)
         #expect(CostHistoryChartMenuView._dateFromDayKeyForTesting(
             "2026-02-30",
-            provider: .codex,
+            provider: .opencode,
             calendar: calendar) == nil)
     }
 
@@ -169,26 +99,6 @@ struct CostHistoryChartMenuViewTests {
     }
 
     @Test
-    func `Codex daily chart defaults to tokens while other providers preserve cost`() {
-        let daily = [
-            Self.dailyEntry(date: "2026-08-12", totalTokens: 1_250_000, costUSD: 1.25),
-        ]
-
-        #expect(CostHistoryChartMenuView._defaultMetricForTesting(provider: .codex, daily: daily) == .tokens)
-        #expect(CostHistoryChartMenuView._defaultMetricForTesting(provider: .claude, daily: daily) == .cost)
-    }
-
-    @Test
-    func `Codex daily chart falls back to cost when token totals are unavailable`() {
-        let daily = [
-            Self.dailyEntry(date: "2026-08-12", totalTokens: nil, costUSD: 1.25),
-        ]
-
-        #expect(CostHistoryChartMenuView._availableMetricsForTesting(provider: .codex, daily: daily) == [.cost])
-        #expect(CostHistoryChartMenuView._defaultMetricForTesting(provider: .codex, daily: daily) == .cost)
-    }
-
-    @Test
     func `token chart keeps exact daily totals even when a cost estimate is unavailable`() {
         let daily = [
             Self.dailyEntry(date: "2026-08-12", totalTokens: 1_250_000, costUSD: 1.25),
@@ -196,16 +106,16 @@ struct CostHistoryChartMenuViewTests {
         ]
 
         #expect(
-            CostHistoryChartMenuView._availableMetricsForTesting(provider: .codex, daily: daily)
+            CostHistoryChartMenuView._availableMetricsForTesting(provider: .opencode, daily: daily)
                 == [.tokens, .cost])
         #expect(
             CostHistoryChartMenuView._chartValuesForTesting(
-                provider: .codex,
+                provider: .opencode,
                 daily: daily,
                 metric: .tokens) == [1_250_000, 2_500_000])
         #expect(
             CostHistoryChartMenuView._chartValuesForTesting(
-                provider: .codex,
+                provider: .opencode,
                 daily: daily,
                 metric: .cost) == [1.25])
     }
@@ -225,7 +135,7 @@ struct CostHistoryChartMenuViewTests {
         ]
 
         #expect(CostHistoryChartMenuView._chartValuesForTesting(
-            provider: .codex,
+            provider: .opencode,
             daily: daily,
             metric: .tokens) == [150])
     }
@@ -234,14 +144,6 @@ struct CostHistoryChartMenuViewTests {
     func `token axis uses compact token labels instead of currency`() {
         #expect(CostHistoryChartMenuView._yAxisTokenStringForTesting(1_250_000) == "1.2M")
         #expect(!CostHistoryChartMenuView._yAxisTokenStringForTesting(1_250_000).contains("$"))
-    }
-
-    @Test
-    func `Codex chart explains that its token estimate is not a subscription bill`() {
-        #expect(
-            CostHistoryChartMenuView.estimateDisclaimer(provider: .codex)
-                == "Estimated from token usage · not a subscription bill")
-        #expect(CostHistoryChartMenuView.estimateDisclaimer(provider: .claude) == nil)
     }
 
     @Test
@@ -281,7 +183,7 @@ struct CostHistoryChartMenuViewTests {
             standardTokens: 100,
             priorityTokens: 200)])
         let view = CostHistoryChartMenuView(
-            provider: .codex,
+            provider: .opencode,
             daily: [entry],
             totalCostUSD: 3,
             costMultiplier: 2,
@@ -289,15 +191,6 @@ struct CostHistoryChartMenuViewTests {
             width: 320)
         let rows = view.breakdownRows(entry: entry, barColor: .blue)
         #expect(rows.first?.modeSubtitle == "Std $2.00 · 100 / Fast $4.00 · 200")
-    }
-
-    @Test
-    func `session model label maps codex auto review role`() {
-        #expect(CostHistoryChartMenuView.sessionModelLabel([]) == "Unknown model")
-        #expect(CostHistoryChartMenuView.sessionModelLabel(["codex-auto-review"]) == "Codex Auto Review")
-        #expect(
-            CostHistoryChartMenuView.sessionModelLabel(["codex-auto-review", "gpt-5.6-sol"])
-                == "Codex Auto Review +1")
     }
 
     @Test
@@ -336,7 +229,7 @@ struct CostHistoryChartMenuViewTests {
 
         #expect(
             CostHistoryChartMenuView._defaultSelectedDateKeyForTesting(
-                provider: .codex,
+                provider: .opencode,
                 daily: daily) == "2026-06-09")
     }
 
@@ -344,16 +237,16 @@ struct CostHistoryChartMenuViewTests {
     @MainActor
     func `cost history sizes its viewport to the largest breakdown in the range`() {
         let threeRows = CostHistoryChartMenuView._detailViewportConfigurationForTesting(
-            provider: .codex,
+            provider: .opencode,
             daily: [Self.entry(date: "2026-06-07", modelCount: 1), Self.entry(date: "2026-06-08", modelCount: 3)])
         let cappedRows = CostHistoryChartMenuView._detailViewportConfigurationForTesting(
-            provider: .codex,
+            provider: .opencode,
             daily: [Self.entry(date: "2026-06-07", modelCount: 6)])
         let mixedRows = CostHistoryChartMenuView._detailViewportConfigurationForTesting(
-            provider: .codex,
+            provider: .opencode,
             daily: [Self.entry(date: "2026-06-07", modelCount: 6), Self.entry(date: "2026-06-08", modelCount: 1)])
         let noRows = CostHistoryChartMenuView._detailViewportConfigurationForTesting(
-            provider: .codex,
+            provider: .opencode,
             daily: [Self.entry(date: "2026-06-07", modelCount: 0)])
 
         #expect(threeRows.rowCount == 3)
@@ -371,10 +264,10 @@ struct CostHistoryChartMenuViewTests {
     @MainActor
     func `cost history expands every row only when the range contains mode details`() {
         let compact = CostHistoryChartMenuView._detailViewportConfigurationForTesting(
-            provider: .codex,
+            provider: .opencode,
             daily: [Self.entry(date: "2026-06-07", modelCount: 2)])
         let expanded = CostHistoryChartMenuView._detailViewportConfigurationForTesting(
-            provider: .codex,
+            provider: .opencode,
             daily: [
                 Self.entry(date: "2026-06-07", modelCount: 2),
                 Self.entry(date: "2026-06-08", modelCount: 1, hasModeDetails: true),
@@ -417,11 +310,11 @@ struct CostHistoryChartMenuViewTests {
         let daily = [tokenOnly, costOnly]
 
         let tokens = CostHistoryChartMenuView._detailViewportConfigurationForTesting(
-            provider: .codex,
+            provider: .opencode,
             daily: daily,
             metric: .tokens)
         let cost = CostHistoryChartMenuView._detailViewportConfigurationForTesting(
-            provider: .codex,
+            provider: .opencode,
             daily: daily,
             metric: .cost)
 
@@ -454,7 +347,7 @@ struct CostHistoryChartMenuViewTests {
                 modelsUsed: nil,
                 modelBreakdowns: nil),
         ]
-        let dates = CostHistoryChartMenuView._axisDatesForTesting(provider: .codex, daily: daily)
+        let dates = CostHistoryChartMenuView._axisDatesForTesting(provider: .opencode, daily: daily)
         let cal = Calendar.current
         #expect(dates.count == 2)
         #expect(cal.component(.month, from: dates[0]) == 5)
@@ -476,7 +369,7 @@ struct CostHistoryChartMenuViewTests {
                 modelsUsed: nil,
                 modelBreakdowns: nil),
         ]
-        let dates = CostHistoryChartMenuView._axisDatesForTesting(provider: .codex, daily: daily)
+        let dates = CostHistoryChartMenuView._axisDatesForTesting(provider: .opencode, daily: daily)
         #expect(dates.count == 1)
     }
 
@@ -493,7 +386,7 @@ struct CostHistoryChartMenuViewTests {
                 modelsUsed: nil,
                 modelBreakdowns: nil),
         ]
-        let dates = CostHistoryChartMenuView._axisDatesForTesting(provider: .codex, daily: daily)
+        let dates = CostHistoryChartMenuView._axisDatesForTesting(provider: .opencode, daily: daily)
         #expect(dates.isEmpty)
     }
 
@@ -596,12 +489,10 @@ struct CostHistoryChartMenuViewTests {
     @MainActor
     func `render fingerprint is stable for identical snapshots`() {
         let snapshot = Self.makeSnapshot(dailyCost: 1.23, projectCount: 5)
-        let first = CostHistoryChartMenuView.renderFingerprint(from: snapshot, provider: .codex)
-        let second = CostHistoryChartMenuView.renderFingerprint(from: snapshot, provider: .codex)
+        let first = CostHistoryChartMenuView.renderFingerprint(from: snapshot, provider: .opencode)
+        let second = CostHistoryChartMenuView.renderFingerprint(from: snapshot, provider: .opencode)
 
         #expect(first == second)
-        #expect(first.projects.count == 5)
-        #expect(first.projects.allSatisfy { $0.sources.count <= 2 })
     }
 
     @Test
@@ -609,10 +500,10 @@ struct CostHistoryChartMenuViewTests {
     func `render fingerprint changes when daily cost changes`() {
         let before = CostHistoryChartMenuView.renderFingerprint(
             from: Self.makeSnapshot(dailyCost: 1.0),
-            provider: .codex)
+            provider: .opencode)
         let after = CostHistoryChartMenuView.renderFingerprint(
             from: Self.makeSnapshot(dailyCost: 2.0),
-            provider: .codex)
+            provider: .opencode)
 
         #expect(before != after)
     }
@@ -624,8 +515,8 @@ struct CostHistoryChartMenuViewTests {
         let complete = Self.makeSnapshot(historyCoverageIsEstablished: true)
 
         #expect(
-            CostHistoryChartMenuView.renderFingerprint(from: partial, provider: .codex)
-                != CostHistoryChartMenuView.renderFingerprint(from: complete, provider: .codex))
+            CostHistoryChartMenuView.renderFingerprint(from: partial, provider: .opencode)
+                != CostHistoryChartMenuView.renderFingerprint(from: complete, provider: .opencode))
     }
 
     @Test
@@ -633,25 +524,25 @@ struct CostHistoryChartMenuViewTests {
     func `render fingerprint changes for total currency history window and label`() {
         let base = Self.makeSnapshot(dailyCost: 1.0)
         #expect(
-            CostHistoryChartMenuView.renderFingerprint(from: base, provider: .codex)
+            CostHistoryChartMenuView.renderFingerprint(from: base, provider: .opencode)
                 != CostHistoryChartMenuView.renderFingerprint(from: Self.makeSnapshot(
                     dailyCost: 1.0,
-                    totalCostUSD: 9.99), provider: .codex))
+                    totalCostUSD: 9.99), provider: .opencode))
         #expect(
-            CostHistoryChartMenuView.renderFingerprint(from: base, provider: .codex)
+            CostHistoryChartMenuView.renderFingerprint(from: base, provider: .opencode)
                 != CostHistoryChartMenuView.renderFingerprint(from: Self.makeSnapshot(
                     dailyCost: 1.0,
-                    currencyCode: "EUR"), provider: .codex))
+                    currencyCode: "EUR"), provider: .opencode))
         #expect(
-            CostHistoryChartMenuView.renderFingerprint(from: base, provider: .codex)
+            CostHistoryChartMenuView.renderFingerprint(from: base, provider: .opencode)
                 != CostHistoryChartMenuView.renderFingerprint(from: Self.makeSnapshot(
                     dailyCost: 1.0,
-                    historyDays: 7), provider: .codex))
+                    historyDays: 7), provider: .opencode))
         #expect(
-            CostHistoryChartMenuView.renderFingerprint(from: base, provider: .codex)
+            CostHistoryChartMenuView.renderFingerprint(from: base, provider: .opencode)
                 != CostHistoryChartMenuView.renderFingerprint(from: Self.makeSnapshot(
                     dailyCost: 1.0,
-                    historyLabel: "Last week"), provider: .codex))
+                    historyLabel: "Last week"), provider: .opencode))
     }
 
     @Test
@@ -863,108 +754,6 @@ struct CostHistoryChartMenuViewTests {
         }
     }
 
-    @Test
-    @MainActor
-    func `render fingerprint excludes projects hidden for non-codex providers`() {
-        let first = Self.fingerprint(
-            projects: [Self.makeProject(index: 0, sourceCount: 2)],
-            provider: .claude)
-        let changed = Self.fingerprint(
-            projects: [Self.makeProject(index: 0, sourceCount: 2, totalCostUSD: 99)],
-            provider: .claude)
-
-        #expect(first.projects.isEmpty)
-        #expect(first == changed)
-    }
-
-    @Test
-    @MainActor
-    func `render fingerprint tracks visible project and source fields only`() {
-        let daily = [Self.entry(date: "2026-06-07", modelCount: 1)]
-        let projects = Self.makeProjects(count: 6, sourcesPerProject: 3)
-        let base = Self.fingerprint(totalCostUSD: 6.0, daily: daily, projects: projects)
-
-        var sixthProjectNestedDaily = projects
-        sixthProjectNestedDaily[5] = Self.makeProject(
-            index: 5,
-            sourceCount: 3,
-            nestedDailyCost: 99.0)
-        #expect(base == Self.fingerprint(totalCostUSD: 6.0, daily: daily, projects: sixthProjectNestedDaily))
-
-        var topProjectNestedDaily = projects
-        topProjectNestedDaily[0] = Self.makeProject(
-            index: 0,
-            sourceCount: 3,
-            nestedDailyCost: 99.0)
-        #expect(base == Self.fingerprint(totalCostUSD: 6.0, daily: daily, projects: topProjectNestedDaily))
-
-        var renamedTopProject = projects
-        renamedTopProject[0] = Self.makeProject(index: 0, sourceCount: 3, nameSuffix: "-renamed")
-        #expect(base != Self.fingerprint(totalCostUSD: 6.0, daily: daily, projects: renamedTopProject))
-
-        var changedTopProjectPath = projects
-        changedTopProjectPath[0] = Self.makeProject(index: 0, sourceCount: 3, pathSuffix: "-renamed")
-        #expect(base != Self.fingerprint(totalCostUSD: 6.0, daily: daily, projects: changedTopProjectPath))
-
-        var changedTopProjectTotals = projects
-        changedTopProjectTotals[0] = Self.makeProject(index: 0, sourceCount: 3, totalCostUSD: 42.0, totalTokens: 9999)
-        #expect(base != Self.fingerprint(totalCostUSD: 6.0, daily: daily, projects: changedTopProjectTotals))
-
-        let reorderedProjects = Array(projects.reversed())
-        #expect(base != Self.fingerprint(totalCostUSD: 6.0, daily: daily, projects: reorderedProjects))
-
-        var promotedHiddenProject = projects
-        let promoted = Self.makeProject(
-            index: 5,
-            sourceCount: 3,
-            totalCostUSD: 1000.0)
-        promotedHiddenProject.remove(at: 5)
-        promotedHiddenProject.insert(promoted, at: 0)
-        #expect(base != Self.fingerprint(totalCostUSD: 6.0, daily: daily, projects: promotedHiddenProject))
-    }
-
-    @Test
-    @MainActor
-    func `render fingerprint tracks source visibility and overflow count`() {
-        let daily = [Self.entry(date: "2026-06-07", modelCount: 1)]
-        let twoSources = [
-            Self.makeProject(index: 0, sourceCount: 2),
-        ]
-        let threeSources = [
-            Self.makeProject(index: 0, sourceCount: 3),
-        ]
-        let base = Self.fingerprint(dailyCost: 1.0, daily: daily, projects: twoSources)
-
-        #expect(base != Self.fingerprint(dailyCost: 1.0, daily: daily, projects: threeSources))
-
-        var thirdSourceRenamed = threeSources
-        thirdSourceRenamed[0] = Self.makeProject(index: 0, sourceCount: 3, renameThirdSource: true)
-        #expect(Self.fingerprint(dailyCost: 1.0, daily: daily, projects: threeSources)
-            == Self.fingerprint(dailyCost: 1.0, daily: daily, projects: thirdSourceRenamed))
-
-        var firstSourceRenamed = twoSources
-        firstSourceRenamed[0] = Self.makeProject(index: 0, sourceCount: 2, renameFirstSource: true)
-        #expect(base != Self.fingerprint(dailyCost: 1.0, daily: daily, projects: firstSourceRenamed))
-
-        var firstSourceTotals = twoSources
-        firstSourceTotals[0] = Self.makeProject(
-            index: 0,
-            sourceCount: 2,
-            firstSourceCostUSD: 9.99,
-            firstSourceTokens: 8888)
-        #expect(base != Self.fingerprint(dailyCost: 1.0, daily: daily, projects: firstSourceTotals))
-
-        let hiddenSingleSource = [
-            Self.project(path: "/tmp/main", sourcePath: "/tmp/main"),
-        ]
-        let visibleSingleSource = [
-            Self.project(path: "/tmp/main", sourcePath: "/tmp/worktree"),
-        ]
-        #expect(
-            Self.fingerprint(dailyCost: 1.0, daily: daily, projects: hiddenSingleSource)
-                != Self.fingerprint(dailyCost: 1.0, daily: daily, projects: visibleSingleSource))
-    }
-
     private static func project(path: String, sourcePath: String) -> CostUsageProjectBreakdown {
         CostUsageProjectBreakdown(
             name: "Project",
@@ -987,7 +776,7 @@ struct CostHistoryChartMenuViewTests {
     @MainActor
     private static func renderedHeight(daily: [CostUsageDailyReport.Entry]) -> CGFloat {
         let hosting = MenuHostingView(rootView: CostHistoryChartMenuView(
-            provider: .codex,
+            provider: .opencode,
             daily: daily,
             totalCostUSD: nil,
             hidePersonalInfo: false,
@@ -1098,7 +887,7 @@ struct CostHistoryChartMenuViewTests {
         daily: [CostUsageDailyReport.Entry]? = nil,
         projects: [CostUsageProjectBreakdown]? = nil,
         sessions: [CostUsageSessionBreakdown] = [],
-        provider: UsageProvider = .codex) -> CostHistoryChartMenuView.RenderFingerprint
+        provider: UsageProvider = .claude) -> CostHistoryChartMenuView.RenderFingerprint
     {
         CostHistoryChartMenuView.renderFingerprint(from: self.makeSnapshot(
             dailyCost: dailyCost,
@@ -1188,15 +977,15 @@ extension CostHistoryChartMenuViewTests {
     @MainActor
     func `render fingerprint honors display currency override`() {
         let snapshot = Self.makeSnapshot(dailyCost: 1.0)
-        let native = CostHistoryChartMenuView.renderFingerprint(from: snapshot, provider: .codex)
+        let native = CostHistoryChartMenuView.renderFingerprint(from: snapshot, provider: .opencode)
         let converted = CostHistoryChartMenuView.renderFingerprint(
             from: snapshot,
-            provider: .codex,
+            provider: .opencode,
             displayCurrencyCode: "CZK",
             displayCostMultiplier: 21.0)
         let rateRefreshed = CostHistoryChartMenuView.renderFingerprint(
             from: snapshot,
-            provider: .codex,
+            provider: .opencode,
             displayCurrencyCode: "CZK",
             displayCostMultiplier: 21.5)
 
@@ -1266,57 +1055,6 @@ extension CostHistoryChartMenuViewTests {
             }
         }
         return nil
-    }
-
-    @Test
-    func `conversation title changes invalidate visible rows but not privacy masked rows`() {
-        let untitled = CostUsageSessionBreakdown(
-            sessionID: "01a10000-0000-0000-0000-00006c0a5925",
-            lastActivity: Date(timeIntervalSince1970: 100),
-            inputTokens: 100,
-            cachedInputTokens: 20,
-            outputTokens: 10,
-            totalTokens: 110,
-            requestCount: 1,
-            costUSD: 0.88,
-            modelBreakdowns: [])
-        let titled = untitled.withTitle("Python Complexity Tools")
-        let renamed = untitled.withTitle("OpenAPI CLI Tools")
-
-        let fallback = L("Session %@", "01a1...6c0a5925")
-        #expect(Self.fingerprint(sessions: [titled, untitled, untitled.withTitle(" \n ")])
-            .sessions.map(\.name) == ["Python Complexity Tools", fallback, fallback])
-        #expect(Self.fingerprint(sessions: [untitled]) != Self.fingerprint(sessions: [titled]))
-        #expect(Self.fingerprint(sessions: [titled]) != Self.fingerprint(sessions: [renamed]))
-        let hidden = CostHistoryChartMenuView.renderFingerprint(
-            from: Self.makeSnapshot(sessions: [titled]), provider: .codex, hidePersonalInfo: true)
-        #expect(hidden.sessions.map(\.name) == [fallback])
-        #expect(hidden == CostHistoryChartMenuView.renderFingerprint(
-            from: Self.makeSnapshot(sessions: [renamed]), provider: .codex, hidePersonalInfo: true))
-        #expect(hidden == CostHistoryChartMenuView.renderFingerprint(
-            from: Self.makeSnapshot(sessions: [untitled]), provider: .codex, hidePersonalInfo: true))
-    }
-
-    @Test
-    @MainActor
-    func `render fingerprint tracks displayed session token components`() {
-        func session(input: Int?, cached: Int?, output: Int?) -> CostUsageSessionBreakdown {
-            CostUsageSessionBreakdown(
-                sessionID: "session-1",
-                lastActivity: Date(timeIntervalSince1970: 100),
-                inputTokens: input,
-                cachedInputTokens: cached,
-                outputTokens: output,
-                totalTokens: 110,
-                requestCount: 1,
-                costUSD: 0.01,
-                modelBreakdowns: [])
-        }
-
-        let base = Self.fingerprint(sessions: [session(input: 100, cached: 20, output: 10)])
-        #expect(base != Self.fingerprint(sessions: [session(input: 90, cached: 20, output: 10)]))
-        #expect(base != Self.fingerprint(sessions: [session(input: 100, cached: 10, output: 10)]))
-        #expect(base != Self.fingerprint(sessions: [session(input: 100, cached: 20, output: 20)]))
     }
 }
 

@@ -29,8 +29,6 @@ extension CodexBarCLI {
             resetStyle: Self.resetTimeDisplayStyleFromDefaults(),
             weeklyWorkDays: Self.weeklyProgressWorkDaysFromDefaults(),
             jsonOnly: true,
-            includeAllCodexAccounts: context.includeAllCodexAccounts,
-            fetcher: UsageFetcher(),
             claudeFetcher: ClaudeUsageFetcher(browserDetection: browserDetection),
             browserDetection: browserDetection,
             persistCLISessions: context.persistCLISessions,
@@ -41,7 +39,6 @@ extension CodexBarCLI {
             providers: selection.asList,
             configFingerprint: Self.serveUsageOperationFingerprint(
                 configFingerprint: context.configFingerprint,
-                includeAllCodexAccounts: context.includeAllCodexAccounts,
                 includeAllAccounts: context.includeAllAccounts),
             deadline: context.providerDeadline,
             operations: context.providerOperations)
@@ -60,11 +57,9 @@ extension CodexBarCLI {
 
     static func serveUsageOperationFingerprint(
         configFingerprint: String,
-        includeAllCodexAccounts: Bool,
         includeAllAccounts: Bool = false) -> String
     {
-        "\(configFingerprint):codex-accounts=\(includeAllCodexAccounts ? "all" : "selected")"
-            + (includeAllAccounts ? ":token-accounts=all" : "")
+        configFingerprint + (includeAllAccounts ? ":token-accounts=all" : "")
     }
 
     typealias ServeUsageFetcher = @Sendable (

@@ -40,22 +40,18 @@ extension StatusItemController {
 
     func makeMenuDescriptor(
         provider: UsageProvider?,
-        includeContextualActions: Bool,
-        codexWorkspacesMenuEnabled: Bool = CodexWorkspacesMenuAvailability.isEnabledForCurrentProcess) -> MenuDescriptor
+        includeContextualActions: Bool) -> MenuDescriptor
     {
         MenuDescriptor.build(
             provider: provider,
             store: self.store,
             settings: self.settings,
             account: self.account,
-            managedCodexAccountCoordinator: self.managedCodexAccountCoordinator,
-            codexAccountPromotionCoordinator: self.codexAccountPromotionCoordinator,
             updateReady: self.updater.updateStatus.isUpdateReady,
             availableUpdateVersion: self.updater.updateStatus.availableVersion,
             isInstallingUpdate: self.updater.updateStatus.isInstalling,
             canCheckForUpdates: self.updater.isAvailable,
             includeContextualActions: includeContextualActions,
-            codexWorkspacesMenuEnabled: codexWorkspacesMenuEnabled,
             isKeepingAwake: self.agentSessions.isKeepingAwake,
             agentSessionsEnabled: self.settings.agentSessionsEnabled,
             agentSessionLabelStyle: self.settings.agentSessionLabelStyle,
@@ -147,10 +143,6 @@ extension StatusItemController {
             "statusPage"
         case .changelog:
             "changelog"
-        case .addCodexAccount:
-            "addCodexAccount:\(self.codexAddAccountSubtitle() ?? "")"
-        case let .requestCodexSystemPromotion(id):
-            "requestCodexSystemPromotion:\(id)"
         case let .addProviderAccount(provider):
             "addProviderAccount:\(provider.rawValue)"
         case let .switchAccount(provider):
@@ -159,8 +151,6 @@ extension StatusItemController {
             "openTerminal:\(command)"
         case let .loginToProvider(url):
             "loginToProvider:\(url)"
-        case .openCodexWorkspaces, .openOpenAILiveUsage:
-            self.windowMenuAction(for: action).1
         case .settings:
             "settings"
         case let .providerSettings(provider):

@@ -18,7 +18,7 @@ extension StatusMenuTests {
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
         settings.costUsageEnabled = true
-        enableTestProviders([.codex], settings: settings)
+        enableTestProviders([.opencode], settings: settings)
 
         let snapshotA = self.makeReadinessBaselineTokenSnapshot(
             sessionTokens: 111,
@@ -33,12 +33,12 @@ extension StatusMenuTests {
             last30DaysCostUSD: 22.22,
             updatedAt: Date(timeIntervalSince1970: 200))
 
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
-        store._setTokenSnapshotForTesting(snapshotA, provider: .codex)
+        let store = self.makeOpenCodeStore(settings: settings)
+        store._setTokenSnapshotForTesting(snapshotA, provider: .opencode)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -54,14 +54,14 @@ extension StatusMenuTests {
         controller.menuDidClose(menu)
 
         // Closed store change to B: the optimization intentionally skips recomputing the baseline here.
-        store._setTokenSnapshotForTesting(snapshotB, provider: .codex)
+        store._setTokenSnapshotForTesting(snapshotB, provider: .opencode)
 
         // Reopening the root menu rebuilds from B and must re-anchor the baseline to B.
         controller.menuWillOpen(menu)
         controller.menuDidClose(menu)
 
         // Reverting to A (the value the *first* baseline held) must still register as a change.
-        store._setTokenSnapshotForTesting(snapshotA, provider: .codex)
+        store._setTokenSnapshotForTesting(snapshotA, provider: .opencode)
         #expect(controller.didMenuAdjunctReadinessChange())
     }
 
@@ -77,7 +77,7 @@ extension StatusMenuTests {
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
         settings.costUsageEnabled = true
-        enableTestProviders([.codex], settings: settings)
+        enableTestProviders([.opencode], settings: settings)
 
         let snapshotA = self.makeReadinessBaselineTokenSnapshot(
             sessionTokens: 111,
@@ -92,12 +92,12 @@ extension StatusMenuTests {
             last30DaysCostUSD: 22.22,
             updatedAt: Date(timeIntervalSince1970: 200))
 
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
-        store._setTokenSnapshotForTesting(snapshotA, provider: .codex)
+        let store = self.makeOpenCodeStore(settings: settings)
+        store._setTokenSnapshotForTesting(snapshotA, provider: .opencode)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -105,13 +105,13 @@ extension StatusMenuTests {
         controller.menuRefreshEnabledOverrideForTesting = true
 
         let menu = controller.makeMenu()
-        controller.populateMenu(menu, provider: .codex)
+        controller.populateMenu(menu, provider: .opencode)
         controller.markMenuFresh(menu)
         let key = ObjectIdentifier(menu)
         let openedVersion = controller.menuVersions[key]
 
         store.isRefreshing = true
-        store._setTokenSnapshotForTesting(snapshotB, provider: .codex)
+        store._setTokenSnapshotForTesting(snapshotB, provider: .opencode)
         controller.invalidateMenus(allowStaleContentDuringDataRefresh: true)
 
         #expect(controller.menuContentVersion != openedVersion)
@@ -136,7 +136,7 @@ extension StatusMenuTests {
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
         settings.costUsageEnabled = true
-        enableTestProviders([.codex], settings: settings)
+        enableTestProviders([.opencode], settings: settings)
         if let claudeMetadata = ProviderRegistry.shared.metadata[.claude] {
             settings.setProviderEnabled(provider: .claude, metadata: claudeMetadata, enabled: true)
         }
@@ -154,12 +154,12 @@ extension StatusMenuTests {
             last30DaysCostUSD: 22.22,
             updatedAt: Date(timeIntervalSince1970: 200))
 
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
-        store._setTokenSnapshotForTesting(snapshotA, provider: .codex)
+        let store = self.makeOpenCodeStore(settings: settings)
+        store._setTokenSnapshotForTesting(snapshotA, provider: .opencode)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -173,7 +173,7 @@ extension StatusMenuTests {
         let preparedVersion = controller.menuVersions[key]
 
         store.isRefreshing = true
-        store._setTokenSnapshotForTesting(snapshotB, provider: .codex)
+        store._setTokenSnapshotForTesting(snapshotB, provider: .opencode)
         controller.invalidateMenus(allowStaleContentDuringDataRefresh: true)
 
         controller.menuNeedsUpdate(menu)
@@ -193,7 +193,7 @@ extension StatusMenuTests {
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
         settings.costUsageEnabled = true
-        enableTestProviders([.codex], settings: settings)
+        enableTestProviders([.opencode], settings: settings)
 
         let snapshotA = self.makeReadinessBaselineTokenSnapshot(
             sessionTokens: 111,
@@ -208,12 +208,12 @@ extension StatusMenuTests {
             last30DaysCostUSD: 22.22,
             updatedAt: Date(timeIntervalSince1970: 200))
 
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
-        store._setTokenSnapshotForTesting(snapshotA, provider: .codex)
+        let store = self.makeOpenCodeStore(settings: settings)
+        store._setTokenSnapshotForTesting(snapshotA, provider: .opencode)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -221,12 +221,12 @@ extension StatusMenuTests {
         controller.menuRefreshEnabledOverrideForTesting = true
 
         let menu = controller.makeMenu()
-        controller.populateMenu(menu, provider: .codex)
+        controller.populateMenu(menu, provider: .opencode)
         controller.markMenuFresh(menu)
         controller.resyncMenuAdjunctReadinessBaseline()
 
         // Simulate the live store mutation being visible before the observation task has invalidated menus.
-        store._setTokenSnapshotForTesting(snapshotB, provider: .codex)
+        store._setTokenSnapshotForTesting(snapshotB, provider: .opencode)
         controller.menuWillOpen(menu)
         defer { controller.menuDidClose(menu) }
 
@@ -254,7 +254,7 @@ extension StatusMenuTests {
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
         settings.costUsageEnabled = true
-        enableTestProviders([.codex], settings: settings)
+        enableTestProviders([.opencode], settings: settings)
 
         let snapshotA = self.makeReadinessBaselineTokenSnapshot(
             sessionTokens: 111,
@@ -269,12 +269,12 @@ extension StatusMenuTests {
             last30DaysCostUSD: 22.22,
             updatedAt: Date(timeIntervalSince1970: 200))
 
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
-        store._setTokenSnapshotForTesting(snapshotA, provider: .codex)
+        let store = self.makeOpenCodeStore(settings: settings)
+        store._setTokenSnapshotForTesting(snapshotA, provider: .opencode)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -282,12 +282,12 @@ extension StatusMenuTests {
         controller.menuRefreshEnabledOverrideForTesting = true
 
         let menu = controller.makeMenu()
-        controller.populateMenu(menu, provider: .codex)
+        controller.populateMenu(menu, provider: .opencode)
         controller.markMenuFresh(menu)
         controller.resyncMenuAdjunctReadinessBaseline()
 
         store.isRefreshing = true
-        store._setTokenSnapshotForTesting(snapshotB, provider: .codex)
+        store._setTokenSnapshotForTesting(snapshotB, provider: .opencode)
         controller.menuWillOpen(menu)
         defer { controller.menuDidClose(menu) }
 
@@ -311,7 +311,7 @@ extension StatusMenuTests {
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
         settings.costUsageEnabled = true
-        enableTestProviders([.codex], settings: settings)
+        enableTestProviders([.opencode], settings: settings)
 
         let snapshotA = self.makeReadinessBaselineTokenSnapshot(
             sessionTokens: 111,
@@ -326,12 +326,12 @@ extension StatusMenuTests {
             last30DaysCostUSD: 22.22,
             updatedAt: Date(timeIntervalSince1970: 200))
 
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
-        store._setTokenSnapshotForTesting(snapshotA, provider: .codex)
+        let store = self.makeOpenCodeStore(settings: settings)
+        store._setTokenSnapshotForTesting(snapshotA, provider: .opencode)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -339,20 +339,20 @@ extension StatusMenuTests {
         controller.menuRefreshEnabledOverrideForTesting = true
 
         let menu = controller.makeMenu()
-        controller.populateMenu(menu, provider: .codex)
+        controller.populateMenu(menu, provider: .opencode)
         controller.markMenuFresh(menu)
         controller.resyncMenuAdjunctReadinessBaseline()
 
-        store._setTokenSnapshotForTesting(snapshotB, provider: .codex)
+        store._setTokenSnapshotForTesting(snapshotB, provider: .opencode)
         controller.invalidateMenus()
-        controller.populateMenu(menu, provider: .codex)
+        controller.populateMenu(menu, provider: .opencode)
         controller.markMenuFresh(menu)
 
         store.isRefreshing = true
         controller.menuWillOpen(menu)
         defer { controller.menuDidClose(menu) }
 
-        store._setTokenSnapshotForTesting(snapshotA, provider: .codex)
+        store._setTokenSnapshotForTesting(snapshotA, provider: .opencode)
         #expect(controller.didMenuAdjunctReadinessChange())
     }
 
@@ -367,7 +367,7 @@ extension StatusMenuTests {
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
         settings.costUsageEnabled = true
-        enableTestProviders([.codex], settings: settings)
+        enableTestProviders([.opencode], settings: settings)
 
         let snapshotA = self.makeReadinessBaselineTokenSnapshot(
             sessionTokens: 111,
@@ -382,32 +382,32 @@ extension StatusMenuTests {
             last30DaysCostUSD: 22.22,
             updatedAt: Date(timeIntervalSince1970: 200))
 
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
-        store._setTokenSnapshotForTesting(snapshotA, provider: .codex)
+        let store = self.makeOpenCodeStore(settings: settings)
+        store._setTokenSnapshotForTesting(snapshotA, provider: .opencode)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
 
-        let menu = controller.makeMenu(for: .codex)
-        controller.providerMenus[.codex] = menu
-        controller.populateMenu(menu, provider: .codex)
+        let menu = controller.makeMenu(for: .opencode)
+        controller.providerMenus[.opencode] = menu
+        controller.populateMenu(menu, provider: .opencode)
         controller.markMenuFresh(menu)
         controller.resyncMenuAdjunctReadinessBaseline()
 
         controller.invalidateMenus()
-        controller.populateMenu(menu, provider: .codex)
+        controller.populateMenu(menu, provider: .opencode)
         controller.markMenuFresh(menu)
         controller.menuWillOpen(menu)
         controller.menuDidClose(menu)
 
         let versionBeforeChange = controller.menuContentVersion
-        store._setTokenSnapshotForTesting(snapshotB, provider: .codex)
+        store._setTokenSnapshotForTesting(snapshotB, provider: .opencode)
         controller.menuWillOpen(menu)
         defer { controller.menuDidClose(menu) }
 
@@ -426,7 +426,7 @@ extension StatusMenuTests {
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
         settings.costUsageEnabled = true
-        enableTestProviders([.codex], settings: settings)
+        enableTestProviders([.opencode], settings: settings)
 
         let snapshotA = self.makeReadinessBaselineTokenSnapshot(
             sessionTokens: 111,
@@ -447,33 +447,33 @@ extension StatusMenuTests {
             last30DaysCostUSD: 33.33,
             updatedAt: Date(timeIntervalSince1970: 300))
 
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
-        store._setTokenSnapshotForTesting(snapshotA, provider: .codex)
+        let store = self.makeOpenCodeStore(settings: settings)
+        store._setTokenSnapshotForTesting(snapshotA, provider: .opencode)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
 
-        let menu = controller.makeMenu(for: .codex)
-        controller.providerMenus[.codex] = menu
-        controller.populateMenu(menu, provider: .codex)
+        let menu = controller.makeMenu(for: .opencode)
+        controller.providerMenus[.opencode] = menu
+        controller.populateMenu(menu, provider: .opencode)
         controller.markMenuFresh(menu)
         controller.resyncMenuAdjunctReadinessBaseline()
 
-        store._setTokenSnapshotForTesting(snapshotB, provider: .codex)
+        store._setTokenSnapshotForTesting(snapshotB, provider: .opencode)
         controller.invalidateMenus()
-        controller.populateMenu(menu, provider: .codex)
+        controller.populateMenu(menu, provider: .opencode)
         controller.markMenuFresh(menu)
         controller.menuWillOpen(menu)
         controller.menuDidClose(menu)
 
         let versionBeforeChange = controller.menuContentVersion
-        store._setTokenSnapshotForTesting(snapshotC, provider: .codex)
+        store._setTokenSnapshotForTesting(snapshotC, provider: .opencode)
         controller.menuWillOpen(menu)
         defer { controller.menuDidClose(menu) }
 
@@ -492,7 +492,7 @@ extension StatusMenuTests {
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
         settings.costUsageEnabled = true
-        enableTestProviders([.codex], settings: settings)
+        enableTestProviders([.opencode], settings: settings)
 
         let snapshotA = self.makeReadinessBaselineTokenSnapshot(
             sessionTokens: 111,
@@ -507,32 +507,32 @@ extension StatusMenuTests {
             last30DaysCostUSD: 22.22,
             updatedAt: Date(timeIntervalSince1970: 200))
 
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
-        store._setTokenSnapshotForTesting(snapshotA, provider: .codex)
+        let store = self.makeOpenCodeStore(settings: settings)
+        store._setTokenSnapshotForTesting(snapshotA, provider: .opencode)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
 
-        let menu = controller.makeMenu(for: .codex)
-        controller.providerMenus[.codex] = menu
+        let menu = controller.makeMenu(for: .opencode)
+        controller.providerMenus[.opencode] = menu
         let key = ObjectIdentifier(menu)
-        controller.populateMenu(menu, provider: .codex)
+        controller.populateMenu(menu, provider: .opencode)
         controller.markMenuFresh(menu)
         controller.resyncMenuAdjunctReadinessBaseline()
 
-        store._setTokenSnapshotForTesting(snapshotB, provider: .codex)
+        store._setTokenSnapshotForTesting(snapshotB, provider: .opencode)
         controller.invalidateMenus()
-        controller.populateMenu(menu, provider: .codex)
+        controller.populateMenu(menu, provider: .opencode)
         controller.markMenuFresh(menu)
 
         let renderedBSignature = controller.menuReadinessSignatures[key]
-        store._setTokenSnapshotForTesting(snapshotA, provider: .codex)
+        store._setTokenSnapshotForTesting(snapshotA, provider: .opencode)
         let versionBeforeOpen = controller.menuContentVersion
         controller.menuWillOpen(menu)
         defer { controller.menuDidClose(menu) }
@@ -554,7 +554,7 @@ extension StatusMenuTests {
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
         settings.costUsageEnabled = true
-        enableTestProviders([.claude, .codex], settings: settings)
+        enableTestProviders([.claude, .opencode], settings: settings)
 
         let snapshotA = self.makeReadinessBaselineTokenSnapshot(
             sessionTokens: 111,
@@ -569,13 +569,13 @@ extension StatusMenuTests {
             last30DaysCostUSD: 22.22,
             updatedAt: Date(timeIntervalSince1970: 200))
 
-        let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
+        let store = self.makeOpenCodeStore(settings: settings)
         store._setTokenSnapshotForTesting(snapshotA, provider: .claude)
-        store._setTokenSnapshotForTesting(snapshotA, provider: .codex)
+        store._setTokenSnapshotForTesting(snapshotA, provider: .opencode)
         let controller = StatusItemController(
             store: store,
             settings: settings,
-            account: UsageFetcher().loadAccountInfo(),
+            account: AccountInfo(email: nil, plan: nil),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
@@ -585,8 +585,8 @@ extension StatusMenuTests {
         let claudeMenu = controller.makeMenu(for: .claude)
         controller.populateMenu(claudeMenu, provider: .claude)
         controller.markMenuFresh(claudeMenu)
-        let codexMenu = controller.makeMenu(for: .codex)
-        controller.populateMenu(codexMenu, provider: .codex)
+        let codexMenu = controller.makeMenu(for: .opencode)
+        controller.populateMenu(codexMenu, provider: .opencode)
         controller.markMenuFresh(codexMenu)
         controller.resyncMenuAdjunctReadinessBaseline()
 

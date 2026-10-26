@@ -50,7 +50,6 @@ struct OpenCodeGoEstimatedPaceTests {
         let settings = testSettingsStore(
             suiteName: "OpenCodeGoEstimatedPaceTests-marker", config: testConfigWithAllProvidersDisabled())
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -95,7 +94,6 @@ struct OpenCodeGoEstimatedPaceTests {
             status: nil,
             usage: snapshot,
             credits: nil,
-            openaiDashboard: nil,
             error: nil,
             pace: CLIRenderer.providerPacePayload(provider: .opencodego, snapshot: snapshot))
         let data = try JSONEncoder().encode(payload)
@@ -136,7 +134,6 @@ struct OpenCodeGoEstimatedPaceTests {
             suiteName: "OpenCodeGoEstimatedPaceTests-layout-\(confidence)",
             config: testConfigWithAllProvidersDisabled())
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,
@@ -182,7 +179,6 @@ struct OpenCodeGoEstimatedPaceTests {
             config: testConfigWithAllProvidersDisabled())
         settings.paceVisible = true
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings,
             startupBehavior: .testing,

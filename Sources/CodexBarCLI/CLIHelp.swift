@@ -2,38 +2,6 @@ import CodexBarCore
 import Foundation
 
 extension CodexBarCLI {
-    static func codexAccountsHelp(version: String) -> String {
-        """
-        CodexBar \(version)
-
-        Usage:
-          codexbar codex-accounts list [--json] [--pretty]
-          codexbar codex-accounts promote <exact-uuid-or-email> [--json] [--pretty]
-
-        Description:
-          macOS only. List CodexBar managed accounts without credential contents.
-          Promote explicitly replaces system Codex authentication after preserving its account.
-          Ambiguous emails require an exact UUID. Concurrent account changes fail without overwriting.
-          Existing Codex processes may retain their current account; restart them to use the promoted account.
-        """
-    }
-
-    static func pluginsHelp(version: String) -> String {
-        """
-        CodexBar \(version)
-
-        Usage:
-          codexbar plugins list
-          codexbar plugins fetch <id> [--json] [--pretty]
-
-        Description:
-          Discover local .js and .ts provider plugins. Fetch requires a recorded approval binding.
-          An interactive terminal can create the approval after showing exact origins, capabilities,
-          secret names, and cookie domains. Headless use fails closed. Browser-cookie plugins are
-          app-only and fail closed in the CLI.
-        """
-    }
-
     static func cardsHelp(version: String) -> String {
         """
         CodexBar \(version)
@@ -93,13 +61,11 @@ extension CodexBarCLI {
           --format toon emits the same payload as --format json, rendered as TOON (github.com/toon-format/spec)
           for token-cheaper agent consumption.
           Source behavior is provider-specific:
-          - Codex: OpenAI web dashboard (usage limits, credits remaining, code review remaining, usage breakdown).
-            Auto falls back to Codex CLI only when cookies are missing.
           - Claude: claude.ai API.
           - DeepSeek: api.deepseek.com balance endpoint.
           Token accounts are loaded from the resolved CodexBar config file.
           Use --account or --account-index to select a specific token account.
-          Use --all-accounts to fetch every token account, or every visible Codex account for Codex.
+          Use --all-accounts to fetch every token account.
           Account selection requires a single provider.
 
         Global flags:
@@ -117,7 +83,6 @@ extension CodexBarCLI {
           codexbar usage --format json --provider all --pretty
           codexbar usage --provider all --json
           codexbar usage --status
-          codexbar usage --provider codex --source web --format json --pretty
           codexbar usage --format toon --provider claude
         """
     }
@@ -132,36 +97,19 @@ extension CodexBarCLI {
                        [--json-only]
                        [--json-output] [--log-level <trace|verbose|debug|info|warning|error|critical>] [-v|--verbose]
                        [--provider \(ProviderHelp.list)]
-                       [--no-color] [--pretty] [--refresh] [--breakdown] [--provider-native-only]
-                       [--period month-to-date|all] [--days <days>] [--group-by project|session]
-                       [--remote <ssh-host> | --summary-only]
-                       [--identified-only [--identified-end <unix-ms>]]
+                       [--no-color] [--pretty] [--refresh] [--breakdown]
+                       [--period month-to-date|all] [--days <days>]
 
         Description:
-          Print local token cost usage from Claude/Codex native logs plus supported pi and OMP sessions.
-          Antigravity token history is read locally, with API-price estimates for known models; Muse Code remains
-          token-only.
+          Print local token cost usage from Claude Code, Devin CLI, and OpenCode Go local logs.
           Local readers need no web or provider CLI access.
           Use --refresh to bypass cached scan results.
           Use --breakdown with Claude text output to show daily and model details.
-          Experimental: use --provider-native-only to exclude pi and OMP session mirrors.
-          Use --provider codex --remote <host> for separate local and SSH-host summaries.
-          --summary-only emits versioned Codex JSON totals without account or session details.
-          --identified-only requires --provider codex and JSON. It exports strong native request identities
-          over one UTC window (30 days by default); legacy and unidentified usage are excluded. Prices are unavailable.
-          Add --remote to deduplicate that export with one SSH host using the same millisecond window.
-          Both hosts need a CLI supporting --identified-only. Failures retain an explicitly partial local subtotal.
-          These modes accept --days 1...365, not --period, --summary-only, grouping or breakdown.
 
         Examples:
           codexbar cost
-          codexbar cost --provider codex --group-by project
-          codexbar cost --provider codex --group-by session
           codexbar cost --provider claude --format json --pretty
-          codexbar cost --provider antigravity --format json
-          codexbar cost --provider muse --format json
-          codexbar cost --provider codex --remote build-host --format json
-          codexbar cost --provider codex --identified-only --format json --remote build-host
+          codexbar cost --provider devin --days 7
         """
     }
 
@@ -170,20 +118,17 @@ extension CodexBarCLI {
         CodexBar \(version)
 
         Usage:
-          codexbar sessions [--json|--json-v2] [--pretty]
+          codexbar sessions [--json] [--pretty]
           codexbar sessions focus <id>
 
         Description:
-          List live local Codex, Claude Code, pi, and OMP agent sessions.
-          --json emits the legacy v1 array with only Codex and Claude providers.
-          --json-v2 emits the complete current array, including Pi-family sessions.
+          List live local Claude Code sessions.
           JSON uses stable AgentSession field names and ISO-8601 dates.
           Focus activates the owning terminal or desktop app on macOS.
 
         Examples:
           codexbar sessions
           codexbar sessions --json
-          codexbar sessions --json-v2
           codexbar sessions focus 019f3497-73bf-7df3-a173-4f67d968914a
         """
     }
@@ -252,11 +197,10 @@ extension CodexBarCLI {
           beyond a trusted network segment.
           Ordinary snapshots and /accounts discovery follow the app's Hide personal information
           setting unless --identity is set. Redacted discovery hides arbitrary labels and email local parts.
-          --all-accounts includes visible Codex profiles and configured token accounts
+          --all-accounts includes configured token accounts
           in dashboard snapshots only, with neutral labels and no identity by default.
           --identity full explicitly includes account identities, labels and error details;
           --identity redacted keeps email domains but hides labels and error details.
-          /usage keeps its existing Codex enumeration.
 
           Account IDs are stable opaque identifiers; clients must not parse their internal format.
           Account discovery reads metadata only and never returns credentials or refreshes usage.

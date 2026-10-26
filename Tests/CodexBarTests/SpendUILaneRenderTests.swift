@@ -39,7 +39,7 @@ final class SpendUILaneRenderTests: XCTestCase {
             }
             return SpendDashboardModel.ProviderInput(
                 id: id,
-                provider: .codex,
+                provider: .claude,
                 displayName: "Demo account",
                 snapshot: CostUsageTokenSnapshot(
                     sessionTokens: nil,
