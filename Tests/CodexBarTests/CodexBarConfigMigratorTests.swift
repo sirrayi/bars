@@ -8,13 +8,13 @@ struct CodexBarConfigMigratorTests {
     @Test
     func `shared legacy migration preserves provider fields and configured values`() throws {
         let defaults = InMemoryUserDefaults(values: [
-            "minimaxAPIRegion": "cn",
+            "deepseekRegion": "cn",
             "opencodeWorkspaceID": "legacy-workspace",
         ])
         let store = testConfigStore(suiteName: "shared-legacy-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: store.fileURL.deletingLastPathComponent()) }
         var config = CodexBarConfig.makeDefault()
-        config.setProviderConfig(ProviderConfig(id: .minimax, apiKey: "configured-token"))
+        config.setProviderConfig(ProviderConfig(id: .deepseek, apiKey: "configured-token"))
         config.setProviderConfig(ProviderConfig(id: .opencode, workspaceID: "configured-workspace"))
         try store.save(config)
         let secrets = CountingLegacySecretStore(token: "  fixture-legacy-token  ")
@@ -23,12 +23,10 @@ struct CodexBarConfigMigratorTests {
             defaults: defaults,
             stores: Self.legacyStores(secrets: secrets, accountStore: CountingTokenAccountStore()))
 
-        #expect(migrated.providerConfig(for: .minimax)?.apiKey == "configured-token")
-        #expect(migrated.providerConfig(for: .minimax)?.region == "cn")
-        #expect(migrated.providerConfig(for: .minimax)?.cookieHeader == "fixture-legacy-token")
+        #expect(migrated.providerConfig(for: .deepseek)?.apiKey == "configured-token")
+        #expect(migrated.providerConfig(for: .deepseek)?.cookieHeader == "fixture-legacy-token")
         #expect(migrated.providerConfig(for: .opencode)?.workspaceID == "configured-workspace")
         #expect(migrated.providerConfig(for: .opencode)?.cookieHeader == "fixture-legacy-token")
-        #expect(migrated.providerConfig(for: .kimi)?.cookieHeader == "fixture-legacy-token")
     }
 
     @Test
@@ -42,19 +40,9 @@ struct CodexBarConfigMigratorTests {
         let settings = SettingsStore(
             userDefaults: InMemoryUserDefaults(),
             configStore: configStore,
-            zaiTokenStore: secrets,
-            syntheticTokenStore: secrets,
             codexCookieStore: secrets,
             claudeCookieStore: secrets,
-            cursorCookieStore: secrets,
             opencodeCookieStore: secrets,
-            factoryCookieStore: secrets,
-            minimaxCookieStore: secrets,
-            minimaxAPITokenStore: secrets,
-            kimiTokenStore: secrets,
-            augmentCookieStore: secrets,
-            ampCookieStore: secrets,
-            copilotTokenStore: secrets,
             tokenAccountStore: CountingTokenAccountStore(),
             performInitialProviderDetection: false)
         let barrier = AsyncStream<Void>.makeStream()
@@ -90,19 +78,9 @@ struct CodexBarConfigMigratorTests {
         let settings = SettingsStore(
             userDefaults: InMemoryUserDefaults(),
             configStore: configStore,
-            zaiTokenStore: secrets,
-            syntheticTokenStore: secrets,
             codexCookieStore: secrets,
             claudeCookieStore: secrets,
-            cursorCookieStore: secrets,
             opencodeCookieStore: secrets,
-            factoryCookieStore: secrets,
-            minimaxCookieStore: secrets,
-            minimaxAPITokenStore: secrets,
-            kimiTokenStore: secrets,
-            augmentCookieStore: secrets,
-            ampCookieStore: secrets,
-            copilotTokenStore: secrets,
             tokenAccountStore: CountingTokenAccountStore(),
             performInitialProviderDetection: false)
         settings._test_configPersistenceUsesDebounce = true
@@ -159,19 +137,9 @@ struct CodexBarConfigMigratorTests {
         let settings = SettingsStore(
             userDefaults: defaults,
             configStore: configStore,
-            zaiTokenStore: secrets,
-            syntheticTokenStore: secrets,
             codexCookieStore: secrets,
             claudeCookieStore: secrets,
-            cursorCookieStore: secrets,
             opencodeCookieStore: secrets,
-            factoryCookieStore: secrets,
-            minimaxCookieStore: secrets,
-            minimaxAPITokenStore: secrets,
-            kimiTokenStore: secrets,
-            augmentCookieStore: secrets,
-            ampCookieStore: secrets,
-            copilotTokenStore: secrets,
             tokenAccountStore: CountingTokenAccountStore(),
             performInitialProviderDetection: false)
         #expect(!settings.openAIWebAccessEnabled)
@@ -221,7 +189,6 @@ struct CodexBarConfigMigratorTests {
         try configStore.save(repaired)
         let migrated = try Self.migrate(configStore: configStore, defaults: defaults, stores: stores)
         #expect(migrated.providerConfig(for: .claude)?.apiKey == "fixture-repaired-token")
-        #expect(migrated.providerConfig(for: .zai)?.apiKey == "fixture-legacy-token")
         #expect(defaults.bool(forKey: Self.legacyMigrationCompletedKey))
     }
 
@@ -246,19 +213,9 @@ struct CodexBarConfigMigratorTests {
         let store = SettingsStore(
             userDefaults: defaults,
             configStore: testConfigStore(suiteName: suite),
-            zaiTokenStore: secrets,
-            syntheticTokenStore: secrets,
             codexCookieStore: secrets,
             claudeCookieStore: secrets,
-            cursorCookieStore: secrets,
             opencodeCookieStore: secrets,
-            factoryCookieStore: secrets,
-            minimaxCookieStore: secrets,
-            minimaxAPITokenStore: secrets,
-            kimiTokenStore: secrets,
-            augmentCookieStore: secrets,
-            ampCookieStore: secrets,
-            copilotTokenStore: secrets,
             tokenAccountStore: CountingTokenAccountStore(),
             keychainAccessPolicy: .live,
             performInitialProviderDetection: false)
@@ -266,32 +223,6 @@ struct CodexBarConfigMigratorTests {
         #expect(store.debugDisableKeychainAccess == disabled)
         #expect(!secrets.keychainAccessOverridesAtLoad.isEmpty)
         #expect(secrets.keychainAccessOverridesAtLoad.allSatisfy { $0 == disabled })
-    }
-
-    @Test
-    func `legacy Moonshot key is bound to its selected region`() throws {
-        let suite = "CodexBarConfigMigratorTests-moonshot-\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: suite))
-        defaults.removePersistentDomain(forName: suite)
-        defer { defaults.removePersistentDomain(forName: suite) }
-        let configStore = testConfigStore(suiteName: suite)
-        var config = CodexBarConfig.makeDefault()
-        config.setProviderConfig(ProviderConfig(
-            id: .moonshot,
-            apiKey: "legacy-china-token",
-            region: MoonshotRegion.china.rawValue))
-        try configStore.save(config)
-
-        let migrated = try CodexBarConfigMigrator.loadOrMigrate(
-            configStore: configStore,
-            userDefaults: defaults,
-            keychainAccessDisabled: false,
-            stores: Self.legacyStores(
-                secrets: CountingLegacySecretStore(),
-                accountStore: CountingTokenAccountStore()))
-
-        #expect(migrated.providerConfig(for: .moonshot)?.apiKeyRegion == MoonshotRegion.china.rawValue)
-        #expect(try configStore.load()?.providerConfig(for: .moonshot)?.apiKeyRegion == MoonshotRegion.china.rawValue)
     }
 
     @Test
@@ -432,8 +363,7 @@ struct CodexBarConfigMigratorTests {
         let accountStore = CountingTokenAccountStore()
         let stores = Self.legacyStores(
             secrets: readableSecrets,
-            accountStore: accountStore,
-            syntheticTokenStore: unreadableSecrets)
+            accountStore: accountStore)
         let configStore = testConfigStore(suiteName: suite)
 
         let first = try CodexBarConfigMigrator.loadOrMigrate(
@@ -442,8 +372,6 @@ struct CodexBarConfigMigratorTests {
             keychainAccessDisabled: false,
             stores: stores)
 
-        #expect(first.providerConfig(for: .zai)?.apiKey == "legacy-token")
-        #expect(try configStore.load()?.providerConfig(for: .zai)?.apiKey == "legacy-token")
         #expect(readableSecrets.clearAttempts == 0)
         #expect(unreadableSecrets.clearAttempts == 0)
         #expect(defaults.bool(forKey: Self.legacyMigrationCompletedKey) == false)
@@ -471,7 +399,6 @@ struct CodexBarConfigMigratorTests {
         let suite = "CodexBarConfigMigratorTests-deferred-keychain-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
-        defaults.set("fixture-cookie=manual", forKey: "kimiManualCookieHeader")
         let configStore = testConfigStore(suiteName: suite)
         let secrets = CountingLegacySecretStore(token: "legacy-fixture-token")
         secrets.hideTokenOnLoad = hidesToken
@@ -483,16 +410,12 @@ struct CodexBarConfigMigratorTests {
             keychainAccessDisabled: true,
             stores: stores)
 
-        #expect(deferred.providerConfig(for: .kimi)?.cookieHeader != nil)
-        #expect(try configStore.load()?.providerConfig(for: .kimi)?.cookieHeader != nil)
         #expect(!defaults.bool(forKey: Self.legacyMigrationCompletedKey))
         #expect(secrets.clearAttempts == 0)
 
         secrets.hideTokenOnLoad = false
         let recovered = try Self.migrate(configStore: configStore, defaults: defaults, stores: stores)
 
-        #expect(recovered.providerConfig(for: .zai)?.apiKey == "legacy-fixture-token")
-        #expect(try configStore.load()?.providerConfig(for: .zai)?.apiKey == "legacy-fixture-token")
         #expect(secrets.clearAttempts > 0)
         #expect(try secrets.loadToken() == nil)
         #expect(defaults.bool(forKey: Self.legacyMigrationCompletedKey))
@@ -512,29 +435,17 @@ struct CodexBarConfigMigratorTests {
 
     private static func legacyStores(
         secrets: CountingLegacySecretStore,
-        accountStore: CountingTokenAccountStore,
-        syntheticTokenStore: CountingLegacySecretStore? = nil) -> CodexBarConfigMigrator.LegacyStores
+        accountStore: CountingTokenAccountStore) -> CodexBarConfigMigrator.LegacyStores
     {
         CodexBarConfigMigrator.LegacyStores(
-            zaiTokenStore: secrets,
-            syntheticTokenStore: syntheticTokenStore ?? secrets,
             codexCookieStore: secrets,
             claudeCookieStore: secrets,
-            cursorCookieStore: secrets,
             opencodeCookieStore: secrets,
-            factoryCookieStore: secrets,
-            minimaxCookieStore: secrets,
-            minimaxAPITokenStore: secrets,
-            kimiTokenStore: secrets,
-            augmentCookieStore: secrets,
-            ampCookieStore: secrets,
-            copilotTokenStore: secrets,
             tokenAccountStore: accountStore)
     }
 }
 
-private final class CountingLegacySecretStore: ZaiTokenStoring, SyntheticTokenStoring, CookieHeaderStoring,
-    MiniMaxCookieStoring, MiniMaxAPITokenStoring, KimiTokenStoring, CopilotTokenStoring,
+private final class CountingLegacySecretStore: CookieHeaderStoring,
     @unchecked Sendable
 {
     private let lock = NSLock()

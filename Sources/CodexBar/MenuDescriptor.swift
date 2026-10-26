@@ -66,7 +66,6 @@ struct MenuDescriptor {
         case installUpdate
         case checkForUpdates
         case refresh
-        case refreshAugmentSession
         case dashboard
         case statusPage
         case changelog
@@ -385,18 +384,6 @@ struct MenuDescriptor {
                 entries.append(.text("\(L("Quota")): \(used) / \(limit)", .primary))
             }
         }
-        if let openAIAPIUsage = snapshot.openAIAPIUsage {
-            Self.appendOpenAIAPIUsageSummary(
-                entries: &entries,
-                usage: openAIAPIUsage,
-                preferredCurrencyCode: preferredCurrencyCode)
-        }
-        if let mistralUsage = snapshot.mistralUsage, !mistralUsage.daily.isEmpty {
-            Self.appendMistralUsageSummary(
-                entries: &entries,
-                usage: mistralUsage,
-                preferredCurrencyCode: preferredCurrencyCode)
-        }
         let policy = ProviderDescriptorRegistry.descriptor(for: provider).presentation.optionalDetails
         if !policy.hidesAllWithoutOptionalUsage || showOptionalUsage {
             let details = showOptionalUsage || policy.hiddenTitlesWithoutOptionalUsage.isEmpty
@@ -448,32 +435,8 @@ struct MenuDescriptor {
         if let emailText, !emailText.isEmpty, !redactedEmail.isEmpty {
             entries.append(.text("\(L("Account")): \(redactedEmail)", .secondary))
         }
-        if provider == .kiro {
-            if let plan = snapshot?.detailRow(label: "Plan")?.value,
-               !plan.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            {
-                entries.append(.text("\(L("Plan")): \(plan)", .secondary))
-            }
-            if let loginMethodText, !loginMethodText.isEmpty {
-                entries.append(.text("\(L("Auth")): \(loginMethodText)", .secondary))
-            }
-            if let overages = snapshot?.detailRow(label: "Overages")?.value,
-               !overages.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            {
-                entries.append(.text("\(L("Overages")): \(overages)", .secondary))
-            }
-        } else if provider == .kilo {
-            let kiloLogin = self.kiloLoginParts(loginMethod: loginMethodText)
-            if let pass = kiloLogin.pass {
-                entries.append(.text("\(L("Plan")): \(AccountFormatter.plan(pass, provider: provider))", .secondary))
-            }
-            for detail in kiloLogin.details {
-                entries.append(.text("\(L("Activity")): \(detail)", .secondary))
-            }
-        } else if let loginMethodText, !loginMethodText.isEmpty {
-            if provider == .openrouter || provider == .mimo || provider == .poe,
-               loginMethodText.localizedCaseInsensitiveContains("balance:")
-            {
+        if let loginMethodText, !loginMethodText.isEmpty {
+            if loginMethodText.localizedCaseInsensitiveContains("balance:") {
                 let balanceValue = loginMethodText
                     .replacingOccurrences(
                         of: #"(?i)^\s*balance:\s*"#,
@@ -507,24 +470,6 @@ struct MenuDescriptor {
         }
 
         return entries
-    }
-
-    private static func kiloLoginParts(loginMethod: String?) -> (pass: String?, details: [String]) {
-        guard let loginMethod else {
-            return (nil, [])
-        }
-        let parts = loginMethod
-            .components(separatedBy: "·")
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-        guard !parts.isEmpty else {
-            return (nil, [])
-        }
-        let first = parts[0]
-        if self.isKiloActivitySegment(first) {
-            return (nil, parts)
-        }
-        return (first, Array(parts.dropFirst()))
     }
 
     private static func isKiloActivitySegment(_ text: String) -> Bool {
@@ -711,25 +656,12 @@ struct MenuDescriptor {
         snapshot: UsageSnapshot) -> (primary: String, secondary: String, tertiary: String, showsTertiary: Bool)
     {
         let presentation = ProviderDescriptorRegistry.descriptor(for: provider).presentation
-        if provider == .factory, snapshot.tertiary != nil {
-            return (L("5-hour"), L("Weekly"), L("Monthly"), true)
-        }
         let primaryLabel = if provider == .codex {
             CodexConsumerProjection.rateTitle(
                 lane: .session,
                 windowMinutes: snapshot.primary?.windowMinutes,
                 sessionLabel: metadata.sessionLabel,
                 weeklyLabel: metadata.weeklyLabel)
-        } else if provider == .grok {
-            GrokProviderDescriptor.displayLabel(window: snapshot.primary) ?? metadata.sessionLabel
-        } else if provider == .doubao {
-            DoubaoProviderDescriptor.primaryLabel(window: snapshot.primary) ?? metadata.sessionLabel
-        } else if provider == .sub2api {
-            Sub2APIProviderDescriptor.primaryLabel(snapshot: snapshot) ?? metadata.sessionLabel
-        } else if provider == .amp {
-            AmpProviderDescriptor.primaryLabel(snapshot: snapshot) ?? metadata.sessionLabel
-        } else if provider == .alibabatokenplan {
-            AlibabaTokenPlanProviderDescriptor.primaryLabel(window: snapshot.primary) ?? metadata.sessionLabel
         } else {
             presentation.rateWindowLabels(metadata: metadata, snapshot: snapshot).primary
         }
@@ -739,10 +671,6 @@ struct MenuDescriptor {
                 windowMinutes: snapshot.secondary?.windowMinutes,
                 sessionLabel: metadata.sessionLabel,
                 weeklyLabel: metadata.weeklyLabel)
-        } else if provider == .amp {
-            AmpProviderDescriptor.secondaryLabel(snapshot: snapshot) ?? metadata.weeklyLabel
-        } else if provider == .alibabatokenplan {
-            AlibabaTokenPlanProviderDescriptor.secondaryLabel(window: snapshot.secondary) ?? metadata.weeklyLabel
         } else {
             presentation.rateWindowLabels(metadata: metadata, snapshot: snapshot).secondary
         }
@@ -800,7 +728,7 @@ extension MenuDescriptor.MenuAction {
         case .settings, .providerSettings: MenuDescriptor.MenuActionSystemImage.settings.rawValue
         case .about: MenuDescriptor.MenuActionSystemImage.about.rawValue
         case .quit: MenuDescriptor.MenuActionSystemImage.quit.rawValue
-        case .refresh, .refreshAugmentSession: MenuDescriptor.MenuActionSystemImage.refresh.rawValue
+        case .refresh: MenuDescriptor.MenuActionSystemImage.refresh.rawValue
         case .dashboard: MenuDescriptor.MenuActionSystemImage.dashboard.rawValue
         case .statusPage: MenuDescriptor.MenuActionSystemImage.statusPage.rawValue
         case .changelog: MenuDescriptor.MenuActionSystemImage.changelog.rawValue

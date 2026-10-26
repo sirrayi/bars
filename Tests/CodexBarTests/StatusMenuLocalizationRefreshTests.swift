@@ -122,9 +122,7 @@ struct StatusMenuLocalizationRefreshTests {
         let configStore = testConfigStore(suiteName: suite)
         return SettingsStore(
             userDefaults: defaults,
-            configStore: configStore,
-            zaiTokenStore: NoopZaiTokenStore(),
-            syntheticTokenStore: NoopSyntheticTokenStore())
+            configStore: configStore)
     }
 
     private static func switcherButtons(in menu: NSMenu) -> [NSButton] {

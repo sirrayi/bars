@@ -58,33 +58,6 @@ struct WidgetSnapshotTests {
         }
     }
 
-    @Test(arguments: [1, 30], [nil, "Custom"] as [String?])
-    func `Codex widget labels disclose API estimates`(historyDays: Int, historyLabel: String?) {
-        let snapshot = CostUsageTokenSnapshot(
-            sessionTokens: 1200,
-            sessionCostUSD: 1.25,
-            last30DaysTokens: 9000,
-            last30DaysCostUSD: 9.99,
-            historyDays: historyDays,
-            historyLabel: historyLabel,
-            daily: [],
-            updatedAt: Date(timeIntervalSince1970: 0))
-
-        let codex = UsageStore.widgetTokenUsageSummary(from: snapshot, provider: .codex)
-        let claude = UsageStore.widgetTokenUsageSummary(from: snapshot, provider: .claude)
-
-        #expect(codex?.sessionLabel == "Today API est. · not billed")
-        let period = historyLabel ?? (historyDays == 1 ? "Today" : "30d")
-        #expect(codex?.last30DaysLabel == "\(period) API est. · not billed")
-        #expect(claude?.sessionLabel == "Today")
-        #expect(claude?.last30DaysLabel == period)
-        for provider in [UsageProvider.bedrock, .mistral] {
-            let summary = UsageStore.widgetTokenUsageSummary(from: snapshot, provider: provider)
-            #expect(summary?.sessionLabel == "Latest billing day")
-            #expect(summary?.last30DaysLabel == period)
-        }
-    }
-
     @Test
     func `widget snapshot round trip`() throws {
         let entry = WidgetSnapshot.ProviderEntry(
@@ -136,86 +109,6 @@ struct WidgetSnapshotTests {
         #expect(decoded.entries.first?.quotaOwnerKey == "claude-account-cache-key")
         #expect(decoded.enabledProviders == [.codex, .claude])
         #expect(decoded.usageBarsShowUsed)
-    }
-
-    @Test
-    func `widget snapshot round trip preserves kilo provider`() throws {
-        let entry = WidgetSnapshot.ProviderEntry(
-            provider: .kilo,
-            updatedAt: Date(),
-            primary: RateWindow(usedPercent: 40, windowMinutes: nil, resetsAt: nil, resetDescription: "40/100 credits"),
-            secondary: nil,
-            tertiary: nil,
-            creditsRemaining: nil,
-            codeReviewRemainingPercent: nil,
-            tokenUsage: WidgetSnapshot.TokenUsageSummary(
-                sessionCostUSD: 1.25,
-                sessionTokens: 4200,
-                last30DaysCostUSD: 19.75,
-                last30DaysTokens: 58000),
-            dailyUsage: [
-                WidgetSnapshot.DailyUsagePoint(dayKey: "2026-02-27", totalTokens: 4200, costUSD: 1.25),
-            ])
-
-        let snapshot = WidgetSnapshot(
-            entries: [entry],
-            enabledProviders: [.kilo, .codex],
-            generatedAt: Date())
-
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        let data = try encoder.encode(snapshot)
-
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        let decoded = try decoder.decode(WidgetSnapshot.self, from: data)
-
-        #expect(decoded.entries.first?.provider == .kilo)
-        #expect(decoded.entries.first?.primary?.resetDescription == "40/100 credits")
-        #expect(decoded.enabledProviders == [.kilo, .codex])
-    }
-
-    @Test
-    func `widget snapshot round trip preserves kilo zero total edge state`() throws {
-        let now = Date()
-        let kiloSnapshot = KiloUsageSnapshot(
-            creditsUsed: 0,
-            creditsTotal: 0,
-            creditsRemaining: 0,
-            planName: "Kilo Pass Pro",
-            autoTopUpEnabled: true,
-            autoTopUpMethod: "visa",
-            updatedAt: now).toUsageSnapshot()
-
-        let entry = WidgetSnapshot.ProviderEntry(
-            provider: .kilo,
-            updatedAt: now,
-            primary: kiloSnapshot.primary,
-            secondary: kiloSnapshot.secondary,
-            tertiary: kiloSnapshot.tertiary,
-            creditsRemaining: nil,
-            codeReviewRemainingPercent: nil,
-            tokenUsage: nil,
-            dailyUsage: [])
-
-        let snapshot = WidgetSnapshot(
-            entries: [entry],
-            enabledProviders: [.kilo],
-            generatedAt: now)
-
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        let data = try encoder.encode(snapshot)
-
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        let decoded = try decoder.decode(WidgetSnapshot.self, from: data)
-
-        #expect(decoded.entries.first?.provider == .kilo)
-        #expect(decoded.entries.first?.primary?.usedPercent == 100)
-        #expect(decoded.entries.first?.primary?.remainingPercent == 0)
-        #expect(decoded.entries.first?.primary?.resetDescription == "0/0 credits")
-        #expect(decoded.enabledProviders == [.kilo])
     }
 
     @Test

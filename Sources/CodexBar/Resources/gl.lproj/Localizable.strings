@@ -1792,7 +1792,7 @@
 "Credits + percent" = "Créditos e porcentaxe restante";
 "Credits left" = "Créditos restante";
 "Cursor-metered" = "Uso medido en Cursor";
-"Cursor-metered: %@ (%@)" = "Cursor-medido: %1$@ (%2$@)";
+"Plan metered: %@ (%@)" = "Cursor-medido: %1$@ (%2$@)";
 "DATA THROUGH %@" = "Datos ata %@";
 "Daily usage" = "Uso diario";
 "Default uses AZURE_OPENAI_API_VERSION when set." = "O predeterminado usa AZURE_OPENAI_API_VERSION cando se establece.";

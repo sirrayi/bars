@@ -1811,7 +1811,7 @@
 "Could not start Claude Code login" = "無法啟動 Claude Code 登入";
 "Create a key at app.fireworks.ai/settings. The same key authorizes billing reads." = "在 app.fireworks.ai/settings. 建立金鑰 相同的金鑰授權計費讀取。";
 "Cursor-metered" = "Cursor 按量計費用量";
-"Cursor-metered: %@ (%@)" = "Cursor 按量計費：%1$@（%2$@）";
+"Plan metered: %@ (%@)" = "Cursor 按量計費：%1$@（%2$@）";
 "DATA THROUGH %@" = "數據截至 %@";
 "Daily usage" = "每日用量";
 "Default uses AZURE_OPENAI_API_VERSION when set." = "如果設置了 AZURE_OPENAI_API_VERSION，將默認使用該版本。";

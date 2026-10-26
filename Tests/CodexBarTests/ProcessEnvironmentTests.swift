@@ -57,52 +57,6 @@ struct ProcessEnvironmentTests {
         Self.expectMirrorRedacted(environment)
     }
 
-    private static func storingValues() -> [Any] {
-        let environment = [Self.sentinelKey: Self.sentinel, "ORDINARY_NAME": Self.sentinel]
-        let fetcher = UsageFetcher(environment: environment)
-        let browserDetection = BrowserDetection(homeDirectory: "/synthetic-home")
-        let claudeFetcher = ClaudeUsageFetcher(browserDetection: browserDetection, environment: environment)
-        let context = ProviderFetchContext(
-            runtime: .cli,
-            sourceMode: .auto,
-            includeCredits: false,
-            webTimeout: 1,
-            webDebugDumpHTML: false,
-            verbose: false,
-            env: environment,
-            settings: nil,
-            fetcher: fetcher,
-            claudeFetcher: claudeFetcher,
-            browserDetection: browserDetection)
-        return [
-            fetcher, claudeFetcher, context,
-            CodexStatusProbe(environment: environment),
-            ClaudeStatusProbe(environment: environment),
-            TTYCommandRunner.Options(baseEnvironment: environment),
-            CodexCLISession.CaptureOptions(
-                timeout: 1, rows: 1, cols: 1, environment: environment, extraArgs: [], workingDirectory: nil),
-            PiSessionCostScanner.Options(environment: environment),
-            PiSessionProcessContext(
-                command: "pi", workingDirectory: nil, selectorEnvironment: ["PI_PROFILE": Self.sentinel]),
-            AgentProcessRecord(
-                pid: 1, ppid: 0, startedAt: nil, command: "pi", piSelectorEnvironment: ["PI_PROFILE": Self.sentinel]),
-            DefaultCodexAccountReconciler(baseEnvironment: environment),
-            AntigravityRemoteUsageFetcher(homeDirectory: "/synthetic-home", environment: environment),
-            QwenCloudTokenPlanAPIClient.Context(
-                secToken: "",
-                secTokenSource: "fixture",
-                environment: environment,
-                apiCookieHeader: "",
-                dashboardURL: URL(string: "https://example.com")!),
-            MiniMaxUsageFetcher.WebFetchContext(
-                cookie: "",
-                authorizationToken: nil,
-                region: .global,
-                environment: environment,
-                transport: ProviderHTTPClient.shared),
-        ]
-    }
-
     @Test
     func `optional environments preserve absence mutation and value equality`() {
         var absent = OptionalConfiguration()
@@ -159,5 +113,38 @@ struct ProcessEnvironmentTests {
             self.expectRedacted(String(describing: child.value))
             self.expectMirrorRedacted(child.value, depth: depth + 1)
         }
+    }
+
+    private static func storingValues() -> [Any] {
+        let environment = [Self.sentinelKey: Self.sentinel, "ORDINARY_NAME": Self.sentinel]
+        let fetcher = UsageFetcher(environment: environment)
+        let browserDetection = BrowserDetection(homeDirectory: "/synthetic-home")
+        let claudeFetcher = ClaudeUsageFetcher(browserDetection: browserDetection, environment: environment)
+        let context = ProviderFetchContext(
+            runtime: .cli,
+            sourceMode: .auto,
+            includeCredits: false,
+            webTimeout: 1,
+            webDebugDumpHTML: false,
+            verbose: false,
+            env: environment,
+            settings: nil,
+            fetcher: fetcher,
+            claudeFetcher: claudeFetcher,
+            browserDetection: browserDetection)
+        return [
+            fetcher, claudeFetcher, context,
+            CodexStatusProbe(environment: environment),
+            ClaudeStatusProbe(environment: environment),
+            TTYCommandRunner.Options(baseEnvironment: environment),
+            CodexCLISession.CaptureOptions(
+                timeout: 1, rows: 1, cols: 1, environment: environment, extraArgs: [], workingDirectory: nil),
+            PiSessionCostScanner.Options(environment: environment),
+            PiSessionProcessContext(
+                command: "pi", workingDirectory: nil, selectorEnvironment: ["PI_PROFILE": Self.sentinel]),
+            AgentProcessRecord(
+                pid: 1, ppid: 0, startedAt: nil, command: "pi", piSelectorEnvironment: ["PI_PROFILE": Self.sentinel]),
+            DefaultCodexAccountReconciler(baseEnvironment: environment),
+        ]
     }
 }

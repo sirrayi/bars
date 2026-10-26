@@ -5,89 +5,11 @@ import Testing
 
 @MainActor
 struct CredentialNotificationTests {
-    @Test
-    func `episodes survive network quota and cached data and recover only for the same account`() {
-        let settings = testSettingsStore(suiteName: "credential-episodes")
-        let store = Self.store(settings)
-        let key = CredentialNotificationKey(provider: .kimi, account: "first")
-        let expired = Result<ProviderFetchResult, Error>.failure(KimiAPIError.expiredCodeCredential)
-        store.handleCredentialOutcome(provider: .kimi, account: "first", result: expired)
-        #expect(store.credentialNotificationEpisodes.isEmpty)
-        settings.credentialExpiryNotificationsEnabled = true
-        store.handleCredentialOutcome(provider: .kimi, account: "first", result: expired)
-        let episode = store.credentialNotificationEpisodes[key]
-        #expect(episode != nil)
-        store.handleCredentialOutcome(provider: .kimi, account: "first", result: expired)
-        store.handleCredentialOutcome(provider: .kimi, account: "first", result: .failure(URLError(.timedOut)))
-        store.handleCredentialOutcome(provider: .kimi, account: "first", result: .failure(
-            ProviderFetchClassifiedError(kind: .rateLimited, message: "Token quota exhausted")))
-        store.handleCredentialOutcome(provider: .kimi, account: "first", result: .success(Self.result(source: "cache")))
-        store.handleCredentialOutcome(provider: .kimi, account: "first", result: .success(
-            Self.result(source: "oauth", diagnostic: "offline fallback")))
-        store.handleCredentialOutcome(provider: .kimi, account: "second", result: .success(Self.result()))
-        #expect(store.credentialNotificationEpisodes[key] == episode)
-        store.handleCredentialOutcome(provider: .kimi, account: "second", result: expired)
-        store.handleCredentialOutcome(provider: .claude, account: "first", result: expired)
-        #expect(store.credentialNotificationEpisodes.count == 3)
-        store.handleCredentialOutcome(provider: .kimi, account: "first", result: .success(Self.result()))
-        #expect(store.credentialNotificationEpisodes[key] == nil)
-        store.handleCredentialOutcome(provider: .kimi, account: "first", result: expired)
-        #expect(store.credentialNotificationEpisodes[key] != episode)
-        #expect(store.credentialNotificationEpisodes.count == 3)
-    }
-
-    @Test
-    func `turning notifications off does not forget an unresolved episode`() {
-        let settings = testSettingsStore(suiteName: "credential-disable")
-        settings.credentialExpiryNotificationsEnabled = true
-        let store = Self.store(settings)
-        let expired = Result<ProviderFetchResult, Error>.failure(AugmentStatusProbeError.sessionExpired)
-        store.handleCredentialOutcome(provider: .augment, result: expired)
-        let episodes = store.credentialNotificationEpisodes
-        settings.credentialExpiryNotificationsEnabled = false
-        store.handleCredentialOutcome(provider: .augment, result: expired)
-        settings.credentialExpiryNotificationsEnabled = true
-        store.handleCredentialOutcome(provider: .augment, result: expired)
-        #expect(store.credentialNotificationEpisodes == episodes)
-        store.credentialNotificationsStopped = true
-        store.credentialNotificationEpisodes.removeAll()
-        store.handleCredentialOutcome(provider: .augment, result: expired)
-        #expect(store.credentialNotificationEpisodes.isEmpty)
-    }
-
     @Test(arguments: ProviderFetchClassifiedError.Kind.allCases)
     func `classified provider failures are authoritative`(kind: ProviderFetchClassifiedError.Kind) {
         let error = ProviderFetchClassifiedError(kind: kind, message: "token expired, login required")
         #expect(ProviderCredentialFailure.isAuthenticationFailure(error) ==
             (kind == .authenticationExpired || kind == .missingCredential))
-    }
-
-    @Test
-    func `native credential errors exclude quota network permission and parse failures`() {
-        let auth: [Error] = [
-            KimiAPIError.expiredCodeCredential, KimiAPIError.invalidCodeCredential,
-            DoubaoUsageError.arkcliAuthenticationRequired, AlibabaTokenPlanUsageError.loginRequired,
-            ClaudeOAuthFetchError.unauthorized, CodexOAuthFetchError.unauthorized,
-            ClaudeUsageError.oauthFailed(ClaudeOAuthFetchError.unauthorized.localizedDescription),
-            ClaudeUsageError
-                .oauthFailed(ClaudeOAuthCredentialsError.refreshFailed("invalid_grant").localizedDescription),
-            ClaudeUsageError.oauthFailed("Claude OAuth token expired and delegated refresh is cooling down."),
-            AugmentStatusProbeError.sessionExpired,
-        ]
-        #expect(auth.allSatisfy(ProviderCredentialFailure.isAuthenticationFailure))
-        let other: [Error] = [
-            KimiAPIError.apiError("You've reached your token usage limit for this billing cycle"),
-            KimiAPIError.networkError("token expired"), URLError(.notConnectedToInternet),
-            ClaudeUsageError.oauthFailed(ClaudeOAuthFetchError.usageRateLimitDescription),
-            ClaudeOAuthCredentialsError.keychainAccessRevoked,
-            ClaudeOAuthCredentialsError.refreshFailed("network offline"),
-            ClaudeUsageError
-                .oauthFailed(ClaudeOAuthCredentialsError.refreshFailed("network offline").localizedDescription),
-            DoubaoUsageError.arkcliTimedOut, DoubaoUsageError.arkcliNotFound,
-            AlibabaTokenPlanUsageError.apiError("insufficient balance"),
-            AugmentStatusProbeError.networkError("login required"),
-        ]
-        #expect(other.allSatisfy { !ProviderCredentialFailure.isAuthenticationFailure($0) })
     }
 
     @Test(arguments: [false, true])
@@ -149,42 +71,6 @@ struct CredentialNotificationTests {
     }
 
     @Test
-    func `failed delivery retries while delivered episodes retire on recovery or shutdown`() {
-        let settings = testSettingsStore(suiteName: "credential-delivery")
-        settings.credentialExpiryNotificationsEnabled = true
-        let store = Self.store(settings)
-        var submitted: [String] = []
-        var removed: [String] = []
-        var completions: [@MainActor (Bool) -> Void] = []
-        store._test_credentialNotificationPost = { id, completion in
-            submitted.append(id)
-            completions.append(completion)
-        }
-        store._test_credentialNotificationRemove = { removed.append($0) }
-        let expired = Result<ProviderFetchResult, Error>.failure(AugmentStatusProbeError.sessionExpired)
-        store.handleCredentialOutcome(provider: .augment, result: expired)
-        completions[0](false)
-        #expect(store.credentialNotificationEpisodes.isEmpty)
-        store.handleCredentialOutcome(provider: .augment, result: expired)
-        #expect(submitted.count == 2)
-        completions[0](false) // A late callback must not clear the replacement episode.
-        completions[1](true)
-        store.handleCredentialOutcome(provider: .augment, result: expired)
-        #expect(submitted.count == 2)
-        store.handleCredentialOutcome(provider: .augment, result: .success(Self.result()))
-        #expect(removed == [submitted[1]])
-        store.handleCredentialOutcome(provider: .augment, result: expired)
-        completions[2](true)
-        store.retireCredentialNotifications(provider: .augment)
-        #expect(removed == [submitted[1], submitted[2]])
-        #expect(store.credentialNotificationEpisodes.isEmpty)
-        store.handleCredentialOutcome(provider: .augment, result: expired)
-        completions[3](true)
-        store.retireCredentialNotifications()
-        #expect(removed.last == submitted[3])
-    }
-
-    @Test
     func `Claude identity gaps and later identity resolution preserve independent episodes`() {
         let settings = testSettingsStore(suiteName: "credential-claude-identity")
         settings.credentialExpiryNotificationsEnabled = true
@@ -207,34 +93,6 @@ struct CredentialNotificationTests {
         #expect(store.credentialNotificationEpisodes.count == 2)
         store.handleCredentialOutcome(provider: .claude, account: first, result: .success(Self.result()))
         #expect(store.credentialNotificationEpisodes.count == 1)
-    }
-
-    @Test
-    func `disabling a provider retires only its delivered credential alerts`() {
-        let settings = testSettingsStore(suiteName: "credential-provider-disable", userDefaults: InMemoryUserDefaults())
-        settings.credentialExpiryNotificationsEnabled = true
-        enableTestProviders([.deepseek, .kimi], settings: settings)
-        let store = Self.store(settings)
-        var submitted: [String] = []
-        var removed: [String] = []
-        store._test_credentialNotificationPost = { id, completion in
-            submitted.append(id)
-            completion(true)
-        }
-        store._test_credentialNotificationRemove = { removed.append($0) }
-        let expired = Result<ProviderFetchResult, Error>.failure(
-            ProviderFetchClassifiedError(kind: .authenticationExpired, message: "Synthetic expiry"))
-        store.handleCredentialOutcome(provider: .deepseek, result: expired)
-        store.handleCredentialOutcome(provider: .kimi, result: expired)
-        enableTestProviders([.kimi], settings: settings)
-        store.retireDisabledCredentialNotifications()
-        store.retireDisabledCredentialNotifications()
-        #expect(removed == [submitted[0]])
-        #expect(Set(store.credentialNotificationEpisodes.keys.map(\.provider)) == [.kimi])
-        enableTestProviders([], settings: settings)
-        store.clearDisabledProviderState(enabledProviders: [])
-        #expect(removed == submitted)
-        #expect(store.credentialNotificationEpisodes.isEmpty)
     }
 
     private static func store(_ settings: SettingsStore) -> UsageStore {

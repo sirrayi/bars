@@ -6,23 +6,6 @@ import Testing
 @MainActor
 struct MergedOverviewAccountsTests {
     @Test
-    func `all accounts defaults off and persists without changing provider selection`() {
-        let defaults = InMemoryUserDefaults()
-        let config = testConfigStore(suiteName: "MergedOverviewAccountsTests")
-        let settings = ProviderUsageItemVisibilityTests.settings(defaults: defaults, configStore: config)
-        #expect(!settings.mergedOverviewAllAccounts)
-        let providers: [ProviderInstanceID] = [.claude, .codex, .gemini, .cursor, .zai, .copilot, .kiro]
-        let before = settings.resolvedMergedOverviewProviders(activeProviders: providers)
-        settings.mergedOverviewAllAccounts = true
-        #expect(ProviderUsageItemVisibilityTests.settings(defaults: defaults, configStore: config)
-            .mergedOverviewAllAccounts)
-        #expect(before.count == SettingsStore.mergedOverviewProviderLimit)
-        #expect(settings.resolvedMergedOverviewProviders(activeProviders: providers) == before)
-        settings.setMergedOverviewProviderSelection(provider: .codex, isSelected: false, activeProviders: providers)
-        #expect(!settings.resolvedMergedOverviewProviders(activeProviders: providers).contains(.codex))
-    }
-
-    @Test
     func `token rows use saved order and account caches even with segmented menus`() async throws {
         try await ClaudeSwapRichUsageFixture.withFixture { fixture in
             let store = fixture.store

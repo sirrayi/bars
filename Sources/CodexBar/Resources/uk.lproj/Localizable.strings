@@ -1794,7 +1794,7 @@
 "Credits + percent" = "Кредити та відсоток залишку";
 "Credits left" = "Залишилося кредитів";
 "Cursor-metered" = "Використання за тарифом Cursor";
-"Cursor-metered: %@ (%@)" = "Використання за тарифом Cursor: %1$@ (%2$@)";
+"Plan metered: %@ (%@)" = "Використання за тарифом Cursor: %1$@ (%2$@)";
 "DATA THROUGH %@" = "Дані станом на %@";
 "Daily usage" = "Щоденне використання";
 "Default uses AZURE_OPENAI_API_VERSION when set." = "За замовчуванням використовується AZURE_OPENAI_API_VERSION, якщо цю змінну задано.";

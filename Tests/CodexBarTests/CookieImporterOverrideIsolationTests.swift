@@ -18,53 +18,5 @@ private actor CookieImporterOverrideBarrier {
     }
 }
 
-struct CookieImporterOverrideIsolationTests {
-    @Test
-    func `cookie importer overrides stay isolated across concurrent tasks`() async throws {
-        let expectedLabels = ["first", "second"]
-        let barrier = CookieImporterOverrideBarrier()
-
-        let observedLabels = try await withThrowingTaskGroup(
-            of: String.self,
-            returning: Set<String>.self)
-        { group in
-            for label in expectedLabels {
-                group.addTask {
-                    try await AlibabaCodingPlanCookieImporter.withImportSessionOverrideForTesting { _, _ in
-                        AlibabaCodingPlanCookieImporter.SessionInfo(cookies: [], sourceLabel: label)
-                    } operation: {
-                        await barrier.wait()
-                        return try AlibabaCodingPlanCookieImporter.importSession(
-                            browserDetection: BrowserDetection()).sourceLabel
-                    }
-                }
-            }
-
-            var labels: Set<String> = []
-            for try await label in group {
-                labels.insert(label)
-            }
-            return labels
-        }
-
-        #expect(observedLabels == Set(expectedLabels))
-    }
-
-    @Test
-    func `perplexity overrides stay scoped to each task`() async throws {
-        let first = try await PerplexityCookieImporter.withImportSessionsOverrideForTesting { _, _ in
-            [PerplexityCookieImporter.SessionInfo(cookies: [], sourceLabel: "first")]
-        } operation: {
-            try PerplexityCookieImporter.importSessions().map(\.sourceLabel)
-        }
-        let second = try await PerplexityCookieImporter.withImportSessionsOverrideForTesting { _, _ in
-            [PerplexityCookieImporter.SessionInfo(cookies: [], sourceLabel: "second")]
-        } operation: {
-            try PerplexityCookieImporter.importSessions().map(\.sourceLabel)
-        }
-
-        #expect(first == ["first"])
-        #expect(second == ["second"])
-    }
-}
+struct CookieImporterOverrideIsolationTests {}
 #endif

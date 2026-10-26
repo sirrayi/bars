@@ -32,9 +32,7 @@ struct ClaudeScopedWeeklySettingsTests {
         let configStore = testConfigStore(suiteName: suite)
         let store = SettingsStore(
             userDefaults: defaults,
-            configStore: configStore,
-            zaiTokenStore: NoopZaiTokenStore(),
-            syntheticTokenStore: NoopSyntheticTokenStore())
+            configStore: configStore)
 
         #expect(store.claudeModelScopedWeeklyUsageVisible == false)
         let backgroundRevision = store.backgroundWorkSettingsRevision
@@ -51,9 +49,7 @@ struct ClaudeScopedWeeklySettingsTests {
 
         let reloaded = SettingsStore(
             userDefaults: defaults,
-            configStore: configStore,
-            zaiTokenStore: NoopZaiTokenStore(),
-            syntheticTokenStore: NoopSyntheticTokenStore())
+            configStore: configStore)
         #expect(reloaded.claudeModelScopedWeeklyUsageVisible)
     }
 }

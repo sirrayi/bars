@@ -263,31 +263,7 @@ extension StatusItemController {
             return result
         }
         let selected = self.primaryProviderForUnifiedIcon()
-        guard let provider = selected.firstPartyProvider else {
-            guard let plugin = UserProviderPluginRegistry.plugin(for: selected) else { return false }
-            let snapshot = self.store.menuBarSnapshot(for: selected)
-            let showUsed = self.settings.usageBarsShowUsed
-            let percent = Self.pluginSwitcherMetricPercent(snapshot: snapshot, showUsed: showUsed)
-            let lanes = Self.pluginMeterPercents(snapshot: snapshot, showUsed: showUsed)
-            let showBrand = self.settings.menuBarShowsBrandIconWithPercent
-            // Returning to a built-in provider must redraw even if its last quota is unchanged.
-            self.lastAppliedMergedIconRenderSignature = nil
-            let image = showBrand ? self.userPluginSwitcherIcon(for: plugin) : IconRenderer.makeIcon(
-                primaryRemaining: lanes.primary,
-                weeklyRemaining: lanes.secondary,
-                creditsRemaining: nil,
-                stale: self.store.errors[selected] != nil,
-                style: .combined,
-                hideCritters: true)
-            self.statusItem.length = NSStatusItem.variableLength
-            self.setButtonContent(
-                image: image,
-                title: showBrand ? percent.map(UsageFormatter.percentString) ?? "—" : nil,
-                tint: nil,
-                for: button)
-            self.noteIconPerfRender(skipped: false)
-            return false
-        }
+        guard let provider = selected.firstPartyProvider else { return false }
         return self.applyIcon(for: provider, phase: phase, statusItem: self.statusItem, merged: true)
     }
 
@@ -438,7 +414,7 @@ extension StatusItemController {
         let isLoading = phase != nil && needsAnimation
         let blink = merged
             ? (style == .combined ? 0 : self.blinkAmount(for: provider))
-            : self.loadingBlinkAmount(for: provider, style: style, phase: isLoading ? phase : nil)
+            : self.blinkAmount(for: provider)
         let wiggle = merged && style == .combined ? 0 : self.wiggleAmount(for: provider)
         let tilt = merged && style == .combined ? 0 : self.tiltAmount(for: provider) * .pi / 28
         let activity = merged ? "anim=\(needsAnimation ? 1 : 0)" : "loading=\(isLoading ? 1 : 0)"
@@ -516,12 +492,6 @@ extension StatusItemController {
         return false
     }
 
-    private func loadingBlinkAmount(for provider: UsageProvider, style: IconStyle, phase: Double?) -> CGFloat {
-        guard style == .warp, let phase else { return self.blinkAmount(for: provider) }
-        let normalized = (sin(phase * 3) + 1) / 2
-        return CGFloat(max(0, min(normalized, 1)))
-    }
-
     static func iconSignatureValue(_ value: Double?) -> String {
         guard let value else { return "nil" }
         return String(format: "%.3f", value)
@@ -548,15 +518,11 @@ extension StatusItemController {
                 primary: showUsed ? metricWindow.usedPercent : metricWindow.remainingPercent,
                 secondary: nil)
         }
-        // Provider-specific by design: Mistral's balance/spend text replaces percentage lanes in its icon.
-        if provider == .mistral {
-            return (primary: nil, secondary: nil)
-        }
         return IconRemainingResolver.resolvedPercents(
             snapshot: snapshot,
             style: style,
             showUsed: showUsed,
-            secondaryOverrideWindowID: self.settings.copilotIconSecondaryWindowOverrideID(snapshot: snapshot))
+            secondaryOverrideWindowID: nil)
     }
 
     private func menuBarMetricWindowForIconOverride(
@@ -754,24 +720,15 @@ extension StatusItemController {
         let preference = self.settings.menuBarMetricPreference(for: provider, snapshot: snapshot)
         // Provider-specific by design: legacy preferences select balance text before quota and display modes.
         let usesBalance = switch provider {
-        case .openrouter: preference == .automatic
-        case .mimo: snapshot?.primary == nil || preference == .secondary
-        case .opencodego, .devpass: snapshot?.primary == nil && snapshot?.secondary == nil
-        case .mistral: self.menuBarMetricWindow(for: provider, snapshot: snapshot, now: now) == nil
+        case .opencodego: snapshot?.primary == nil && snapshot?.secondary == nil
         default: !ProviderDescriptorRegistry.descriptor(for: provider).presentation.menuBarBalanceUsesPrepaidCost
         }
         if usesBalance, let balance = MenuBarLayoutBalanceResolver.balance(provider: provider, snapshot: snapshot) {
             return balance
         }
-        if provider == .kiro {
-            return self.kiroMenuBarText(
-                provider: provider,
-                snapshot: snapshot,
-                now: now)
-        }
+
         if mode != .resetTime,
            self.settings.menuBarMetricPreference(for: provider, snapshot: snapshot) == .extraUsage,
-           provider != .cursor || mode == .pace,
            let spend = Self.extraUsageSpendDisplayText(snapshot: snapshot)
         {
             return spend
@@ -864,9 +821,7 @@ extension StatusItemController {
         automatic: MenuBarLayoutRenderWindow?,
         showsOptionalCredits: Bool = true) -> String?
     {
-        // Provider-specific by design: DeepInfra's real billing window has no balance detail.
         let balanceOnly = provider == .deepseek
-            || (provider == .deepinfra && automatic?.resetDescription != nil && automatic?.resetsAt == nil)
         guard automatic == nil || balanceOnly else { return nil }
         return MenuBarLayoutBalanceResolver.balance(
             provider: provider,
@@ -885,23 +840,6 @@ extension StatusItemController {
             return nil
         }
         return UsageFormatter.currencyString(cost.used, currencyCode: cost.currencyCode)
-    }
-
-    private func kiroMenuBarText(provider: UsageProvider, snapshot: UsageSnapshot?, now: Date) -> String? {
-        let mode = self.settings.menuBarDisplayMode
-        let text = Self.kiroDisplayText(
-            snapshot: snapshot,
-            mode: self.settings.kiroMenuBarDisplayMode,
-            showUsed: self.settings.usageBarsShowUsed)
-        guard !self.menuBarUsageSource(for: provider).isFleet,
-              mode == .pace || mode == .both, let text else { return text }
-        guard let paceText = self.store.menuBarLayoutPaceText(
-            provider: provider,
-            window: snapshot?.primary,
-            dataConfidence: snapshot?.dataConfidence ?? .unknown,
-            now: now)
-        else { return text }
-        return mode == .pace ? paceText : "\(text) · \(paceText)"
     }
 
     nonisolated static func kiroDisplayText(
@@ -1125,10 +1063,6 @@ extension StatusItemController {
         if let projection {
             return projection.menuBarSelectableRateWindow(for: .weekly)
         }
-        // Provider-specific by design: Abacus publishes its weekly semantic window in the primary lane.
-        if provider == .abacus {
-            return snapshot?.primary
-        }
         if let combinedLanes {
             return combinedLanes.weekly
         }
@@ -1271,10 +1205,6 @@ extension StatusItemController {
 
         let isStale = self.menuBarIsStale(for: provider)
         let hasSatisfiedUsageFetch = self.store.hasSatisfiedUsageFetch(for: provider)
-        // Provider-specific by design: Warp animates while its first remote refresh is still in flight.
-        if provider == .warp, !hasSatisfiedUsageFetch, self.store.refreshingProviders.contains(provider.instanceID) {
-            return true
-        }
         return !hasSatisfiedUsageFetch && !isStale
     }
 

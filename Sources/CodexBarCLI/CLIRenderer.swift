@@ -46,37 +46,33 @@ enum CLIRenderer {
             metadata: descriptor.metadata,
             snapshot: snapshot)
         var lines: [String] = []
-        if let quotaLanes = Self.antigravityQuotaSummaryLanes(provider: provider, snapshot: snapshot) {
-            self.appendNamedRateWindowLines(quotaLanes, context: context, now: now, lines: &lines)
-        } else {
-            self.appendPrimaryLines(
-                provider: provider,
-                snapshot: snapshot,
-                labels: labels,
-                context: context,
-                now: now,
-                lines: &lines)
-            self.appendSecondaryLines(
-                provider: provider,
-                snapshot: snapshot,
-                labels: labels,
-                context: context,
-                now: now,
-                lines: &lines)
-            self.appendTertiaryLines(
-                provider: provider,
-                snapshot: snapshot,
-                labels: labels,
-                context: context,
-                now: now,
-                lines: &lines)
-            self.appendExtraRateWindows(
-                provider: provider,
-                snapshot: snapshot,
-                context: context,
-                now: now,
-                lines: &lines)
-        }
+        self.appendPrimaryLines(
+            provider: provider,
+            snapshot: snapshot,
+            labels: labels,
+            context: context,
+            now: now,
+            lines: &lines)
+        self.appendSecondaryLines(
+            provider: provider,
+            snapshot: snapshot,
+            labels: labels,
+            context: context,
+            now: now,
+            lines: &lines)
+        self.appendTertiaryLines(
+            provider: provider,
+            snapshot: snapshot,
+            labels: labels,
+            context: context,
+            now: now,
+            lines: &lines)
+        self.appendExtraRateWindows(
+            provider: provider,
+            snapshot: snapshot,
+            context: context,
+            now: now,
+            lines: &lines)
         self.appendProviderDetails(snapshot.details, useColor: context.useColor, lines: &lines)
         self.appendPresentationCostLines(
             provider: provider,
@@ -329,20 +325,15 @@ enum CLIRenderer {
         let labels = descriptor.presentation.rateWindowLabels(
             metadata: descriptor.metadata,
             snapshot: snapshot)
-        let windows: [NamedRateWindow]
-        if let quotaLanes = Self.antigravityQuotaSummaryLanes(provider: provider, snapshot: snapshot) {
-            windows = quotaLanes
-        } else {
-            let slots: [(String, RateWindow?)] = [
-                (labels.primary, snapshot.primary),
-                (labels.secondary, snapshot.secondary),
-                (labels.tertiary, labels.showsTertiary ? snapshot.tertiary : nil),
-            ]
-            windows = slots.compactMap { label, window in
-                guard let window, !window.isSyntheticPlaceholder else { return nil }
-                return NamedRateWindow(id: label, title: label, window: window)
-            } + descriptor.presentation.extraRateWindows(snapshot: snapshot)
-        }
+        let slots: [(String, RateWindow?)] = [
+            (labels.primary, snapshot.primary),
+            (labels.secondary, snapshot.secondary),
+            (labels.tertiary, labels.showsTertiary ? snapshot.tertiary : nil),
+        ]
+        let windows = slots.compactMap { label, window in
+            guard let window, !window.isSyntheticPlaceholder else { return nil }
+            return NamedRateWindow(id: label, title: label, window: window)
+        } + descriptor.presentation.extraRateWindows(snapshot: snapshot)
         return windows.map {
             self.makeCardMetric(provider: provider, window: $0, resetStyle: resetStyle, now: now)
         }
@@ -672,22 +663,6 @@ enum CLIRenderer {
                 now: now,
                 lines: &lines)
         }
-    }
-
-    /// Quota-summary buckets replace legacy family representatives only on CLI display surfaces.
-    /// Keep raw snapshots intact and retain the existing all-idle/unknown-family visibility policy.
-    private static func antigravityQuotaSummaryLanes(
-        provider: UsageProvider,
-        snapshot: UsageSnapshot) -> [NamedRateWindow]?
-    {
-        // Provider-specific by design: quota buckets replace Antigravity family representatives only in CLI views.
-        guard provider == .antigravity else { return nil }
-        let extras = snapshot.extraRateWindows ?? []
-        guard extras.contains(where: { AntigravityStatusSnapshot.isQuotaSummaryWindowID($0.id) }) else {
-            return nil
-        }
-        let idleWindowIDs = AntigravityQuotaFamilyVisibility.idleWindowIDs(in: snapshot)
-        return extras.filter { !idleWindowIDs.contains($0.id) }
     }
 
     private static func appendCreditsLine(

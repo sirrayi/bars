@@ -228,7 +228,6 @@ This document outlines the development roadmap for the CodexBar fork maintained 
 
 ## 🔗 Related Documentation
 
-- [Augment Provider](augment.md) - Augment-specific documentation
 - [Development Guide](DEVELOPMENT.md) - Build and test instructions
 - [Provider Authoring](provider.md) - How to create new providers
 - [Upstream Strategy](UPSTREAM_STRATEGY.md) - Syncing with original repository

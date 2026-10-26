@@ -5,44 +5,6 @@ import Testing
 
 struct BrowserCookieImportSupportTests {
     @Test
-    func `mimo candidates leave later browsers unread after a usable Safari session`() throws {
-        let detection = BrowserDetection(
-            homeDirectory: "/synthetic-mimo-cookie-home",
-            cacheTTL: 0,
-            now: { Date(timeIntervalSince1970: 0) },
-            fileExists: { _ in true },
-            directoryContents: { _ in ["Default"] },
-            applicationURLs: { _ in [] },
-            profileAccessIssue: { _ in nil })
-        var visited: [Browser] = []
-        let candidates = try MiMoCookieImporter.importSessions(
-            browserDetection: detection,
-            loadRecords: { browser, _, _ in
-                visited.append(browser)
-                let store = BrowserCookieStore(
-                    browser: browser,
-                    profile: .init(id: "Default", name: "Default"),
-                    kind: .primary,
-                    label: browser.displayName,
-                    databaseURL: nil)
-                let records = ["api-platform_serviceToken", "userId"].map { name in
-                    BrowserCookieRecord(
-                        domain: "platform.xiaomimimo.com",
-                        name: name,
-                        path: "/",
-                        value: "fixture",
-                        expires: nil,
-                        isSecure: true,
-                        isHTTPOnly: true)
-                }
-                return [BrowserCookieStoreRecords(store: store, records: records)]
-            },
-            loadStores: { _ in [] })
-        #expect(candidates.first(where: { _ in true })?.sourceLabel == "Safari")
-        #expect(visited == [.safari])
-    }
-
-    @Test
     func `usable first session leaves later browsers unread`() throws {
         var visited: [Browser] = []
         let sessions = try BrowserCookieImportSupport.collectSessions(
@@ -93,34 +55,6 @@ struct BrowserCookieImportSupportTests {
     }
 
     @Test
-    func `browser labels and keychain requirements follow catalog metadata without discovery`() {
-        #expect(BrowserCookieImportSupport.browserNames(for: nil) == "Chrome")
-        #expect(BrowserCookieImportSupport.importOrder(for: .museai) == Browser.defaultImportOrder)
-        for browser in Browser.allCases {
-            #expect(browser.usesKeychainForCookieDecryption == browser.usesChromiumProfileStore)
-        }
-    }
-
-    @Test(arguments: ["Aside", "Opera", "Opera Neon"])
-    func `catalog browsers participate in Muse automatic import`(name: String) throws {
-        let browser = try #require(Browser.allCases.first { $0.displayName == name })
-        #expect(browser.usesChromiumProfileStore)
-        #expect(browser.usesKeychainForCookieDecryption)
-        #expect(Browser.defaultImportOrder.contains(browser))
-        var visited: [Browser] = []
-        let sessions = try BrowserCookieImportSupport.collectSessions(
-            from: BrowserCookieImportSupport.importOrder(for: .museai),
-            missingError: ImportError.missing,
-            logger: { _ in },
-            load: { candidate in
-                visited.append(candidate)
-                return candidate == browser ? ["fixture-session"] : []
-            })
-        #expect(Array(sessions) == ["fixture-session"])
-        #expect(visited == Browser.defaultImportOrder)
-    }
-
-    @Test
     func `automatic plugin import excludes opt in desktop cookies`() {
         #expect(!BrowserCookieImportSupport.importOrder(for: .claude).contains(.claudeDesktop))
         #expect(!BrowserCookieImportSupport.browserNames(for: .claude).contains("Claude desktop app"))
@@ -134,23 +68,6 @@ struct BrowserCookieImportSupportTests {
             logger: { _ in },
             load: { _ in [] })
         #expect(Array(sessions).isEmpty)
-    }
-
-    @Test
-    func `automatic provider cookie orders include every supported browser`() {
-        #expect(ReplicateCookieImporter.resolvedImportOrder(nil) == Browser.defaultImportOrder)
-        #expect(ReplicateCookieImporter.resolvedImportOrder([]) == Browser.defaultImportOrder)
-        for descriptor in ProviderDescriptorRegistry.all {
-            // Devin reads Chromium local storage; selected-profile providers honor the user's picker.
-            // WorkBuddy sessions bind to the Chrome User-Agent supplied by its host integration.
-            guard descriptor.id != .devin, descriptor.id != .workbuddy,
-                  descriptor.settingsSection.selectedProfileBrowsers == nil,
-                  let order = descriptor.metadata.browserCookieOrder
-            else { continue }
-            #expect(
-                Set(order.filter { $0 != .claudeDesktop }) == Set(Browser.defaultImportOrder),
-                "\(descriptor.id) restricts automatic cookie import")
-        }
     }
 
     private enum ImportError: Error {

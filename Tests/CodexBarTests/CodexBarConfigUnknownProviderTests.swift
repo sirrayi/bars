@@ -26,6 +26,26 @@ struct CodexBarConfigUnknownProviderTests {
     }
 
     @Test
+    func `removed provider id keeps retained claude and devin entries`() throws {
+        let data = Data(#"""
+        {
+          "version": 1,
+          "providers": [
+            {"id": "claude", "enabled": true},
+            {"id": "cursor", "enabled": true},
+            {"id": "devin", "enabled": true}
+          ]
+        }
+        """#.utf8)
+
+        let decoded = try JSONDecoder().decode(CodexBarConfig.self, from: data)
+
+        #expect(decoded.providers.map(\.id) == [.claude, .devin])
+        #expect(decoded.providerConfig(for: .claude)?.enabled == true)
+        #expect(decoded.providerConfig(for: .devin)?.enabled == true)
+    }
+
+    @Test
     func `reading and saving retired Crof config preserves its record`() throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }
@@ -86,20 +106,6 @@ struct CodexBarConfigUnknownProviderTests {
         let records = try #require(root["providers"] as? [[String: Any]])
         let expected = ["first-opaque", "grok", "second-opaque", "groq"].filter { $0 != deleted }
         #expect(records.compactMap { $0["id"] as? String } == expected)
-    }
-
-    @MainActor
-    @Test
-    func `app config persistence preserves unavailable plugin records`() throws {
-        let settings = testSettingsStore(
-            suiteName: #function,
-            userDefaults: InMemoryUserDefaults(),
-            keychainAccessPolicy: .init(setDisabled: { _ in }, isExplicitlyDisabled: { true }))
-        defer { try? settings.configStore.deleteIfPresent() }
-        try settings.configStore.saveEncodedData(Self.fixture)
-        settings.reloadConfig(reason: "fixture")
-        settings.updateProviderConfig(provider: .grok) { $0.enabled = true }
-        try Self.expectRetainedRecords(in: Data(contentsOf: settings.configStore.fileURL))
     }
 
     static let fixture = Data(#"""

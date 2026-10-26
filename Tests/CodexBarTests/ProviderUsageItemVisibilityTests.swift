@@ -27,22 +27,6 @@ struct ProviderUsageItemVisibilityTests {
     }
 
     @Test
-    func `detail row explanations follow provider optional visibility policy`() throws {
-        let model = try Self.model(provider: .deepseek, metricIDs: ["primary"], detailSections: [
-            ProviderDetailSection(title: "Quota details", rows: [.init(label: "Remaining", value: "50")]),
-        ])
-        #expect(model.usageItemDescriptors.filter(\.requiresOptionalUsage).map(\.id) == [
-            .detailSection("Quota details"),
-        ])
-        let unavailable = Self.model(provider: .minimax, metricIDs: ["primary"])
-            .usageItemDescriptors(includingHidden: [.detailSection("Billing history")])
-        #expect(unavailable.last?.requiresOptionalUsage == true)
-        #expect(!ProviderUsageItemID.detailSection("Quota details").requiresOptionalUsage(for: .minimax))
-        #expect(!ProviderUsageItemID.metric("claude-routines").requiresOptionalUsage(for: .codex))
-        #expect(!ProviderUsageItemID.metric("codex-spark").requiresOptionalUsage(for: .claude))
-    }
-
-    @Test
     func `claude independently selects resets extra usage and subscription without losing quota notes`() {
         var model = Self.model(provider: .claude, metricIDs: ["primary", "secondary"], showsResetCredits: true)
         model.providerCost = .init(title: "Extra usage", percentUsed: 10, spendLine: "$1 / $10", percentLine: nil)
@@ -186,26 +170,6 @@ struct ProviderUsageItemVisibilityTests {
     }
 
     @Test
-    func `a hidden item the provider stopped reporting stays restorable`() {
-        // A partial refresh can drop a lane the user hid earlier. Its checkbox has to survive so the
-        // single row can be restored without Restore Defaults discarding the rest of the selection.
-        let model = Self.model(provider: .cursor, metricIDs: ["primary"])
-        let hiddenItemIDs: Set<ProviderUsageItemID> = [.metric("cursor-grok-bot"), .credits]
-
-        let descriptors = model.usageItemDescriptors(includingHidden: hiddenItemIDs)
-
-        #expect(descriptors.map(\.id.rawValue) == [
-            "metric:primary",
-            "metric:cursor-grok-bot",
-            "section:credits",
-        ])
-        #expect(descriptors[1].title == "Grok Bot (unavailable)")
-        #expect(descriptors.last?.title.contains("Credits") == true)
-        // Rows the provider still reports keep their menu title instead of the unreported fallback.
-        #expect(model.usageItemDescriptors.map(\.id.rawValue) == ["metric:primary"])
-    }
-
-    @Test
     func `codex reset credits choice appears only when available or hidden`() {
         let model = Self.model(provider: .codex, metricIDs: ["secondary"])
 
@@ -217,182 +181,6 @@ struct ProviderUsageItemVisibilityTests {
             "section:codex-reset-credits",
         ])
         #expect(descriptors.last?.title == "Limit Reset Credits (unavailable)")
-    }
-
-    @Test
-    func `cursor grok bot usage can be hidden without hiding weekly usage`() {
-        let model = Self.model(provider: .cursor, metricIDs: ["primary", "cursor-grok-bot"])
-
-        let projected = model.applyingUsageItemVisibility(hiddenItemIDs: [
-            .metric("cursor-grok-bot"),
-        ])
-
-        #expect(projected.metrics.map(\.id) == ["primary"])
-    }
-
-    @Test
-    func `provider detail sections appear as usage items keyed by raw title`() throws {
-        let model = try Self.model(
-            provider: .zai,
-            metricIDs: ["primary", "secondary", "zai-mcp"],
-            detailSections: [
-                "Quota details",
-                "Hourly tokens",
-                "Daily tokens",
-            ].map { try ProviderDetailSection(title: $0, rows: [.init(label: "GLM-5.3", value: "100")]) })
-
-        // Cost-summary sections stay owned by the cost summary style picker; only independent
-        // sections join the checkbox list.
-        #expect(model.usageItemDescriptors.map(\.id.rawValue) == [
-            "metric:primary",
-            "metric:secondary",
-            "metric:zai-mcp",
-            "detailSection:Quota details",
-        ])
-        #expect(model.usageItemDescriptors.last?.title == "Quota details")
-    }
-
-    @Test
-    func `hiding a detail section removes it from the projection only`() throws {
-        let model = try Self.model(
-            provider: .zai,
-            metricIDs: ["primary"],
-            detailSections: [
-                "Quota details",
-                "Hourly tokens",
-            ].map { try ProviderDetailSection(title: $0, rows: [.init(label: "GLM-5.3", value: "100")]) })
-
-        let projected = model.applyingUsageItemVisibility(hiddenItemIDs: [.detailSection("Quota details")])
-
-        #expect(projected.providerDetails.map(\.title) == ["Hourly tokens"])
-        #expect(projected.providerDetailRawTitles == ["Hourly tokens"])
-        #expect(projected.metrics.map(\.id) == ["primary"])
-        // The raw model remains available to populate the settings checkboxes.
-        #expect(model.providerDetails.map(\.title) == ["Quota details", "Hourly tokens"])
-        // Applying the projection twice changes nothing further.
-        let reapplied = projected.applyingUsageItemVisibility(hiddenItemIDs: [.detailSection("Quota details")])
-        #expect(reapplied.providerDetails.map(\.title) == projected.providerDetails.map(\.title))
-    }
-
-    @Test
-    func `hiding a remembered section preserves details without identity metadata`() throws {
-        let model = try Self.model(
-            provider: .zai,
-            metricIDs: ["primary"],
-            detailSections: [ProviderDetailSection(title: "New details", rows: [])],
-            detailRawTitles: [])
-
-        let projected = model.applyingUsageItemVisibility(hiddenItemIDs: [.detailSection("Old details")])
-
-        #expect(projected.providerDetails.map(\.title) == ["New details"])
-        #expect(projected.providerDetailRawTitles == [nil])
-    }
-
-    @Test
-    func `a hidden detail section the provider stopped reporting stays restorable`() throws {
-        let model = try Self.model(
-            provider: .zai,
-            metricIDs: ["primary"],
-            detailSections: [ProviderDetailSection(title: "Account balance", rows: [])])
-
-        let descriptors = model.usageItemDescriptors(includingHidden: [.detailSection("Quota details")])
-
-        #expect(descriptors.map(\.id.rawValue) == [
-            "metric:primary",
-            "detailSection:Account balance",
-            "detailSection:Quota details",
-        ])
-        #expect(descriptors.last?.title == "Quota details (unavailable)")
-    }
-
-    @Test
-    func `unavailable detail labels respect privacy without changing stored identity`() {
-        let model = Self.model(provider: .zai, metricIDs: [])
-        let item = ProviderUsageItemID.detailSection("Quota for fixture@example.com")
-        let hidden: Set<ProviderUsageItemID> = [item]
-
-        let privateItems = model.usageItemDescriptors(includingHidden: hidden, hidePersonalInfo: true)
-        let visibleItems = model.usageItemDescriptors(includingHidden: hidden, hidePersonalInfo: false)
-
-        #expect(privateItems.last?.id == item)
-        #expect(privateItems.last?.title.contains("fixture@example.com") == false)
-        #expect(visibleItems.last?.title == "Quota for fixture@example.com (unavailable)")
-    }
-
-    @Test
-    func `untitled detail sections render without joining the usage item list`() throws {
-        let untitled = try ProviderDetailSection(title: nil, rows: [.init(label: "Pool", value: "42")])
-        let model = Self.model(
-            provider: .kimi,
-            metricIDs: ["primary"],
-            detailSections: [untitled],
-            detailRawTitles: [nil])
-
-        #expect(model.usageItemDescriptors.map(\.id.rawValue) == ["metric:primary"])
-        let projected = model.applyingUsageItemVisibility(hiddenItemIDs: [.detailSection("Quota details")])
-        #expect(projected.providerDetails.count == 1)
-        #expect(projected.providerDetailRawTitles == [nil])
-    }
-
-    @Test
-    func `detail section choices round-trip through provider config and restore defaults`() {
-        let settings = Self.settings(
-            defaults: InMemoryUserDefaults(),
-            configStore: testConfigStore(
-                suiteName: "ProviderUsageItemVisibilityTests-detail-sections-\(UUID().uuidString)"))
-
-        settings.setUsageItemVisible(false, itemID: .detailSection("Quota details"), for: .zai)
-        settings.setUsageItemVisible(false, itemID: .metric("zai-mcp"), for: .zai)
-
-        #expect(settings.providerConfig(for: .zai)?.hiddenUsageItemIDs == [
-            "detailSection:Quota details",
-            "metric:zai-mcp",
-        ])
-        #expect(!settings.isUsageItemVisible(.detailSection("Quota details"), for: .zai))
-
-        settings.restoreDefaultUsageItemVisibility(for: .zai)
-
-        #expect(settings.providerConfig(for: .zai)?.hiddenUsageItemIDs == [])
-    }
-
-    @Test
-    func `projection keeps sections and raw titles aligned on a maximally populated card`() throws {
-        // A snapshot may carry the documented maximum of 8 sections with 24 rows each; the paired
-        // arrays must survive selective removal without drifting out of sync.
-        let sections = try (0..<8).map { index in
-            try ProviderDetailSection(
-                title: "Section \(index)",
-                rows: (0..<24).map { row in try .init(label: "Row \(row)", value: "\(index)-\(row)") })
-        }
-        let model = Self.model(provider: .zai, metricIDs: ["primary", "secondary"], detailSections: sections)
-        let hiddenItemIDs: Set<ProviderUsageItemID> = [
-            .detailSection("Section 0"),
-            .detailSection("Section 3"),
-            .detailSection("Section 7"),
-            .metric("secondary"),
-        ]
-
-        let projected = model.applyingUsageItemVisibility(hiddenItemIDs: hiddenItemIDs)
-
-        #expect(projected.providerDetails.count == 5)
-        #expect(projected.providerDetailRawTitles.count == projected.providerDetails.count)
-        #expect(zip(projected.providerDetails, projected.providerDetailRawTitles).allSatisfy { $0.title == $1 })
-        #expect(projected.providerDetails.flatMap(\.rows).count == 5 * 24)
-        #expect(projected.metrics.map(\.id) == ["primary"])
-        #expect(model.usageItemDescriptors(includingHidden: hiddenItemIDs).count == 2 + 8)
-    }
-
-    @Test
-    func `restoring one unavailable item preserves other hidden choices`() {
-        let suite = "ProviderUsageItemVisibilityTests-restoration-\(UUID().uuidString)"
-        let defaults = InMemoryUserDefaults()
-        let settings = Self.settings(defaults: defaults, configStore: testConfigStore(suiteName: suite))
-
-        settings.setUsageItemVisible(false, itemID: .metric("cursor-grok-bot"), for: .cursor)
-        settings.setUsageItemVisible(false, itemID: .credits, for: .cursor)
-        settings.setUsageItemVisible(true, itemID: .metric("cursor-grok-bot"), for: .cursor)
-
-        #expect(settings.hiddenUsageItemIDs(for: .cursor) == [.credits])
     }
 
     @Test
@@ -470,29 +258,6 @@ struct ProviderUsageItemVisibilityTests {
             defaults: defaults,
             configStore: testConfigStore(suiteName: suite, reset: false))
         #expect(reloaded.hiddenUsageItemIDs(for: .codex).isEmpty)
-    }
-
-    @Test
-    func `legacy hidden rows are persisted for sync without replacing explicit selections`() throws {
-        let defaults = InMemoryUserDefaults(values: [
-            "codexSparkUsageVisible": false,
-            "claudeDailyRoutinesUsageVisible": false,
-        ])
-        let configStore = testConfigStore(suiteName: "visibility-sync-\(UUID().uuidString)")
-        let settings = Self.settings(defaults: defaults, configStore: configStore)
-        for (provider, expected) in [
-            (UsageProvider.codex, ["metric:codex-spark", "metric:codex-spark-weekly"]),
-            (.claude, ["metric:claude-routines"]),
-        ] {
-            let config = try #require(settings.providerConfig(for: provider))
-            #expect(ProviderIntentPayload(config: config).hiddenUsageItemIDs == expected)
-            #expect(try configStore.load()?.providerConfig(for: provider.instanceID)?.hiddenUsageItemIDs == expected)
-            settings.restoreDefaultUsageItemVisibility(for: provider)
-        }
-        let reloaded = Self.settings(defaults: defaults, configStore: configStore)
-        #expect(reloaded.providerConfig(for: .codex)?.hiddenUsageItemIDs == [])
-        #expect(reloaded.providerConfig(for: .claude)?.hiddenUsageItemIDs == [])
-        #expect(reloaded.providerConfig(for: .cursor)?.hiddenUsageItemIDs == nil)
     }
 
     @Test(arguments: [true, false], [true, false])
@@ -613,19 +378,9 @@ struct ProviderUsageItemVisibilityTests {
         SettingsStore(
             userDefaults: defaults,
             configStore: configStore,
-            zaiTokenStore: NoopZaiTokenStore(),
-            syntheticTokenStore: NoopSyntheticTokenStore(),
             codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
-            cursorCookieStore: InMemoryCookieHeaderStore(),
             opencodeCookieStore: InMemoryCookieHeaderStore(),
-            factoryCookieStore: InMemoryCookieHeaderStore(),
-            minimaxCookieStore: InMemoryMiniMaxCookieStore(),
-            minimaxAPITokenStore: InMemoryMiniMaxAPITokenStore(),
-            kimiTokenStore: InMemoryKimiTokenStore(),
-            augmentCookieStore: InMemoryCookieHeaderStore(),
-            ampCookieStore: InMemoryCookieHeaderStore(),
-            copilotTokenStore: InMemoryCopilotTokenStore(),
             tokenAccountStore: InMemoryTokenAccountStore(),
             keychainAccessPolicy: .init(setDisabled: { _ in }, isExplicitlyDisabled: { false }),
             performInitialProviderDetection: false)
@@ -664,7 +419,6 @@ struct ProviderUsageItemVisibilityTests {
             usageNotes: [],
             providerDetails: detailSections,
             providerDetailRawTitles: detailRawTitles ?? detailSections.map(\.title),
-            openAIAPIUsage: nil,
             inlineUsageDashboard: nil,
             creditsText: showsCredits ? "$12.34 remaining" : nil,
             creditsRemaining: showsCredits ? 12.34 : nil,

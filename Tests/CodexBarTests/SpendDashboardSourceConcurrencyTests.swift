@@ -629,69 +629,6 @@ struct SpendDashboardSourceConcurrencyTests {
         #expect(final.inputs.map(\.id) == ["codex:first", "codex:second"])
     }
 
-    @Test
-    func `force request recaptures earlier provider after later refresh suspends`() async throws {
-        let settings = testSettingsStore(suiteName: "SpendDashboardSourceConcurrencyTests-force-recapture")
-        settings.costUsageEnabled = true
-        for provider in UsageProvider.allCases {
-            guard let metadata = ProviderRegistry.shared.metadata[provider] else { continue }
-            settings.setProviderEnabled(
-                provider: provider,
-                metadata: metadata,
-                enabled: provider == .claude || provider == .mistral)
-        }
-        let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
-            browserDetection: BrowserDetection(cacheTTL: 0),
-            settings: settings,
-            startupBehavior: .testing,
-            environmentBase: [:])
-        let providers = SpendDashboardSource.costCapableProviders(store: store)
-        #expect(providers == [.claude, .mistral])
-        let firstProvider = UsageProvider.claude
-        let laterProvider = UsageProvider.mistral
-        store._setTokenSnapshotForTesting(
-            Self.input(provider: firstProvider, cost: 1).snapshot,
-            provider: firstProvider)
-        store._setTokenSnapshotForTesting(
-            Self.input(provider: laterProvider, cost: 2).snapshot,
-            provider: laterProvider)
-
-        let gate = SpendDashboardPendingLoads<Void>()
-        defer { gate.close() }
-        store._test_tokenUsageRefreshOverride = { provider, _ in
-            #expect(provider == firstProvider)
-            store._setTokenSnapshotForTesting(
-                Self.input(provider: provider, cost: 10).snapshot,
-                provider: provider)
-        }
-        store._test_providerRefreshOverride = { provider in
-            #expect(provider == laterProvider)
-            await gate.suspend()
-            store._setTokenSnapshotForTesting(
-                Self.input(provider: provider, cost: 20).snapshot,
-                provider: provider)
-        }
-
-        let requestTask = Task { @MainActor in
-            await SpendDashboardSource.makeRequest(settings: settings, store: store, mode: .forceRefresh)
-        }
-        defer { requestTask.cancel() }
-        try await gate.waitForPendingCount(1)
-        store._setTokenSnapshotForTesting(
-            Self.input(provider: firstProvider, cost: 11).snapshot,
-            provider: firstProvider)
-        gate.resume()
-
-        let request = await requestTask.value
-        let firstInput = try #require(request.capturedInputs.first { $0.provider == firstProvider })
-        let laterInput = try #require(request.capturedInputs.first { $0.provider == laterProvider })
-        #expect(firstInput.snapshot.last30DaysCostUSD == 11)
-        #expect(laterInput.snapshot.last30DaysCostUSD == 20)
-        #expect(request.unavailableSourceIDs.isEmpty)
-        #expect(request.configuration == SpendDashboardSource.configuration(settings: settings, store: store))
-    }
-
     private static func makeAccount(id: String, root: URL) throws -> CodexSpendScanRequest {
         let home = root.appendingPathComponent(id, isDirectory: true)
         try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)

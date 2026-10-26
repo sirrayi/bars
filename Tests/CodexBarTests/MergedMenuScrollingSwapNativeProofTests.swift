@@ -133,78 +133,6 @@ final class MergedMenuScrollingSwapNativeProofTests: XCTestCase {
 
     // MARK: - Fixture
 
-    private static func makeFixture() throws -> CodexWorkspacesNavigationFixture {
-        let fixture = try CodexWorkspacesNavigationFixture(userDefaults: InMemoryUserDefaults())
-        fixture.settings.mergeIcons = true
-        fixture.settings.multiAccountMenuLayout = .segmented
-        fixture.settings.selectedMenuProvider = .codex
-        let now = Date()
-        func window(_ used: Double, _ minutes: Int) -> RateWindow {
-            RateWindow(
-                usedPercent: used,
-                windowMinutes: minutes,
-                resetsAt: now.addingTimeInterval(TimeInterval(minutes * 30)),
-                resetDescription: nil)
-        }
-        /// Deliberately uneven card heights: tab swaps must grow and shrink by different amounts.
-        func snapshot(windows: Int) -> UsageSnapshot {
-            UsageSnapshot(
-                primary: window(25, 300),
-                secondary: windows >= 2 ? window(40, 7 * 24 * 60) : nil,
-                tertiary: windows >= 3 ? window(10, 7 * 24 * 60) : nil,
-                updatedAt: now)
-        }
-        // Every provider the swap script selects must be enabled here.
-        let windowsByProvider: [(UsageProvider, Int)] = [
-            (.codex, 3), (.claude, 1), (.cursor, 3), (.gemini, 2), (.copilot, 1), (.zai, 3),
-        ]
-        for (provider, windows) in windowsByProvider {
-            fixture.settings.setProviderEnabled(
-                provider: provider,
-                metadata: ProviderDescriptorRegistry.descriptor(for: provider).metadata,
-                enabled: true)
-            fixture.store._setSnapshotForTesting(snapshot(windows: windows), provider: provider)
-        }
-        if ProcessInfo.processInfo.environment["CODEXBAR_MENU_SWAP_COST"] == "1" {
-            // Cost sections and the Overview spend summary add rows whose heights differ per provider.
-            fixture.settings.costUsageEnabled = true
-            for (provider, days) in [(UsageProvider.codex, 30), (.claude, 3), (.cursor, 12)] {
-                let daily = (0..<days).map { offset in
-                    CostUsageDailyReport.Entry(
-                        date: Self.dayString(now.addingTimeInterval(TimeInterval(-offset * 86400))),
-                        inputTokens: 1000 * (offset + 1),
-                        outputTokens: 500,
-                        totalTokens: 1500 + 1000 * offset,
-                        costUSD: Double(offset + 1) * 1.25,
-                        modelsUsed: ["synthetic-model"],
-                        modelBreakdowns: nil)
-                }
-                fixture.store._setTokenSnapshotForTesting(
-                    CostUsageTokenSnapshot(
-                        sessionTokens: 12000,
-                        sessionCostUSD: 3.5,
-                        last30DaysTokens: 900_000,
-                        last30DaysCostUSD: Double(days) * 4.2,
-                        historyDays: days,
-                        daily: daily,
-                        updatedAt: now),
-                    provider: provider)
-            }
-        }
-        fixture.store.claudeSwapAccountSnapshots = (1...3).map { slot in
-            ProviderAccountUsageSnapshot(
-                id: ProviderAccountIdentity(source: "claude-swap", opaqueID: String(slot)),
-                provider: .claude,
-                displayLabel: "synthetic\(slot)@example.com",
-                isActive: slot == 1,
-                canActivate: slot != 1,
-                snapshot: snapshot(windows: slot),
-                error: nil,
-                sourceLabel: "claude-swap")
-        }
-        return fixture
-    }
-
     private static func dayString(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.calendar = Calendar(identifier: .gregorian)
@@ -314,6 +242,78 @@ final class MergedMenuScrollingSwapNativeProofTests: XCTestCase {
             try? note.write(to: url.appendingPathExtension("txt"), atomically: true, encoding: .utf8)
         }
     }
+
+    private static func makeFixture() throws -> CodexWorkspacesNavigationFixture {
+        let fixture = try CodexWorkspacesNavigationFixture(userDefaults: InMemoryUserDefaults())
+        fixture.settings.mergeIcons = true
+        fixture.settings.multiAccountMenuLayout = .segmented
+        fixture.settings.selectedMenuProvider = .codex
+        let now = Date()
+        func window(_ used: Double, _ minutes: Int) -> RateWindow {
+            RateWindow(
+                usedPercent: used,
+                windowMinutes: minutes,
+                resetsAt: now.addingTimeInterval(TimeInterval(minutes * 30)),
+                resetDescription: nil)
+        }
+        /// Deliberately uneven card heights: tab swaps must grow and shrink by different amounts.
+        func snapshot(windows: Int) -> UsageSnapshot {
+            UsageSnapshot(
+                primary: window(25, 300),
+                secondary: windows >= 2 ? window(40, 7 * 24 * 60) : nil,
+                tertiary: windows >= 3 ? window(10, 7 * 24 * 60) : nil,
+                updatedAt: now)
+        }
+        // Every provider the swap script selects must be enabled here.
+        let windowsByProvider: [(UsageProvider, Int)] = [
+            (.codex, 3), (.claude, 1), (.opencode, 3), (.deepseek, 2), (.devin, 1), (.pi, 3),
+        ]
+        for (provider, windows) in windowsByProvider {
+            fixture.settings.setProviderEnabled(
+                provider: provider,
+                metadata: ProviderDescriptorRegistry.descriptor(for: provider).metadata,
+                enabled: true)
+            fixture.store._setSnapshotForTesting(snapshot(windows: windows), provider: provider)
+        }
+        if ProcessInfo.processInfo.environment["CODEXBAR_MENU_SWAP_COST"] == "1" {
+            // Cost sections and the Overview spend summary add rows whose heights differ per provider.
+            fixture.settings.costUsageEnabled = true
+            for (provider, days) in [(UsageProvider.codex, 30), (.claude, 3), (.opencode, 12)] {
+                let daily = (0..<days).map { offset in
+                    CostUsageDailyReport.Entry(
+                        date: Self.dayString(now.addingTimeInterval(TimeInterval(-offset * 86400))),
+                        inputTokens: 1000 * (offset + 1),
+                        outputTokens: 500,
+                        totalTokens: 1500 + 1000 * offset,
+                        costUSD: Double(offset + 1) * 1.25,
+                        modelsUsed: ["synthetic-model"],
+                        modelBreakdowns: nil)
+                }
+                fixture.store._setTokenSnapshotForTesting(
+                    CostUsageTokenSnapshot(
+                        sessionTokens: 12000,
+                        sessionCostUSD: 3.5,
+                        last30DaysTokens: 900_000,
+                        last30DaysCostUSD: Double(days) * 4.2,
+                        historyDays: days,
+                        daily: daily,
+                        updatedAt: now),
+                    provider: provider)
+            }
+        }
+        fixture.store.claudeSwapAccountSnapshots = (1...3).map { slot in
+            ProviderAccountUsageSnapshot(
+                id: ProviderAccountIdentity(source: "claude-swap", opaqueID: String(slot)),
+                provider: .claude,
+                displayLabel: "synthetic\(slot)@example.com",
+                isActive: slot == 1,
+                canActivate: slot != 1,
+                snapshot: snapshot(windows: slot),
+                error: nil,
+                sourceLabel: "claude-swap")
+        }
+        return fixture
+    }
 }
 
 /// Runs the swap script from inside the menu's tracking run loop, recording each phase after it settles.
@@ -369,5 +369,13 @@ private final class MergedMenuSwapDriver {
             return
         }
         _ = switcher.handleKeyboardSelection(at: index)
+    }
+
+    private static func dayString(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
     }
 }

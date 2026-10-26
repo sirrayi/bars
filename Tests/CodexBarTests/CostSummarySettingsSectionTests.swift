@@ -10,9 +10,4 @@ struct CostSummarySettingsSectionTests {
                 == "Costs may be provider-reported or estimated from token usage at public API prices. "
                 + "Estimates are not subscription charges.")
     }
-
-    @Test
-    func `cost settings status providers come from ordered descriptor capabilities`() {
-        #expect(CostSummarySettingsSection.costStatusProviders == [.claude, .codex, .cursor, .antigravity, .pi])
-    }
 }

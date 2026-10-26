@@ -1471,16 +1471,13 @@ extension CodexBarCLI {
             providers: providers,
             config: context.config,
             context: context.collection)
-        { provider, cursorCookieHeaderOverride in
+        { provider in
             do {
                 let snapshot = try await fetcher.loadTokenSnapshot(
                     provider: provider,
-                    antigravityAdditionalProfileHomes:
-                    context.config.providerConfig(for: provider.instanceID)?.antigravityAdditionalProfileHomes ?? [],
                     now: context.now,
                     forceRefresh: false,
                     historyDays: context.period.days(now: context.now, calendar: context.calendar),
-                    cursorCookieHeaderOverride: cursorCookieHeaderOverride,
                     refreshPricingInBackground: Self.serveCostRefreshesPricingInBackground,
                     includePiSessions: Self.costIncludePiSessions(
                         provider: provider,
@@ -1506,34 +1503,13 @@ extension CodexBarCLI {
         providers: [UsageProvider],
         config: CodexBarConfig,
         context: ServeCostCollectionContext,
-        fetch: @Sendable @escaping (UsageProvider, String?) async -> CostPayload) async -> [CostPayload]
+        fetch: @Sendable @escaping (UsageProvider) async -> CostPayload) async -> [CostPayload]
     {
-        // Keep every dashboard transport aligned with the configured Cursor credential source.
-        // Policy failures remain row-local so other providers still render.
-        let cursorCookieSettings: ProviderSettingsSnapshot.CursorProviderSettings?
-        let cursorCookieSettingsError: Error?
-        do {
-            cursorCookieSettings = try Self.cursorCookieSettings(config: config, providers: providers)
-            cursorCookieSettingsError = nil
-        } catch {
-            cursorCookieSettings = nil
-            cursorCookieSettingsError = error
-        }
-
-        return await Self.serveCollectCostPayloads(
+        await self.serveCollectCostPayloads(
             providers: providers,
             context: context)
         { provider in
-            if let error = Self.cursorCostAvailabilityError(
-                provider,
-                settings: cursorCookieSettings,
-                resolutionError: cursorCookieSettingsError)
-            {
-                return Self.makeCostPayload(provider: provider, snapshot: nil, error: error)
-            }
-            return await fetch(
-                provider,
-                Self.cursorCostHeaderOverride(provider, settings: cursorCookieSettings))
+            await fetch(provider)
         }
     }
 

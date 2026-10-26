@@ -112,58 +112,6 @@ struct AutomaticQuotaSelectionTests {
             now: self.now) == snapshot.primary)
     }
 
-    @Test
-    func `descriptors keep optional model quotas and ordered credits separate`() {
-        let snapshot = UsageSnapshot(
-            primary: window(20, minutes: 300, remaining: 0),
-            secondary: window(90, minutes: 10080, remaining: 0),
-            tertiary: window(100, minutes: 10080, remaining: 0),
-            updatedAt: now)
-        for provider in [UsageProvider.claude, .zai, .copilot] {
-            #expect(MenuBarMetricWindowResolver.rateWindow(
-                preference: .automatic,
-                provider: provider,
-                snapshot: snapshot,
-                supportsAverage: false,
-                now: self.now) == snapshot.secondary)
-            #expect(MenuBarMetricWindowResolver.rateWindow(
-                preference: .primary,
-                provider: provider,
-                snapshot: snapshot,
-                supportsAverage: false,
-                now: self.now) == snapshot.primary)
-        }
-        for provider in [UsageProvider.claudeplatform, .kiro] {
-            #expect(MenuBarMetricWindowResolver.rateWindow(
-                preference: .automatic,
-                provider: provider,
-                snapshot: snapshot,
-                supportsAverage: false,
-                now: self.now) == snapshot.primary)
-        }
-        let missingChat = UsageSnapshot(
-            primary: snapshot.primary,
-            secondary: nil,
-            tertiary: snapshot.tertiary,
-            updatedAt: self.now)
-        #expect(MenuBarMetricWindowResolver.rateWindow(
-            preference: .automatic,
-            provider: .copilot,
-            snapshot: missingChat,
-            supportsAverage: false,
-            now: self.now) == missingChat.primary)
-        let exhaustedBonus = UsageSnapshot(
-            primary: snapshot.primary,
-            secondary: snapshot.tertiary,
-            updatedAt: self.now)
-        #expect(MenuBarMetricWindowResolver.rateWindow(
-            preference: .automatic,
-            provider: .kiro,
-            snapshot: exhaustedBonus,
-            supportsAverage: false,
-            now: self.now) == exhaustedBonus.secondary)
-    }
-
     private func window(_ used: Double, minutes: Int, remaining: TimeInterval) -> RateWindow {
         RateWindow(
             usedPercent: used,

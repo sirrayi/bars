@@ -79,6 +79,22 @@ struct MenuBarAutomaticWindowLabelsTests {
         }
     }
 
+    private func options(
+        showLabels: Bool = true,
+        now: Date? = nil,
+        conditionals: [MenuBarLayoutConditional] = []) -> MenuBarLayoutRenderOptions
+    {
+        MenuBarLayoutRenderOptions(
+            size: .regular,
+            highContrast: false,
+            showUsed: true,
+            conditionals: conditionals,
+            appearanceName: "aqua",
+            isDebugApp: false,
+            now: now ?? self.now,
+            showWindowLabels: showLabels)
+    }
+
     private func data(
         weekly: Bool = false,
         monthly: Bool = false,
@@ -110,7 +126,7 @@ struct MenuBarAutomaticWindowLabelsTests {
                 windowMinutes: nil,
                 resetsAt: self.now.addingTimeInterval(7200),
                 resetDescription: nil))) : nil
-        let provider: UsageProvider = monthly ? .opencodego : namedAllowance ? .cursor : .claude
+        let provider: UsageProvider = monthly ? .opencodego : namedAllowance ? .deepseek : .claude
         return MenuBarLayoutRenderData(
             provider: provider,
             iconKey: "synthetic-auto-label",
@@ -135,21 +151,5 @@ struct MenuBarAutomaticWindowLabelsTests {
             costToday: nil,
             cost30d: nil,
             metrics: .unavailable)
-    }
-
-    private func options(
-        showLabels: Bool = true,
-        now: Date? = nil,
-        conditionals: [MenuBarLayoutConditional] = []) -> MenuBarLayoutRenderOptions
-    {
-        MenuBarLayoutRenderOptions(
-            size: .regular,
-            highContrast: false,
-            showUsed: true,
-            conditionals: conditionals,
-            appearanceName: "aqua",
-            isDebugApp: false,
-            now: now ?? self.now,
-            showWindowLabels: showLabels)
     }
 }

@@ -6,24 +6,6 @@ import Testing
 
 struct CLIConfigSourceCommandTests {
     @Test
-    func `set source validates aliases and provider capabilities`() throws {
-        let selection = try CodexBarCLI.configSourceSelection(provider: "COMMAND-CODE", source: "WEB")
-        #expect(selection.provider == .commandcode)
-        #expect(selection.source == .web)
-        for (provider, source) in [
-            (nil, "web"),
-            ("unknown", "auto"),
-            ("claude", nil),
-            ("claude", "unknown"),
-            ("commandcode", "cli"),
-        ] {
-            #expect(throws: CLIArgumentError.self) {
-                _ = try CodexBarCLI.configSourceSelection(provider: provider, source: source)
-            }
-        }
-    }
-
-    @Test
     func `set source follows descriptors for every provider alias and mode`() throws {
         for (alias, provider) in ProviderDescriptorRegistry.cliNameMap {
             let supported = ProviderDescriptorRegistry.descriptor(for: provider).fetchPlan.sourceModes
@@ -73,62 +55,6 @@ struct CLIConfigSourceCommandTests {
         #expect(CodexBarCLI._decodeFormatForTesting(from: values) == .json)
         #expect(values.flags.contains("pretty"))
         #expect(CodexBarCLI.configHelp(version: "fixture").contains("config set-source"))
-    }
-
-    @Test
-    func `real CLI persists source and aliases emits safe JSON and clears overrides`() async throws {
-        let root = FileManager.default.temporaryDirectory.appendingPathComponent("config-source-\(UUID())")
-        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: root) }
-        let url = root.appendingPathComponent("config.json")
-        let store = CodexBarConfigStore(fileURL: url)
-        let opaque = #"{ "id":"future-provider", "opaque":[1e400,-0,"\u0061"], "token":"fixture-opaque-token" }"#
-        let raw = #"{"version":1,"providers":["# +
-            #"{"id":"claude","enabled":false,"source":"web","apiKey":" fixture-api-key ","# +
-            #""secretKey":"fixture-secret-key","cookieHeader":"fixture-secret-cookie","futureField":{"keep":true},"# +
-            #""tokenAccounts":{"version":1,"activeIndex":0,"accounts":["# +
-            #"{"id":"00000000-0000-0000-0000-000000000001","label":"fixture","# +
-            #""token":"fixture-account-token","addedAt":1000}]}},"# +
-            #"{"id":"commandcode","enabled":false},"# + opaque + "]}"
-        try Data(raw.utf8).write(to: url)
-        let original = try #require(try store.load())
-        let output = try await Self.run(root: root, arguments: ["--provider", "claude", "--source", "cli", "--json"])
-        let json = try #require(JSONSerialization.jsonObject(with: Data(output.utf8)) as? [String: Any])
-        #expect(json["provider"] as? String == "claude")
-        #expect(json["source"] as? String == "cli")
-        #expect(json["enabled"] as? Bool == false)
-        #expect(json["configPath"] as? String == url.path)
-        #expect(Set(json.keys) == ["provider", "displayName", "enabled", "source", "configPath"])
-        #expect(!output.contains("fixture-"))
-        #expect(try store.load()?.providerConfig(for: .claude)?.source == .cli)
-        let saved = try #require(try store.load())
-        let savedEntry = try #require(saved.providerConfig(for: .claude))
-        #expect(savedEntry.apiKey == " fixture-api-key ")
-        #expect(savedEntry.secretKey == "fixture-secret-key")
-        #expect(savedEntry.tokenAccounts?.accounts.first?.token == "fixture-account-token")
-        #expect(savedEntry.cookieHeader == "fixture-secret-cookie")
-        #expect(try Data(contentsOf: url).range(of: Data(opaque.utf8)) != nil)
-        var reset = saved
-        var entry = savedEntry
-        entry.source = .web
-        reset.setProviderConfig(entry)
-        #expect(try reset.encodedData() == original.encodedData())
-        let resetOutput = try await Self.run(
-            root: root,
-            arguments: ["--provider", "claude", "--source", "auto", "--pretty", "--json"])
-        let resetJSON = try #require(JSONSerialization.jsonObject(with: Data(resetOutput.utf8)) as? [String: Any])
-        #expect(resetJSON["source"] as? String == "auto")
-        #expect(try store.load()?.providerConfig(for: .claude)?.source == nil)
-        #expect(try store.load()?.providerConfig(for: .claude)?.cookieHeader == "fixture-secret-cookie")
-        #expect(try store.load()?.providerConfig(for: .claude)?.enabled == false)
-        #expect(try Data(contentsOf: url).range(of: Data(opaque.utf8)) != nil)
-        let aliasOutput = try await Self.run(
-            root: root,
-            arguments: ["--provider", "COMMAND-CODE", "--source", "WEB", "--format", "json"])
-        let aliasJSON = try #require(JSONSerialization.jsonObject(with: Data(aliasOutput.utf8)) as? [String: Any])
-        #expect(aliasJSON["provider"] as? String == "commandcode")
-        #expect(try store.load()?.providerConfig(for: .commandcode)?.source == .web)
-        #expect(try store.load()?.providerConfig(for: .commandcode)?.enabled == false)
     }
 
     @Test(arguments: ["missing", "malformed", "valid"])

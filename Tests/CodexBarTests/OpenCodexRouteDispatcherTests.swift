@@ -6,10 +6,7 @@ struct OpenCodexRouteDispatcherTests {
     @Test(arguments: [
         ("openai", OpenCodexRouteTarget.subscription(.codex)),
         ("opencode-go", OpenCodexRouteTarget.subscription(.opencodego)),
-        ("kimi-coding", OpenCodexRouteTarget.subscription(.kimi)),
         ("deepseek", OpenCodexRouteTarget.subscription(.deepseek)),
-        ("nous", OpenCodexRouteTarget.subscription(.nous)),
-        (" NOUS\n", OpenCodexRouteTarget.subscription(.nous)),
         ("opencode-free", OpenCodexRouteTarget.tokenOnly),
         ("unknown-vendor", OpenCodexRouteTarget.unknown),
     ])
@@ -46,11 +43,5 @@ struct OpenCodexRouteDispatcherTests {
             OpenCodexRouteDispatcher.route(
                 provider: "opencode-go",
                 modelName: "gpt-5.2") == .subscription(.opencodego))
-    }
-
-    @Test(arguments: ["anthropic/claude-sonnet-4.6", "deepseek/fixture-model", "openai/gpt-5.4"])
-    func `Nous billing identity wins over the model vendor namespace`(model: String) {
-        #expect(OpenCodexRouteDispatcher.route(provider: "nous", modelName: model) == .subscription(.nous))
-        #expect(OpenCodexRouteDispatcher.route(provider: "unknown-vendor", modelName: model) == .unknown)
     }
 }

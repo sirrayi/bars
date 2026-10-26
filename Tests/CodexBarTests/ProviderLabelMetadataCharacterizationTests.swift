@@ -24,19 +24,6 @@ struct ProviderLabelMetadataCharacterizationTests {
 
     // MARK: - Known empty weeklyLabel exceptions
 
-    @Test
-    func `weeklyLabel empty providers are explicitly characterized`() {
-        // Allowlist of providers known to have empty weeklyLabel on current main.
-        // If a new provider is added with empty weeklyLabel, this test fails and
-        // requires a deliberate decision to add it here — preventing silent regressions.
-        let knownEmptyWeeklyLabelProviders: Set<UsageProvider> = [.mistral]
-        for descriptor in ProviderDescriptorRegistry.all where descriptor.metadata.weeklyLabel.isEmpty {
-            #expect(
-                knownEmptyWeeklyLabelProviders.contains(descriptor.id),
-                "Provider \(descriptor.id.rawValue) has empty weeklyLabel and is not in the known exception list.")
-        }
-    }
-
     // MARK: - Invariant: supportsOpus implies opusLabel
 
     @Test

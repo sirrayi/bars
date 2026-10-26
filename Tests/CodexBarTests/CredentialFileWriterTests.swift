@@ -60,46 +60,6 @@ struct CredentialFileWriterTests {
         #expect(try FileManager.default.contentsOfDirectory(atPath: root.path) == ["auth.json"])
     }
 
-    @Test(arguments: ["config", "accounts", "antigravity", "live-auth", "cookie-cache"])
-    func `credential stores use private staging before publication`(kind: String) throws {
-        let root = CodexCredentialFixtures.root.appendingPathComponent(UUID().uuidString)
-        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-        let url = root.appendingPathComponent("auth.json")
-        let original = Data("original-synthetic".utf8)
-        try original.write(to: url)
-        #expect(throws: CancellationError.self) {
-            let inspectStaged: @Sendable (URL) throws -> Void = { staged in
-                #expect(try Self.mode(staged.deletingLastPathComponent()) == 0o700)
-                #expect(try Self.mode(staged) == 0o600)
-                #expect(try Data(contentsOf: url) == original)
-                throw CancellationError()
-            }
-            try CredentialFileWriter.$beforePublishForTesting.withValue(inspectStaged) {
-                switch kind {
-                case "config":
-                    try CodexBarConfigStore(fileURL: url).save(CodexBarConfig(providers: []))
-                case "accounts":
-                    try FileTokenAccountStore(fileURL: url).storeAccounts([:])
-                case "antigravity":
-                    try AntigravityOAuthCredentialsStore(fileURL: url).save(AntigravityOAuthCredentials(
-                        accessToken: "synthetic", refreshToken: "synthetic", expiryDate: nil))
-                case "live-auth":
-                    try DefaultCodexLiveAuthSwapper().swapLiveAuthData(Data("synthetic".utf8), liveHomeURL: root)
-                default:
-                    CookieHeaderCache.store(
-                        .init(cookieHeader: "session=synthetic", storedAt: Date(), sourceLabel: "fixture"),
-                        to: url)
-                    // The legacy cache deliberately swallows persistence failures.
-                    #expect(try Data(contentsOf: url) == original)
-                    throw CancellationError()
-                }
-            }
-        }
-        #expect(try Data(contentsOf: url) == original)
-        let expectedFiles = kind == "config" ? ["auth.json", "auth.json.lock"] : ["auth.json"]
-        #expect(try FileManager.default.contentsOfDirectory(atPath: root.path).sorted() == expectedFiles)
-    }
-
     private static func mode(_ url: URL) throws -> Int {
         let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
         return try #require(attributes[.posixPermissions] as? NSNumber).intValue & 0o777

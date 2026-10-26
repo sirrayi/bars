@@ -676,6 +676,18 @@ struct CodexManagedOpenAIWebRefreshTests {
         try data.write(to: homeURL.appendingPathComponent("auth.json"))
     }
 
+    private static func codexSnapshot(email: String, usedPercent: Double) -> UsageSnapshot {
+        UsageSnapshot(
+            primary: RateWindow(usedPercent: usedPercent, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
+            secondary: nil,
+            updatedAt: Date(),
+            identity: ProviderIdentitySnapshot(
+                providerID: .codex,
+                accountEmail: email,
+                accountOrganization: nil,
+                loginMethod: "Pro"))
+    }
+
     private static func fakeJWT(email: String, plan: String, accountId: String? = nil) -> String {
         let header = (try? JSONSerialization.data(withJSONObject: ["alg": "none"])) ?? Data()
         var authClaims: [String: Any] = [
@@ -698,18 +710,6 @@ struct CodexManagedOpenAIWebRefreshTests {
         }
 
         return "\(base64URL(header)).\(base64URL(payload))."
-    }
-
-    private static func codexSnapshot(email: String, usedPercent: Double) -> UsageSnapshot {
-        UsageSnapshot(
-            primary: RateWindow(usedPercent: usedPercent, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
-            secondary: nil,
-            updatedAt: Date(),
-            identity: ProviderIdentitySnapshot(
-                providerID: .codex,
-                accountEmail: email,
-                accountOrganization: nil,
-                loginMethod: "Pro"))
     }
 }
 

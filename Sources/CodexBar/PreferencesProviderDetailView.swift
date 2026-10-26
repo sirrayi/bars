@@ -424,14 +424,6 @@ struct ProviderDetailInfoRows: View {
             ProviderDetailInfoRow(label: L("Account"), value: self.model.email)
         }
 
-        // Provider-specific by design: Kiro reports an auth method as a separate identity field, not a plan.
-        if self.provider == .kiro,
-           let authMethod = self.store.snapshot(for: self.provider.instanceID)?.loginMethod(for: .kiro),
-           !authMethod.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        {
-            ProviderDetailInfoRow(label: L("Auth"), value: authMethod)
-        }
-
         if self.showsAccountInfo, let planRow = ProviderDetailView<EmptyView>.planRow(
             provider: self.provider,
             planText: self.model.planText)

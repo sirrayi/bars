@@ -138,22 +138,6 @@ struct CostHistoryChartMenuViewTests {
     }
 
     @Test
-    func `Mistral UTC day keys map to the same local day as spend activity`() throws {
-        let losAngeles = try #require(TimeZone(identifier: "America/Los_Angeles"))
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = losAngeles
-        let date = try #require(CostHistoryChartMenuView._dateFromDayKeyForTesting(
-            "2026-08-14",
-            provider: .mistral,
-            calendar: calendar))
-
-        #expect(calendar.dateComponents([.year, .month, .day], from: date) == DateComponents(
-            year: 2026,
-            month: 8,
-            day: 13))
-    }
-
-    @Test
     func `incomplete-only Claude usage remains selectable and labeled`() throws {
         let day = try #require(Calendar.current.date(from: DateComponents(year: 2026, month: 8, day: 12, hour: 12)))
         let entry = CostUsageDailyReport.Entry(
@@ -284,45 +268,6 @@ struct CostHistoryChartMenuViewTests {
         #expect(CostHistoryChartMenuView.detailRowsNeedScrolling(itemCount: ordered.count))
         #expect(CostHistoryChartMenuView.detailOverflowHint(itemCount: ordered.count) == "Scroll to see more models")
         #expect(CostHistoryChartMenuView.detailOverflowHint(itemCount: 4) == nil)
-    }
-
-    @Test(arguments: [UsageProvider.grok, .codex, .claude])
-    func `token history shows observed names without inventing model totals`(provider: UsageProvider) {
-        func entry(_ names: [String], breakdown: [CostUsageDailyReport.ModelBreakdown]? = nil)
-            -> CostUsageDailyReport.Entry
-        {
-            .init(
-                date: "2026-06-07",
-                inputTokens: nil,
-                outputTokens: nil,
-                totalTokens: 150,
-                costUSD: nil,
-                modelsUsed: names,
-                modelBreakdowns: breakdown)
-        }
-        let names = ["fictional-model-a", "fictional-model-b", " fictional-model-a ", " "]
-        let daily = entry(names)
-        let rows = CostHistoryChartMenuView._detailRowsForTesting(
-            provider: provider, daily: [daily], selectedDateKey: daily.date)
-        #expect(Set(rows.map(\.title)) == ["fictional-model-a", "fictional-model-b"])
-        #expect(rows.count == 2)
-        #expect(rows.allSatisfy { $0.subtitle == nil })
-        #expect(CostHistoryChartMenuView._detailViewportConfigurationForTesting(
-            provider: provider, daily: [daily]).rowCount == 2)
-        let before = CostHistoryChartMenuView.renderFingerprint(
-            from: Self.makeSnapshot(daily: [daily]),
-            provider: provider)
-        let after = CostHistoryChartMenuView.renderFingerprint(
-            from: Self.makeSnapshot(daily: [entry(["fictional-model-c"])]), provider: provider)
-        #expect(before != after)
-        let emptyBreakdown = entry(names, breakdown: [])
-        #expect(CostHistoryChartMenuView._detailRowsForTesting(
-            provider: provider, daily: [emptyBreakdown], selectedDateKey: daily.date).count == 2)
-        let measured = entry(names, breakdown: [.init(modelName: "measured-model", costUSD: nil, totalTokens: 150)])
-        let measuredRows = CostHistoryChartMenuView._detailRowsForTesting(
-            provider: provider, daily: [measured], selectedDateKey: daily.date)
-        #expect(measuredRows.map(\.title) == ["measured-model"])
-        #expect(measuredRows.first?.subtitle?.contains("150") == true)
     }
 
     @Test

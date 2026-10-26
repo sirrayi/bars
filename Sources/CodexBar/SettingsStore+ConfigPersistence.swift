@@ -224,48 +224,6 @@ extension SettingsStore {
         return trimmed.isEmpty ? nil : trimmed
     }
 
-    func savePluginSettings(
-        provider: UsageProvider,
-        values: [String: String],
-        isCurrent: () -> Bool) async -> ProviderSettingsSaveOutcome
-    {
-        // Drain any detached save before committing the discovery, then recheck its ownership.
-        while !Task.isCancelled, let pending = self.configPersistTask {
-            await pending.value
-            if self.configPersistTask == pending { break }
-        }
-        guard !Task.isCancelled, !self.configLoading, !self.configNeedsReload, isCurrent() else { return .stale }
-        var config: CodexBarConfig
-        do {
-            config = try self.configPersistenceCoordinator.load(self.configStore) ?? self.config
-        } catch {
-            self.configNeedsReload = true
-            return .failed
-        }
-        do {
-            let original = self.config
-                .providerConfig(for: provider.instanceID) ?? ProviderConfig(id: provider.instanceID)
-            guard ProviderPluginResultPolicy.matches(
-                config.providerConfig(for: provider.instanceID) ?? ProviderConfig(id: provider.instanceID), original)
-            else { return .stale }
-            let updated = try ProviderDescriptorRegistry.descriptor(for: provider).pluginResultPolicy
-                .applying(values, to: original)
-            guard !ProviderPluginResultPolicy.matches(updated, original) else { return .unchanged }
-            config.setProviderConfig(updated)
-            try Self.writeConfig(
-                config,
-                to: self.configStore,
-                watcher: self.configFileWatcher,
-                permit: self.configPersistenceCoordinator.makeWritePermit())
-            self.config = config.normalized()
-            self.updateProviderState(config: self.config)
-            self.bumpConfigRevision(reason: "plugin-settings", affectsBackgroundWork: false)
-            return .saved
-        } catch {
-            return .failed
-        }
-    }
-
     func schedulePersistConfig() {
         // Defaults or stale settings must not replace a repaired file before its reload arrives.
         guard !self.configLoading, !self.configNeedsReload else { return }

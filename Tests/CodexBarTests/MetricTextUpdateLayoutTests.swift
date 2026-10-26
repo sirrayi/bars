@@ -68,39 +68,6 @@ struct MetricTextUpdateLayoutTests {
         try Self.export(reopened, name: "pace-overflow-reopened")
     }
 
-    private static func model(kind: TextKind, text: String) -> UsageMenuCardView.Model {
-        UsageMenuCardView.Model(
-            provider: .kimi,
-            providerName: "Kimi Code",
-            email: "synthetic@example.test",
-            subtitleText: "Updated just now",
-            subtitleStyle: .info,
-            planText: nil,
-            metrics: [.init(
-                id: "primary",
-                title: "7-day usage",
-                percent: 68,
-                percentStyle: .left,
-                resetText: "Resets in 3d 2h",
-                detailText: kind == .detail ? text : nil,
-                detailLeftText: kind == .pace ? text : nil,
-                detailRightText: nil,
-                pacePercent: 36,
-                detailIsPaceDerived: kind == .pace,
-                paceOnTop: false)],
-            usageNotes: [],
-            openAIAPIUsage: nil,
-            inlineUsageDashboard: nil,
-            creditsText: nil,
-            creditsRemaining: nil,
-            creditsHintText: nil,
-            creditsHintCopyText: nil,
-            providerCost: nil,
-            tokenUsage: nil,
-            placeholder: nil,
-            progressColor: .blue)
-    }
-
     private static func render(
         model: UsageMenuCardView.Model,
         layoutModel: UsageMenuCardView.Model) throws -> RenderedSection
@@ -154,5 +121,37 @@ struct MetricTextUpdateLayoutTests {
         let directory = URL(fileURLWithPath: NSString(string: path).expandingTildeInPath, isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         try rendered.png.write(to: directory.appendingPathComponent("\(name).png"), options: .atomic)
+    }
+
+    private static func model(kind: TextKind, text: String) -> UsageMenuCardView.Model {
+        UsageMenuCardView.Model(
+            provider: .deepseek,
+            providerName: "DeepSeek",
+            email: "synthetic@example.test",
+            subtitleText: "Updated just now",
+            subtitleStyle: .info,
+            planText: nil,
+            metrics: [.init(
+                id: "primary",
+                title: "7-day usage",
+                percent: 68,
+                percentStyle: .left,
+                resetText: "Resets in 3d 2h",
+                detailText: kind == .detail ? text : nil,
+                detailLeftText: kind == .pace ? text : nil,
+                detailRightText: nil,
+                pacePercent: 36,
+                detailIsPaceDerived: kind == .pace,
+                paceOnTop: false)],
+            usageNotes: [],
+            inlineUsageDashboard: nil,
+            creditsText: nil,
+            creditsRemaining: nil,
+            creditsHintText: nil,
+            creditsHintCopyText: nil,
+            providerCost: nil,
+            tokenUsage: nil,
+            placeholder: nil,
+            progressColor: .blue)
     }
 }

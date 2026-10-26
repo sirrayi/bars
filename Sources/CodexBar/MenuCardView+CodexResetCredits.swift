@@ -42,17 +42,6 @@ struct LimitResetCreditsPresentation: Equatable {
             now: now)
     }
 
-    static func make(
-        snapshot: GrokRateLimitResetCreditsSnapshot,
-        resetStyle: ResetTimeDisplayStyle,
-        now: Date) -> LimitResetCreditsPresentation?
-    {
-        self.make(
-            expirations: snapshot.availableExpirations(at: now).map(Optional.some),
-            resetStyle: resetStyle,
-            now: now)
-    }
-
     private static func availableText(count: Int) -> String {
         count == 1 ? L("1 available") : String(format: L("%d available"), count)
     }
@@ -143,13 +132,6 @@ extension UsageMenuCardView.Model {
         switch input.provider {
         case .codex:
             guard let resetCredits = input.snapshot?.codexResetCredits else { return nil }
-            return LimitResetCreditsPresentation.make(
-                snapshot: resetCredits,
-                resetStyle: input.resetTimeDisplayStyle,
-                now: input.now)
-        case .grok:
-            guard input.showOptionalCreditsAndExtraUsage else { return nil }
-            guard let resetCredits = input.snapshot?.grokResetCredits else { return nil }
             return LimitResetCreditsPresentation.make(
                 snapshot: resetCredits,
                 resetStyle: input.resetTimeDisplayStyle,

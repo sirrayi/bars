@@ -107,8 +107,8 @@ struct SpendTrendScopeTests {
         let end = try Self.day(endDay, month: endMonth, calendar: calendar)
         let sources: [(String, UsageProvider, Double?, String)] = [
             ("native", .codex, 9, "Codex · #2"), ("opencodex", .codex, 5, "Codex"),
-            ("cursor", .cursor, 3, "Cursor"), ("idle", .claude, 0, "Claude"),
-            ("unknown", .antigravity, nil, "Antigravity"), ("unused-account", .codex, 0, "Codex · #1"),
+            ("deepseek", .deepseek, 3, "DeepSeek"), ("idle", .claude, 0, "Claude"),
+            ("unknown", .opencode, nil, "OpenCode"), ("unused-account", .codex, 0, "Codex · #1"),
         ]
         let providers = sources.enumerated().map { rank, source in
             SpendDashboardModel.ProviderRow(
@@ -122,8 +122,8 @@ struct SpendTrendScopeTests {
                 sourceKind: source.0 == "opencodex" ? .openCodex : .native)
         }
         let amounts: [(Int, String, UsageProvider, Double)] = [
-            (1, "native", .codex, 2), (1, "cursor", .cursor, 1), (2, "native", .codex, 3),
-            (7, "native", .codex, 4), (7, "opencodex", .codex, 5), (7, "cursor", .cursor, 2),
+            (1, "native", .codex, 2), (1, "deepseek", .deepseek, 1), (2, "native", .codex, 3),
+            (7, "native", .codex, 4), (7, "opencodex", .codex, 5), (7, "deepseek", .deepseek, 2),
             (2, "idle", .claude, 0),
         ]
         let daily = try amounts.map { day, id, provider, cost in
@@ -137,7 +137,7 @@ struct SpendTrendScopeTests {
                 stackEnd: cost)
         }
         let hours: [(Int, String, UsageProvider, Double)] = [
-            (30, "native", .codex, 10), (1, "native", .codex, 2), (1, "cursor", .cursor, 1),
+            (30, "native", .codex, 10), (1, "native", .codex, 2), (1, "deepseek", .deepseek, 1),
             (7, "native", .codex, 4), (7, "opencodex", .codex, 5), (7, "idle", .claude, 0),
         ]
         let hourly = try hours.map { day, id, provider, cost in

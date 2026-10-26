@@ -206,27 +206,6 @@ struct CostUsageClaudeReportContextTests {
             CostUsageScanner.ClaudeScanWorkMetrics())
     }
 
-    @Test
-    func `dashboard Vertex reads preserve the default provider filter`() throws {
-        let fixture = try Fixture()
-        defer { fixture.env.cleanup() }
-        _ = try fixture.write(path: "anthropic.jsonl", day: fixture.now, id: "ordinary", input: 10)
-        let vertex = try fixture.event(day: fixture.now, id: "vertex", input: 20)
-            .replacingOccurrences(of: "request-vertex", with: "req_vrtx_fixture")
-        _ = try fixture.env.writeClaudeProjectFile(relativePath: "vertex.jsonl", contents: vertex)
-        for context in [CostUsageReportContext.regular, .spendDashboard] {
-            let report = try CostUsageScanner.loadDailyReportCancellable(
-                provider: .vertexai,
-                since: fixture.now,
-                until: fixture.now,
-                now: fixture.now,
-                options: fixture.options,
-                reportContext: context,
-                checkCancellation: nil)
-            #expect(report.summary?.totalInputTokens == 20)
-        }
-    }
-
     @Test(.enabled(if: getuid() != 0, "root ignores directory permissions"), arguments: [false, true])
     func `unreadable source inventory fails without replacing the cache or report memo`(lockRoot: Bool) throws {
         var fixture = try Fixture()

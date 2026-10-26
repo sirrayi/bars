@@ -16,34 +16,6 @@ struct ProvidersPaneCoverageTests {
     }
 
     @Test
-    func `claude token account descriptor shows organization field`() throws {
-        let settings = Self.makeSettingsStore(suite: "ProvidersPaneCoverageTests-claude-org-field")
-        let store = Self.makeUsageStore(settings: settings)
-        let pane = ProvidersPane(settings: settings, store: store)
-
-        let claudeDescriptor = try #require(pane._test_tokenAccountDescriptor(for: .claude))
-        #expect(claudeDescriptor.showsOrganizationField)
-
-        let copilotDescriptor = try #require(pane._test_tokenAccountDescriptor(for: .copilot))
-        #expect(!copilotDescriptor.showsOrganizationField)
-    }
-
-    @Test
-    func `zai token account descriptor shows team mode controls only for zai`() throws {
-        let settings = Self.makeSettingsStore(suite: "ProvidersPaneCoverageTests-zai-team-controls")
-        let store = Self.makeUsageStore(settings: settings)
-        let pane = ProvidersPane(settings: settings, store: store)
-
-        let zaiDescriptor = try #require(pane._test_tokenAccountDescriptor(for: .zai))
-        #expect(zaiDescriptor.showsTeamModeControls)
-        #expect(!zaiDescriptor.showsOrganizationField)
-
-        let claudeDescriptor = try #require(pane._test_tokenAccountDescriptor(for: .claude))
-        #expect(!claudeDescriptor.showsTeamModeControls)
-        #expect(claudeDescriptor.showsOrganizationField)
-    }
-
-    @Test
     func `zai team account add button requires organization and project`() {
         #expect(ProviderSettingsTokenAccountsRowView.isAddDisabled(
             label: "Team",
@@ -105,30 +77,6 @@ struct ProvidersPaneCoverageTests {
     }
 
     @Test
-    func `provider search filters display names and raw ids`() {
-        let providers: [UsageProvider] = [.codex, .claude, .openrouter, .deepseek]
-        let names: [UsageProvider: String] = [
-            .codex: "Codex",
-            .claude: "Claude",
-            .openrouter: "OpenRouter",
-            .deepseek: "DeepSeek",
-        ]
-
-        #expect(
-            ProvidersPane.filteredProviders(providers, query: "  ", displayName: { names[$0] ?? $0.rawValue })
-                == providers)
-        #expect(
-            ProvidersPane.filteredProviders(providers, query: "router", displayName: { names[$0] ?? $0.rawValue })
-                == [.openrouter])
-        #expect(
-            ProvidersPane.filteredProviders(providers, query: "CLA", displayName: { names[$0] ?? $0.rawValue })
-                == [.claude])
-        #expect(
-            ProvidersPane.filteredProviders(providers, query: "deepseek", displayName: { _ in "API" })
-                == [.deepseek])
-    }
-
-    @Test
     func `provider reordering is inert while alphabetical sorting is enabled`() {
         let settings = Self.makeSettingsStore(suite: "ProvidersPaneCoverageTests-sorted-reorder")
         let store = Self.makeUsageStore(settings: settings)
@@ -151,35 +99,6 @@ struct ProvidersPaneCoverageTests {
         #expect(SettingsPane.about.title == L("tab_about"))
         #expect(!SettingsPane.provider(.codex).title.isEmpty)
         #expect(SettingsPane.provider(.codex) != SettingsPane.provider(.claude))
-    }
-
-    @Test
-    func `copilot menu card preview follows budget extras setting`() {
-        let settings = Self.makeSettingsStore(suite: "ProvidersPaneCoverageTests-copilot-budget-preview")
-        let store = Self.makeUsageStore(settings: settings)
-        let budgetTitle = "Budget - Copilot Agent Premium Requests"
-        store._setSnapshotForTesting(
-            UsageSnapshot(
-                primary: RateWindow(usedPercent: 20, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
-                secondary: RateWindow(usedPercent: 30, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
-                extraRateWindows: [
-                    NamedRateWindow(
-                        id: "copilot-budget-agent",
-                        title: budgetTitle,
-                        window: RateWindow(
-                            usedPercent: 65,
-                            windowMinutes: nil,
-                            resetsAt: nil,
-                            resetDescription: nil)),
-                ],
-                updatedAt: Date()),
-            provider: .copilot)
-        let pane = ProvidersPane(settings: settings, store: store)
-
-        #expect(!pane._test_menuCardModel(for: .copilot).metrics.map(\.title).contains(budgetTitle))
-
-        settings.copilotBudgetExtrasEnabled = true
-        #expect(pane._test_menuCardModel(for: .copilot).metrics.map(\.title).contains(budgetTitle))
     }
 
     @Test
@@ -271,39 +190,6 @@ struct ProvidersPaneCoverageTests {
         let hiddenModel = pane._test_menuCardModel(for: .codex)
         #expect(!hiddenModel.metrics.contains { $0.id == CodexAdditionalRateLimitMapper.sparkWindowID })
         #expect(hiddenModel.metrics.contains { $0.id == "codex-other-limit" })
-    }
-
-    @Test
-    func `provider detail plan row formats open router as balance`() {
-        Self.withEnglishLocalization {
-            let row = ProviderDetailView<EmptyView>.planRow(provider: .openrouter, planText: "Balance: $4.61")
-
-            #expect(row?.label == "Balance")
-            #expect(row?.value == "$4.61")
-        }
-    }
-
-    @Test
-    func `provider detail plan row formats moonshot as balance`() {
-        Self.withEnglishLocalization {
-            let row = ProviderDetailView<EmptyView>.planRow(provider: .moonshot, planText: "Balance: $49.58")
-
-            #expect(row?.label == "Balance")
-            #expect(row?.value == "$49.58")
-        }
-    }
-
-    @Test(arguments: [
-        (nil as String?, nil as String?),
-        ("  ", nil),
-        (" Balance: $0.00 ", "$0.00"),
-        ("Balance:   ", "Balance:"),
-        ("Plan", "Plan"),
-    ])
-    func `provider balance prefix preserves empty and unprefixed values`(input: String?, expected: String?) {
-        Self.withEnglishLocalization {
-            #expect(ProviderDetailView<EmptyView>.planRow(provider: .openrouter, planText: input)?.value == expected)
-        }
     }
 
     @Test
@@ -437,19 +323,9 @@ struct ProvidersPaneCoverageTests {
         return SettingsStore(
             userDefaults: defaults,
             configStore: configStore,
-            zaiTokenStore: NoopZaiTokenStore(),
-            syntheticTokenStore: NoopSyntheticTokenStore(),
             codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
-            cursorCookieStore: InMemoryCookieHeaderStore(),
             opencodeCookieStore: InMemoryCookieHeaderStore(),
-            factoryCookieStore: InMemoryCookieHeaderStore(),
-            minimaxCookieStore: InMemoryMiniMaxCookieStore(),
-            minimaxAPITokenStore: InMemoryMiniMaxAPITokenStore(),
-            kimiTokenStore: InMemoryKimiTokenStore(),
-            augmentCookieStore: InMemoryCookieHeaderStore(),
-            ampCookieStore: InMemoryCookieHeaderStore(),
-            copilotTokenStore: InMemoryCopilotTokenStore(),
             tokenAccountStore: InMemoryTokenAccountStore())
     }
 

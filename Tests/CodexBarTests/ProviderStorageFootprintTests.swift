@@ -142,27 +142,6 @@ struct ProviderStorageFootprintTests {
     }
 
     @Test
-    func `cursor path catalog includes application data and caches`() {
-        let home = FileManager.default.homeDirectoryForCurrentUser
-        let paths = ProviderStoragePathCatalog.candidatePaths(for: .cursor, environment: [:])
-
-        #expect(paths == [
-            home.appendingPathComponent("Library/Application Support/Cursor", isDirectory: true).path,
-            home.appendingPathComponent(
-                "Library/Application Support/Caches/cursor-updater",
-                isDirectory: true).path,
-            home.appendingPathComponent(".cursor", isDirectory: true).path,
-            home.appendingPathComponent("Library/Caches/Cursor", isDirectory: true).path,
-            home.appendingPathComponent("Library/Caches/com.todesktop.230313mzl4w4u92", isDirectory: true).path,
-            home.appendingPathComponent("Library/Caches/com.todesktop.230313mzl4w4u92.ShipIt", isDirectory: true).path,
-            home.appendingPathComponent("Library/Caches/cursor-compile-cache", isDirectory: true).path,
-            home.appendingPathComponent(
-                "Library/HTTPStorages/com.todesktop.230313mzl4w4u92",
-                isDirectory: true).path,
-        ])
-    }
-
-    @Test
     func `claude recommendations use documented cleanup categories`() {
         let root = "/Users/test/.claude"
         let footprint = ProviderStorageFootprint(
@@ -223,22 +202,6 @@ struct ProviderStorageFootprintTests {
             "\(root)/shell_snapshots",
         ])
         #expect(recommendations.map(\.bytes) == [20, 15, 10, 12, 11, 9])
-    }
-
-    @Test
-    func `unknown provider storage returns no cleanup recommendations`() {
-        let footprint = ProviderStorageFootprint(
-            provider: .gemini,
-            totalBytes: 10,
-            paths: ["/Users/test/.gemini"],
-            missingPaths: [],
-            unreadablePaths: [],
-            components: [
-                .init(path: "/Users/test/.gemini/cache", totalBytes: 10),
-            ],
-            updatedAt: Date(timeIntervalSince1970: 0))
-
-        #expect(footprint.cleanupRecommendations.isEmpty)
     }
 
     @Test
@@ -358,9 +321,7 @@ struct ProviderStorageFootprintTests {
         defaults.removePersistentDomain(forName: suite)
         let settings = SettingsStore(
             userDefaults: defaults,
-            configStore: testConfigStore(suiteName: suite),
-            zaiTokenStore: NoopZaiTokenStore(),
-            syntheticTokenStore: NoopSyntheticTokenStore())
+            configStore: testConfigStore(suiteName: suite))
         if let codexMetadata = ProviderDefaults.metadata[.codex] {
             settings.setProviderEnabled(provider: .codex, metadata: codexMetadata, enabled: true)
         }
@@ -399,9 +360,7 @@ struct ProviderStorageFootprintTests {
         defaults.removePersistentDomain(forName: suite)
         let settings = SettingsStore(
             userDefaults: defaults,
-            configStore: testConfigStore(suiteName: suite),
-            zaiTokenStore: NoopZaiTokenStore(),
-            syntheticTokenStore: NoopSyntheticTokenStore())
+            configStore: testConfigStore(suiteName: suite))
         if let codexMetadata = ProviderDefaults.metadata[.codex] {
             settings.setProviderEnabled(provider: .codex, metadata: codexMetadata, enabled: true)
         }
@@ -447,9 +406,7 @@ struct ProviderStorageFootprintTests {
         defaults.removePersistentDomain(forName: suite)
         let settings = SettingsStore(
             userDefaults: defaults,
-            configStore: testConfigStore(suiteName: suite),
-            zaiTokenStore: NoopZaiTokenStore(),
-            syntheticTokenStore: NoopSyntheticTokenStore())
+            configStore: testConfigStore(suiteName: suite))
         if let codexMetadata = ProviderDefaults.metadata[.codex] {
             settings.setProviderEnabled(provider: .codex, metadata: codexMetadata, enabled: true)
         }
@@ -487,9 +444,7 @@ struct ProviderStorageFootprintTests {
         defaults.removePersistentDomain(forName: suite)
         let settings = SettingsStore(
             userDefaults: defaults,
-            configStore: testConfigStore(suiteName: suite),
-            zaiTokenStore: NoopZaiTokenStore(),
-            syntheticTokenStore: NoopSyntheticTokenStore())
+            configStore: testConfigStore(suiteName: suite))
         let store = UsageStore(
             fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
@@ -532,9 +487,7 @@ struct ProviderStorageFootprintTests {
         defaults.removePersistentDomain(forName: suite)
         let settings = SettingsStore(
             userDefaults: defaults,
-            configStore: testConfigStore(suiteName: suite),
-            zaiTokenStore: NoopZaiTokenStore(),
-            syntheticTokenStore: NoopSyntheticTokenStore())
+            configStore: testConfigStore(suiteName: suite))
         if let codexMetadata = ProviderDefaults.metadata[.codex] {
             settings.setProviderEnabled(provider: .codex, metadata: codexMetadata, enabled: true)
         }

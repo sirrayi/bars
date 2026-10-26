@@ -851,18 +851,4 @@ struct CodexOAuthTests {
         let url = CodexOAuthUsageFetcher._resolveUsageURLForTesting(configContents: config)
         #expect(url.absoluteString == "https://chatgpt.com/backend-api/wham/usage")
     }
-
-    @Test
-    func `resolves codex usage URL from config`() {
-        let config = "chatgpt_base_url = \"https://api.openai.com\"\n"
-        let url = CodexOAuthUsageFetcher._resolveUsageURLForTesting(configContents: config)
-        #expect(url.absoluteString == "https://api.openai.com/api/codex/usage")
-    }
-
-    @Test
-    func `normalizes chat GPT base URL without backend API`() {
-        let config = "chatgpt_base_url = \"https://chat.openai.com\"\n"
-        let url = CodexOAuthUsageFetcher._resolveUsageURLForTesting(configContents: config)
-        #expect(url.absoluteString == "https://chat.openai.com/backend-api/wham/usage")
-    }
 }

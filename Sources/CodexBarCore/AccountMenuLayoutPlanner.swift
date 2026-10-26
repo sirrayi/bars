@@ -190,8 +190,7 @@ public enum AccountMenuLayoutPlanner {
         if let primary = snapshot.primary, !primary.isSyntheticPlaceholder {
             windows.append(WindowDetail(
                 metricID: "primary",
-                label: (account.provider == .cursor ? CursorProviderDescriptor.primaryLabel(snapshot: snapshot) : nil)
-                    ?? metadata?.sessionLabel ?? "Session",
+                label: metadata?.sessionLabel ?? "Session",
                 window: primary,
                 resetPresentation: self.primaryResetPresentation(for: account, window: primary)))
         }

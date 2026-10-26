@@ -99,7 +99,6 @@ printf '%s' "$Z_AI_API_KEY" | codexbar config set-api-key --provider zai --stdin
   --workspace-id proj_...
 ```
 
-Use single-line BigModel organization/project IDs; see [z.ai](zai.md).
 
 Only providers that consume config-backed API keys accept this command. Admin API providers may require a key with
 organization/usage permissions, not a normal inference key. The `xai` provider reads xAI developer-platform billing

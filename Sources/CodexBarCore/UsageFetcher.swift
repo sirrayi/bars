@@ -185,21 +185,14 @@ public struct UsageSnapshot: Codable, Sendable {
     public let browserSessionOwner: ProviderBrowserSessionOwner?
     public let opencodegoUsage: OpenCodeGoUsageSnapshot?
     public let throughput: ProviderThroughputSnapshot?
-    public let openAIAPIUsage: OpenAIAPIUsageSnapshot?
     public let codexResetCredits: CodexRateLimitResetCreditsSnapshot?
     /// Live-only display inventory. Grok redemption token identifiers are intentionally excluded.
-    public let grokResetCredits: GrokRateLimitResetCreditsSnapshot?
     /// Live-only display inventory. Claude grant identifiers are never decoded.
     public let claudeResetCredits: ClaudeRateLimitResetCreditsSnapshot?
-    public let mistralUsage: MistralUsageSnapshot?
     /// Retains an observed zero when a metered Copilot seat has no visible credit row.
-    public let copilotMeteredZeroCredits: Bool
     /// Live-only marker for optional Command Code subscription lookup failure.
-    public let commandCodeSubscriptionEnrichmentUnavailable: Bool
     /// Live-only marker that Command Code returned a recognized subscription plan.
-    public let commandCodeHasSubscriptionPlan: Bool
     /// Live-only marker that Command Code's monthly grant has no remaining credits.
-    public let commandCodeMonthlyGrantDepleted: Bool
     public let subscriptionExpiresAt: Date?
     public let subscriptionRenewsAt: Date?
     public let subscriptionRenewsAtIsDateOnly: Bool
@@ -216,10 +209,7 @@ public struct UsageSnapshot: Codable, Sendable {
         case providerCost
         case details
         case throughput
-        case openAIAPIUsage
         case codexResetCredits
-        case mistralUsage
-        case copilotMeteredZeroCredits
         case subscriptionExpiresAt
         case subscriptionRenewsAt
         case subscriptionRenewsAtIsDateOnly
@@ -246,15 +236,8 @@ public struct UsageSnapshot: Codable, Sendable {
         browserSessionOwner: ProviderBrowserSessionOwner? = nil,
         opencodegoUsage: OpenCodeGoUsageSnapshot? = nil,
         throughput: ProviderThroughputSnapshot? = nil,
-        openAIAPIUsage: OpenAIAPIUsageSnapshot? = nil,
         codexResetCredits: CodexRateLimitResetCreditsSnapshot? = nil,
-        grokResetCredits: GrokRateLimitResetCreditsSnapshot? = nil,
         claudeResetCredits: ClaudeRateLimitResetCreditsSnapshot? = nil,
-        mistralUsage: MistralUsageSnapshot? = nil,
-        copilotMeteredZeroCredits: Bool = false,
-        commandCodeSubscriptionEnrichmentUnavailable: Bool = false,
-        commandCodeHasSubscriptionPlan: Bool = false,
-        commandCodeMonthlyGrantDepleted: Bool = false,
         subscriptionExpiresAt: Date? = nil,
         subscriptionRenewsAt: Date? = nil,
         subscriptionRenewsAtIsDateOnly: Bool = false,
@@ -279,15 +262,8 @@ public struct UsageSnapshot: Codable, Sendable {
         self.browserSessionOwner = browserSessionOwner
         self.opencodegoUsage = opencodegoUsage
         self.throughput = throughput
-        self.openAIAPIUsage = openAIAPIUsage
         self.codexResetCredits = codexResetCredits
-        self.grokResetCredits = grokResetCredits
         self.claudeResetCredits = claudeResetCredits
-        self.mistralUsage = mistralUsage
-        self.copilotMeteredZeroCredits = copilotMeteredZeroCredits
-        self.commandCodeSubscriptionEnrichmentUnavailable = commandCodeSubscriptionEnrichmentUnavailable
-        self.commandCodeHasSubscriptionPlan = commandCodeHasSubscriptionPlan
-        self.commandCodeMonthlyGrantDepleted = commandCodeMonthlyGrantDepleted
         self.subscriptionExpiresAt = subscriptionExpiresAt
         self.subscriptionRenewsAt = subscriptionRenewsAt
         self.subscriptionRenewsAtIsDateOnly = subscriptionRenewsAtIsDateOnly
@@ -307,22 +283,6 @@ public struct UsageSnapshot: Codable, Sendable {
 
     public func withCodexResetCredits(_ resetCredits: CodexRateLimitResetCreditsSnapshot?) -> UsageSnapshot {
         self.replacing(codexResetCredits: .value(resetCredits))
-    }
-
-    public func withGrokResetCredits(_ resetCredits: GrokRateLimitResetCreditsSnapshot?) -> UsageSnapshot {
-        self.replacing(
-            details: .value(Self.removingLiveResetCreditDetails(from: self.details)),
-            grokResetCredits: .value(resetCredits))
-    }
-
-    private static func removingLiveResetCreditDetails(
-        from details: [ProviderDetailSection]) -> [ProviderDetailSection]
-    {
-        details.compactMap { section -> ProviderDetailSection? in
-            let rows = section.rows.filter { $0.label != GrokRateLimitResetCreditsSnapshot.detailLabel }
-            guard !rows.isEmpty || section.chart != nil else { return nil }
-            return .makeSection(title: section.title, rows: rows, chart: section.chart)
-        }
     }
 
     public func withSubscriptionMetadata(
@@ -380,7 +340,7 @@ public struct UsageSnapshot: Codable, Sendable {
         let details = try container.decodeIfPresent([ProviderDetailSection].self, forKey: .details) ?? []
         try ProviderDetailSection.validateSections(details)
         // Provider-specific by design: native Grok and Claude reset-credit rows are live-only inventory.
-        self.details = decodedIdentity?.providerID == .grok || decodedIdentity?.providerID == .claude
+        self.details = decodedIdentity?.providerID == .claude
             ? Self.removingLiveResetCreditDetails(from: details)
             : details
         self.deepseekDetailedUsageState = .notRequested // Live-only fetch state
@@ -389,18 +349,10 @@ public struct UsageSnapshot: Codable, Sendable {
         self.browserSessionOwner = nil // Live-only browser session ownership
         self.opencodegoUsage = nil // Not persisted, fetched fresh each time
         self.throughput = try container.decodeIfPresent(ProviderThroughputSnapshot.self, forKey: .throughput)
-        self.openAIAPIUsage = try container.decodeIfPresent(OpenAIAPIUsageSnapshot.self, forKey: .openAIAPIUsage)
         self.codexResetCredits = try container.decodeIfPresent(
             CodexRateLimitResetCreditsSnapshot.self,
             forKey: .codexResetCredits)
-        self.grokResetCredits = nil // Live-only inventory; refresh without persisting redemption state.
         self.claudeResetCredits = nil // Live-only inventory; a reset used on claude.ai must not reappear.
-        self.mistralUsage = try container.decodeIfPresent(MistralUsageSnapshot.self, forKey: .mistralUsage)
-        self.copilotMeteredZeroCredits = try container
-            .decodeIfPresent(Bool.self, forKey: .copilotMeteredZeroCredits) ?? false
-        self.commandCodeSubscriptionEnrichmentUnavailable = false // Live-only fetch state
-        self.commandCodeHasSubscriptionPlan = false // Live-only fetch state
-        self.commandCodeMonthlyGrantDepleted = false // Live-only fetch state
         self.subscriptionExpiresAt = try container.decodeIfPresent(Date.self, forKey: .subscriptionExpiresAt)
         self.subscriptionRenewsAt = try container.decodeIfPresent(Date.self, forKey: .subscriptionRenewsAt)
         self.subscriptionRenewsAtIsDateOnly = try container.decodeIfPresent(
@@ -430,13 +382,7 @@ public struct UsageSnapshot: Codable, Sendable {
             try container.encode(self.details, forKey: .details)
         }
         try container.encodeIfPresent(self.throughput, forKey: .throughput)
-        try container.encodeIfPresent(self.openAIAPIUsage, forKey: .openAIAPIUsage)
         try container.encodeIfPresent(self.codexResetCredits, forKey: .codexResetCredits)
-        try container.encodeIfPresent(self.mistralUsage, forKey: .mistralUsage)
-        if self.copilotMeteredZeroCredits {
-            try container.encode(true, forKey: .copilotMeteredZeroCredits)
-        }
-        try container.encodeIfPresent(self.subscriptionExpiresAt, forKey: .subscriptionExpiresAt)
         try container.encodeIfPresent(self.subscriptionRenewsAt, forKey: .subscriptionRenewsAt)
         if self.subscriptionRenewsAtIsDateOnly { try container.encode(true, forKey: .subscriptionRenewsAtIsDateOnly) }
         if self.subscriptionExpiresAtIsDateOnly { try container.encode(true, forKey: .subscriptionExpiresAtIsDateOnly) }
@@ -453,21 +399,6 @@ public struct UsageSnapshot: Codable, Sendable {
     public func identity(for instanceID: ProviderInstanceID) -> ProviderIdentitySnapshot? {
         guard let identity, identity.providerID == instanceID else { return nil }
         return identity
-    }
-
-    public func automaticPerplexityWindow() -> RateWindow? {
-        self.orderedPerplexityDisplayWindows().first
-    }
-
-    public func orderedPerplexityDisplayWindows() -> [RateWindow] {
-        let fallbackWindows = self.orderedPerplexityFallbackWindows()
-        guard let primary = self.primary else {
-            return fallbackWindows
-        }
-        if primary.remainingPercent > 0 || fallbackWindows.isEmpty {
-            return [primary] + fallbackWindows
-        }
-        return fallbackWindows + [primary]
     }
 
     public func accountEmail(for provider: UsageProvider) -> String? {
@@ -522,38 +453,26 @@ public struct UsageSnapshot: Codable, Sendable {
         return self.withIdentity(scopedIdentity)
     }
 
+    private static func removingLiveResetCreditDetails(
+        from details: [ProviderDetailSection]) -> [ProviderDetailSection]
+    {
+        details.compactMap { section -> ProviderDetailSection? in
+            let rows = section.rows.filter { $0.label != ClaudeRateLimitResetCreditsSnapshot.detailLabel }
+            guard !rows.isEmpty || section.chart != nil else { return nil }
+            return .makeSection(title: section.title, rows: rows, chart: section.chart)
+        }
+    }
+
     public func backfillingResetTimes(from cached: UsageSnapshot?, now: Date = .init()) -> UsageSnapshot {
         guard let cached else { return self }
         guard Self.identitiesMatch(self.identity, cached.identity) else { return self }
-        func eligibleCachedReset(_ candidate: RateWindow?, for current: RateWindow?) -> RateWindow? {
-            // Provider-specific by design: z.ai's five-hour Coding Plan must not regain an impossible reset.
-            guard self.identity?.providerID == .zai,
-                  current?.windowMinutes == 300, current?.resetDescription == "5-hour"
-            else { return candidate }
-            guard cached.identity?.providerID == self.identity?.providerID,
-                  candidate?.windowMinutes == 300, candidate?.resetDescription == "5-hour",
-                  let reset = candidate?.resetsAt,
-                  reset.timeIntervalSince1970.isFinite,
-                  reset.timeIntervalSince(now) <= 5 * 3600 + 60
-            else { return nil }
-            return candidate
-        }
-        // Amp's percentage-based daily quota supersedes the legacy rolling-replenishment cadence. Do not attach
-        // that older exact reset to the new daily window; other providers retain the shared backfill behavior.
-        // Provider-specific by design: Amp daily quotas must not inherit its obsolete rolling-reset cadence.
-        let cachedPrimary: RateWindow? = if self.identity?.providerID == .amp,
-                                            self.primary?.resetDescription == "resets daily"
-        {
-            nil
-        } else {
-            cached.primary
-        }
+        let cachedPrimary = cached.primary
         let primary = self.primary?.backfillingResetTime(
-            from: eligibleCachedReset(cachedPrimary, for: self.primary), now: now)
+            from: cachedPrimary, now: now)
         let secondary = self.secondary?.backfillingResetTime(
-            from: eligibleCachedReset(cached.secondary, for: self.secondary), now: now)
+            from: cached.secondary, now: now)
         let tertiary = self.tertiary?.backfillingResetTime(
-            from: eligibleCachedReset(cached.tertiary, for: self.tertiary), now: now)
+            from: cached.tertiary, now: now)
         if primary == self.primary, secondary == self.secondary, tertiary == self.tertiary {
             return self
         }
@@ -561,13 +480,6 @@ public struct UsageSnapshot: Codable, Sendable {
             primary: .value(primary),
             secondary: .value(secondary),
             tertiary: .value(tertiary))
-    }
-
-    private func orderedPerplexityFallbackWindows() -> [RateWindow] {
-        let fallbackWindows = [self.tertiary, self.secondary].compactMap(\.self)
-        let usableFallback = fallbackWindows.filter { $0.remainingPercent > 0 }
-        let exhaustedFallback = fallbackWindows.filter { $0.remainingPercent <= 0 }
-        return usableFallback + exhaustedFallback
     }
 
     private static func identitiesMatch(_ lhs: ProviderIdentitySnapshot?, _ rhs: ProviderIdentitySnapshot?) -> Bool {
@@ -612,7 +524,6 @@ public struct UsageSnapshot: Codable, Sendable {
         deepseekPlatformProfiles: Replacement<[DeepSeekPlatformProfile]> = .unchanged,
         browserSessionOwner: Replacement<ProviderBrowserSessionOwner?> = .unchanged,
         codexResetCredits: Replacement<CodexRateLimitResetCreditsSnapshot?> = .unchanged,
-        grokResetCredits: Replacement<GrokRateLimitResetCreditsSnapshot?> = .unchanged,
         subscriptionExpiresAt: Replacement<Date?> = .unchanged,
         subscriptionRenewsAt: Replacement<Date?> = .unchanged,
         subscriptionRenewsAtIsDateOnly: Replacement<Bool> = .unchanged,
@@ -634,15 +545,8 @@ public struct UsageSnapshot: Codable, Sendable {
             browserSessionOwner: browserSessionOwner.resolving(self.browserSessionOwner),
             opencodegoUsage: self.opencodegoUsage,
             throughput: self.throughput,
-            openAIAPIUsage: self.openAIAPIUsage,
             codexResetCredits: codexResetCredits.resolving(self.codexResetCredits),
-            grokResetCredits: grokResetCredits.resolving(self.grokResetCredits),
             claudeResetCredits: self.claudeResetCredits,
-            mistralUsage: self.mistralUsage,
-            copilotMeteredZeroCredits: self.copilotMeteredZeroCredits,
-            commandCodeSubscriptionEnrichmentUnavailable: self.commandCodeSubscriptionEnrichmentUnavailable,
-            commandCodeHasSubscriptionPlan: self.commandCodeHasSubscriptionPlan,
-            commandCodeMonthlyGrantDepleted: self.commandCodeMonthlyGrantDepleted,
             subscriptionExpiresAt: subscriptionExpiresAt.resolving(self.subscriptionExpiresAt),
             subscriptionRenewsAt: subscriptionRenewsAt.resolving(self.subscriptionRenewsAt),
             subscriptionRenewsAtIsDateOnly: subscriptionRenewsAtIsDateOnly
@@ -734,7 +638,7 @@ public enum UsageLimitsAvailability: Equatable, Sendable {
                 : .available
         }
 
-        guard provider == .codex || provider == .doubao || provider == .antigravity else { return .available }
+        guard provider == .codex else { return .available }
 
         if let snapshot {
             guard snapshot.identity(for: provider.instanceID) != nil else { return .available }

@@ -78,18 +78,4 @@ struct KeychainPromptCoordinatorTests {
             #expect(model.message.contains("your \(name) cookie header so it can fetch usage"))
         }
     }
-
-    @Test
-    func `muse alert preserves the requested keychain purpose`() {
-        let context = KeychainPromptContext(
-            kind: .museToken,
-            service: MuseCredentials.keychainService,
-            account: MuseCredentials.keychainAccount)
-
-        let model = KeychainPromptCoordinator.alertModel(for: context)
-
-        #expect(model.message.contains("Muse Code login token"))
-        #expect(model.message.contains("fetch your Muse Code subscription usage"))
-        #expect(model.learnMoreButtonTitle == "Learn More…")
-    }
 }

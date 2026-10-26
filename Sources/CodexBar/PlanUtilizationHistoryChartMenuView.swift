@@ -186,14 +186,11 @@ struct PlanUtilizationHistoryChartMenuView: View {
         snapshot: UsageSnapshot?) -> [VisibleSeries]
     {
         let metadata = ProviderDescriptorRegistry.metadata[provider]
-        // Provider-specific by design: Antigravity pool observations have no session/weekly cadence.
-        let usesObservations = provider == .antigravity && UsageStore.antigravityHistoryUsesObservations(
-            snapshot: snapshot, histories: histories)
-        let allowedNames = usesObservations ? nil : self.visibleSeriesNames(provider: provider, snapshot: snapshot)
+        let allowedNames = self.visibleSeriesNames(provider: provider, snapshot: snapshot)
         var historiesBySelection: [SeriesSelection: PlanUtilizationSeriesHistory] = [:]
         for history in histories {
             guard !history.entries.isEmpty else { continue }
-            guard history.hasSupportedCadence, history.name.isQuotaObservation == usesObservations else { continue }
+            guard history.hasSupportedCadence, !history.name.isQuotaObservation else { continue }
             let effectiveName = Self.effectiveSeriesName(provider: provider, history: history)
             guard allowedNames?.contains(effectiveName) ?? true else { continue }
 

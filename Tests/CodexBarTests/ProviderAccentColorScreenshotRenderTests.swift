@@ -20,33 +20,6 @@ final class ProviderAccentColorScreenshotRenderTests: XCTestCase {
     /// A deliberately unmistakable override, so a reviewer can tell at a glance that it took effect.
     private static let overrideHex = "#A56CC1"
 
-    func test_renderAccentColorSettingsScreenshots() throws {
-        guard let dir = ProcessInfo.processInfo.environment["CODEXBAR_ACCENT_SCREENSHOT_DIR"] else {
-            throw XCTSkip("Set CODEXBAR_ACCENT_SCREENSHOT_DIR to render accent color screenshots.")
-        }
-        let directory = URL(
-            fileURLWithPath: NSString(string: dir).expandingTildeInPath,
-            isDirectory: true)
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-
-        let provider = UsageProvider.antigravity
-        let defaultSettings = Self.settings(accentColor: nil, provider: provider)
-        let overriddenSettings = Self.settings(accentColor: Self.overrideHex, provider: provider)
-
-        let renders: [(String, AnyView)] = [
-            ("accent-color-row-default", AnyView(Self.settingsRow(provider: provider, settings: defaultSettings))),
-            ("accent-color-row-override", AnyView(Self.settingsRow(provider: provider, settings: overriddenSettings))),
-            ("accent-color-bars-before-after", AnyView(Self.barComparison(provider: provider))),
-        ]
-
-        for (name, view) in renders {
-            let data = try XCTUnwrap(Self.pngData(for: view), "render failed for \(name)")
-            let url = directory.appendingPathComponent("\(name).png")
-            try data.write(to: url, options: .atomic)
-            print("Wrote \(url.path)")
-        }
-    }
-
     private static func settings(accentColor: String?, provider: UsageProvider) -> SettingsStore {
         let config = CodexBarConfig(providers: [
             ProviderConfig(id: provider.instanceID, enabled: true, accentColor: accentColor),

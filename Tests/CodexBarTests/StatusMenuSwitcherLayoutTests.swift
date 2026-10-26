@@ -8,7 +8,7 @@ struct StatusMenuSwitcherLayoutTests {
     @Test
     func `overview switcher segment matches provider segment height when quota bars are present`() throws {
         let view = ProviderSwitcherView(
-            providers: [.claude, .grok, .cursor],
+            providers: [.claude, .deepseek, .devin],
             selected: .overview,
             includesOverview: true,
             width: 300,
@@ -90,8 +90,7 @@ struct StatusMenuSwitcherLayoutTests {
     func `long stacked provider title stays inside its row`() throws {
         let view = ProviderSwitcherView(
             providers: [
-                .codex, .claude, .cursor, .antigravity, .copilot, .warp, .perplexity,
-                .deepseek, .commandcode, .grok, .notion, .gemini, .devin,
+                .codex, .claude, .deepseek, .devin, .opencode, .opencodego, .pi,
             ],
             selected: .overview,
             includesOverview: true,

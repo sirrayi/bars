@@ -4,50 +4,6 @@ import Testing
 @testable import CodexBar
 
 struct OverviewSpendSummaryTests {
-    @Test(arguments: [30, 7], [false, true])
-    func `publication separates available history from unavailable subscription pricing`(
-        historyDays: Int, established: Bool) throws
-    {
-        let fixture = try CursorOverviewProofFixture.make(historyDays: historyDays, established: established)
-        #expect(fixture.model.groups.count == 1)
-        #expect(fixture.model.groups.first?.providers.map(\.provider) == [.cursor])
-        #expect(fixture.model.groups.first?.coveredDayCount == (established ? historyDays : 0))
-        #expect(fixture.counts.total == 2)
-        #expect(fixture.counts.cost == (established ? 1 : 0))
-        #expect(fixture.counts.tokens == (established ? 1 : 0))
-        #expect(fixture.summary.primarySpendText == (established ? "~$12.00" : "Spend unavailable"))
-        #expect(fixture.summary.tokenText == (established ? "~1K tokens" : nil))
-        #expect(fixture.summary.providerCoverageText == "\(established ? 1 : 0) of 2 subscriptions have spend")
-        #expect(fixture.summary.historyCoverageText == "Coverage: \(established ? historyDays : 0) / 30")
-        #expect(fixture.summary.isPartial == established)
-    }
-
-    @Test
-    func `summary marks incomplete provider coverage as partial`() {
-        let group = self.group(
-            providers: [
-                self.provider(.codex, tokens: 4_800_000, cost: 412.64),
-                self.provider(.claude, tokens: nil, cost: nil),
-                self.provider(.openrouter, tokens: 9_640_000, cost: 282.74),
-                self.provider(.cursor, tokens: 1_250_000, cost: 64.18),
-            ],
-            totalTokens: 15_690_000,
-            totalCost: 759.56,
-            coverage: CostUsageCoverageCounts(priced: 3, unpriced: 1))
-
-        let summary = OverviewSpendSummary(
-            model: SpendDashboardModel(requestedDays: 30, groups: [group]),
-            providerCount: 4)
-
-        #expect(summary.primarySpendText == "~$759.56")
-        #expect(summary.providerCoverageText == "3 of 4 subscriptions have spend")
-        #expect(summary.tokenText == "~\(15.7.formatted())M tokens")
-        #expect(summary.historyCoverageText == "Coverage: 30 / 30")
-        #expect(summary.pricingCoverageText == "Priced 3 · Unpriced 1 · Unmetered 0 · Estimated 0")
-        #expect(summary.provenanceText == "List-price equivalent")
-        #expect(summary.isPartial)
-    }
-
     @Test
     func `summary keeps distinct currencies separate`() {
         let usd = self.group(
@@ -112,32 +68,6 @@ struct OverviewSpendSummaryTests {
         #expect(summary.providerCoverageText == "1 of 2 subscriptions have spend")
         #expect(summary.tokenText == "~1K tokens")
         #expect(summary.historyCoverageText == "Coverage: 30 / 30")
-        #expect(summary.isPartial)
-    }
-
-    @Test
-    func `six selected providers sum only finite eligible spend and remain partial`() {
-        let group = self.group(
-            providers: [
-                self.provider(.claude, tokens: 2_000_000, cost: 35.09),
-                self.provider(.openrouter, tokens: nil, cost: 39.79),
-            ],
-            totalTokens: 2_000_000,
-            totalCost: 35.09 + 39.79,
-            coverage: CostUsageCoverageCounts(priced: 2),
-            provenance: .vendorMetered)
-
-        let summary = OverviewSpendSummary(
-            model: SpendDashboardModel(requestedDays: 30, groups: [group]),
-            providerCount: 6)
-
-        #expect((35.09 + 39.79).isFinite)
-        #expect(summary.primarySpendText == "~$74.88")
-        #expect(summary.providerCoverageText == "2 of 6 subscriptions have spend")
-        #expect(summary.tokenText == "~2M tokens")
-        #expect(summary.historyCoverageText == "Coverage: 30 / 30")
-        #expect(summary.pricingCoverageText == "Priced 2 · Unpriced 0 · Unmetered 0 · Estimated 0")
-        #expect(summary.provenanceText == "Plan metered")
         #expect(summary.isPartial)
     }
 

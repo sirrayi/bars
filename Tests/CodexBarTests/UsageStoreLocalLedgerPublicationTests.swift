@@ -46,26 +46,6 @@ struct UsageStoreLocalLedgerPublicationTests {
         }
     }
 
-    @Test
-    func `both off skips Codex and local mode does not enable unrelated scanners`() async throws {
-        try await Self.withFixture(localEnabled: false) { fixture in
-            await fixture.store.refreshTokenUsageNow(for: .codex, force: false)
-            #expect(fixture.store.tokenSnapshotPublicationRevision(for: .codex) == 0)
-            fixture.expectIdle(loadCount: 0)
-
-            fixture.store.settings.codexLocalSessionCostLedgerEnabled = true
-            for provider in [UsageProvider.claude, .cursor] {
-                fixture.store.settings.setProviderEnabled(
-                    provider: provider, metadata: fixture.store.metadata(for: provider), enabled: true)
-                await fixture.store.refreshTokenUsageNow(for: provider, force: false)
-                #expect(!fixture.store.settings.isCostUsageEffectivelyEnabled(for: provider))
-                #expect(fixture.store.tokenSnapshotPublicationRevision(for: provider) == 0)
-                #expect(fixture.store.tokenError(for: provider) == nil)
-            }
-            fixture.expectIdle(loadCount: 0)
-        }
-    }
-
     @Test(arguments: [false, true])
     func `local ledger failures retain the failure gate and recover without stale retries`(cached: Bool) async throws {
         try await Self.withFixture { fixture in

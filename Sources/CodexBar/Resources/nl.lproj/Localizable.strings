@@ -1792,7 +1792,7 @@
 "Credits + percent" = "Kredieten en resterend percentage";
 "Credits left" = "Resterende Kredieten";
 "Cursor-metered" = "Gemeten gebruik in Cursor";
-"Cursor-metered: %@ (%@)" = "Cursor-gemeten: %1$@ (%2$@)";
+"Plan metered: %@ (%@)" = "Cursor-gemeten: %1$@ (%2$@)";
 "DATA THROUGH %@" = "Gegevens tot %@";
 "Daily usage" = "Dagelijks gebruik";
 "Default uses AZURE_OPENAI_API_VERSION when set." = "Standaard wordt AZURE_OPENAI_API_VERSION gebruikt indien ingesteld.";

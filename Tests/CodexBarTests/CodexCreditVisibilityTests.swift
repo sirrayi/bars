@@ -78,32 +78,6 @@ struct CodexCreditVisibilityTests {
     }
 
     @Test(arguments: [false, true])
-    func `dashboard omits an unread balance and retains a confirmed zero`(balanceReadSucceeded: Bool) throws {
-        let payload = ProviderPayload(
-            provider: .codex,
-            account: nil,
-            version: nil,
-            source: "oauth",
-            status: nil,
-            usage: Self.snapshot,
-            credits: Self.credits(balanceReadSucceeded: balanceReadSucceeded),
-            antigravityPlanInfo: nil,
-            openaiDashboard: nil,
-            error: nil)
-        let dashboard = DashboardSnapshotBuilder.makeSnapshot(
-            usagePayloads: [payload],
-            costPayloads: [],
-            config: CodexBarConfig(providers: [ProviderConfig(id: .codex, enabled: true)]),
-            identityMode: .none,
-            generatedAt: Self.now,
-            refreshInterval: 60,
-            codexBarVersion: nil)
-
-        let provider = try #require(dashboard.providers.first)
-        #expect(provider.credits?.remaining == (balanceReadSucceeded ? 0 : nil))
-    }
-
-    @Test(arguments: [false, true])
     func `legacy menu distinguishes unavailable credits from confirmed zero`(balanceReadSucceeded: Bool) throws {
         let settings = testSettingsStore(
             suiteName: "CodexCreditVisibilityTests-legacy-menu",

@@ -155,7 +155,7 @@ struct MonthlyPacingTargetTests {
         window: RateWindow?,
         cost: ProviderCostSnapshot? = nil,
         snapshot: UsageSnapshot? = nil,
-        provider: UsageProvider = .notion,
+        provider: UsageProvider = .deepseek,
         now: Date = Self.now,
         calendar: Calendar = Self.utc,
         paceVisible: Bool = true) -> UsageMenuCardView.Model

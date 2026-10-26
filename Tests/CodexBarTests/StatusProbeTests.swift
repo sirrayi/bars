@@ -832,39 +832,6 @@ struct StatusProbeTests {
         let expected = calendar.date(from: DateComponents(year: 2026, month: 3, day: 13, hour: 12, minute: 30))
         #expect(parsed == expected)
     }
-
-    @Test
-    func `live codex status`() async throws {
-        guard ProcessInfo.processInfo.environment["LIVE_CODEX_STATUS"] == "1" else { return }
-
-        let probe = CodexStatusProbe()
-        do {
-            let snap = try await probe.fetch()
-            let summary = """
-            Live Codex status:
-            \(snap.rawText)
-            values: 5h \(snap.fiveHourPercentLeft ?? -1)% left,
-            weekly \(snap.weeklyPercentLeft ?? -1)% left,
-            credits \(snap.credits ?? -1)
-            """
-            print(summary)
-        } catch {
-            // Dump raw PTY text to help debug.
-            let runner = TTYCommandRunner()
-            let res = try runner.run(
-                binary: "codex",
-                send: "/status\n",
-                options: .init(rows: 60, cols: 200, timeout: 12))
-            print("RAW CODEX PTY OUTPUT BEGIN\n\(res.text)\nRAW CODEX PTY OUTPUT END")
-            let clean = TextParsing.stripANSICodes(res.text)
-            print("CLEAN CODEX OUTPUT BEGIN\n\(clean)\nCLEAN CODEX OUTPUT END")
-            let five = TextParsing.firstInt(pattern: #"5h limit[^\n]*?([0-9]{1,3})%\s+left"#, text: clean) ?? -1
-            let week = TextParsing.firstInt(pattern: #"Weekly limit[^\n]*?([0-9]{1,3})%\s+left"#, text: clean) ?? -1
-            let credits = TextParsing.firstNumber(pattern: #"Credits:\s*([0-9][0-9.,]*)"#, text: clean) ?? -1
-            print("Parsed probes => 5h \(five)% weekly \(week)% credits \(credits)")
-            throw error
-        }
-    }
 }
 
 struct ClaudeUsageErrorClassificationTests {

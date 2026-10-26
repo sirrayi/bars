@@ -50,15 +50,6 @@ struct MenuBarProviderColorTests {
 
     // MARK: - Contrast Policy & Relative Luminance
 
-    @Test(arguments: ["aqua", "darkAqua", "NSAppearanceNameVibrantLight", "NSAppearanceNameVibrantDark"])
-    func `contrast policy accepts standard provider accents in supported appearances`(appearance: String) {
-        for provider in [UsageProvider.claude, .codex, .copilot, .cursor] {
-            let options = self.options(appearanceName: appearance, colorByProvider: true)
-            let tint = MenuBarLayoutRenderer.effectiveProviderTintColor(for: provider, options: options)
-            #expect(tint != nil, "Expected accent for \(provider) to meet contrast in \(appearance)")
-        }
-    }
-
     @Test
     func `contrast policy rejects low contrast colors`() {
         // Pure white (#FFFFFF) has 1.0:1 contrast against light background (fails >= 2.0:1)

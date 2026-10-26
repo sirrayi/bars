@@ -270,7 +270,7 @@ struct MenuBarPane: View {
 
     private func providerDisplayName(_ instanceID: ProviderInstanceID) -> String {
         if let provider = instanceID.firstPartyProvider { return self.providerDisplayName(provider) }
-        return UserProviderPluginRegistry.plugin(for: instanceID)?.manifest.name ?? instanceID.rawValue
+        return instanceID.rawValue
     }
 
     private func providerDisplayName(_ provider: UsageProvider) -> String {

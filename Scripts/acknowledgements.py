@@ -23,20 +23,6 @@ PACKAGES = {
     'swift-log': ('swift-log', ['The SwiftLog Project'], 'Apache-2.0', ['NOTICE.txt', 'LICENSE.txt']),
     'vortex': ('Vortex', ['Paul Hudson'], 'MIT', ['LICENSE']),
 }
-SUCRASE_SHA256 = '4d997e15b72cbc9ccf6e743c30c6eb48bf4533f6709852367b40766be5eba70b'
-
-# These versions reproduce the checked-in Sucrase bundle, including its transitive imports.
-NPM = {
-    'sucrase': '3.35.1',
-    '@jridgewell/gen-mapping': '0.3.13',
-    '@jridgewell/resolve-uri': '3.1.2',
-    '@jridgewell/sourcemap-codec': '1.5.5',
-    '@jridgewell/trace-mapping': '0.3.31',
-    'lines-and-columns': '1.2.4',
-    'ts-interface-checker': '0.1.13',
-}
-
-
 def digest(data):
     return hashlib.sha256(data).hexdigest()
 
@@ -107,37 +93,15 @@ def generate(root):
                                  revision=boring_revision))
             entries.append(entry('XKCP', ['The Keccak Team', 'Brian Gladman'], 'https://github.com/XKCP/XKCP',
                                  'CC0-1.0 / BSD', header_notices(files, 'Sources/CXKCP/'), revision=revision))
-    quickjs = {str(p.relative_to(root)): p.read_bytes() for p in (root / 'Sources/CQuickJS').rglob('*') if p.is_file()}
-    entries.append(entry('QuickJS', ['Fabrice Bellard', 'Charlie Gordon', 'Ben Noordhuis', 'Saúl Ibarra Corretgé'],
-                         'https://github.com/quickjs-ng/quickjs', 'MIT / Unicode-3.0',
-                         [source('Sources/CQuickJS/LICENSE', quickjs['Sources/CQuickJS/LICENSE'])]
-                         + header_notices(quickjs, 'Sources/CQuickJS/')))
-    for name, version in NPM.items():
-        basename = name.split('/')[-1]
-        files = archive_files(download(f'https://registry.npmjs.org/{name}/-/{basename}-{version}.tgz'))
-        info = json.loads(files['package.json'])
-        authors = info.get('author', 'Various contributors')
-        if isinstance(authors, dict):
-            authors = authors['name']
-        paths = sorted(path for path in files if '/' not in path and path.lower().startswith(('license', 'notice')))
-        if not paths:
-            raise ValueError(f'{name}: no upstream license')
-        entries.append(entry('Sucrase' if name == 'sucrase' else name, [authors],
-                             f'https://www.npmjs.com/package/{name}', info['license'],
-                             [source(path, files[path]) for path in paths], npm=name, revision=version))
     return sorted(entries, key=lambda item: item['name'].lower())
 
 
 def check(root, entries):
     resolved = pins(root)
-    bundle = root / 'Sources/CodexBarCore/Resources/Plugins/sucrase-3.35.1.min.js'
-    if digest(bundle.read_bytes()) != SUCRASE_SHA256:
-        raise ValueError('Sucrase bundle changed; audit and regenerate its dependency notices')
     actual = {item['identity']: (item['url'], item['revision']) for item in entries if 'identity' in item}
     if actual != resolved:
         raise ValueError('Acknowledgements do not match root/widget pins; run Scripts/acknowledgements.py --write')
-    npm = {item['npm']: item['revision'] for item in entries if 'npm' in item}
-    if npm != NPM or not {'QuickJS', 'BoringSSL', 'XKCP'}.issubset(item['name'] for item in entries):
+    if not {'BoringSSL', 'XKCP'}.issubset(item['name'] for item in entries):
         raise ValueError('Vendored dependency acknowledgement is missing')
     for item in entries:
         if not item['sources']:
@@ -146,12 +110,6 @@ def check(root, entries):
             data = notice['text'].encode('utf-8')
             if not data or digest(data) != notice['sha256']:
                 raise ValueError(f'{item["name"]}: notice changed')
-            if item['name'] == 'QuickJS':
-                original = (root / notice['path']).read_bytes()
-                if data not in original:
-                    raise ValueError(f'{notice["path"]}: vendored notice drifted')
-    if 'UNICODE LICENSE V3' not in json.dumps(entries) or 'Brian Gladman' not in json.dumps(entries):
-        raise ValueError('Unicode or XKCP BSD notice is missing')
 
 
 def render(entries):

@@ -55,9 +55,6 @@ struct SettingsDefaultsState {
     var menuBarLayoutSizeRaw: String
     var menuBarLayoutGapRaw: String
     var menuBarLayoutVerticalAdjustment: Int
-    var copilotBudgetExtrasEnabled: Bool
-    var copilotIconSecondaryWindowIDRaw: String
-    var copilotSeatCreditEntitlementRaw: String
     var costUsageEnabled: Bool
     var codexLocalSessionCostLedgerEnabled: Bool
     var costReportingPeriod: CostReportingPeriod

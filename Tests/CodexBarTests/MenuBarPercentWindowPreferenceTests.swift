@@ -14,16 +14,6 @@ struct MenuBarPercentWindowPreferenceTests {
         #expect(MenuBarLayoutLane.available(for: .opencodego, snapshot: snapshot).contains(.tertiary))
     }
 
-    @Test
-    func `tertiary choices use provider labels without exposing snapshot-required lanes`() {
-        #expect(MenuBarPercentWindowPreference.available(for: .opencodego).contains(.tertiary))
-        #expect(MenuBarPercentWindowPreference.tertiary.label(for: .opencodego) == L("Monthly"))
-        #expect(MenuBarPercentWindowPreference.available(for: .perplexity).contains(.tertiary))
-        #expect(MenuBarPercentWindowPreference.tertiary.label(for: .perplexity) == L("Purchased"))
-        #expect(!MenuBarPercentWindowPreference.available(for: .cursor).contains(.tertiary))
-        #expect(!MenuBarPercentWindowPreference.available(for: .codex).contains(.tertiary))
-    }
-
     @Test(arguments: [PercentWindow.automatic, .weekly])
     func `monthly to weekly round trip preserves independent layout tokens`(_ pace: PercentWindow) {
         let ruleID = UUID()
@@ -133,15 +123,6 @@ struct MenuBarPercentWindowPreferenceTests {
             current: currentOverrides, released: releasedOverrides, legacy: legacyOverrides) == [key: monthly])
         #expect(MenuBarLayoutPersistence.preferredOverrides(
             current: currentOverrides, released: [:], legacy: [:]).isEmpty)
-    }
-
-    @Test
-    func `picker labels name credit pools and respect reversed semantic windows`() {
-        #expect(MenuBarPercentWindowPreference.session.label(for: .warp) == L("Credits"))
-        #expect(MenuBarPercentWindowPreference.weekly.label(for: .warp) == L("Add-on credits"))
-        #expect(MenuBarPercentWindowPreference.session.label(for: .kimi) == L("5-hour usage"))
-        #expect(MenuBarPercentWindowPreference.weekly.label(for: .kimi) == L("7-day usage"))
-        #expect(MenuBarPercentWindowPreference.automatic.label(for: .warp) == L("menu_bar_layout_token_auto"))
     }
 
     @Test
@@ -282,30 +263,6 @@ struct MenuBarPercentWindowPreferenceTests {
             iconStyle: .iconAndPercent,
             layout: layout,
             available: [.automatic, .session]))
-    }
-
-    @Test
-    func `available options follow provider percent-window capabilities`() {
-        let mistralLike = ProviderMenuBarMetricCapabilities(supported: [.automatic, .monthlyPlan])
-        #expect(MenuBarPercentWindowPreference.available(metrics: mistralLike) == [.automatic, .monthlyPlan])
-
-        let sessionOnlyPrimary = ProviderMenuBarMetricCapabilities(supported: [.automatic, .primary])
-        #expect(MenuBarPercentWindowPreference.available(metrics: sessionOnlyPrimary) == [.automatic, .session])
-
-        let weeklyPrimary = ProviderMenuBarMetricCapabilities(supported: [.automatic, .primary])
-        #expect(MenuBarPercentWindowPreference.available(
-            metrics: weeklyPrimary,
-            primarySemanticWindow: .weekly) == [.automatic, .weekly])
-
-        #expect(MenuBarPercentWindowPreference.available(
-            metrics: .standard) == [.automatic, .session, .weekly])
-        #expect(MenuBarPercentWindowPreference.available(for: .mistral) == [.automatic, .session, .monthlyPlan])
-        #expect(MenuBarPercentWindowPreference.available(for: .openrouter) == [.automatic, .session])
-        #expect(MenuBarPercentWindowPreference.available(for: .codex) == [.automatic, .session, .weekly])
-        #expect(MenuBarPercentWindowPreference.isVisible(
-            iconStyle: .iconAndPercent,
-            layout: MenuBarLayout(lines: [[.icon, .percent(window: .automatic)]]),
-            provider: .mistral) == true)
     }
 
     @Test

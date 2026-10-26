@@ -391,7 +391,7 @@ A managed Codex entry in redacted mode (other account fields use the same shapes
   Grok's purchased wallet is currently exposed by `codexbar usage --provider grok --json` and `/usage` as
   `usage.providerCost.balance` with `currencyCode: "USD"`, not by this dashboard projection. It is separate from
   the included quota: zero is a known balance, absence is unknown, and balance-only `used`/`limit` values of zero
-  do not establish spend or a budget. See [Grok](grok.md#purchased-credits-in-cli-json).
+  do not establish spend or a budget.
 - `providers[].cost`: Local cost data when available, otherwise a provider's reported 30-day USD history.
   Reported history preserves its aggregate, including a known zero, and leaves `todayUSD` null because its day
   boundaries may differ from the host's local calendar. OpenRouter Activity covers completed UTC days; it must

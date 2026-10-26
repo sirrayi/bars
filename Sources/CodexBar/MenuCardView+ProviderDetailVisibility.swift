@@ -30,9 +30,8 @@ extension UsageMenuCardView.Model {
                 }
             }
         }
-        // Provider-specific by design: Grok and Claude replace reset rows with the live section; Sub2API
-        // localizes its usage details.
-        if input.provider == .grok || input.provider == .claude {
+        // Provider-specific by design: Claude replaces reset rows with the live section.
+        if input.provider == .claude {
             details = details.compactMap { section in
                 let rows = section.rows.filter { $0.label != "Limit Reset Credits" }
                 guard !rows.isEmpty || section.chart != nil else { return nil }
@@ -44,8 +43,7 @@ extension UsageMenuCardView.Model {
             details.removeAll { $0.title == ClaudeCloudCreditsSnapshot.detailTitle }
         }
         let pairs = details.flatMap { rawSection in
-            let localized = input.provider == .sub2api
-                ? Self.sub2APILocalizedDetails([rawSection]) : [rawSection]
+            let localized = [rawSection]
             return Self.localizedProviderDetails(localized, provider: input.provider).map {
                 (section: $0, rawTitle: rawSection.title)
             }

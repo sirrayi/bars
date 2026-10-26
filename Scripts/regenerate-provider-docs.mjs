@@ -92,28 +92,5 @@ update("docs/site-locales.mjs", (text) =>
     line.replace(/\b\d{2,}\b/u, String(count)),
   ),
 );
-update("docs/plugin-conversion-matrix.md", (text) => {
-  text = section(text, [
-    "",
-    "| Provider | Status | Engines | Scope |",
-    "|---|---|---|---|",
-    ...entries.map((entry) => `| ${entry.id} | \`cut-over\` | QuickJS + JavaScriptCore | ${entry.scope} |`),
-    "",
-  ]);
-  const additions = [...text.split("## Additional plugin-first providers")[1].matchAll(/^\| [a-z0-9]+ \|/gm)].length;
-  const audit = Number(text.match(/\| \*\*Audit total\*\* \| \*\*(\d+)\*\*/u)[1]);
-  const unclassified = count - audit - additions;
-  return text
-    .replace(/registry now contains \d+ providers/u, `registry now contains ${count} providers`)
-    .replace(
-      /\d+ additional plugin-first rows, and \d+ providers/u,
-      `${additions} additional plugin-first rows, and ${unclassified} providers`,
-    )
-    .replace(/\| Additional plugin-first providers \| \d+ \|/u, `| Additional plugin-first providers | ${additions} |`)
-    .replace(
-      /\| Registered providers not yet classified here \| \d+ \|/u,
-      `| Registered providers not yet classified here | ${unclassified} |`,
-    )
-    .replace(/\| \*\*Registry total\*\* \| \*\*\d+\*\* \|/u, `| **Registry total** | **${count}** |`);
-});
+
 console.log(`Provider documentation ${check ? "current" : "generated"}: ${count} registered providers`);

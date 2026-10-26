@@ -20,7 +20,7 @@ struct CLIUsageFetchSetupTests {
             name,
             arguments: [
                 "--source", "API", "--web-timeout", "0", "--no-credits", "--no-color", "--status", "--verbose",
-                "--web-debug-dump-html", "--antigravity-plan-debug", "--augment-debug", "--account-index", "2",
+                "--web-debug-dump-html", "--account-index", "2",
             ],
             providers: [.claude])
         #expect(explicit.command.sourceModeOverride == .api)
@@ -30,8 +30,6 @@ struct CLIUsageFetchSetupTests {
         #expect(explicit.includeStatus)
         #expect(explicit.command.verbose)
         #expect(explicit.command.webDebugDumpHTML)
-        #expect(explicit.command.antigravityPlanDebug)
-        #expect(explicit.command.augmentDebug)
         #expect(explicit.tokenSelection.index == 1)
         let web = try Self.decode(name, arguments: ["--source", "invalid", "--web"])
         #expect(web.command.sourceModeOverride == .web)

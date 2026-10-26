@@ -333,6 +333,10 @@ final class CodexAccountPromotionTestContainer {
         return data
     }
 
+    private static func authFileURL(for homeURL: URL) -> URL {
+        homeURL.appendingPathComponent("auth.json", isDirectory: false)
+    }
+
     private static func fakeJWT(email: String, plan: String, accountID: String?) -> String {
         let header = (try? JSONSerialization.data(withJSONObject: ["alg": "none"])) ?? Data()
         var authClaims: [String: Any] = [
@@ -355,10 +359,6 @@ final class CodexAccountPromotionTestContainer {
         }
 
         return "\(base64URL(header)).\(base64URL(payload))."
-    }
-
-    private static func authFileURL(for homeURL: URL) -> URL {
-        homeURL.appendingPathComponent("auth.json", isDirectory: false)
     }
 }
 

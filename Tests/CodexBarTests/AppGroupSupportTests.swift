@@ -36,7 +36,7 @@ struct AppGroupSupportTests {
         let fixture = try MigrationFixture()
         defer { fixture.cleanUp() }
         fixture.legacyDefaults.set(true, forKey: "debugDisableKeychainAccess")
-        fixture.legacyDefaults.set(UsageProvider.cursor.rawValue, forKey: "widgetSelectedProvider")
+        fixture.legacyDefaults.set(UsageProvider.claude.rawValue, forKey: "widgetSelectedProvider")
         try fixture.writeSnapshot("legacy-snapshot", to: fixture.legacySnapshotURL)
 
         let result = fixture.migrate()
@@ -45,7 +45,7 @@ struct AppGroupSupportTests {
         #expect(result.copiedSnapshot)
         #expect(result.copiedDefaults == 2)
         #expect(fixture.currentDefaults.bool(forKey: "debugDisableKeychainAccess"))
-        #expect(fixture.currentDefaults.string(forKey: "widgetSelectedProvider") == UsageProvider.cursor.rawValue)
+        #expect(fixture.currentDefaults.string(forKey: "widgetSelectedProvider") == UsageProvider.claude.rawValue)
         #expect(try Data(contentsOf: fixture.currentSnapshotURL) == Data("legacy-snapshot".utf8))
         #expect(
             fixture.standardDefaults.integer(forKey: AppGroupSupport.migrationVersionKey)
@@ -74,7 +74,7 @@ struct AppGroupSupportTests {
         fixture.currentDefaults.set(false, forKey: "debugDisableKeychainAccess")
         fixture.currentDefaults.set(UsageProvider.codex.rawValue, forKey: "widgetSelectedProvider")
         fixture.legacyDefaults.set(true, forKey: "debugDisableKeychainAccess")
-        fixture.legacyDefaults.set(UsageProvider.cursor.rawValue, forKey: "widgetSelectedProvider")
+        fixture.legacyDefaults.set(UsageProvider.claude.rawValue, forKey: "widgetSelectedProvider")
 
         let result = fixture.migrate()
 

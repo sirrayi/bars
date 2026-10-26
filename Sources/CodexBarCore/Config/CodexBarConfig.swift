@@ -64,14 +64,8 @@ public struct CodexBarConfig: Codable, Sendable {
                 let value = try ProviderConfigExtensionValue(from: providerDecoder)
                 data = try JSONEncoder().encode(value.requiringExactNumbers())
             }
-            if let instanceID, UserProviderPluginRegistry.plugin(for: instanceID) != nil,
-               let config = Self.exactProviderConfig(from: data)
-            {
-                providers.append(config)
-            } else {
-                self.unknownProviders.append((
-                    index, rawID, (try? providerContainer.decode(Bool.self, forKey: .enabled)) ?? false, data))
-            }
+            self.unknownProviders.append((
+                index, rawID, (try? providerContainer.decode(Bool.self, forKey: .enabled)) ?? false, data))
         }
         self.providers = providers
         self.hooks = try container.decodeIfPresent(HooksConfig.self, forKey: .hooks)
@@ -134,8 +128,7 @@ public struct CodexBarConfig: Codable, Sendable {
         let providers = UsageProvider.allCases.map { provider in
             Self.defaultProviderConfig(
                 provider,
-                metadata: metadata,
-                alibabaTokenPlanRegion: .international)
+                metadata: metadata)
         }
         return CodexBarConfig(version: Self.currentVersion, providers: providers)
     }
@@ -183,8 +176,7 @@ public struct CodexBarConfig: Codable, Sendable {
         for provider in UsageProvider.allCases where !seen.contains(provider.instanceID) {
             normalized.append(Self.defaultProviderConfig(
                 provider,
-                metadata: metadata,
-                alibabaTokenPlanRegion: .chinaMainland))
+                metadata: metadata))
         }
 
         var copy = self
@@ -226,12 +218,7 @@ public struct CodexBarConfig: Codable, Sendable {
     }
 
     public func providerConfig(for id: ProviderInstanceID) -> ProviderConfig? {
-        if let config = self.providers.first(where: { $0.id == id }) { return config }
-        // Discovery can recover while the app still holds a config loaded before the plugin was available.
-        guard UserProviderPluginRegistry.plugin(for: id) != nil,
-              let unknown = self.unknownProviders.first(where: { $0.id == id.rawValue })
-        else { return nil }
-        return try? JSONDecoder().decode(ProviderConfig.self, from: unknown.data)
+        self.providers.first(where: { $0.id == id })
     }
 
     public mutating func setProviderConfig(_ config: ProviderConfig) {
@@ -276,13 +263,11 @@ public struct CodexBarConfig: Codable, Sendable {
 
     private static func defaultProviderConfig(
         _ provider: UsageProvider,
-        metadata: [UsageProvider: ProviderMetadata],
-        alibabaTokenPlanRegion: AlibabaTokenPlanAPIRegion) -> ProviderConfig
+        metadata: [UsageProvider: ProviderMetadata]) -> ProviderConfig
     {
         ProviderConfig(
             id: provider.instanceID,
-            enabled: metadata[provider]?.defaultEnabled,
-            region: provider == .alibabatokenplan ? alibabaTokenPlanRegion.rawValue : nil)
+            enabled: metadata[provider]?.defaultEnabled)
     }
 }
 

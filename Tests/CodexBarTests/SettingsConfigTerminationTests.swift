@@ -7,42 +7,6 @@ import Testing
 @MainActor
 struct SettingsConfigTerminationTests {
     @Test
-    func `failed physical save preserves a repair until full reload`() async throws {
-        try await self.withSettings { settings in
-            settings.configFileWatcher?.stop()
-            settings[providerConfig: .fireworks, field: .apiKey] = "fixture-key"
-            try #require(await settings.savePluginSettings(
-                provider: .fireworks,
-                values: ["ACCOUNT_SLUG": "fixture"],
-                isCurrent: { true }) == .saved)
-            let corrupt = Data("synthetic-corrupt-config".utf8)
-            try corrupt.write(to: settings.configStore.fileURL)
-            settings.opencodeWorkspaceID = "edit-during-corruption"
-            await self.drainSaves(settings)
-            #expect(try Data(contentsOf: settings.configStore.fileURL) == corrupt)
-
-            var repaired = settings.configSnapshot
-            var entry = try #require(repaired.providerConfig(for: .opencode))
-            entry.workspaceID = "manually-repaired-workspace"
-            repaired.setProviderConfig(entry)
-            let expected = try settings.configStore.encodedData(for: repaired)
-            try expected.write(to: settings.configStore.fileURL, options: .atomic)
-            #expect(await settings.savePluginSettings(
-                provider: .fireworks,
-                values: ["ACCOUNT_SLUG": "fixture"],
-                isCurrent: { true }) == .unchanged)
-            settings.opencodeWorkspaceID = "stale-edit-before-reload"
-            await self.drainSaves(settings)
-            #expect(try Data(contentsOf: settings.configStore.fileURL) == expected)
-
-            settings.reloadConfig(reason: "physical-save-repair", origin: .localFile)
-            settings.opencodeWorkspaceID = "edit-after-reload"
-            await self.drainSaves(settings)
-            #expect(try settings.configStore.load()?.providerConfig(for: .opencode)?.workspaceID == "edit-after-reload")
-        }
-    }
-
-    @Test
     func `account reload preserves the rest of the externally edited config`() async throws {
         try await self.withSettings { settings in
             settings.configFileWatcher?.stop()
@@ -58,44 +22,6 @@ struct SettingsConfigTerminationTests {
             #expect(settings.opencodeWorkspaceID == "externally-edited-workspace")
             #expect(try settings.configStore.load()?.providerConfig(for: .opencode)?.workspaceID
                 == "externally-edited-workspace")
-        }
-    }
-
-    @Test(arguments: [false, true])
-    func `failed secondary config reads preserve a repair until full reload`(_ pluginSave: Bool) async throws {
-        try await self.withSettings { settings in
-            settings.configFileWatcher?.stop()
-            if pluginSave {
-                settings[providerConfig: .fireworks, field: .apiKey] = "fixture-key"
-                try #require(await settings.savePluginSettings(
-                    provider: .fireworks,
-                    values: ["ACCOUNT_SLUG": "fixture"],
-                    isCurrent: { true }) == .saved)
-            }
-            try Data("synthetic-corrupt-config".utf8).write(to: settings.configStore.fileURL)
-            if pluginSave {
-                #expect(await settings.savePluginSettings(
-                    provider: .fireworks,
-                    values: ["ACCOUNT_SLUG": "updated-fixture"],
-                    isCurrent: { true }) == .failed)
-            } else {
-                settings.reloadTokenAccounts()
-            }
-
-            var repaired = settings.configSnapshot
-            var entry = try #require(repaired.providerConfig(for: .opencode))
-            entry.workspaceID = "manually-repaired-workspace"
-            repaired.setProviderConfig(entry)
-            let expected = try settings.configStore.encodedData(for: repaired)
-            try expected.write(to: settings.configStore.fileURL, options: .atomic)
-            settings.opencodeWorkspaceID = "stale-edit-before-reload"
-            await self.drainSaves(settings)
-            #expect(try Data(contentsOf: settings.configStore.fileURL) == expected)
-
-            settings.reloadConfig(reason: "secondary-read-repair", origin: .localFile)
-            settings.opencodeWorkspaceID = "edit-after-reload"
-            await self.drainSaves(settings)
-            #expect(try settings.configStore.load()?.providerConfig(for: .opencode)?.workspaceID == "edit-after-reload")
         }
     }
 
@@ -310,8 +236,6 @@ struct SettingsConfigTerminationTests {
             settings = SettingsStore(
                 userDefaults: InMemoryUserDefaults(),
                 configStore: configStore,
-                zaiTokenStore: NoopZaiTokenStore(),
-                syntheticTokenStore: NoopSyntheticTokenStore(),
                 tokenAccountStore: InMemoryTokenAccountStore(),
                 keychainAccessPolicy: SettingsStoreKeychainAccessPolicy(
                     setDisabled: { _ in }, isExplicitlyDisabled: { true }))

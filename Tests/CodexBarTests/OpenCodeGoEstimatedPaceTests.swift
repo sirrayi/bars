@@ -95,7 +95,6 @@ struct OpenCodeGoEstimatedPaceTests {
             status: nil,
             usage: snapshot,
             credits: nil,
-            antigravityPlanInfo: nil,
             openaiDashboard: nil,
             error: nil,
             pace: CLIRenderer.providerPacePayload(provider: .opencodego, snapshot: snapshot))
@@ -163,7 +162,7 @@ struct OpenCodeGoEstimatedPaceTests {
             }
         }
         #expect(store.weeklyPace(
-            provider: .zai, window: window, dataConfidence: .estimated, now: OpenCodeGoPaceTestSupport.now) != nil)
+            provider: .deepseek, window: window, dataConfidence: .estimated, now: OpenCodeGoPaceTestSupport.now) != nil)
     }
 
     @Test

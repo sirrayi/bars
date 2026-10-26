@@ -37,30 +37,6 @@ extension CodexAccountScopedRefreshTests {
         try data.write(to: homeURL.appendingPathComponent("auth.json"))
     }
 
-    static func fakeJWT(email: String, plan: String, accountId: String? = nil) -> String {
-        let header = (try? JSONSerialization.data(withJSONObject: ["alg": "none"])) ?? Data()
-        var authClaims: [String: Any] = [
-            "chatgpt_plan_type": plan,
-        ]
-        if let accountId {
-            authClaims["chatgpt_account_id"] = accountId
-        }
-        let payload = (try? JSONSerialization.data(withJSONObject: [
-            "email": email,
-            "chatgpt_plan_type": plan,
-            "https://api.openai.com/auth": authClaims,
-        ])) ?? Data()
-
-        func base64URL(_ data: Data) -> String {
-            data.base64EncodedString()
-                .replacingOccurrences(of: "=", with: "")
-                .replacingOccurrences(of: "+", with: "-")
-                .replacingOccurrences(of: "/", with: "_")
-        }
-
-        return "\(base64URL(header)).\(base64URL(payload))."
-    }
-
     func makeUsageStore(
         settings: SettingsStore,
         environmentBase: [String: String] = [:],
@@ -294,6 +270,30 @@ extension CodexAccountScopedRefreshTests {
             isEnabled: baseSpec.isEnabled,
             descriptor: descriptor,
             makeFetchContext: baseSpec.makeFetchContext)
+    }
+
+    static func fakeJWT(email: String, plan: String, accountId: String? = nil) -> String {
+        let header = (try? JSONSerialization.data(withJSONObject: ["alg": "none"])) ?? Data()
+        var authClaims: [String: Any] = [
+            "chatgpt_plan_type": plan,
+        ]
+        if let accountId {
+            authClaims["chatgpt_account_id"] = accountId
+        }
+        let payload = (try? JSONSerialization.data(withJSONObject: [
+            "email": email,
+            "chatgpt_plan_type": plan,
+            "https://api.openai.com/auth": authClaims,
+        ])) ?? Data()
+
+        func base64URL(_ data: Data) -> String {
+            data.base64EncodedString()
+                .replacingOccurrences(of: "=", with: "")
+                .replacingOccurrences(of: "+", with: "-")
+                .replacingOccurrences(of: "/", with: "_")
+        }
+
+        return "\(base64URL(header)).\(base64URL(payload))."
     }
 }
 

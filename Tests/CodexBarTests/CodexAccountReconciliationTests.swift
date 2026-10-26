@@ -4,6 +4,7 @@ import Testing
 @testable import CodexBar
 
 @Suite(.serialized, CodexCredentialFixtures())
+// swiftlint:disable:next type_body_length
 struct CodexAccountReconciliationTests {
     @MainActor
     private static func makeSettings(suite: String) throws -> SettingsStore {
@@ -12,9 +13,7 @@ struct CodexAccountReconciliationTests {
         defaults.set(true, forKey: "providerDetectionCompleted")
         let settings = SettingsStore(
             userDefaults: defaults,
-            configStore: testConfigStore(suiteName: suite),
-            zaiTokenStore: NoopZaiTokenStore(),
-            syntheticTokenStore: NoopSyntheticTokenStore())
+            configStore: testConfigStore(suiteName: suite))
         settings.providerDetectionCompleted = true
         return settings
     }
@@ -885,6 +884,29 @@ struct CodexAccountReconciliationTests {
         #expect(settings.codexActiveSource == .managedAccount(id: managed.id))
         #expect(settings.codexResolvedActiveSource == .managedAccount(id: managed.id))
     }
+
+    private static func fakeJWT(email: String, plan: String, accountID: String? = nil) -> String {
+        let header = (try? JSONSerialization.data(withJSONObject: ["alg": "none"])) ?? Data()
+        var payloadObject: [String: Any] = [
+            "email": email,
+            "chatgpt_plan_type": plan,
+        ]
+        if let accountID {
+            payloadObject["https://api.openai.com/auth"] = [
+                "chatgpt_account_id": accountID,
+            ]
+        }
+        let payload = (try? JSONSerialization.data(withJSONObject: payloadObject)) ?? Data()
+
+        func base64URL(_ data: Data) -> String {
+            data.base64EncodedString()
+                .replacingOccurrences(of: "=", with: "")
+                .replacingOccurrences(of: "+", with: "-")
+                .replacingOccurrences(of: "/", with: "_")
+        }
+
+        return "\(base64URL(header)).\(base64URL(payload))."
+    }
 }
 
 private struct StubSystemObserver: CodexSystemAccountObserving {
@@ -919,28 +941,5 @@ extension CodexAccountReconciliationTests {
         let auth = ["tokens": tokens]
         let data = try JSONSerialization.data(withJSONObject: auth)
         try data.write(to: homeURL.appendingPathComponent("auth.json"))
-    }
-
-    private static func fakeJWT(email: String, plan: String, accountID: String? = nil) -> String {
-        let header = (try? JSONSerialization.data(withJSONObject: ["alg": "none"])) ?? Data()
-        var payloadObject: [String: Any] = [
-            "email": email,
-            "chatgpt_plan_type": plan,
-        ]
-        if let accountID {
-            payloadObject["https://api.openai.com/auth"] = [
-                "chatgpt_account_id": accountID,
-            ]
-        }
-        let payload = (try? JSONSerialization.data(withJSONObject: payloadObject)) ?? Data()
-
-        func base64URL(_ data: Data) -> String {
-            data.base64EncodedString()
-                .replacingOccurrences(of: "=", with: "")
-                .replacingOccurrences(of: "+", with: "-")
-                .replacingOccurrences(of: "/", with: "_")
-        }
-
-        return "\(base64URL(header)).\(base64URL(payload))."
     }
 }

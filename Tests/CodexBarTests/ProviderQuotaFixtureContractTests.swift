@@ -5,42 +5,6 @@ import Testing
 
 struct ProviderQuotaFixtureContractTests {
     @Test
-    func `MiniMax fixture preserves quota windows and plan`() throws {
-        let data = try Self.fixtureData(provider: "MiniMax", name: "token-plan-normal", fileExtension: "json")
-        let snapshot = try MiniMaxUsageParser.parseCodingPlanRemains(
-            data: data,
-            now: Date(timeIntervalSince1970: 1_780_282_340))
-        let usage = snapshot.toUsageSnapshot()
-
-        #expect(usage.identity(for: .minimax)?.loginMethod == "Token Plan Plus")
-        #expect(usage.primary?.usedPercent == 4)
-        #expect(usage.primary?.windowMinutes == 300)
-        #expect(usage.primary?.resetsAt == Date(timeIntervalSince1970: 1_780_297_200))
-        #expect(usage.secondary?.usedPercent == 1)
-        #expect(usage.secondary?.windowMinutes == 10080)
-        #expect(usage.secondary?.resetsAt == Date(timeIntervalSince1970: 1_780_848_000))
-    }
-
-    @Test
-    func `MiniMax fixture keeps windows when reset timestamps are absent`() throws {
-        let data = try Self.fixtureData(
-            provider: "MiniMax",
-            name: "token-plan-missing-reset",
-            fileExtension: "json")
-        let snapshot = try MiniMaxUsageParser.parseCodingPlanRemains(
-            data: data,
-            now: Date(timeIntervalSince1970: 1_780_282_340))
-        let usage = snapshot.toUsageSnapshot()
-
-        #expect(usage.identity(for: .minimax)?.loginMethod == "Token Plan Plus")
-        #expect(usage.primary?.usedPercent == 25)
-        #expect(usage.primary?.resetsAt == nil)
-        #expect(usage.secondary?.usedPercent == 40)
-        #expect(usage.secondary?.windowMinutes == 10080)
-        #expect(usage.secondary?.resetsAt == nil)
-    }
-
-    @Test
     func `OpenAI fixture preserves quota windows and plan`() throws {
         let data = try Self.fixtureData(provider: "OpenAI", name: "pro-normal", fileExtension: "html")
         let body = try #require(String(data: data, encoding: .utf8))

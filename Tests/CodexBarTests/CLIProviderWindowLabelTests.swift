@@ -39,7 +39,6 @@ struct CLIProviderWindowLabelTests {
             status: nil,
             usage: usage,
             credits: nil,
-            antigravityPlanInfo: nil,
             openaiDashboard: nil,
             error: nil)
     }

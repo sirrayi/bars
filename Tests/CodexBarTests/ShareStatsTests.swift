@@ -25,42 +25,6 @@ struct ShareStatsTests {
     }
 
     @Test
-    func `builder preserves native currencies and partial group spend`() throws {
-        let subscriptionNames = try [
-            "codex:one": #require(Self.subscriptionName(provider: .codex, rawName: "pro")),
-            "cursor": #require(Self.subscriptionName(provider: .cursor, rawName: "Cursor Pro")),
-            "claude": #require(Self.subscriptionName(provider: .claude, rawName: "Claude Max")),
-        ]
-        let payload = try #require(ShareStatsBuilder.make(
-            model: Self.dashboard,
-            subscriptionNames: subscriptionNames))
-
-        #expect(payload.days == 30)
-        #expect(payload.totalTokens == 500)
-        #expect(payload.hasPartialTokens)
-        #expect(payload.currencies == [
-            ShareStatsCurrencyPayload(currencyCode: "GBP", estimatedCost: 12, coveredDayCount: 10),
-            ShareStatsCurrencyPayload(
-                currencyCode: "USD",
-                estimatedCost: 4,
-                coveredDayCount: 0,
-                isPartial: true),
-        ])
-        #expect(payload.providers.map(\.providerName) == ["Claude", "Codex · #1", "Cursor"])
-        #expect(payload.providers.map(\.subscriptionName) == ["Max", "Pro 20x", "Cursor Pro"])
-        #expect(payload.providers.last?.estimatedCost == nil)
-        #expect(payload.topModels.map(\.modelName).prefix(2) == ["Claude", "GPT"])
-
-        let text = ShareStatsFormatting.text(payload)
-        #expect(text.contains("GBP: £12.00 estimated · coverage 10/30 days"))
-        #expect(text.contains("Claude · Max: 300 tokens · ~£12.00 est · 10/30 days"))
-        #expect(text.contains("USD: $4.00 estimated (partial) · coverage 0/30 days"))
-        #expect(text.contains("~500 tracked tokens (partial)"))
-        #expect(text.contains("Cursor · Cursor Pro: Spend unavailable"))
-        #expect(!text.contains("£12.00 +"))
-    }
-
-    @Test
     func `copied share stats uses all-time labels for the scan window`() throws {
         let payload = try #require(ShareStatsBuilder.make(
             model: SpendDashboardModel(
@@ -74,68 +38,6 @@ struct ShareStatsTests {
         #expect(text.contains("Claude: 300 tokens · ~£12.00 est · 10/all"))
         #expect(!text.contains("last \(SpendDashboardSource.scanDays) days"))
         #expect(!text.contains("/\(SpendDashboardSource.scanDays) days"))
-    }
-
-    @Test
-    func `payload sanitizer excludes emails identifiers paths and prompts`() throws {
-        let model = Self.dashboard(models: [
-            "gpt-5.4",
-            "person@example.com",
-            "/Users/peter/private/model",
-            "550e8400-e29b-41d4-a716-446655440000",
-            "summarize my secret project",
-            "abcdefabcdefabcdefabcdef",
-            "https://intranet.example/client-model-2",
-            "acme/private-model-v2",
-            "acme-private-model-v2",
-            "gpt-acme-private-model-v2",
-        ])
-        var subscriptionNames = try [
-            "claude": #require(Self.subscriptionName(provider: .claude, rawName: "Claude Max")),
-        ]
-        if let unsafeCodexName = Self.subscriptionName(provider: .codex, rawName: "person@example.com") {
-            subscriptionNames["codex:one"] = unsafeCodexName
-        }
-        if let unsafeCursorName = Self.subscriptionName(provider: .cursor, rawName: "/Users/peter/plan") {
-            subscriptionNames["cursor"] = unsafeCursorName
-        }
-        let payload = try #require(ShareStatsBuilder.make(
-            model: model,
-            subscriptionNames: subscriptionNames))
-        let text = ShareStatsFormatting.text(payload)
-
-        #expect(payload.topModels.map(\.modelName) == ["Claude", "GPT"])
-        #expect(payload.topModels.last?.totalTokens == 400)
-        #expect(payload.topModels.last?.estimatedCost == 8)
-        #expect(payload.providers.map(\.subscriptionName) == ["Max", nil, nil])
-        #expect(!text.contains("person@example.com"))
-        #expect(!text.contains("/Users/"))
-        #expect(!text.contains("550e8400"))
-        #expect(!text.contains("secret project"))
-        #expect(!text.contains("abcdefabcdef"))
-        #expect(!text.contains("intranet"))
-        #expect(!text.contains("acme"))
-    }
-
-    @Test
-    func `subscription labels require a plan tier provider contract`() {
-        #expect(Self.subscriptionName(provider: .codex, rawName: "pro")?.displayName == "Pro 20x")
-        #expect(Self.subscriptionName(provider: .codex, rawName: "Plus Plan")?.displayName == "Plus")
-        #expect(Self.subscriptionName(provider: .cursor, rawName: "Cursor Pro")?.displayName == "Cursor Pro")
-        #expect(Self.subscriptionName(provider: .gemini, rawName: "Paid")?.displayName == "Paid")
-        #expect(Self.subscriptionName(provider: .copilot, rawName: "Business")?.displayName == "Business")
-        #expect(Self.subscriptionName(provider: .perplexity, rawName: "Max")?.displayName == "Max")
-        #expect(Self.subscriptionName(provider: .windsurf, rawName: "Teams")?.displayName == "Teams")
-        #expect(Self.subscriptionName(provider: .zed, rawName: "Zed Pro")?.displayName == "Zed Pro")
-        #expect(Self.subscriptionName(provider: .minimax, rawName: "MiniMax Star")?.displayName == "MiniMax Star")
-        #expect(Self.subscriptionName(provider: .synthetic, rawName: "Starter")?.displayName == "Starter")
-        #expect(Self.subscriptionName(provider: .openrouter, rawName: "Team") == nil)
-        #expect(Self.subscriptionName(provider: .claude, rawName: "name@example.com") == nil)
-        #expect(Self.subscriptionName(provider: .claude, rawName: "Alice Smith") == nil)
-        #expect(Self.subscriptionName(provider: .codex, rawName: "123456789") == nil)
-        #expect(Self.subscriptionName(provider: .cursor, rawName: "sk-live-example") == nil)
-        #expect(Self.subscriptionName(provider: .claude, rawName: "internal.example") == nil)
-        #expect(Self.subscriptionName(provider: .claude, rawName: "Max", accountOrganization: "Max") == nil)
     }
 
     @Test
@@ -550,10 +452,10 @@ struct ShareStatsTests {
                         totalCost: 4,
                         coveredDayCount: 30),
                     SpendDashboardModel.ProviderRow(
-                        id: "cursor",
+                        id: "deepseek",
                         rank: 2,
-                        provider: .cursor,
-                        displayName: "Cursor",
+                        provider: .deepseek,
+                        displayName: "DeepSeek",
                         totalTokens: nil,
                         totalCost: nil,
                         coveredDayCount: 0),

@@ -112,7 +112,7 @@ struct LocalizationSemanticContractTests {
             let details = try ProviderDetailSection(title: "Quota details", rows: [
                 .init(label: "Period", value: "peak \(countdown)", secondaryValue: "off-peak \(countdown)"),
             ])
-            let localized = UsageMenuCardView.Model.localizedProviderDetails([details], provider: .zai)
+            let localized = UsageMenuCardView.Model.localizedProviderDetails([details], provider: .deepseek)
             let row = try #require(localized.first?.rows.first)
             #expect(row.value == "\(L("peak")) \(expected)")
             #expect(row.secondaryValue == "\(L("off-peak")) \(expected)")

@@ -4,8 +4,6 @@ import Foundation
 public enum CostUsageError: LocalizedError, Sendable {
     case unsupportedProvider(UsageProvider)
     case timedOut(seconds: Int)
-    case cursorPaginationIncomplete(expected: Int?, received: Int)
-    case cursorPaginationInconsistent(expected: Int, received: Int)
 
     public var errorDescription: String? {
         switch self {
@@ -16,13 +14,6 @@ public enum CostUsageError: LocalizedError, Sendable {
                 return "Cost refresh timed out after \(seconds / 60)m."
             }
             return "Cost refresh timed out after \(seconds)s."
-        case let .cursorPaginationIncomplete(expected, received):
-            if let expected {
-                return "Cursor cost refresh was incomplete (received \(received) of \(expected) events)."
-            }
-            return "Cursor cost refresh reached its pagination safety limit after \(received) events."
-        case let .cursorPaginationInconsistent(expected, received):
-            return "Cursor cost pagination was inconsistent (expected \(expected), received \(received) events)."
         }
     }
 }
@@ -204,13 +195,10 @@ public struct CostUsageFetcher: Sendable {
     public func loadTokenSnapshot(
         provider: UsageProvider,
         environment: [String: String] = ProcessInfo.processInfo.environment,
-        antigravityAdditionalProfileHomes: [String] = [],
         now: Date = Date(),
         forceRefresh: Bool = false,
-        allowVertexClaudeFallback: Bool = false,
         codexHomePath: String? = nil,
         historyDays: Int = 30,
-        cursorCookieHeaderOverride: String? = nil,
         allowPricingRefresh: Bool = true,
         refreshPricingInBackground: Bool = true,
         includePiSessions: Bool = true,
@@ -222,13 +210,10 @@ public struct CostUsageFetcher: Sendable {
         try await Self.loadTokenSnapshot(
             provider: provider,
             environment: environment,
-            antigravityAdditionalProfileHomes: antigravityAdditionalProfileHomes,
             now: now,
             forceRefresh: forceRefresh,
-            allowVertexClaudeFallback: allowVertexClaudeFallback,
             codexHomePath: codexHomePath,
             historyDays: historyDays,
-            cursorCookieHeaderOverride: cursorCookieHeaderOverride,
             allowPricingRefresh: allowPricingRefresh,
             refreshPricingInBackground: refreshPricingInBackground,
             includePiSessions: includePiSessions,
@@ -242,13 +227,10 @@ public struct CostUsageFetcher: Sendable {
         provider: UsageProvider,
         claudeConfigDirectory: String? = nil,
         environment: [String: String] = ProcessInfo.processInfo.environment,
-        antigravityAdditionalProfileHomes: [String] = [],
         now: Date = Date(),
         forceRefresh: Bool = false,
-        allowVertexClaudeFallback: Bool = false,
         codexHomePath: String? = nil,
         historyDays: Int = 30,
-        cursorCookieHeaderOverride: String? = nil,
         allowPricingRefresh: Bool = true,
         refreshPricingInBackground: Bool = true,
         includePiSessions: Bool = true,
@@ -272,13 +254,10 @@ public struct CostUsageFetcher: Sendable {
         return try await Self.loadTokenResult(
             provider: provider,
             environment: environment,
-            antigravityAdditionalProfileHomes: antigravityAdditionalProfileHomes,
             now: now,
             forceRefresh: forceRefresh,
-            allowVertexClaudeFallback: allowVertexClaudeFallback,
             codexHomePath: codexHomePath,
             historyDays: historyDays,
-            cursorCookieHeaderOverride: cursorCookieHeaderOverride,
             allowPricingRefresh: allowPricingRefresh,
             refreshPricingInBackground: refreshPricingInBackground,
             includePiSessions: includePiSessions,
@@ -295,7 +274,6 @@ public struct CostUsageFetcher: Sendable {
         environment: [String: String] = ProcessInfo.processInfo.environment,
         now: Date = Date(),
         forceRefresh: Bool = false,
-        allowVertexClaudeFallback: Bool = false,
         codexHomePath: String? = nil,
         historyDays: Int = 30,
         allowPricingRefresh: Bool = true,
@@ -307,7 +285,6 @@ public struct CostUsageFetcher: Sendable {
             environment: environment,
             now: now,
             forceRefresh: forceRefresh,
-            allowVertexClaudeFallback: allowVertexClaudeFallback,
             codexHomePath: codexHomePath,
             historyDays: historyDays,
             allowPricingRefresh: allowPricingRefresh,
@@ -421,13 +398,10 @@ public struct CostUsageFetcher: Sendable {
     static func loadTokenSnapshot(
         provider: UsageProvider,
         environment: [String: String] = ProcessInfo.processInfo.environment,
-        antigravityAdditionalProfileHomes: [String] = [],
         now: Date = Date(),
         forceRefresh: Bool = false,
-        allowVertexClaudeFallback: Bool = false,
         codexHomePath: String? = nil,
         historyDays: Int = 30,
-        cursorCookieHeaderOverride: String? = nil,
         allowPricingRefresh: Bool = true,
         refreshPricingInBackground: Bool = true,
         includePiSessions: Bool = true,
@@ -443,13 +417,10 @@ public struct CostUsageFetcher: Sendable {
         try await self.loadTokenResult(
             provider: provider,
             environment: environment,
-            antigravityAdditionalProfileHomes: antigravityAdditionalProfileHomes,
             now: now,
             forceRefresh: forceRefresh,
-            allowVertexClaudeFallback: allowVertexClaudeFallback,
             codexHomePath: codexHomePath,
             historyDays: historyDays,
-            cursorCookieHeaderOverride: cursorCookieHeaderOverride,
             allowPricingRefresh: allowPricingRefresh,
             refreshPricingInBackground: refreshPricingInBackground,
             includePiSessions: includePiSessions,
@@ -466,13 +437,10 @@ public struct CostUsageFetcher: Sendable {
     static func loadTokenResult(
         provider: UsageProvider,
         environment: [String: String] = ProcessInfo.processInfo.environment,
-        antigravityAdditionalProfileHomes: [String] = [],
         now: Date = Date(),
         forceRefresh: Bool = false,
-        allowVertexClaudeFallback: Bool = false,
         codexHomePath: String? = nil,
         historyDays: Int = 30,
-        cursorCookieHeaderOverride: String? = nil,
         allowPricingRefresh: Bool = true,
         refreshPricingInBackground: Bool = true,
         includePiSessions: Bool = true,
@@ -492,52 +460,13 @@ public struct CostUsageFetcher: Sendable {
 
         let clampedHistoryDays = max(1, historyDays)
 
-        var remoteSnapshot: CostUsageTokenSnapshot?
-        var remoteError: Error?
         do {
             // Provider-specific by design: Bedrock uses AWS billing while Cursor uses its macOS dashboard session.
             let calendar = overrideScannerOptions?.calendar ?? .current
             let since = CostReportingPeriod.rolling(days: clampedHistoryDays).bounds(now: now, calendar: calendar)
                 .lowerBound
-            if provider == .bedrock {
-                let daily = try await Self.loadBedrockDailyReport(
-                    environment: environment,
-                    since: since,
-                    until: now)
-                remoteSnapshot = Self.tokenSnapshot(
-                    from: CostUsageDailyReport(
-                        data: CostReportingPeriod.rolling(days: clampedHistoryDays)
-                            .entries(daily.data, now: now, calendar: calendar),
-                        summary: nil),
-                    now: now,
-                    historyDays: clampedHistoryDays,
-                    useCurrentLocalDayForSession: false,
-                    calendar: calendar,
-                    historyCoverageIsEstablished: CostUsageLocalDay.key(from: now, calendar: calendar)
-                        <= CostUsageLocalDay.key(
-                            from: now, calendar: CostUsageBucketTimeZone.calendar(identifier: "UTC")),
-                    costProvenance: .vendorMetered)
-            }
-
-            #if os(macOS)
-            // Provider-specific by design: Cursor retries failed web cost queries against local CSV history.
-            if provider == .cursor {
-                remoteSnapshot = try await self.loadCursorTokenSnapshot(
-                    now: now,
-                    since: since,
-                    historyDays: clampedHistoryDays,
-                    calendar: calendar,
-                    cookieHeaderOverride: cursorCookieHeaderOverride)
-            }
-            #endif
         } catch {
-            if provider != .cursor {
-                throw error
-            }
-            remoteError = error
-        }
-        if let remoteSnapshot {
-            return CostUsageTokenResult(snapshot: remoteSnapshot)
+            throw error
         }
 
         // Provider-specific by design: Cursor and Antigravity local readers backfill providers without remote history.
@@ -546,47 +475,6 @@ public struct CostUsageFetcher: Sendable {
             provider: provider,
             codexHomePath: codexHomePath)
         let fallbackCalendar = fallbackOptions.calendar
-        if provider == .cursor {
-            if let local = await self.loadCursorLocalSnapshot(
-                now: now, historyDays: clampedHistoryDays, calendar: fallbackCalendar)
-            {
-                return CostUsageTokenResult(snapshot: local)
-            }
-            if let remoteError {
-                throw remoteError
-            }
-            return CostUsageTokenResult(snapshot: Self.unavailableLocalSnapshot(
-                now: now,
-                historyDays: clampedHistoryDays,
-                calendar: fallbackCalendar))
-        }
-        // Provider-specific by design: Antigravity uses recognized local stores without generic pricing or cache scans.
-        if provider == .antigravity {
-            let pricing = AntigravityPricingOptions(
-                cacheRoot: overrideScannerOptions?.cacheRoot,
-                refresh: PricingRefreshOptions(
-                    provider: .antigravity,
-                    isAllowed: allowPricingRefresh,
-                    retryUnknown: retryUnknownPricing,
-                    inBackground: refreshPricingInBackground || !forceRefresh),
-                client: modelsDevClient)
-            if let local = try await self.loadPricedAntigravityLocalSnapshot(
-                context: .init(environment: environment, additionalProfileHomes: antigravityAdditionalProfileHomes),
-                now: now,
-                historyDays: clampedHistoryDays,
-                calendar: fallbackCalendar,
-                pricing: pricing)
-            {
-                return CostUsageTokenResult(snapshot: local)
-            }
-            if let remoteError {
-                throw remoteError
-            }
-            return CostUsageTokenResult(snapshot: Self.unavailableLocalSnapshot(
-                now: now,
-                historyDays: clampedHistoryDays,
-                calendar: fallbackCalendar))
-        }
         // OpenCode Go shares the app's device-local reader and recorded-cost projection.
         if provider == .opencodego {
             let home = environment["HOME"].map { URL(fileURLWithPath: $0, isDirectory: true) }
@@ -597,14 +485,6 @@ public struct CostUsageFetcher: Sendable {
                 return CostUsageTokenResult(snapshot: usage.toCostUsageTokenSnapshot(
                     historyDays: clampedHistoryDays, calendar: fallbackCalendar))
             }
-        }
-        // Provider-specific by design: Muse local history has token evidence but no established dollar rates.
-        if provider == .muse {
-            return try await CostUsageTokenResult(snapshot: Self.loadMuseLocalSnapshot(
-                environment: environment,
-                now: now,
-                historyDays: clampedHistoryDays,
-                options: fallbackOptions))
         }
         // Provider-specific by design: Devin reads the Devin CLI's local session ledger; SWE-2
         // requests are free during the promo and Claude-routed requests price like Claude.
@@ -621,10 +501,6 @@ public struct CostUsageFetcher: Sendable {
                     inBackground: refreshPricingInBackground),
                 modelsDevClient: modelsDevClient))
         }
-        if let remoteError {
-            throw remoteError
-        }
-
         // Provider-specific by design: Pi has an independent aggregate token-cost history over its local JSONL logs.
         if provider == .pi {
             var piOptionsOnly = overridePiScannerOptions ?? PiSessionCostScanner.Options()
@@ -695,10 +571,8 @@ public struct CostUsageFetcher: Sendable {
                         environment: environment,
                         now: now,
                         forceRefresh: forceRefresh,
-                        allowVertexClaudeFallback: allowVertexClaudeFallback,
                         codexHomePath: codexHomePath,
                         historyDays: historyDays,
-                        cursorCookieHeaderOverride: cursorCookieHeaderOverride,
                         allowPricingRefresh: allowPricingRefresh,
                         refreshPricingInBackground: false,
                         includePiSessions: includePiSessions,
@@ -750,7 +624,6 @@ public struct CostUsageFetcher: Sendable {
         Self.configureScannerRefresh(
             &options,
             provider: provider,
-            allowVertexClaudeFallback: allowVertexClaudeFallback,
             forceRefresh: forceRefresh,
             bypassScannerDebounce: bypassScannerDebounce)
         var resolvedPiOptions = overridePiScannerOptions ?? PiSessionCostScanner.Options()
@@ -775,7 +648,6 @@ public struct CostUsageFetcher: Sendable {
 
         let scanOptions = options
         let localScanOptions = LocalTokenScanOptions(
-            allowVertexClaudeFallback: allowVertexClaudeFallback,
             includePiSessions: includePiSessions,
             shouldMergePiUsage: shouldMergePiUsage,
             scanOptions: scanOptions,
@@ -803,10 +675,8 @@ public struct CostUsageFetcher: Sendable {
                 environment: environment,
                 now: now,
                 forceRefresh: forceRefresh,
-                allowVertexClaudeFallback: allowVertexClaudeFallback,
                 codexHomePath: codexHomePath,
                 historyDays: historyDays,
-                cursorCookieHeaderOverride: cursorCookieHeaderOverride,
                 allowPricingRefresh: allowPricingRefresh,
                 refreshPricingInBackground: false,
                 includePiSessions: includePiSessions,
@@ -869,7 +739,6 @@ public struct CostUsageFetcher: Sendable {
     }
 
     private struct LocalTokenScanOptions: Sendable {
-        let allowVertexClaudeFallback: Bool
         let includePiSessions: Bool
         let shouldMergePiUsage: Bool
         let scanOptions: CostUsageScanner.Options
@@ -912,24 +781,6 @@ public struct CostUsageFetcher: Sendable {
                 reportContext: options.reportContext,
                 checkCancellation: checkCancellation)
             try checkCancellation()
-
-            if provider == .vertexai,
-               !options.allowVertexClaudeFallback,
-               options.scanOptions.claudeLogProviderFilter == .vertexAIOnly,
-               daily.data.isEmpty
-            {
-                var fallback = options.scanOptions
-                fallback.claudeLogProviderFilter = .all
-                daily = try CostUsageScanner.loadDailyReportCancellable(
-                    provider: provider,
-                    since: since,
-                    until: now,
-                    now: now,
-                    options: fallback,
-                    reportContext: options.reportContext,
-                    checkCancellation: checkCancellation)
-                try checkCancellation()
-            }
 
             var projects: [CostUsageProjectBreakdown] = []
             var sessions: [CostUsageSessionBreakdown] = []
@@ -1143,12 +994,6 @@ public struct CostUsageFetcher: Sendable {
         let inBackground: Bool
     }
 
-    private struct AntigravityPricingOptions {
-        let cacheRoot: URL?
-        let refresh: PricingRefreshOptions
-        let client: ModelsDevClient
-    }
-
     static func refreshPricingIfAllowed(
         options: PricingRefreshOptions,
         now: Date,
@@ -1157,7 +1002,7 @@ public struct CostUsageFetcher: Sendable {
     {
         guard options.isAllowed,
               options.retryUnknown,
-              options.provider == .codex || options.provider == .claude || options.provider == .antigravity
+              options.provider == .codex || options.provider == .claude
         else { return }
 
         if options.inBackground {
@@ -1167,54 +1012,6 @@ public struct CostUsageFetcher: Sendable {
         } else {
             await ModelsDevPricingPipeline.refreshIfNeeded(now: now, cacheRoot: cacheRoot, client: client)
         }
-    }
-
-    private static func loadPricedAntigravityLocalSnapshot(
-        context: AntigravityLocalReader.Context,
-        now: Date,
-        historyDays: Int,
-        calendar: Calendar,
-        pricing: AntigravityPricingOptions) async throws -> CostUsageTokenSnapshot?
-    {
-        let snapshot = try await self.loadAntigravityLocalSnapshot(
-            context: context,
-            now: now,
-            historyDays: historyDays,
-            calendar: calendar,
-            pricingCacheRoot: pricing.cacheRoot)
-        // Provider-specific by design: Antigravity returns before the shared scan path, so it is the
-        // one provider that has to request its own unknown-model pricing refresh; without it a
-        // newly released model stays unpriced forever.
-        guard let snapshot, !snapshot.daily.isEmpty,
-              pricing.refresh.isAllowed,
-              pricing.refresh.retryUnknown
-        else { return snapshot }
-        guard let request = Self.unknownPricingRefreshRequest(
-            provider: .antigravity,
-            daily: CostUsageDailyReport(data: snapshot.daily, summary: nil),
-            now: now,
-            cacheRoot: pricing.cacheRoot,
-            client: pricing.client)
-        else {
-            await self.refreshPricingIfAllowed(
-                options: PricingRefreshOptions(
-                    provider: pricing.refresh.provider, isAllowed: true, retryUnknown: true, inBackground: true),
-                now: now,
-                cacheRoot: pricing.cacheRoot,
-                client: pricing.client)
-            return snapshot
-        }
-        guard await Self.refreshUnknownPricingIfNeeded(request, inBackground: pricing.refresh.inBackground)
-        else { return snapshot }
-        let repriced = try await self.loadAntigravityLocalSnapshot(
-            context: context,
-            now: now,
-            historyDays: historyDays,
-            calendar: calendar,
-            pricingCacheRoot: pricing.cacheRoot)
-        // A pricing download must not replace a complete scan with history truncated in the meantime.
-        guard let repriced, snapshot.historyScanIsPartial || !repriced.historyScanIsPartial else { return snapshot }
-        return repriced
     }
 
     private struct UnknownPricingRefreshRequest: Sendable {
@@ -1231,15 +1028,13 @@ public struct CostUsageFetcher: Sendable {
         cacheRoot: URL?,
         client: ModelsDevClient) -> UnknownPricingRefreshRequest?
     {
-        guard provider == .codex || provider == .claude || provider == .antigravity else { return nil }
+        guard provider == .codex || provider == .claude else { return nil }
         var targets = Set<ModelsDevPricingTarget>()
         for entry in daily.data {
             for breakdown in entry.modelBreakdowns ?? [] {
                 guard breakdown.costUSD == nil else { continue }
                 let pricingTargets: [(providerID: String, modelID: String)]
-                if provider == .antigravity {
-                    pricingTargets = AntigravityLocalReader.pricingRefreshTargets(for: breakdown.modelName)
-                } else if provider == .codex {
+                if provider == .codex {
                     guard OpenCodexRouteDispatcher.countsTowardCodexSubscription(modelName: breakdown.modelName)
                     else { continue }
                     guard !CostUsagePricing.isCodexUnattributedModel(breakdown.modelName) else { continue }
@@ -1643,111 +1438,6 @@ public struct CostUsageFetcher: Sendable {
         return CodexLocalDataScope.resolve(options: options).applying(to: options)
     }
 
-    private static func loadBedrockDailyReport(
-        environment: [String: String],
-        since: Date,
-        until: Date) async throws -> CostUsageDailyReport
-    {
-        let resolved = try await BedrockCredentialResolver.resolve(environment: environment)
-        return try await BedrockUsageFetcher.fetchDailyReport(
-            credentials: resolved.credentials,
-            since: since,
-            until: until,
-            environment: environment)
-    }
-
-    #if os(macOS)
-    /// Fetch Cursor's per-day token-cost plus its Cursor-metered total via the cookie-authenticated
-    /// dashboard API, reusing the same session resolution as the Cursor status probe. Like Codex and
-    /// Claude, the report covers the rolling `historyDays` window and the session line is tied to the
-    /// current local day (so a stale latest entry is never labeled as Today).
-    private static func loadCursorTokenSnapshot(
-        now: Date,
-        since: Date?,
-        historyDays: Int,
-        calendar: Calendar,
-        cookieHeaderOverride: String? = nil) async throws -> CostUsageTokenSnapshot
-    {
-        let probe = CursorStatusProbe(browserDetection: BrowserDetection())
-        let report = try await probe.fetchCostReport(
-            since: since,
-            until: now,
-            calendar: calendar,
-            cookieHeaderOverride: cookieHeaderOverride)
-        return Self.tokenSnapshot(
-            from: report.daily,
-            now: now,
-            historyDays: historyDays,
-            useCurrentLocalDayForSession: true,
-            calendar: calendar,
-            meteredCostUSD: report.meteredCostUSD,
-            costProvenance: Self.cursorCostProvenance(
-                meteredCostUSD: report.meteredCostUSD,
-                daily: report.daily.data),
-            credentialScopeFingerprint: report.credentialScopeFingerprint)
-    }
-    #endif
-
-    private static func loadCursorLocalSnapshot(
-        now: Date,
-        historyDays: Int,
-        calendar: Calendar = .current) async -> CostUsageTokenSnapshot?
-    {
-        let allRows = CursorLocalCSVReader.cachedCSVPaths().flatMap { CursorLocalCSVReader.parseFile(at: $0) }
-        guard !allRows.isEmpty else { return nil }
-        let full = CursorLocalCSVReader.makeDailyReport(from: allRows, calendar: calendar, now: now)
-        let daily = Self.windowedDailyReport(full, historyDays: historyDays, now: now, calendar: calendar)
-        guard !daily.data.isEmpty else { return nil }
-        return Self.tokenSnapshot(
-            from: daily,
-            now: now,
-            historyDays: historyDays,
-            useCurrentLocalDayForSession: true,
-            calendar: calendar,
-            costProvenance: .listPriceEstimate)
-    }
-
-    private static func loadAntigravityLocalSnapshot(
-        context: AntigravityLocalReader.Context,
-        now: Date,
-        historyDays: Int,
-        calendar: Calendar = .current,
-        pricingCacheRoot: URL?) async throws -> CostUsageTokenSnapshot?
-    {
-        let reportResult = try await CostUsageScanExecutor.run { checkCancellation in
-            try AntigravityLocalReader.makeDailyReportWithStatus(
-                context: context,
-                calendar: calendar,
-                estimateCost: true,
-                pricingCacheRoot: pricingCacheRoot,
-                checkCancellation: checkCancellation)
-        }
-        // A scan can be partial when an old Antigravity database has a missing WAL sidecar or the
-        // safety budget stops early. Those rows are a trustworthy subset, so keep them as a marked
-        // lower bound. Contradicted evidence is different in kind — the surviving rows may be
-        // wrong, not merely incomplete — and stays unpublishable. The same applies to an
-        // immutable SQLite read whose underlying files changed during the read.
-        guard reportResult.isAvailable
-            || (!reportResult.report.data.isEmpty && !reportResult.evidenceIsContradicted
-                && !reportResult.evidenceIsUnstable)
-        else { return nil }
-        let report = reportResult.report
-        guard !report.data.isEmpty || reportResult.isComplete else { return nil }
-        let daily = Self.windowedDailyReport(report, historyDays: historyDays, now: now, calendar: calendar)
-        return Self.tokenSnapshot(
-            from: daily,
-            now: now,
-            historyDays: historyDays,
-            useCurrentLocalDayForSession: true,
-            calendar: calendar,
-            // A truncated scan must not claim the window: absence of a row is not proof of a zero
-            // day. `historyScanIsPartial` keeps the rows it did read usable as a marked lower
-            // bound, which is what separates "read part of it" from "could not read it".
-            historyCoverageIsEstablished: reportResult.isComplete,
-            historyScanIsPartial: !reportResult.isComplete,
-            costProvenance: daily.summary?.totalCostUSD == nil ? .unknown : .listPriceEstimate)
-    }
-
     private static func windowedDailyReport(
         _ report: CostUsageDailyReport, historyDays: Int, now: Date, calendar: Calendar) -> CostUsageDailyReport
     {
@@ -1842,33 +1532,13 @@ public struct CostUsageFetcher: Sendable {
         return self.codexAutomaticScanDurationPerRefresh
     }
 
-    private static func cursorCostProvenance(
-        meteredCostUSD: Double?,
-        daily: [CostUsageDailyReport.Entry]) -> CostProvenance
-    {
-        let hasDailyCosts = daily.contains { $0.costUSD != nil }
-        if meteredCostUSD != nil, hasDailyCosts {
-            return .mixed
-        }
-        if meteredCostUSD != nil {
-            return .vendorMetered
-        }
-        if hasDailyCosts {
-            return .listPriceEstimate
-        }
-        return .unknown
-    }
-
     private static func configureScannerRefresh(
         _ options: inout CostUsageScanner.Options,
         provider: UsageProvider,
-        allowVertexClaudeFallback: Bool,
         forceRefresh: Bool,
         bypassScannerDebounce: Bool)
     {
-        if provider == .vertexai {
-            options.claudeLogProviderFilter = allowVertexClaudeFallback ? .all : .vertexAIOnly
-        } else if provider == .claude {
+        if provider == .claude {
             options.claudeLogProviderFilter = .excludeVertexAI
         }
         if forceRefresh || bypassScannerDebounce {

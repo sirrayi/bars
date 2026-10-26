@@ -346,28 +346,6 @@ struct WidgetTileLayoutTests {
         #expect(rows.map(\.percentLeft) == [90, 60])
     }
 
-    @Test
-    func `slot recovery does not invent resets for provider specific rows`() {
-        let entry = WidgetSnapshot.ProviderEntry(
-            provider: .kimi,
-            updatedAt: Date(timeIntervalSince1970: 1_800_000_000),
-            primary: RateWindow(
-                usedPercent: 10,
-                windowMinutes: 300,
-                resetsAt: Date(timeIntervalSince1970: 1_800_003_600),
-                resetDescription: nil),
-            secondary: nil,
-            tertiary: nil,
-            usageRows: nil,
-            creditsRemaining: nil,
-            codeReviewRemainingPercent: nil,
-            tokenUsage: nil,
-            dailyUsage: [])
-
-        #expect(WidgetUsageRow.slotWindow(for: "kimi-code-7d", entry: entry) == nil)
-        #expect(WidgetUsageRow.slotWindow(for: "primary", entry: entry) != nil)
-    }
-
     // MARK: - Severity
 
     @Test

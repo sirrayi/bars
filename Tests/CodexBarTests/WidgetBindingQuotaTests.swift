@@ -75,17 +75,6 @@ struct WidgetBindingQuotaTests {
     }
 
     @Test
-    func `all declared binding slots participate in headline selection`() {
-        let entry = self.entry(.alibaba, rows: [
-            Row(id: "primary", title: "Session", percentLeft: 70),
-            Row(id: "secondary", title: "Weekly", percentLeft: 40),
-            Row(id: "tertiary", title: "Monthly", percentLeft: 5),
-        ])
-        let plan = WidgetTilePlan.make(lanes: WidgetTileLane.lanes(for: entry), maxSecondaryLanes: 5)
-        #expect(plan.hero?.id == "tertiary")
-    }
-
-    @Test
     func `Claude replacement balance remains useful without promoting scoped only rows`() {
         let balance = self.entry(.claude, rows: [Row(id: "extraUsage", title: "Extra usage", percentLeft: 15)])
         let scoped = self.entry(.claude, rows: [Row(id: "tertiary", title: "Fable", percentLeft: 0)])
@@ -94,25 +83,6 @@ struct WidgetBindingQuotaTests {
         #expect(balancePlan.hero?.id == "extraUsage")
         #expect(scopedPlan.hero == nil)
         #expect(scopedPlan.lanes.map(\.id) == ["tertiary"])
-    }
-
-    @Test
-    func `Kimi quota beyond compact curation remains the headline`() {
-        let entry = self.entry(.kimi, rows: [
-            Row(id: "primary", title: "Session", percentLeft: 70),
-            Row(id: "secondary", title: "Weekly", percentLeft: 40),
-            Row(id: "kimi-monthly", title: "Monthly", percentLeft: 30),
-            Row(id: "kimi-code-7d", title: "Code 7d", percentLeft: 1),
-        ])
-        let all = WidgetTileLane.lanes(for: entry)
-        let curated = WidgetTileLane.lanes(for: entry, limit: WidgetUsageRow.smallWidgetRowLimit(for: entry))
-        let plan = WidgetTilePlan.make(
-            lanes: all,
-            displayCandidates: curated,
-            maxSecondaryLanes: 2,
-            reservesOverflowRow: true)
-        #expect(plan.hero?.id == "kimi-code-7d")
-        #expect(plan.overflowCount == all.count - 1 - plan.lanes.count)
     }
 
     @Test

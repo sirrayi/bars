@@ -409,9 +409,7 @@ struct CodexDashboardWorkedExampleParityTests {
         defaults.removePersistentDomain(forName: suite)
         let settings = SettingsStore(
             userDefaults: defaults,
-            configStore: testConfigStore(suiteName: suite),
-            zaiTokenStore: NoopZaiTokenStore(),
-            syntheticTokenStore: NoopSyntheticTokenStore())
+            configStore: testConfigStore(suiteName: suite))
         settings._test_activeManagedCodexAccount = nil
         settings._test_activeManagedCodexRemoteHomePath = nil
         settings._test_unreadableManagedCodexAccountStore = false
@@ -494,33 +492,6 @@ struct CodexDashboardWorkedExampleParityTests {
         try data.write(to: homeURL.appendingPathComponent("auth.json"))
     }
 
-    private static func fakeJWT(email: String?, accountId: String?) -> String {
-        let header = (try? JSONSerialization.data(withJSONObject: ["alg": "none"])) ?? Data()
-        var authClaims: [String: Any] = [
-            "chatgpt_plan_type": "pro",
-        ]
-        if let accountId {
-            authClaims["chatgpt_account_id"] = accountId
-        }
-        var claims: [String: Any] = [
-            "chatgpt_plan_type": "pro",
-            "https://api.openai.com/auth": authClaims,
-        ]
-        if let email {
-            claims["email"] = email
-        }
-        let payload = (try? JSONSerialization.data(withJSONObject: claims)) ?? Data()
-
-        func base64URL(_ data: Data) -> String {
-            data.base64EncodedString()
-                .replacingOccurrences(of: "=", with: "")
-                .replacingOccurrences(of: "+", with: "-")
-                .replacingOccurrences(of: "/", with: "_")
-        }
-
-        return "\(base64URL(header)).\(base64URL(payload))."
-    }
-
     private func makeManagedAccountStoreURL(accounts: [ManagedCodexAccount]) throws -> URL {
         let storeURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let store = FileManagedCodexAccountStore(fileURL: storeURL)
@@ -594,5 +565,32 @@ struct CodexDashboardWorkedExampleParityTests {
                 ],
                 totalCreditsUsed: dailyCredits)
         }
+    }
+
+    private static func fakeJWT(email: String?, accountId: String?) -> String {
+        let header = (try? JSONSerialization.data(withJSONObject: ["alg": "none"])) ?? Data()
+        var authClaims: [String: Any] = [
+            "chatgpt_plan_type": "pro",
+        ]
+        if let accountId {
+            authClaims["chatgpt_account_id"] = accountId
+        }
+        var claims: [String: Any] = [
+            "chatgpt_plan_type": "pro",
+            "https://api.openai.com/auth": authClaims,
+        ]
+        if let email {
+            claims["email"] = email
+        }
+        let payload = (try? JSONSerialization.data(withJSONObject: claims)) ?? Data()
+
+        func base64URL(_ data: Data) -> String {
+            data.base64EncodedString()
+                .replacingOccurrences(of: "=", with: "")
+                .replacingOccurrences(of: "+", with: "-")
+                .replacingOccurrences(of: "/", with: "_")
+        }
+
+        return "\(base64URL(header)).\(base64URL(payload))."
     }
 }

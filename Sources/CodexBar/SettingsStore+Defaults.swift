@@ -532,11 +532,6 @@ extension SettingsStore {
         self.userDefaults.set(blobs.legacy, forKey: MenuBarLayoutUserDefaultsKey.overrides)
     }
 
-    var copilotIconSecondaryWindowIDRaw: String {
-        get { self.defaultsState.copilotIconSecondaryWindowIDRaw }
-        set { self.setDefault(\.copilotIconSecondaryWindowIDRaw, newValue, key: "copilotIconSecondaryWindowID") }
-    }
-
     var costUsageEnabled: Bool {
         get { self.defaultsState.costUsageEnabled }
         set {
@@ -737,25 +732,6 @@ extension SettingsStore {
             } else if self.claudeOAuthKeychainPromptMode == .never {
                 self.claudeOAuthKeychainPromptMode = .onlyOnUserAction
             }
-        }
-    }
-
-    var copilotBudgetExtrasEnabled: Bool {
-        get { self.defaultsState.copilotBudgetExtrasEnabled }
-        set {
-            self.setDefault(\.copilotBudgetExtrasEnabled, newValue, key: "copilotBudgetExtrasEnabled")
-            CodexBarLog.logger(LogCategories.settings).info(
-                "Copilot budget extras updated",
-                metadata: ["enabled": newValue ? "1" : "0"])
-            self.noteBackgroundWorkSettingsChanged()
-        }
-    }
-
-    var copilotSeatCreditEntitlementRaw: String {
-        get { self.defaultsState.copilotSeatCreditEntitlementRaw }
-        set {
-            self.setDefault(\.copilotSeatCreditEntitlementRaw, newValue, key: "copilotSeatCreditEntitlement")
-            self.noteBackgroundWorkSettingsChanged()
         }
     }
 

@@ -153,7 +153,7 @@ final class ResetTimeBackfillTests: XCTestCase {
             secondary: nil,
             updatedAt: now.addingTimeInterval(-300),
             identity: ProviderIdentitySnapshot(
-                providerID: .cursor,
+                providerID: .opencode,
                 accountEmail: "shared@example.com",
                 accountOrganization: nil,
                 loginMethod: nil,
@@ -163,7 +163,7 @@ final class ResetTimeBackfillTests: XCTestCase {
             secondary: nil,
             updatedAt: now,
             identity: ProviderIdentitySnapshot(
-                providerID: .cursor,
+                providerID: .opencode,
                 accountEmail: "shared@example.com",
                 accountOrganization: nil,
                 loginMethod: nil,

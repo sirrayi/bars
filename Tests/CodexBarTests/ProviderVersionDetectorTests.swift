@@ -256,25 +256,6 @@ final class ProviderVersionDetectorTests: XCTestCase {
         XCTAssertEqual(state.callCount, 1)
     }
 
-    func test_claudeVersion_realExecutableProof() throws {
-        guard ProcessInfo.processInfo.environment["LIVE_CLAUDE_TTY"] == "1" else {
-            throw XCTSkip("Set LIVE_CLAUDE_TTY=1 to probe the installed Claude executable")
-        }
-        guard let path = TTYCommandRunner.which("claude") else {
-            throw XCTSkip("claude executable is not installed in PATH")
-        }
-
-        let direct = try XCTUnwrap(ProviderVersionDetector.run(path: path, args: ["--version"]))
-        let cold = try XCTUnwrap(Self.userInitiatedClaudeVersion())
-        let warm = try XCTUnwrap(Self.userInitiatedClaudeVersion())
-
-        print(
-            "Claude real executable proof: path=\(URL(fileURLWithPath: path).lastPathComponent) "
-                + "direct=\(direct) cold=\(cold) warm=\(warm)")
-        XCTAssertEqual(cold, direct)
-        XCTAssertEqual(warm, direct)
-    }
-
     func test_claudeVersion_coalescesConcurrentProbes() {
         let state = MockDetectorState()
         state.runDelay = 0.1

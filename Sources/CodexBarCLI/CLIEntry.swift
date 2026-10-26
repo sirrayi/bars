@@ -48,7 +48,6 @@ enum CodexBarCLI {
         do {
             let invocation = try program.resolve(argv: argv)
             Self.bootstrapLogging(path: invocation.path, values: invocation.parsedValues)
-            UserProviderPluginRegistry.refresh()
             switch invocation.path {
             case ["cards"], ["usage"]:
                 await self.runUsageDisplay(path: invocation.path, values: invocation.parsedValues)
@@ -80,8 +79,6 @@ enum CodexBarCLI {
                 await self.runDiagnose(invocation.parsedValues)
             case ["guard"]:
                 await self.runGuard(invocation.parsedValues)
-            case let path where path.first == "plugins":
-                await self.runPlugins(path: path, values: invocation.parsedValues)
             default:
                 Self.exit(
                     code: .failure,
@@ -178,7 +175,7 @@ enum CodexBarCLI {
         let diagnoseSignature = CommandSignature.describe(DiagnoseOptions()).flattened()
         let guardSignature = CommandSignature.describe(GuardOptions()).flattened()
 
-        var descriptors = [
+        return [
             Self.codexAccountsCommandDescriptor(),
             CommandDescriptor(
                 name: "cards",
@@ -294,29 +291,6 @@ enum CodexBarCLI {
                 discussion: nil,
                 signature: diagnoseSignature),
         ]
-        descriptors.append(Self.pluginsCommandDescriptor())
-        return descriptors
-    }
-
-    private static func pluginsCommandDescriptor() -> CommandDescriptor {
-        CommandDescriptor(
-            name: "plugins",
-            abstract: "List or fetch user-installed provider plugins",
-            discussion: nil,
-            signature: CommandSignature(),
-            subcommands: [
-                CommandDescriptor(
-                    name: "list",
-                    abstract: "List discovered local plugins",
-                    discussion: nil,
-                    signature: CommandSignature()),
-                CommandDescriptor(
-                    name: "fetch",
-                    abstract: "Fetch one plugin, interactively approving network access when needed",
-                    discussion: nil,
-                    signature: CommandSignature.describe(PluginFetchOptions())),
-            ],
-            defaultSubcommandName: "list")
     }
 
     private static func dashboardCommandDescriptor() -> CommandDescriptor {

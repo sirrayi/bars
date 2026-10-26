@@ -154,12 +154,9 @@ extension UsageStore {
                 : descriptor.tokenCost.showsCostMenuSection && self.settings.costSummaryShowsSubmenu(for: provider),
             costComparisonPeriodsEnabled: !isSettings && self.settings.costComparisonPeriodsEnabled,
             showOptionalCreditsAndExtraUsage: optionalUsageOverride ?? self.settings.showOptionalCreditsAndExtraUsage,
-            copilotBudgetExtrasEnabled: self.settings.copilotBudgetExtrasEnabled,
             showsAllUsageLanes: isSettings,
             sourceLabel: account?.sourceLabel ?? (!isSettings && isLive ? self.sourceLabel(for: provider) : nil),
             subtitleOverride: account?.subtitle,
-            // Provider-specific by design: Kilo's menu explains its automatic source fallback.
-            kiloAutoMode: !isSettings && provider == .kilo && self.settings.kiloUsageDataSource == .auto,
             hidePersonalInfo: self.settings.hidePersonalInfo,
             weeklyPace: weeklyPace,
             sessionEquivalentForecast: forecast,

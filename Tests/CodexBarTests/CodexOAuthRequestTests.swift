@@ -122,36 +122,6 @@ struct CodexOAuthRequestTests {
         #expect(requests.allSatisfy { $0.url?.path == "/backend-api/me" })
     }
     #endif
-
-    @Test
-    func `token refresh request uses isolated cache policy`() async throws {
-        let transport = ProviderHTTPTransportStub { request in
-            #expect(request.url?.absoluteString == "https://auth.openai.com/oauth/token")
-            #expect(request.httpMethod == "POST")
-            #expect(request.cachePolicy == .reloadIgnoringLocalCacheData)
-            let url = try #require(request.url)
-            let response = try #require(HTTPURLResponse(
-                url: url,
-                statusCode: 200,
-                httpVersion: nil,
-                headerFields: ["Cache-Control": "public, max-age=300"]))
-            return (Data(#"{"access_token":"new-a","refresh_token":"new-r"}"#.utf8), response)
-        }
-        let credentials = CodexOAuthCredentials(
-            accessToken: "old-a",
-            refreshToken: "old-r",
-            idToken: nil,
-            accountId: "account-a",
-            lastRefresh: nil)
-
-        let refreshed = try await CodexAuthenticatedHTTPTransport.$overrideForTesting.withValue(transport) {
-            try await CodexTokenRefresher.refresh(credentials)
-        }
-
-        #expect(refreshed.accessToken == "new-a")
-        #expect(refreshed.refreshToken == "new-r")
-        #expect(await transport.requests().count == 1)
-    }
 }
 
 private final class CodexOAuthAccountURLProtocol: URLProtocol {

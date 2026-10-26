@@ -66,7 +66,7 @@ struct ClaudeSwapAccountPrivacyTests {
     @Test
     func `other account sources retain whole value privacy redaction`() throws {
         for (provider, source) in [
-            (UsageProvider.codex, "codex-account"), (.claude, "token-account"), (.cursor, "token-account"),
+            (UsageProvider.codex, "codex-account"), (.claude, "token-account"), (.opencode, "token-account"),
         ] {
             let accounts = (1...4).map { slot in
                 self.account(

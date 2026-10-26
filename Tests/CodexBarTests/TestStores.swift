@@ -1,5 +1,6 @@
 import CodexBarCore
 import Foundation
+import Testing
 @testable import CodexBar
 #if os(macOS)
 import AppKit
@@ -108,70 +109,6 @@ final class InMemoryCookieHeaderStore: CookieHeaderStoring, @unchecked Sendable 
     }
 }
 
-final class InMemoryMiniMaxCookieStore: MiniMaxCookieStoring, @unchecked Sendable {
-    var value: String?
-
-    init(value: String? = nil) {
-        self.value = value
-    }
-
-    func loadCookieHeader() throws -> String? {
-        self.value
-    }
-
-    func storeCookieHeader(_ header: String?) throws {
-        self.value = header
-    }
-}
-
-final class InMemoryMiniMaxAPITokenStore: MiniMaxAPITokenStoring, @unchecked Sendable {
-    var value: String?
-
-    init(value: String? = nil) {
-        self.value = value
-    }
-
-    func loadToken() throws -> String? {
-        self.value
-    }
-
-    func storeToken(_ token: String?) throws {
-        self.value = token
-    }
-}
-
-final class InMemoryKimiTokenStore: KimiTokenStoring, @unchecked Sendable {
-    var value: String?
-
-    init(value: String? = nil) {
-        self.value = value
-    }
-
-    func loadToken() throws -> String? {
-        self.value
-    }
-
-    func storeToken(_ token: String?) throws {
-        self.value = token
-    }
-}
-
-final class InMemoryCopilotTokenStore: CopilotTokenStoring, @unchecked Sendable {
-    var value: String?
-
-    init(value: String? = nil) {
-        self.value = value
-    }
-
-    func loadToken() throws -> String? {
-        self.value
-    }
-
-    func storeToken(_ token: String?) throws {
-        self.value = token
-    }
-}
-
 final class InMemoryTokenAccountStore: ProviderTokenAccountStoring, @unchecked Sendable {
     var accounts: [UsageProvider: ProviderTokenAccountData] = [:]
     private let fileURL: URL
@@ -248,19 +185,9 @@ func testSettingsStore(
     return SettingsStore(
         userDefaults: defaults,
         configStore: configStore,
-        zaiTokenStore: NoopZaiTokenStore(),
-        syntheticTokenStore: NoopSyntheticTokenStore(),
         codexCookieStore: InMemoryCookieHeaderStore(),
         claudeCookieStore: InMemoryCookieHeaderStore(),
-        cursorCookieStore: InMemoryCookieHeaderStore(),
         opencodeCookieStore: InMemoryCookieHeaderStore(),
-        factoryCookieStore: InMemoryCookieHeaderStore(),
-        minimaxCookieStore: InMemoryMiniMaxCookieStore(),
-        minimaxAPITokenStore: InMemoryMiniMaxAPITokenStore(),
-        kimiTokenStore: InMemoryKimiTokenStore(),
-        augmentCookieStore: InMemoryCookieHeaderStore(),
-        ampCookieStore: InMemoryCookieHeaderStore(),
-        copilotTokenStore: InMemoryCopilotTokenStore(),
         tokenAccountStore: tokenAccountStore,
         keychainAccessPolicy: keychainAccessPolicy)
 }
@@ -340,4 +267,32 @@ func testPlanUtilizationHistoryStore(suiteName: String, reset: Bool = true) -> P
         try? FileManager.default.removeItem(at: url)
     }
     return PlanUtilizationHistoryStore(directoryURL: url)
+}
+
+actor HeldRequestGate {
+    private(set) var isOpen = false
+    private var continuations: [CheckedContinuation<Void, Never>] = []
+
+    func wait() async {
+        guard !self.isOpen else { return }
+        let hangGuard = Task {
+            do { try await Task.sleep(for: .seconds(60)) } catch { return }
+            guard !self.isOpen else { return }
+            Issue.record("Held request was not released before the hang guard")
+            self.open()
+        }
+        defer { hangGuard.cancel() }
+        await withCheckedContinuation { continuation in
+            self.continuations.append(continuation)
+        }
+    }
+
+    func open() {
+        self.isOpen = true
+        let continuations = self.continuations
+        self.continuations.removeAll()
+        for continuation in continuations {
+            continuation.resume()
+        }
+    }
 }

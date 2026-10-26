@@ -141,8 +141,6 @@ extension StatusItemController {
             "checkForUpdates"
         case .refresh:
             "refresh"
-        case .refreshAugmentSession:
-            "refreshAugmentSession"
         case .dashboard:
             "dashboard"
         case .statusPage:

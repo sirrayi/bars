@@ -87,7 +87,7 @@ private final class WidgetReadabilityProofModel {
     var margin: Double = 14
     var pagerChanges = 0
     let now = Date()
-    let providers: [UsageProvider] = [.codex, .claude, .alibabatokenplan, .kimi]
+    let providers: [UsageProvider] = [.codex, .claude, .opencode, .deepseek]
 
     var renderingMode: WidgetRenderingMode {
         switch self.mode {
@@ -99,7 +99,7 @@ private final class WidgetReadabilityProofModel {
 
     func selectFixture(_ fixture: String) {
         self.fixture = fixture
-        self.selected = fixture == "Long name" ? .alibabatokenplan : fixture == "Tokens only" ? .claude : .codex
+        self.selected = fixture == "Long name" ? .deepseek : fixture == "Tokens only" ? .claude : .codex
     }
 
     var snapshot: WidgetSnapshot {
@@ -122,10 +122,6 @@ private final class WidgetReadabilityProofModel {
                 .init(id: primaryID, title: "Session", percentLeft: 99, window: primary),
                 .init(id: weeklyID, title: "Weekly", percentLeft: 4, window: weekly),
             ]
-            if provider == .kimi, !tokensOnly {
-                rows.append(.init(id: "kimi-monthly", title: "Monthly", percentLeft: 40))
-                rows.append(.init(id: "kimi-code-7d", title: "Code 7d", percentLeft: 1))
-            }
             return WidgetSnapshot.ProviderEntry(
                 provider: provider,
                 updatedAt: stale ? self.now.addingTimeInterval(-172_800) : self.now,

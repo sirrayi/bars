@@ -1762,7 +1762,7 @@
 "Credits + percent" = "크레딧 및 남은 비율";
 "Credits left" = "남은 크레딧";
 "Cursor-metered" = "Cursor의 측정 사용량";
-"Cursor-metered: %@ (%@)" = "Cursor 측정: %1$@ (%2$@)";
+"Plan metered: %@ (%@)" = "Cursor 측정: %1$@ (%2$@)";
 "DATA THROUGH %@" = "%@ 기준 데이터";
 "Daily usage" = "일일 사용량";
 "Default uses AZURE_OPENAI_API_VERSION when set." = "기본값은 설정 시 AZURE_OPENAI_API_VERSION를 사용합니다.";

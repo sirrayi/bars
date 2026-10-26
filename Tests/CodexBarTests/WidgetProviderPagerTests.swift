@@ -7,28 +7,9 @@ import WidgetKit
 
 @Suite("Widget provider pager")
 struct WidgetProviderPagerTests {
-    private let providers: [UsageProvider] = [.codex, .claude, .cursor, .gemini, .copilot]
+    private let providers: [UsageProvider] = [.codex, .claude, .opencode, .devin, .pi]
 
     // MARK: - Paging
-
-    @Test
-    func `paging reports the position and both neighbours`() {
-        let pager = ProviderPager.make(providers: self.providers, selected: .cursor)
-
-        #expect(pager?.previous == .claude)
-        #expect(pager?.next == .gemini)
-        #expect(pager?.positionText == "3/5")
-        #expect(pager?.isPageable == true)
-    }
-
-    @Test
-    func `paging wraps around at both ends`() {
-        let first = ProviderPager.make(providers: self.providers, selected: .codex)
-        let last = ProviderPager.make(providers: self.providers, selected: .copilot)
-
-        #expect(first?.previous == .copilot)
-        #expect(last?.next == .codex)
-    }
 
     @Test
     func `a single provider is not pageable`() {
@@ -67,28 +48,6 @@ struct WidgetProviderPagerTests {
     // MARK: - Marks
 
     @Test
-    func `the providers that used to collide under truncation no longer do`() {
-        // "Co…", "Cl…", "Cu…" and a bare "C" were all the old chips could show.
-        #expect(ProviderMonogram.text(for: .codex) == "CX")
-        #expect(ProviderMonogram.text(for: .claude) == "CL")
-        #expect(ProviderMonogram.text(for: .cursor) == "CU")
-        #expect(ProviderMonogram.text(for: .copilot) == "CP")
-    }
-
-    @Test
-    func `the widget selectable providers all get distinct marks`() {
-        let providers: [UsageProvider] = [
-            .codex, .claude, .cursor, .copilot, .gemini, .antigravity, .devin, .kilo, .kimi,
-            .minimax, .mistral, .opencode, .opencodego, .qwencloud, .zai, .alibaba, .alibabatokenplan,
-        ]
-
-        let marks = providers.map(ProviderMonogram.text(for:))
-
-        #expect(Set(marks).count == marks.count)
-        #expect(marks.allSatisfy { $0.count == 2 })
-    }
-
-    @Test
     func `uncurated providers fall back to derived initials`() {
         #expect(ProviderMonogram.derived(from: "Token Plan") == "TP")
         #expect(ProviderMonogram.derived(from: "Warp") == "WA")
@@ -105,20 +64,6 @@ struct WidgetProviderPagerTests {
     }
 
     // MARK: - Titles
-
-    @Test
-    func `small tiles retain the full provider name`() {
-        #expect(ProviderTitle.text(for: .alibabatokenplan, size: .medium) == "Alibaba Token Plan")
-        #expect(ProviderTitle.text(for: .alibabatokenplan, size: .small) == "Alibaba Token Plan")
-    }
-
-    @Test
-    func `names that already fit are never shortened`() {
-        for size in [WidgetTileSize.small, .medium, .large] {
-            #expect(ProviderTitle.text(for: .claude, size: size) == "Claude")
-            #expect(ProviderTitle.text(for: .antigravity, size: size) == "Antigravity")
-        }
-    }
 
     @Test
     func `small tiles preserve the provider name`() {

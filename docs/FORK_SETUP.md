@@ -8,7 +8,7 @@ read_when:
 
 > Historical `topoffunnel/CodexBar` instructions. Use the [README](../README.md) and
 > [Development guide](DEVELOPMENT.md) for this repository. The Augment-removal warning below describes an old fork
-> comparison: Augment is registered and supported on current main. See the [Augment guide](augment.md).
+> comparison: Augment is registered and supported on current main. See the upstream Augment guide.
 > The upstream/Quotio scripts and monitoring workflow still exist; their presence does not make this old fork
 > remote layout or selective-sync policy a requirement for main-repository development.
 

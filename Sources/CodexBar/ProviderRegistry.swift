@@ -81,14 +81,7 @@ struct ProviderRegistry {
                                     token: token)
                             }
                         },
-                        providerManualTokenUpdater: { provider, token in
-                            await MainActor.run {
-                                // Provider-specific by design: StepFun rotates its legacy app-owned session token.
-                                if provider == .stepfun {
-                                    settings.stepfunToken = token
-                                }
-                            }
-                        },
+                        providerManualTokenUpdater: nil,
                         costUsageHistoryDays: settings.costUsageHistoryDays,
                         persistsCLISessions: true,
                         persistentCLISessionIdleWindow: Self.persistentCLISessionIdleWindow(

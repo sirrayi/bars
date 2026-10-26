@@ -43,7 +43,7 @@ extension CodexBarCLI {
                         [--provider \(ProviderHelp.list)]
                         [--account <label>] [--account-index <index>] [--all-accounts]
                         [--no-credits] [--no-color] [--status] [--source <auto|web|cli|oauth|api>]
-                        [--web-timeout <seconds>] [--web-debug-dump-html] [--antigravity-plan-debug] [--augment-debug]
+                        [--web-timeout <seconds>] [--web-debug-dump-html]
                         [--brief]
 
         Description:
@@ -85,7 +85,7 @@ extension CodexBarCLI {
                        [--provider \(ProviderHelp.list)]
                        [--account <label>] [--account-index <index>] [--all-accounts]
                        [--no-credits] [--no-color] [--pretty] [--status] [--source <auto|web|cli|oauth|api>]
-                       [--web-timeout <seconds>] [--web-debug-dump-html] [--antigravity-plan-debug] [--augment-debug]
+                       [--web-timeout <seconds>] [--web-debug-dump-html]
 
         Description:
           Print usage from enabled providers as text (default), JSON, or TOON. Honors your in-app toggles.
@@ -305,14 +305,12 @@ extension CodexBarCLI {
                              [--pretty]
           codexbar config preferences export [--file <preferences.json>]
           codexbar config preferences import --file <preferences.json> [--json]
-          codexbar config login --provider copilot [--json]
           codexbar config providers [--format text|json] [--json] [--json-only] [--pretty]
           codexbar config enable --provider <name> [--format text|json] [--json] [--json-only] [--pretty]
           codexbar config disable --provider <name> [--format text|json] [--json] [--json-only] [--pretty]
           codexbar config set-source --provider <name> --source auto|web|cli|oauth|api
                                    [--format text|json] [--json] [--json-only] [--pretty]
           codexbar config set-api-key --provider <name> (--api-key <key>|--stdin)
-                                    [--label <label>] [--usage-scope team]
                                     [--organization-id <org>] [--workspace-id <project>]
                                     [--no-enable]
                                     [--format text|json] [--json] [--json-only] [--pretty]
@@ -506,7 +504,7 @@ extension CodexBarCLI {
                   [--provider \(ProviderHelp.list)]
                   [--account <label>] [--account-index <index>] [--all-accounts]
                   [--no-credits] [--no-color] [--pretty] [--status] [--source <auto|web|cli|oauth|api>]
-                  [--web-timeout <seconds>] [--web-debug-dump-html] [--antigravity-plan-debug] [--augment-debug]
+                  [--web-timeout <seconds>] [--web-debug-dump-html]
           codexbar cards [--provider \(ProviderHelp.list)] [--brief] [--no-color] [--status]
           codexbar cost [--format text|json]
                        [--json]

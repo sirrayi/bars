@@ -67,6 +67,40 @@ struct CLIToonSnapshotTests {
         #expect(toonKeys == jsonKeys)
     }
 
+    private static func jsonFieldNames(in value: Any) -> Set<String> {
+        switch value {
+        case let object as [String: Any]:
+            object.reduce(into: Set(object.keys)) { names, entry in
+                names.formUnion(self.jsonFieldNames(in: entry.value))
+            }
+        case let array as [Any]:
+            array.reduce(into: Set<String>()) { names, element in
+                names.formUnion(self.jsonFieldNames(in: element))
+            }
+        default:
+            []
+        }
+    }
+
+    /// Collects `key:`, `key[N]:`, and tabular `key[N]{field,field}:` names from rendered TOON.
+    /// Table data lines carry no keys, so they are skipped.
+    private static func toonFieldNames(in toon: String) -> Set<String> {
+        var names: Set<String> = []
+        for rawLine in toon.split(separator: "\n", omittingEmptySubsequences: false) {
+            var line = rawLine.trimmingCharacters(in: .whitespaces)
+            if line.hasPrefix("- ") {
+                line = String(line.dropFirst(2))
+            }
+            guard let match = line.firstMatch(of: /^([A-Za-z_][A-Za-z0-9_]*)(?:\[\d+\])?(?:\{([^}]*)\})?:/) else {
+                continue
+            }
+            names.insert(String(match.1))
+            guard let fields = match.2 else { continue }
+            names.formUnion(fields.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) })
+        }
+        return names
+    }
+
     private static func makeFixturePayload() throws -> [ProviderPayload] {
         let uniformRows = try ProviderDetailSection(
             title: "Usage summary",
@@ -101,43 +135,8 @@ struct CLIToonSnapshotTests {
                 status: nil,
                 usage: snapshot,
                 credits: nil,
-                antigravityPlanInfo: nil,
                 openaiDashboard: nil,
                 error: nil),
         ]
-    }
-
-    private static func jsonFieldNames(in value: Any) -> Set<String> {
-        switch value {
-        case let object as [String: Any]:
-            object.reduce(into: Set(object.keys)) { names, entry in
-                names.formUnion(self.jsonFieldNames(in: entry.value))
-            }
-        case let array as [Any]:
-            array.reduce(into: Set<String>()) { names, element in
-                names.formUnion(self.jsonFieldNames(in: element))
-            }
-        default:
-            []
-        }
-    }
-
-    /// Collects `key:`, `key[N]:`, and tabular `key[N]{field,field}:` names from rendered TOON.
-    /// Table data lines carry no keys, so they are skipped.
-    private static func toonFieldNames(in toon: String) -> Set<String> {
-        var names: Set<String> = []
-        for rawLine in toon.split(separator: "\n", omittingEmptySubsequences: false) {
-            var line = rawLine.trimmingCharacters(in: .whitespaces)
-            if line.hasPrefix("- ") {
-                line = String(line.dropFirst(2))
-            }
-            guard let match = line.firstMatch(of: /^([A-Za-z_][A-Za-z0-9_]*)(?:\[\d+\])?(?:\{([^}]*)\})?:/) else {
-                continue
-            }
-            names.insert(String(match.1))
-            guard let fields = match.2 else { continue }
-            names.formUnion(fields.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) })
-        }
-        return names
     }
 }

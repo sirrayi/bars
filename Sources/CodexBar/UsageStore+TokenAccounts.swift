@@ -583,12 +583,6 @@ extension UsageStore {
             self.accountSnapshots[provider.instanceID] = snapshots
         }
 
-        self.scheduleSupplementalUsageUpdates(
-            provider: provider,
-            results: results,
-            selectedAccountID: selectedAccount.id,
-            generation: generation)
-
         if let selectedOutcome, let resolvedSelectedAccount {
             await self.applySelectedOutcome(
                 selectedOutcome,
@@ -894,7 +888,6 @@ extension UsageStore {
             .generation
         let contextConfigRevision = self.settings.providerConfigRevision(for: provider)
         let originalAccountToken = account?.token
-        let originalManualToken = provider == .stepfun ? self.settings.stepfunToken : nil
         return ProviderFetchContext(
             runtime: .app,
             sourceMode: sourceMode,
@@ -935,31 +928,6 @@ extension UsageStore {
                         provider: provider,
                         generation: publicationGeneration)
                 }
-            },
-            providerManualTokenUpdater: { [weak self] provider, token in
-                await MainActor.run {
-                    guard let self, provider == .stepfun,
-                          self.settings.stepfunToken == originalManualToken
-                    else { return }
-                    guard
-                        self.providerConfigMutationIsCurrent(
-                            provider: provider,
-                            generation: publicationGeneration,
-                            originalConfigRevision: contextConfigRevision)
-                    else { return }
-                    self.settings.stepfunToken = token
-                    self.advanceProviderRefreshConfigRevision(
-                        provider: provider,
-                        generation: publicationGeneration)
-                }
-            },
-            settingsWriter: { [weak self] provider, values in
-                guard let self, provider == contextProvider else { return .stale }
-                return await self.persistPluginSettings(
-                    provider: provider,
-                    values: values,
-                    generation: publicationGeneration,
-                    originalConfigRevision: contextConfigRevision)
             },
             costUsageHistoryDays: self.settings.costUsageHistoryDays,
             claudeOwnerCLIRecoveryOnly: claudeOwnerCLIRecoveryOnly,
@@ -1216,7 +1184,7 @@ extension UsageStore {
         switch outcome.result {
         case let .success(result):
             let scoped = result.usage.scoped(to: provider)
-            let current = self.resolvingCurrentCopilotAllowance(in: scoped, provider: provider, account: account)
+            let current = scoped
             let labeled = current.withAccountLabel(account.label, for: provider)
             let snapshot = TokenAccountUsageSnapshot(
                 account: account,
@@ -1256,7 +1224,7 @@ extension UsageStore {
               let current = self.uniqueTokenAccount(provider: provider, accountID: account.id),
               snapshot.cacheKey == self.tokenAccountSnapshotCacheKey(provider: provider, account: current)
         else { return nil }
-        return self.resolvingCurrentCopilotAllowance(in: snapshot, provider: provider, account: current)
+        return snapshot
     }
 
     private static func preservesClaudeOAuthSnapshot(
@@ -1481,7 +1449,7 @@ extension UsageStore {
         switch outcome.result {
         case let .success(result):
             let scoped = result.usage.scoped(to: provider)
-            let current = self.resolvingCurrentCopilotAllowance(in: scoped, provider: provider, account: account)
+            let current = scoped
             let labeled: UsageSnapshot =
                 if let account {
                     current.withAccountLabel(account.label, for: provider)
@@ -1517,11 +1485,6 @@ extension UsageStore {
             self.errors[provider.instanceID] = nil
             self.knownLimitsAvailabilityByProvider.removeValue(forKey: provider.instanceID)
             self.failureGates[provider.instanceID]?.recordSuccess()
-            self.scheduleSupplementalUsageUpdate(
-                provider: provider,
-                result: result,
-                generation: generation,
-                accountID: account?.id)
             await self.recordPlanUtilizationHistorySample(
                 provider: provider,
                 snapshot: backfilled,

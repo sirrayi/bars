@@ -7,16 +7,10 @@ enum ProviderCredentialFailure {
         switch error {
         case let error as ProviderFetchClassifiedError:
             error.kind == .authenticationExpired || error.kind == .missingCredential
-        case KimiAPIError.invalidToken, KimiAPIError.invalidAPIKey,
-             KimiAPIError.expiredCodeCredential, KimiAPIError.invalidCodeCredential,
-             DoubaoUsageError.arkcliAuthenticationRequired,
-             AlibabaTokenPlanUsageError.loginRequired, AlibabaTokenPlanUsageError.invalidCredentials,
-             ClaudeOAuthFetchError.unauthorized, CodexOAuthFetchError.unauthorized,
+        case ClaudeOAuthFetchError.unauthorized, CodexOAuthFetchError.unauthorized,
              CodexTokenRefresher.RefreshError.expired, CodexTokenRefresher.RefreshError.revoked,
              CodexTokenRefresher.RefreshError.reused,
-             CodexOAuthCredentialsError.nativeRefreshRequired, CodexOAuthCredentialsError.readOnlySource,
-             AugmentStatusProbeError.notLoggedIn, AugmentStatusProbeError.sessionExpired,
-             AugmentStatusProbeError.noSessionCookie:
+             CodexOAuthCredentialsError.nativeRefreshRequired, CodexOAuthCredentialsError.readOnlySource:
             true
         case let error as ClaudeOAuthCredentialsError:
             switch error {

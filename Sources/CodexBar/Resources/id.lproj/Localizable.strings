@@ -1797,7 +1797,7 @@
 "Credits + percent" = "Kredit dan persentase tersisa";
 "Credits left" = "Sisa Kredit";
 "Cursor-metered" = "Penggunaan terukur di Cursor";
-"Cursor-metered: %@ (%@)" = "Cursor bermeter: %1$@ (%2$@)";
+"Plan metered: %@ (%@)" = "Cursor bermeter: %1$@ (%2$@)";
 "DATA THROUGH %@" = "Data per %@";
 "Daily usage" = "Penggunaan sehari-hari";
 "Default uses AZURE_OPENAI_API_VERSION when set." = "Default menggunakan AZURE_OPENAI_API_VERSION saat disetel.";

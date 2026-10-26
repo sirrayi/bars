@@ -1801,7 +1801,7 @@
 "Credits + percent" = "额度与百分比";
 "Credits left" = "剩余额度";
 "Cursor-metered" = "Cursor 按量计费用量";
-"Cursor-metered: %@ (%@)" = "Cursor 按量计费：%1$@（%2$@）";
+"Plan metered: %@ (%@)" = "Cursor 按量计费：%1$@（%2$@）";
 "DATA THROUGH %@" = "数据截至 %@";
 "Daily usage" = "每日用量";
 "Default uses AZURE_OPENAI_API_VERSION when set." = "如果设置了 AZURE_OPENAI_API_VERSION，将默认使用该版本。";

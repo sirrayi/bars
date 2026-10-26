@@ -438,13 +438,6 @@ enum DashboardSnapshotBuilder {
         if provider == .codex {
             return CodexPlanFormatting.displayName(raw) ?? UsageFormatter.cleanPlanName(raw)
         }
-        if provider == .kilo {
-            let firstPlanSegment = raw
-                .components(separatedBy: "·")
-                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-                .first { !$0.isEmpty && !$0.lowercased().hasPrefix("auto top-up:") }
-            return firstPlanSegment.map(UsageFormatter.cleanPlanName)
-        }
         return UsageFormatter.cleanPlanName(raw)
     }
 
@@ -454,25 +447,13 @@ enum DashboardSnapshotBuilder {
         usage: UsageSnapshot?) -> [DashboardWindowPayload]
     {
         guard let usage else { return [] }
-        // Provider-specific by design: Antigravity's primary and secondary are representatives
-        // copied out of its own quota-summary lanes so the icon and menu bar have standard slots
-        // to read. Emitting all three repeats two lanes under the generic session and weekly
-        // labels, so the dashboard renders the summary lanes alone, one per quota bucket.
-        if provider == .antigravity, let windows = self.antigravityQuotaSummaryWindows(usage) {
-            return windows
-        }
         let labels = self.rateWindowLabels(provider: provider, metadata: metadata, usage: usage)
         var windows: [DashboardWindowPayload] = []
-        // Provider-specific by design: Amp subscription payloads model balance and orb as non-time-window kinds.
-        let isAmpSubscription = provider == .amp && usage.secondary != nil
-
         if let primary = usage.primary {
-            let kind = isAmpSubscription ? "other" : "session"
-            windows.append(self.makeWindow(kind: kind, label: labels.primary, window: primary))
+            windows.append(self.makeWindow(kind: "session", label: labels.primary, window: primary))
         }
         if let secondary = usage.secondary {
-            let kind = isAmpSubscription ? "orb" : "weekly"
-            windows.append(self.makeWindow(kind: kind, label: labels.secondary, window: secondary))
+            windows.append(self.makeWindow(kind: "weekly", label: labels.secondary, window: secondary))
         }
         if let tertiary = usage.tertiary {
             windows.append(self.makeWindow(kind: "tertiary", label: labels.tertiary, window: tertiary))
@@ -482,26 +463,6 @@ enum DashboardSnapshotBuilder {
         }
 
         return windows
-    }
-
-    /// Display lanes for an Antigravity quota-summary snapshot, or `nil` when the snapshot has no
-    /// summary lanes and must keep the standard primary and secondary rows. Every family stays in the
-    /// payload, because a script client reads the same document and must not lose a window. The lanes of
-    /// a family that reports no usage carry `idle`, the same rule the menu card and the widget use to
-    /// hide that family, so the web UI can drop those rows without repeating the rule in JavaScript.
-    private static func antigravityQuotaSummaryWindows(_ usage: UsageSnapshot) -> [DashboardWindowPayload]? {
-        let extras = usage.extraRateWindows ?? []
-        guard extras.contains(where: { AntigravityStatusSnapshot.isQuotaSummaryWindowID($0.id) }) else {
-            return nil
-        }
-        let idleWindowIDs = AntigravityQuotaFamilyVisibility.idleWindowIDs(in: usage)
-        return extras.map {
-            self.makeWindow(
-                kind: $0.id,
-                label: $0.title,
-                window: $0.window,
-                idle: idleWindowIDs.contains($0.id))
-        }
     }
 
     private struct RateWindowLabels {

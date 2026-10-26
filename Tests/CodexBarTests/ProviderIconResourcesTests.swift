@@ -39,46 +39,6 @@ struct ProviderIconResourcesTests {
         #expect(first.isTemplate)
     }
 
-    @Test(arguments: [UsageProvider.ollama, .llmman, .replicate])
-    func `provider icons use template rendering`(provider: UsageProvider) throws {
-        ProviderBrandIcon.resetCacheForTesting()
-        defer { ProviderBrandIcon.resetCacheForTesting() }
-
-        let image = try #require(ProviderBrandIcon.image(for: provider))
-
-        #expect(image.size == NSSize(width: 18, height: 18))
-        #expect(image.isTemplate)
-
-        let bitmap = try #require(NSBitmapImageRep(
-            bitmapDataPlanes: nil,
-            pixelsWide: 16,
-            pixelsHigh: 16,
-            bitsPerSample: 8,
-            samplesPerPixel: 4,
-            hasAlpha: true,
-            isPlanar: false,
-            colorSpaceName: .deviceRGB,
-            bytesPerRow: 0,
-            bitsPerPixel: 0))
-        let context = try #require(NSGraphicsContext(bitmapImageRep: bitmap))
-        NSGraphicsContext.saveGraphicsState()
-        NSGraphicsContext.current = context
-        context.cgContext.clear(CGRect(x: 0, y: 0, width: 16, height: 16))
-        image.draw(in: NSRect(x: 0, y: 0, width: 16, height: 16))
-        NSGraphicsContext.restoreGraphicsState()
-
-        var visiblePixels = 0
-        for y in 0..<bitmap.pixelsHigh {
-            for x in 0..<bitmap.pixelsWide
-                where (bitmap.colorAt(x: x, y: y)?.alphaComponent ?? 0) > 0
-            {
-                visiblePixels += 1
-            }
-        }
-        #expect(visiblePixels > 40)
-        #expect(visiblePixels < 240)
-    }
-
     @Test
     func `replicate uses the official glyph across app website and serve`() throws {
         let root = try Self.repoRoot()
@@ -123,60 +83,6 @@ struct ProviderIconResourcesTests {
         let image = try #require(ProviderBrandIcon.image(for: .devin))
         #expect(image.size == NSSize(width: 18, height: 18))
         #expect(image.isTemplate)
-    }
-
-    @Test
-    func `typesafe keeps its proportions across app website and serve`() throws {
-        let root = try Self.repoRoot()
-        let svg = try String(
-            contentsOf: root.appending(path: "Sources/CodexBar/Resources/ProviderIcon-typesafe.svg"),
-            encoding: .utf8)
-        #expect(svg.contains("fill=\"currentColor\""))
-        #expect(svg.contains("viewBox=\"24.68 24.68 350.65 350.65\""))
-        #expect(svg.contains("M256.407 86.5946V138.33L303.032 168.589"))
-        let website = try String(contentsOf: root.appending(path: "docs/logos/typesafe.svg"), encoding: .utf8)
-        #expect(website == svg)
-        let cli = try String(
-            contentsOf: root.appending(path: "Sources/CodexBarCLI/CLIServeProviderIcons.swift"), encoding: .utf8)
-        #expect(cli.contains("\"ProviderIcon-typesafe\": \"\(Data(svg.utf8).base64EncodedString())\""))
-
-        ProviderBrandIcon.resetCacheForTesting()
-        defer { ProviderBrandIcon.resetCacheForTesting() }
-        let image = try #require(ProviderBrandIcon.image(for: .typesafe))
-        #expect(image.size == NSSize(width: 18, height: 18))
-        #expect(image.isTemplate)
-
-        // The old 206×300 viewBox was stretched to fill the square slot edge to edge.
-        let bitmap = try #require(NSBitmapImageRep(
-            bitmapDataPlanes: nil,
-            pixelsWide: 36,
-            pixelsHigh: 36,
-            bitsPerSample: 8,
-            samplesPerPixel: 4,
-            hasAlpha: true,
-            isPlanar: false,
-            colorSpaceName: .deviceRGB,
-            bytesPerRow: 0,
-            bitsPerPixel: 0))
-        let context = try #require(NSGraphicsContext(bitmapImageRep: bitmap))
-        NSGraphicsContext.saveGraphicsState()
-        NSGraphicsContext.current = context
-        context.cgContext.clear(CGRect(x: 0, y: 0, width: 36, height: 36))
-        image.draw(in: NSRect(x: 0, y: 0, width: 36, height: 36))
-        NSGraphicsContext.restoreGraphicsState()
-
-        var columns = Set<Int>()
-        var rows = Set<Int>()
-        for y in 0..<bitmap.pixelsHigh {
-            for x in 0..<bitmap.pixelsWide
-                where (bitmap.colorAt(x: x, y: y)?.alphaComponent ?? 0) > 0.5
-            {
-                columns.insert(x)
-                rows.insert(y)
-            }
-        }
-        #expect(rows.count < 36)
-        #expect(columns.count < rows.count * 4 / 5)
     }
 
     @Test
@@ -271,75 +177,6 @@ struct ProviderIconResourcesTests {
                 ProviderBrandIcon.image(for: provider) != nil,
                 "Missing icon resource \(descriptor.branding.iconResourceName).svg for \(provider.rawValue)")
         }
-    }
-
-    @Test(arguments: [UsageProvider.claude, .codex, .antigravity, .mistral, .muse, .bedrock, .vertexai])
-    func `brand and monochrome images have independent caches`(provider: UsageProvider) throws {
-        for brandFirst in [false, true] {
-            ProviderBrandIcon.resetCacheForTesting()
-            let firstStyle: ProviderBrandIcon.Style = brandFirst ? .brand : .monochrome
-            let secondStyle: ProviderBrandIcon.Style = brandFirst ? .monochrome : .brand
-            let first = try #require(ProviderBrandIcon.image(for: provider, style: firstStyle))
-            let second = try #require(ProviderBrandIcon.image(for: provider, style: secondStyle))
-            #expect(first !== second)
-            #expect(first.isTemplate == !brandFirst)
-            #expect(second.isTemplate == brandFirst)
-            #expect(ProviderBrandIcon.image(for: provider, style: firstStyle) === first)
-            #expect(ProviderBrandIcon.image(for: provider, style: secondStyle) === second)
-            #expect(ProviderBrandIcon.image(for: provider)?.isTemplate == true)
-        }
-        ProviderBrandIcon.resetCacheForTesting()
-    }
-
-    @Test(arguments: [UsageProvider.cursor, .pi, .openai, .azureopenai])
-    func `brand requests without curated assets retain adaptive templates`(provider: UsageProvider) throws {
-        let image = try #require(ProviderBrandIcon.image(for: provider, style: .brand))
-        #expect(image.isTemplate)
-        #expect(image.size == NSSize(width: 18, height: 18))
-    }
-
-    @Test(arguments: [UsageProvider.claude, .codex, .antigravity, .mistral, .muse, .bedrock, .vertexai])
-    func `curated brand resources render color and transparent padding`(provider: UsageProvider) throws {
-        let image = try #require(ProviderBrandIcon.image(for: provider, style: .brand))
-        let bitmap = try #require(NSBitmapImageRep(
-            bitmapDataPlanes: nil,
-            pixelsWide: 64,
-            pixelsHigh: 64,
-            bitsPerSample: 8,
-            samplesPerPixel: 4,
-            hasAlpha: true,
-            isPlanar: false,
-            colorSpaceName: .deviceRGB,
-            bytesPerRow: 0,
-            bitsPerPixel: 0))
-        let context = try #require(NSGraphicsContext(bitmapImageRep: bitmap))
-        NSGraphicsContext.saveGraphicsState()
-        NSGraphicsContext.current = context
-        context.cgContext.clear(CGRect(x: 0, y: 0, width: 64, height: 64))
-        image.draw(in: NSRect(x: 0, y: 0, width: 64, height: 64))
-        NSGraphicsContext.restoreGraphicsState()
-        var coloredPixels = 0
-        var warmPixels = 0
-        var greenPixels = 0
-        for y in 0..<64 {
-            for x in 0..<64 {
-                guard let color = bitmap.colorAt(x: x, y: y)?.usingColorSpace(.deviceRGB),
-                      color.alphaComponent > 0.5 else { continue }
-                if color.redComponent > color.blueComponent + 0.1 { warmPixels += 1 }
-                if color.greenComponent > color.blueComponent + 0.1 { greenPixels += 1 }
-                let components = [color.redComponent, color.greenComponent, color.blueComponent]
-                if (components.max() ?? 0) - (components.min() ?? 0) > 0.1 {
-                    coloredPixels += 1
-                }
-            }
-        }
-        #expect(coloredPixels > 100)
-        if provider == .antigravity {
-            // A native SVG decoder can silently flatten the official blurred gradient to blue.
-            #expect(warmPixels > 5)
-            #expect(greenPixels > 5)
-        }
-        #expect((bitmap.colorAt(x: 0, y: 0)?.alphaComponent ?? 1) == 0)
     }
 
     private static func repoRoot() throws -> URL {

@@ -2172,17 +2172,6 @@ enum CostUsageScanner {
                 now: now,
                 options: options,
                 checkCancellation: checkCancellation)
-        case .vertexai:
-            var filtered = options
-            if filtered.claudeLogProviderFilter == .all {
-                filtered.claudeLogProviderFilter = .vertexAIOnly
-            }
-            return try self.loadClaudeDaily(
-                provider: .vertexai,
-                range: range,
-                now: now,
-                options: filtered,
-                checkCancellation: checkCancellation)
         default:
             return emptyReport
         }

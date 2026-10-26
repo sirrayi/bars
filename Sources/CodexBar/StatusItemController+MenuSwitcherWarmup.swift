@@ -69,17 +69,16 @@ extension StatusItemController {
             ? self.resolvedMenuProvider(enabledProviders: enabledProviders)
             : selection.provider
         let currentProvider = selectedProvider ?? enabledProviders.first ?? .codex
-        let isPluginSelected = Self.isUserPluginSelection(selection)
-        let codexAccountDisplay = isOverviewSelected || isPluginSelected
+        let codexAccountDisplay = isOverviewSelected
             ? nil
             : self.codexAccountMenuDisplay(for: currentProvider)
-        let tokenAccountDisplay = isOverviewSelected || isPluginSelected
+        let tokenAccountDisplay = isOverviewSelected
             ? nil
             : self.tokenAccountMenuDisplay(for: currentProvider)
         let showAllAccounts = (tokenAccountDisplay?.showAll ?? false) || (codexAccountDisplay?.showAll ?? false)
         let descriptor = self.makeMenuDescriptor(
             provider: selectedProvider,
-            includeContextualActions: !isOverviewSelected && !isPluginSelected)
+            includeContextualActions: !isOverviewSelected)
         let menuWidth = self.menuCardWidth(
             for: enabledProviders,
             selectedProvider: selectedProvider,

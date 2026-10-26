@@ -4,66 +4,6 @@ import Testing
 
 struct CodexCLIDiscoveryTests {
     #if os(macOS)
-    @Test(arguments: ["pty", "status"])
-    func `supplied environment rejection cannot fall back to the process environment`(entrypoint: String) async throws {
-        let fm = FileManager.default
-        let root = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-        let package = root.appendingPathComponent("node_modules/@openai/codex")
-        let wrapper = package.appendingPathComponent("bin/codex.js")
-        let payload = package.appendingPathComponent("vendor/aarch64-apple-darwin/bin/codex")
-        for directory in [wrapper.deletingLastPathComponent(), payload.deletingLastPathComponent()] {
-            try fm.createDirectory(at: directory, withIntermediateDirectories: true)
-        }
-        defer { try? fm.removeItem(at: root) }
-        let marker = root.appendingPathComponent("launched")
-        let script = """
-        #!/bin/sh
-        # path.join(vendorRoot, targetTriple, "bin")
-        /usr/bin/touch "$CODEXBAR_TEST_LAUNCH_MARKER"
-        printf 'Credits: 1\\n'
-        """
-        try Data(script.utf8).write(to: wrapper)
-        try fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: wrapper.path)
-        try FakeExecutable.install("exit 0", at: payload)
-        try FakeExecutable.install(
-            #"printf '%s' '{"architecture":"arm64","packageRoot":null}'"#,
-            at: root.appendingPathComponent("node"))
-        let environment = [
-            "PATH": root.path,
-            "HOME": root.path,
-            "TMPDIR": root.path,
-            "NODE_OPTIONS": "--require=/fixture/forbidden-preload.cjs",
-            "CODEXBAR_TEST_LAUNCH_MARKER": marker.path,
-        ]
-        let resolver: @Sendable ([String: String]) -> String? = { supplied in
-            var isolated = supplied
-            isolated["PATH"] = root.path
-            return CodexLaunchPreflight.isLaunchCandidateAllowed(path: wrapper.path, environment: isolated)
-                ? wrapper.path : nil
-        }
-        #expect(resolver([:]) == wrapper.path)
-        #expect(resolver(environment) == nil)
-        await BinaryLocator.$codexBinaryResolverOverrideForTesting.withValue(resolver) {
-            do {
-                if entrypoint == "pty" {
-                    _ = try TTYCommandRunner().run(
-                        binary: "codex",
-                        send: "",
-                        options: .init(timeout: 5, baseEnvironment: environment, initialDelay: 0))
-                } else {
-                    _ = try await CodexStatusProbe(timeout: 5, environment: environment).fetch()
-                }
-                Issue.record("Rejected discovery must stop before launch")
-            } catch TTYCommandRunner.Error.binaryNotFound where entrypoint == "pty" {
-                // The rejected locator result is terminal.
-            } catch CodexStatusProbeError.codexNotInstalled where entrypoint == "status" {
-                // The rejected locator result is terminal.
-            } catch {
-                Issue.record("Unexpected error: \(error)")
-            }
-            #expect(!fm.fileExists(atPath: marker.path))
-        }
-    }
 
     @Test(arguments: ["relative", "mixed-relative", "leading-empty", "trailing-empty", "preload", "absolute"])
     func `Node discovery only runs an absolute interpreter without preload options`(configuration: String) throws {

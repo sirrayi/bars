@@ -16,7 +16,6 @@ extension UsageStore {
         _ = self.lastSourceLabels
         _ = self.lastFetchAttempts
         _ = (self.accountSnapshots, self.tokenAccountLiveStateProviders, self.codexAccountSnapshots)
-        _ = self.kiloScopeSnapshots
         _ = self.claudeSwapAccountSnapshots
         _ = self.claudeSwapLastError
         _ = self.claudeSwapRevision
@@ -153,7 +152,6 @@ final class UsageStore {
     var snapshots: [ProviderInstanceID: UsageSnapshot] = [:]
     var errors: [ProviderInstanceID: String] = [:]
     var diagnostics: [ProviderInstanceID: String] = [:]
-    var geminiMigrationObservation: GeminiMigrationObservation = .none
     var knownLimitsAvailabilityByProvider: [ProviderInstanceID: UsageLimitsAvailability] = [:]
     var lastSourceLabels: [ProviderInstanceID: String] = [:]
     var lastFetchAttempts: [ProviderInstanceID: [ProviderFetchAttempt]] = [:]
@@ -163,7 +161,6 @@ final class UsageStore {
     var tokenAccountLiveStateProviders: Set<ProviderInstanceID> = []
     var codexAccountSnapshots: [CodexAccountUsageSnapshot] = []
     var codexSettingsRefreshingAccountIDs: Set<String> = []
-    var kiloScopeSnapshots: [KiloScopeSnapshot] = []
     var claudeSwapAccountSnapshots: [ProviderAccountUsageSnapshot] = []
     var claudeSwapLastRefreshAt: Date?
     var claudeSwapLastError: String?
@@ -268,7 +265,6 @@ final class UsageStore {
     #if DEBUG
     @ObservationIgnored var _test_codexAccountScopedRefreshDidComplete: (@MainActor () -> Void)?
     @ObservationIgnored var _test_codexPlanHistoryBackfillWillRecord: (@MainActor () -> Void)?
-    @ObservationIgnored var _test_cursorCostCredentialFingerprintOverride: (() -> String?)?
     #endif
     @ObservationIgnored var _test_tokenUsageRefreshOverride: (@MainActor (UsageProvider, Bool) async -> Void)?
     @ObservationIgnored var _test_tokenUsageResultLoaderOverride: (@MainActor (
@@ -340,13 +336,11 @@ final class UsageStore {
     @ObservationIgnored let browserDetection: BrowserDetection
     @ObservationIgnored let settings: SettingsStore
     @ObservationIgnored @ProcessEnvironment private(set) var environmentBase: [String: String]
-    @ObservationIgnored let pluginApprovalStore: ProviderPluginApprovalStore
     @ObservationIgnored let sessionQuotaNotifier: any SessionQuotaNotifying
     @ObservationIgnored let sessionQuotaLogger = CodexBarLog.logger(LogCategories.sessionQuota)
     // Provider-specific by design: OpenAI web and Augment runtime diagnostics have dedicated app-owned log streams.
-    @ObservationIgnored let openAIWebLogger = CodexBarLog.logger(LogCategories.provider(.openai, scope: "web"))
+    @ObservationIgnored let openAIWebLogger = CodexBarLog.logger(LogCategories.provider(.codex, scope: "web"))
     @ObservationIgnored let tokenCostLogger = CodexBarLog.logger(LogCategories.tokenCost)
-    @ObservationIgnored let augmentLogger = CodexBarLog.logger(LogCategories.provider(.augment))
     @ObservationIgnored let providerLogger = CodexBarLog.logger(LogCategories.providers)
     @ObservationIgnored let adaptiveRefreshLogger = CodexBarLog.logger(LogCategories.adaptiveRefresh)
     @ObservationIgnored var openAIWebDebugLines: [String] = []
@@ -519,7 +513,6 @@ final class UsageStore {
         sessionQuotaNotifier: any SessionQuotaNotifying = SessionQuotaNotifier(),
         startupBehavior: StartupBehavior = .automatic,
         environmentBase: [String: String] = ProcessInfo.processInfo.environment,
-        pluginApprovalStore: ProviderPluginApprovalStore = ProviderPluginApprovalStore(),
         widgetSnapshotURL: URL? = nil,
         cliUsageCacheURL: URL? = nil,
         widgetAccountSnapshotStore: (any WidgetAccountSnapshotStoring)? = nil,
@@ -532,7 +525,6 @@ final class UsageStore {
         self.costUsageFetcher = costUsageFetcher
         self.settings = settings
         self.environmentBase = environmentBase
-        self.pluginApprovalStore = pluginApprovalStore
         self.widgetSnapshotURL = widgetSnapshotURL
         self.cliUsageCacheURL = cliUsageCacheURL
         self.widgetTimelineReloader = widgetTimelineReloader
@@ -584,11 +576,6 @@ final class UsageStore {
                 for: self.freshCodexVisibleAccountsForSnapshotHydration())
         }
         self.logStartupState()
-        self.settings.onProviderFetchIdentityChange = { [weak self] instanceID in
-            guard instanceID.firstPartyProvider == nil else { return }
-            self?.clearUserPluginHookState(instanceID)
-        }
-        self.pruneUserPluginHookState()
         self.observeSettingsChanges()
         self.pathDebugInfo = PathDebugSnapshot(
             codexBinary: nil,
@@ -639,7 +626,8 @@ final class UsageStore {
         // Use cached enablement to avoid repeated UserDefaults lookups in animation ticks.
         let enabled = self.settings.enabledProvidersOrdered(metadataByProvider: self.providerMetadata)
         let now = Date()
-        return enabled.filter { self.isEnabledProviderInstance($0, now: now) }
+        _ = now
+        return enabled
     }
 
     /// Enabled providers without availability filtering. Used for display (switcher, merge-icons).
@@ -815,10 +803,7 @@ final class UsageStore {
 
             await withTaskGroup(of: Void.self) { group in
                 for instanceID in refreshProviders {
-                    guard let provider = instanceID.firstPartyProvider else {
-                        group.addTask { await self.refreshUserPlugin(instanceID) }
-                        continue
-                    }
+                    guard let provider = instanceID.firstPartyProvider else { continue }
                     group.addTask {
                         await self.refreshProvider(
                             provider,
@@ -999,9 +984,6 @@ final class UsageStore {
 
     enum SessionQuotaWindowSource: String {
         case primary
-        case copilotSecondaryFallback
-        case antigravityQuotaSummary
-        case antigravityLegacy
     }
 
     func postQuotaWarning(_ event: QuotaWarningEvent, provider: UsageProvider) {
@@ -1058,15 +1040,6 @@ extension UsageStore {
         } else {
             nil
         }
-        let cursorCookieSource = self.settings.cursorCookieSource
-        let cursorCookieHeader = self.settings.cursorCookieHeader
-        let ampCookieSource = self.settings.ampCookieSource
-        let ampCookieHeader = self.settings.ampCookieHeader
-        let ollamaCookieSource = self.settings.ollamaCookieSource
-        let ollamaCookieHeader = self.settings.ollamaCookieHeader
-        let notionCookieSource = self.settings.notionCookieSource
-        let notionCookieHeader = self.settings.notionCookieHeader
-        let notionWorkspaceID = self.settings.notionWorkspaceID
         let processEnvironment = self.environmentBase
         let apiKeyDebugContext = self.apiKeyDebugContext(
             provider: provider,
@@ -1099,57 +1072,6 @@ extension UsageStore {
                             browserDetection: browserDetection,
                             configuration: claudeDebugConfiguration)
                     }
-                case .zai:
-                    let resolution = ProviderTokenResolver.resolution(for: .zai)
-                    let hasAny = resolution != nil
-                    let source = resolution?.source.rawValue ?? "none"
-                    return "Z_AI_API_KEY=\(hasAny ? "present" : "missing") source=\(source)"
-                case .synthetic:
-                    let resolution = ProviderTokenResolver.resolution(for: .synthetic)
-                    let hasAny = resolution != nil
-                    let source = resolution?.source.rawValue ?? "none"
-                    return "SYNTHETIC_API_KEY=\(hasAny ? "present" : "missing") source=\(source)"
-                case .cursor:
-                    return await Self.debugCursorLog(
-                        browserDetection: browserDetection,
-                        cursorCookieSource: cursorCookieSource,
-                        cursorCookieHeader: cursorCookieHeader)
-                case .minimax:
-                    let tokenResolution = ProviderTokenResolver.resolution(for: .minimax)
-                    let cookieResolution = ProviderTokenResolver.resolution(for: .minimax, kind: .secondary)
-                    let tokenSource = tokenResolution?.source.rawValue ?? "none"
-                    let cookieSource = cookieResolution?.source.rawValue ?? "none"
-                    return "MINIMAX_API_KEY=\(tokenResolution == nil ? "missing" : "present") " +
-                        "source=\(tokenSource) MINIMAX_COOKIE=\(cookieResolution == nil ? "missing" : "present") " +
-                        "source=\(cookieSource)"
-                case .alibaba:
-                    let resolution = ProviderTokenResolver.resolution(for: .alibaba)
-                    let hasAny = resolution != nil
-                    let source = resolution?.source.rawValue ?? "none"
-                    return "ALIBABA_CODING_PLAN_API_KEY=\(hasAny ? "present" : "missing") source=\(source)"
-                case .augment:
-                    return await Self.debugAugmentLog()
-                case .amp:
-                    return await Self.debugAmpLog(
-                        browserDetection: browserDetection,
-                        ampCookieSource: ampCookieSource,
-                        ampCookieHeader: ampCookieHeader)
-                case .ollama:
-                    return await Self.debugOllamaLog(
-                        browserDetection: browserDetection,
-                        ollamaCookieSource: ollamaCookieSource,
-                        ollamaCookieHeader: ollamaCookieHeader)
-                case .notion:
-                    return await Self.debugNotionLog(
-                        browserDetection: browserDetection,
-                        notionCookieSource: notionCookieSource,
-                        notionCookieHeader: notionCookieHeader,
-                        notionWorkspaceID: notionWorkspaceID)
-                case .warp:
-                    let resolution = ProviderTokenResolver.resolution(for: .warp)
-                    let hasAny = resolution != nil
-                    let source = resolution?.source.rawValue ?? "none"
-                    return "WARP_API_KEY=\(hasAny ? "present" : "missing") source=\(source)"
                 case .deepseek:
                     return Self.apiKeyDebugLine(
                         label: "DEEPSEEK_API_KEY",
@@ -1279,94 +1201,6 @@ extension UsageStore {
         #endif
     }
 
-    private static func debugCursorLog(
-        browserDetection: BrowserDetection,
-        cursorCookieSource: ProviderCookieSource,
-        cursorCookieHeader: String) async -> String
-    {
-        await runWithTimeout(seconds: 15) {
-            var lines: [String] = []
-
-            do {
-                let probe = CursorStatusProbe(browserDetection: browserDetection)
-                let snapshot: CursorStatusSnapshot = if cursorCookieSource == .manual,
-                                                        let normalizedHeader = CookieHeaderNormalizer
-                                                            .normalize(cursorCookieHeader)
-                {
-                    try await probe.fetchWithManualCookies(normalizedHeader)
-                } else {
-                    try await probe.fetch { msg in lines.append("[cursor-cookie] \(msg)") }
-                }
-
-                lines.append("")
-                lines.append("Cursor Status Summary:")
-                lines.append("membershipType=\(snapshot.membershipType ?? "nil")")
-                lines.append("accountEmail=\(snapshot.accountEmail ?? "nil")")
-                lines.append("planPercentUsed=\(snapshot.planPercentUsed)%")
-                lines.append("planUsedUSD=$\(snapshot.planUsedUSD)")
-                lines.append("planLimitUSD=$\(snapshot.planLimitUSD)")
-                lines.append("onDemandUsedUSD=$\(snapshot.onDemandUsedUSD)")
-                lines.append("onDemandLimitUSD=\(snapshot.onDemandLimitUSD.map { "$\($0)" } ?? "nil")")
-                if let teamUsed = snapshot.teamOnDemandUsedUSD {
-                    lines.append("teamOnDemandUsedUSD=$\(teamUsed)")
-                }
-                if let teamLimit = snapshot.teamOnDemandLimitUSD {
-                    lines.append("teamOnDemandLimitUSD=$\(teamLimit)")
-                }
-                lines.append("billingCycleEnd=\(snapshot.billingCycleEnd?.description ?? "nil")")
-
-                if let rawJSON = snapshot.rawJSON {
-                    lines.append("")
-                    lines.append("Raw API Response:")
-                    lines.append(rawJSON)
-                }
-
-                return lines.joined(separator: "\n")
-            } catch {
-                lines.append("")
-                lines.append("Cursor probe failed: \(error.localizedDescription)")
-                return lines.joined(separator: "\n")
-            }
-        }
-    }
-
-    private static func debugAugmentLog() async -> String {
-        await runWithTimeout(seconds: 15) {
-            let probe = AugmentStatusProbe()
-            return await probe.debugRawProbe()
-        }
-    }
-
-    private static func debugAmpLog(
-        browserDetection: BrowserDetection,
-        ampCookieSource: ProviderCookieSource,
-        ampCookieHeader: String) async -> String
-    {
-        await runWithTimeout(seconds: 15) {
-            let fetcher = AmpUsageFetcher(browserDetection: browserDetection)
-            let manualHeader = ampCookieSource == .manual
-                ? CookieHeaderNormalizer.normalize(ampCookieHeader)
-                : nil
-            return await fetcher.debugRawProbe(cookieHeaderOverride: manualHeader)
-        }
-    }
-
-    private static func debugOllamaLog(
-        browserDetection: BrowserDetection,
-        ollamaCookieSource: ProviderCookieSource,
-        ollamaCookieHeader: String) async -> String
-    {
-        await runWithTimeout(seconds: 15) {
-            let fetcher = OllamaUsageFetcher(browserDetection: browserDetection)
-            let manualHeader = ollamaCookieSource == .manual
-                ? CookieHeaderNormalizer.normalize(ollamaCookieHeader)
-                : nil
-            return await fetcher.debugRawProbe(
-                cookieHeaderOverride: manualHeader,
-                manualCookieMode: ollamaCookieSource == .manual)
-        }
-    }
-
     /// Version probes can spawn subprocesses (Antigravity's `ps` scan trips a TCC
     /// prompt, CLI providers exec their binaries), so disabled providers must not
     /// be probed (#2267). Settings changes re-run this when the enabled set changes.
@@ -1468,14 +1302,6 @@ extension UsageStore {
             return
         }
 
-        // Provider-specific by design: Cursor cost shares the dashboard-cookie source policy with status fetching.
-        // Cursor cost honors the same cookie policy as status: when the user set the cookie source
-        // to Off, skip the network fetch entirely (mirrors CursorProviderDescriptor.checkStatus).
-        if provider == .cursor, self.settings.cursorCookieSource == .off {
-            self.resetTokenUsageState(for: provider)
-            return
-        }
-
         guard await self.refreshPiHistoryScope(for: provider) else { return }
 
         guard !self.tokenRefreshInFlight.contains(provider.instanceID) else { return }
@@ -1486,9 +1312,7 @@ extension UsageStore {
             calendar: self.settings.costUsageBucketCalendar)
         // Cursor cost reuses the status cookie policy: a Manual source forwards the manual header so
         // cost and status share the same session; other sources fall back to auto resolution.
-        guard case let .proceed(cursorCookieHeaderOverride) = self.prepareCursorCostCookie(for: provider) else {
-            return
-        }
+
         let costScope = self.tokenCostScope(for: provider)
         let costScopeSignature = self.tokenSnapshotScopeSignature(for: provider)
         let publicationScope = self.tokenRefreshPublicationScope(
@@ -1538,7 +1362,6 @@ extension UsageStore {
                 now: now,
                 codexHomePath: costScope.codexHomePath,
                 historyDays: historyDays,
-                cursorCookieHeaderOverride: cursorCookieHeaderOverride,
                 includePiSessions: self.shouldIncludePiSessionsInTokenSnapshot(for: provider))
             try self.commitTokenUsageResult(result, context: refreshContext)
         } catch {

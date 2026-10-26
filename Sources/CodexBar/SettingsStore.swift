@@ -257,7 +257,6 @@ final class SettingsStore {
     @ObservationIgnored lazy var httpServer = HTTPServerController(
         configURL: self.configStore.fileURL.deletingLastPathComponent().appendingPathComponent("http-server.json"))
     @ObservationIgnored let configStore: CodexBarConfigStore
-    @ObservationIgnored let antigravityOAuthCredentialsStore: AntigravityOAuthCredentialsStore
     @ObservationIgnored let keychainAccessPolicy: SettingsStoreKeychainAccessPolicy
     @ObservationIgnored var config: CodexBarConfig
     @ObservationIgnored var configPersistTask: Task<Void, Never>?
@@ -308,43 +307,21 @@ final class SettingsStore {
     init(
         userDefaults: UserDefaults = .standard,
         configStore: CodexBarConfigStore = CodexBarConfigStore(),
-        zaiTokenStore: any ZaiTokenStoring = KeychainZaiTokenStore(),
-        syntheticTokenStore: any SyntheticTokenStoring = KeychainSyntheticTokenStore(),
         codexCookieStore: any CookieHeaderStoring = KeychainCookieHeaderStore(
             account: "codex-cookie",
             promptKind: .codexCookie),
         claudeCookieStore: any CookieHeaderStoring = KeychainCookieHeaderStore(
             account: "claude-cookie",
             promptKind: .claudeCookie),
-        cursorCookieStore: any CookieHeaderStoring = KeychainCookieHeaderStore(
-            account: "cursor-cookie",
-            promptKind: .cursorCookie),
         opencodeCookieStore: any CookieHeaderStoring = KeychainCookieHeaderStore(
             account: "opencode-cookie",
             promptKind: .opencodeCookie),
-        factoryCookieStore: any CookieHeaderStoring = KeychainCookieHeaderStore(
-            account: "factory-cookie",
-            promptKind: .factoryCookie),
-        minimaxCookieStore: any MiniMaxCookieStoring = KeychainMiniMaxCookieStore(),
-        minimaxAPITokenStore: any MiniMaxAPITokenStoring = KeychainMiniMaxAPITokenStore(),
-        kimiTokenStore: any KimiTokenStoring = KeychainKimiTokenStore(),
-        augmentCookieStore: any CookieHeaderStoring = KeychainCookieHeaderStore(
-            account: "augment-cookie",
-            promptKind: .augmentCookie),
-        ampCookieStore: any CookieHeaderStoring = KeychainCookieHeaderStore(
-            account: "amp-cookie",
-            promptKind: .ampCookie),
-        copilotTokenStore: any CopilotTokenStoring = KeychainCopilotTokenStore(),
         tokenAccountStore: any ProviderTokenAccountStoring = FileTokenAccountStore(),
-        antigravityOAuthCredentialsStore: AntigravityOAuthCredentialsStore = AntigravityOAuthCredentialsStore(),
         keychainAccessPolicy: SettingsStoreKeychainAccessPolicy = .defaultPolicy,
         performInitialProviderDetection: Bool = !SettingsStore.isRunningTests)
     {
         // Legacy credential migration must see the saved policy, including shared-defaults fallback.
         keychainAccessPolicy.setDisabled(Self.loadDebugDisableKeychainAccess(userDefaults: userDefaults))
-        if !Self.isRunningTests {
-            _ = UserProviderPluginRegistry.refresh()
-        }
         // Capture this before app-group/config migrations can create prior-installation state.
         let hadExistingConfig = (try? configStore.load()) != nil
         let hadPreviousInstallationState = hadExistingConfig || Self.hadPreviousAppLaunch(userDefaults: userDefaults)
@@ -371,19 +348,9 @@ final class SettingsStore {
             userDefaults.set(legacyOpenAIWebAccess, forKey: "openAIWebAccessEnabled")
         }
         let legacyStores = CodexBarConfigMigrator.LegacyStores(
-            zaiTokenStore: zaiTokenStore,
-            syntheticTokenStore: syntheticTokenStore,
             codexCookieStore: codexCookieStore,
             claudeCookieStore: claudeCookieStore,
-            cursorCookieStore: cursorCookieStore,
             opencodeCookieStore: opencodeCookieStore,
-            factoryCookieStore: factoryCookieStore,
-            minimaxCookieStore: minimaxCookieStore,
-            minimaxAPITokenStore: minimaxAPITokenStore,
-            kimiTokenStore: kimiTokenStore,
-            augmentCookieStore: augmentCookieStore,
-            ampCookieStore: ampCookieStore,
-            copilotTokenStore: copilotTokenStore,
             tokenAccountStore: tokenAccountStore)
         let config: CodexBarConfig
         do {
@@ -403,7 +370,6 @@ final class SettingsStore {
             userDefaults: userDefaults, config: config, hadExistingConfig: hadExistingConfig)
         self.userDefaults = userDefaults
         self.configStore = configStore
-        self.antigravityOAuthCredentialsStore = antigravityOAuthCredentialsStore
         self.keychainAccessPolicy = keychainAccessPolicy
         self.config = config
         self.configLoading = true
@@ -425,7 +391,6 @@ final class SettingsStore {
         if performInitialProviderDetection {
             self.runInitialProviderDetectionIfNeeded()
         }
-        self.ensureAlibabaProviderAutoEnabledIfNeeded()
         self.applyTokenCostDefaultIfNeeded()
         if self.claudeUsageDataSource != .cli {
             if Self.isRunningTests {
@@ -539,7 +504,6 @@ extension SettingsStore {
         let menuBarLayoutOverridesRaw = Self.loadMenuBarLayoutOverrides(userDefaults: userDefaults)
         let rawVerticalAdjustment = userDefaults.object(forKey: "menuBarLayoutVerticalAdjustment") as? Int
         let menuBarLayoutVerticalAdjustment = max(-20, min(20, rawVerticalAdjustment ?? 0))
-        let copilotIconSecondaryWindowIDRaw = Self.loadCopilotIconSecondaryWindowIDRaw(userDefaults: userDefaults)
         let costUsageEnabled = userDefaults.object(forKey: "tokenCostUsageEnabled") as? Bool ?? false
         let costReportingPeriod = CostReportingPeriod.migrated(
             rawValue: userDefaults.string(forKey: CostReportingPeriod.defaultsKey),
@@ -639,10 +603,6 @@ extension SettingsStore {
             menuBarLayoutGapRaw: userDefaults.string(forKey: "menuBarLayoutGap")
                 ?? MenuBarLayoutGap.regular.rawValue,
             menuBarLayoutVerticalAdjustment: menuBarLayoutVerticalAdjustment,
-            copilotBudgetExtrasEnabled: userDefaults.object(forKey: "copilotBudgetExtrasEnabled") as? Bool ?? false,
-            copilotIconSecondaryWindowIDRaw: copilotIconSecondaryWindowIDRaw,
-            copilotSeatCreditEntitlementRaw: userDefaults.object(
-                forKey: "copilotSeatCreditEntitlement") as? String ?? "",
             costUsageEnabled: costUsageEnabled,
             codexLocalSessionCostLedgerEnabled: userDefaults.object(
                 forKey: "codexLocalSessionCostLedgerEnabled") as? Bool ?? false,
@@ -828,7 +788,7 @@ extension SettingsStore {
 
     private static func loadMenuBarMetricPreferences(userDefaults: UserDefaults) -> [String: String] {
         let storedPreferences = userDefaults.dictionary(forKey: "menuBarMetricPreferences") as? [String: String] ?? [:]
-        let preferences: [String: String] = if !storedPreferences.isEmpty {
+        return if !storedPreferences.isEmpty {
             storedPreferences
         } else if let menuBarMetricRaw = userDefaults.string(forKey: "menuBarMetricPreference"),
                   let legacyPreference = MenuBarMetricPreference(rawValue: menuBarMetricRaw)
@@ -838,27 +798,6 @@ extension SettingsStore {
         } else {
             [:]
         }
-
-        let migrationKey = "antigravityTwoPoolMetricPreferenceMigrated"
-        guard !userDefaults.bool(forKey: migrationKey) else { return preferences }
-
-        // Tagged builds through v0.35 used primary=Claude, secondary=Gemini Pro,
-        // and tertiary=Gemini Flash. Remap those meanings once to the two-pool schema.
-        // Provider-specific by design: this one-time migration rewrites Antigravity's historical persisted lanes.
-        var migrated = preferences
-        switch MenuBarMetricPreference(rawValue: migrated[UsageProvider.antigravity.rawValue] ?? "") {
-        case .primary:
-            migrated[UsageProvider.antigravity.rawValue] = MenuBarMetricPreference.secondary.rawValue
-        case .secondary:
-            migrated[UsageProvider.antigravity.rawValue] = MenuBarMetricPreference.primary.rawValue
-        case .tertiary:
-            migrated[UsageProvider.antigravity.rawValue] = MenuBarMetricPreference.primary.rawValue
-        case .automatic, .primaryAndSecondary, .extraUsage, .average, .monthlyPlan, .none:
-            break
-        }
-        userDefaults.set(migrated, forKey: "menuBarMetricPreferences")
-        userDefaults.set(true, forKey: migrationKey)
-        return migrated
     }
 
     private static func loadMenuBarLayout(userDefaults: UserDefaults) -> MenuBarLayout? {
@@ -934,10 +873,6 @@ extension SettingsStore {
         }
         let legacyShowAll = userDefaults.object(forKey: "showAllTokenAccountsInMenu") as? Bool ?? false
         return legacyShowAll ? MultiAccountMenuLayout.stacked.rawValue : MultiAccountMenuLayout.segmented.rawValue
-    }
-
-    private static func loadCopilotIconSecondaryWindowIDRaw(userDefaults: UserDefaults) -> String {
-        userDefaults.string(forKey: "copilotIconSecondaryWindowID") ?? CopilotIconSecondaryWindowSelection.chat
     }
 
     static func loadDebugDisableKeychainAccess(userDefaults: UserDefaults) -> Bool {
@@ -1026,8 +961,6 @@ extension SettingsStore {
         let metadata = ProviderDescriptorRegistry.metadata
         let defaults = UsageProvider.allCases.map { provider in
             (id: provider.instanceID, enabled: metadata[provider]?.defaultEnabled ?? false)
-        } + UserProviderPluginRegistry.all.map { plugin in
-            (id: plugin.manifest.id, enabled: true)
         }
         var enablement: [ProviderInstanceID: Bool] = [:]
         enablement.reserveCapacity(defaults.count)
@@ -1158,7 +1091,7 @@ extension SettingsStore {
 
         for rawValue in raw {
             guard let instanceID = ProviderInstanceID(rawValue: rawValue),
-                  instanceID.firstPartyProvider != nil || UserProviderPluginRegistry.plugin(for: instanceID) != nil
+                  instanceID.firstPartyProvider != nil
             else {
                 continue
             }
@@ -1172,24 +1105,8 @@ extension SettingsStore {
             seen = Set(ordered)
         }
 
-        if !seen.contains(.factory), let zaiIndex = ordered.firstIndex(of: .zai) {
-            ordered.insert(.factory, at: zaiIndex)
-            seen.insert(.factory)
-        }
-
-        if !seen.contains(.minimax), let zaiIndex = ordered.firstIndex(of: .zai) {
-            let insertIndex = ordered.index(after: zaiIndex)
-            ordered.insert(.minimax, at: insertIndex)
-            seen.insert(.minimax)
-        }
-
         for provider in UsageProvider.allCases where !seen.contains(provider.instanceID) {
             ordered.append(provider.instanceID)
-        }
-
-        for plugin in UserProviderPluginRegistry.all where !seen.contains(plugin.manifest.id) {
-            ordered.append(plugin.manifest.id)
-            seen.insert(plugin.manifest.id)
         }
 
         return ordered

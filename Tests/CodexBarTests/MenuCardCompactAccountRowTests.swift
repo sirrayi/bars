@@ -98,7 +98,7 @@ struct MenuCardCompactAccountRowTests {
         }
     }
 
-    @Test(arguments: [UsageProvider.deepseek, .kilo, .mimo, .neuralwatt, .mistral, .warp, .abacus])
+    @Test(arguments: [UsageProvider.deepseek])
     func `balance descriptions never become reset claims`(provider: UsageProvider) throws {
         let balance = Fixture.window(80, description: "$5.00 (Paid: $3.00 / Granted: $2.00)")
         let row = try Fixture.row(provider: provider, primary: balance)
@@ -107,49 +107,6 @@ struct MenuCardCompactAccountRowTests {
         #expect(model.detailLines.count == 1)
         #expect(!model.detailLines[0].contains(" · "))
         #expect(!model.accessibilityText.contains("$5.00"))
-    }
-
-    @Test
-    func `provider reset suppression remains scoped to the primary window`() throws {
-        let session = Fixture.window(70, after: 3600, description: "$5.00")
-        let weekly = Fixture.window(89, after: 187_200)
-        let row = try Fixture.row(provider: .manus, primary: session, weekly: weekly)
-        let model = Fixture.model(row)
-        #expect(row.windowDetails.map(\.resetPresentation) == [.standard, .hidden])
-        #expect(try model.detailLines[0].hasSuffix(
-            #require(UsageFormatter.resetLine(for: weekly, style: .countdown, now: Fixture.now))))
-        #expect(!model.detailLines[1].contains(" · "))
-    }
-
-    @Test
-    func `date backed balance quotas retain their authoritative reset`() throws {
-        let window = Fixture.window(80, after: 3600, description: "$5.00")
-        let row = try Fixture.row(provider: .kilo, primary: window)
-        let model = Fixture.model(row)
-        #expect(row.windowDetails.first?.resetPresentation == .standard)
-        #expect(try model.detailLines[0].hasSuffix(
-            #require(UsageFormatter.resetLine(for: window, style: .countdown, now: Fixture.now))))
-        #expect(!model.detailLines[0].contains("$5.00"))
-    }
-
-    @Test(arguments: [UsageProvider.openrouter, .sub2api])
-    func `provider owned description is displayed without adding a reset prefix`(provider: UsageProvider) throws {
-        let row = try Fixture.row(provider: provider, primary: Fixture.window(80, description: "  Quota detail  "))
-        let model = Fixture.model(row)
-        #expect(row.windowDetails.first?.resetPresentation == .providerDescription)
-        #expect(model.detailLines[0].hasSuffix(" · Quota detail"))
-        #expect(!model.detailLines[0].contains("Resets"))
-        let blank = try Fixture.model(Fixture.row(provider: provider, primary: Fixture.window(80, description: "  ")))
-        #expect(!blank.detailLines[0].contains(" · "))
-    }
-
-    @Test(arguments: [nil, "  "] as [String?])
-    func `optional provider description preserves a dated reset when empty`(description: String?) throws {
-        let window = Fixture.window(80, after: 3600, description: description)
-        let row = try Fixture.row(provider: .openrouter, primary: window)
-        #expect(row.windowDetails.first?.resetPresentation == .standard)
-        #expect(try Fixture.model(row).detailLines[0].hasSuffix(
-            #require(UsageFormatter.resetLine(for: window, style: .countdown, now: Fixture.now))))
     }
 
     @Test

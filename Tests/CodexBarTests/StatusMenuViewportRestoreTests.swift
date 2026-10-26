@@ -1388,56 +1388,6 @@ extension StatusMenuViewportRestoreTests {
     }
 
     @Test
-    func `account selection ABA discards originating refresh restore`() async throws {
-        let settings = self.makeSettings()
-        settings.refreshFrequency = .manual
-        settings.mergeIcons = false
-        settings.multiAccountMenuLayout = .segmented
-        settings.statusChecksEnabled = false
-        self.enableOnly([.copilot], settings: settings)
-        settings.addTokenAccount(provider: .copilot, label: "Primary", token: "a")
-        settings.addTokenAccount(provider: .copilot, label: "Secondary", token: "b")
-        settings.setActiveTokenAccountIndex(0, for: .copilot)
-
-        let controller = self.makeController(settings: settings)
-        defer { controller.releaseStatusItemsForTesting() }
-        controller.menuRefreshEnabledOverrideForTesting = true
-        controller._test_providerSwitcherMenuRebuildDebounceNanoseconds = UInt64.max
-        let menu = controller.makeMenu(for: .copilot)
-        controller.menuWillOpen(menu)
-        defer { controller.menuDidClose(menu) }
-        let switcher = try #require(menu.items.compactMap { $0.view as? TokenAccountSwitcherView }.first)
-
-        let gate = ViewportRefreshGate()
-        var scheduledCount = 0
-        controller._test_menuViewportRestoreScheduler = { _ in scheduledCount += 1 }
-        controller._test_manualRefreshOperation = {
-            await gate.wait()
-            controller.refreshOpenMenusAfterExplicitStoreAction()
-        }
-        controller.refreshMenuProviderNow(in: menu)
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.copilot)] == nil {
-            await Task.yield()
-        }
-        let task = try #require(controller.manualRefreshTasks[.provider(.copilot)])
-        let initialGeneration = try #require(controller.menuSession
-            .menuInteractionGeneration(for: ObjectIdentifier(menu)))
-
-        let secondaryRefresh = try #require(switcher._test_select(index: 1))
-        secondaryRefresh.cancel()
-        let primaryRefresh = try #require(switcher._test_select(index: 0))
-        primaryRefresh.cancel()
-        #expect(settings.tokenAccountsData(for: .copilot)?.clampedActiveIndex() == 0)
-        #expect(controller.menuSession.menuInteractionGeneration(for: ObjectIdentifier(menu)) == initialGeneration + 2)
-
-        gate.resume()
-        await task.value
-
-        #expect(scheduledCount == 0)
-        #expect(controller.menuSession.pendingViewportRestores.isEmpty)
-    }
-
-    @Test
     func `cancelled manual refresh clears restore request without scheduling`() async throws {
         let settings = self.makeSettings()
         settings.refreshFrequency = .manual

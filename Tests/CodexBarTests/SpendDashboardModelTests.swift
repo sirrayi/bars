@@ -65,52 +65,6 @@ struct SpendDashboardModelTests {
     }
 
     @Test
-    func `dashboard source contract includes only cost capable descriptors`() {
-        let providers = Set(ProviderDescriptorRegistry.all
-            .filter(\.tokenCost.supportsTokenCost)
-            .map(\.id))
-        #expect(providers == [
-            .codex,
-            .claude,
-            .vertexai,
-            .openai,
-            .mistral,
-            .bedrock,
-            .cursor,
-            .grok,
-            .opencodego,
-            .openrouter,
-            .xai,
-            // Antigravity and Muse provide local token history without monetary values.
-            .antigravity, .muse, .pi,
-        ])
-    }
-
-    @Test
-    func `native currencies stay separate and rank only within their currency`() throws {
-        let model = Self.model(
-            inputs: [
-                Self.input(id: "usd-low", provider: .claude, currency: "usd", cost: 2),
-                Self.input(id: "eur", provider: .openai, currency: "EUR", cost: 100),
-                Self.input(id: "usd-high", provider: .codex, currency: "USD", cost: 8),
-            ])
-
-        #expect(model.groups.map(\.currencyCode) == ["EUR", "USD"])
-        let eur = try #require(model.groups.first)
-        #expect(eur.providers.map(\.id) == ["eur"])
-        #expect(eur.providers.map(\.rank) == [1])
-        #expect(eur.totalCost == 100)
-        #expect(eur.models.map(\.modelName) == ["test-model"])
-        #expect(eur.models.map(\.totalCost) == [100])
-        let usd = try #require(model.groups.last)
-        #expect(usd.providers.map(\.id) == ["usd-high", "usd-low"])
-        #expect(usd.providers.map(\.rank) == [1, 2])
-        #expect(usd.totalCost == 10)
-        #expect(usd.models.allSatisfy { $0.modelName == "test-model" })
-        #expect(usd.models.compactMap(\.totalCost).reduce(0, +) == 10)
-    }
-
-    @Test
     func `windows anchor to injected now and report covered days honestly`() throws {
         let snapshot = Self.snapshot(
             currency: "USD",
@@ -384,30 +338,6 @@ struct SpendDashboardModelTests {
     }
 
     @Test
-    func `invalid costs and arithmetic overflow never become spend`() throws {
-        let invalid = SpendDashboardModel.ProviderInput(
-            id: "invalid",
-            provider: .claude,
-            displayName: "Claude",
-            snapshot: Self.snapshot(currency: "USD", entries: [
-                Self.entry(day: "2026-07-16", cost: -.infinity, tokens: .max),
-                Self.entry(day: "2026-07-15", cost: -.nan, tokens: .max),
-                Self.entry(day: "2026-07-14", cost: -1),
-                Self.entry(day: "2026-06-31", cost: 99),
-            ]))
-        let hugeA = Self.input(id: "huge-a", provider: .codex, currency: "USD", cost: .greatestFiniteMagnitude)
-        let hugeB = Self.input(id: "huge-b", provider: .openai, currency: "USD", cost: .greatestFiniteMagnitude)
-        let group = try #require(Self.model(
-            inputs: [invalid, hugeA, hugeB]).groups.first)
-
-        #expect(group.providers.first(where: { $0.id == "invalid" })?.totalCost == nil)
-        #expect(group.totalCost == nil)
-        #expect(group.totalTokens == 20)
-        #expect(group.hasPartialTokens)
-        #expect(group.dailyPoints.isEmpty)
-    }
-
-    @Test
     func `malformed date mixed with valid usage fails the source closed`() throws {
         let snapshot = Self.snapshot(currency: "USD", entries: [
             Self.entry(day: "2026-07-16", cost: 4, tokens: 40),
@@ -467,54 +397,6 @@ struct SpendDashboardModelTests {
         #expect(group.modelHistoryCompleteness == .complete)
         #expect(group.models.map(\.totalCost) == [3])
         #expect(group.dailyPoints.map(\.cost) == [3])
-    }
-
-    @Test
-    func `mixed invalid entry metrics make source and group totals unavailable`() throws {
-        let inputs = [
-            SpendDashboardModel.ProviderInput(
-                id: "missing",
-                provider: .claude,
-                displayName: "Missing",
-                snapshot: Self.snapshot(currency: "USD", entries: [
-                    Self.entry(day: "2026-07-16", cost: 1, tokens: 1),
-                    Self.entry(day: "2026-07-15", cost: nil, tokens: nil),
-                ])),
-            SpendDashboardModel.ProviderInput(
-                id: "negative",
-                provider: .codex,
-                displayName: "Negative",
-                snapshot: Self.snapshot(currency: "USD", entries: [
-                    Self.entry(day: "2026-07-16", cost: 1, tokens: 1),
-                    Self.entry(day: "2026-07-15", cost: -1, tokens: -1),
-                ])),
-            SpendDashboardModel.ProviderInput(
-                id: "nonfinite",
-                provider: .openai,
-                displayName: "Nonfinite",
-                snapshot: Self.snapshot(currency: "USD", entries: [
-                    Self.entry(day: "2026-07-16", cost: 1, tokens: 1),
-                    Self.entry(day: "2026-07-15", cost: .infinity, tokens: 1),
-                ])),
-            SpendDashboardModel.ProviderInput(
-                id: "overflow",
-                provider: .mistral,
-                displayName: "Overflow",
-                snapshot: Self.snapshot(currency: "USD", entries: [
-                    Self.entry(day: "2026-07-16", cost: .greatestFiniteMagnitude, tokens: .max),
-                    Self.entry(day: "2026-07-15", cost: .greatestFiniteMagnitude, tokens: .max),
-                ])),
-        ]
-        let group = try #require(Self.model(
-            inputs: inputs,
-            requestedDays: 7).groups.first)
-
-        #expect(group.providers.allSatisfy { $0.totalCost == nil })
-        #expect(group.providers.first(where: { $0.id == "nonfinite" })?.totalTokens == 2)
-        #expect(group.providers.filter { $0.id != "nonfinite" }.allSatisfy { $0.totalTokens == nil })
-        #expect(group.totalCost == nil)
-        #expect(group.totalTokens == 2)
-        #expect(group.hasPartialTokens)
     }
 
     @Test
@@ -633,35 +515,6 @@ struct SpendDashboardModelTests {
 
         #expect(group.modelHistoryCompleteness == .incomplete)
         #expect(group.models.isEmpty)
-    }
-
-    @Test
-    func `incomplete duplicate day sources do not render partial chart stacks`() throws {
-        let missing = SpendDashboardModel.ProviderInput(
-            id: "missing",
-            provider: .claude,
-            displayName: "Missing",
-            snapshot: Self.snapshot(currency: "USD", entries: [
-                Self.entry(day: "2026-07-16", cost: 2),
-                Self.entry(day: "2026-07-16", cost: nil),
-            ]))
-        let overflow = SpendDashboardModel.ProviderInput(
-            id: "overflow",
-            provider: .codex,
-            displayName: "Overflow",
-            snapshot: Self.snapshot(currency: "USD", entries: [
-                Self.entry(day: "2026-07-16", cost: .greatestFiniteMagnitude),
-                Self.entry(day: "2026-07-16", cost: .greatestFiniteMagnitude),
-            ]))
-        let complete = Self.input(id: "complete", provider: .openai, currency: "USD", cost: 3)
-        let group = try #require(Self.model(
-            inputs: [missing, overflow, complete],
-            requestedDays: 7).groups.first)
-
-        #expect(group.dailyPoints.map(\.sourceID) == ["complete"])
-        #expect(group.dailyPoints.map(\.cost) == [3])
-        #expect(group.dailyPoints.map(\.stackStart) == [0])
-        #expect(group.dailyPoints.map(\.stackEnd) == [3])
     }
 
     @Test
@@ -1088,53 +941,6 @@ extension SpendDashboardModelTests {
             hiddenSourceIDs: [SpendDashboardModel.openCodexSourceID])
         #expect(filtered.groups[0].providers.map(\.id) == ["codex:main"])
         #expect(Set(filtered.availableSources.map(\.id)) == ["codex:main", SpendDashboardModel.openCodexSourceID])
-    }
-
-    @Test
-    func `metered spend stays on the snapshot window instead of a shorter range`() {
-        let now = Date(timeIntervalSince1970: 1_784_179_200)
-        let snapshot = CostUsageTokenSnapshot(
-            sessionTokens: 10,
-            sessionCostUSD: 1,
-            last30DaysTokens: 100,
-            last30DaysCostUSD: 10,
-            historyDays: 30,
-            meteredCostUSD: 4.5,
-            costProvenance: .mixed,
-            daily: [Self.entry(day: "2026-07-16", cost: 1)],
-            updatedAt: now)
-        let input = SpendDashboardModel.ProviderInput(
-            id: "cursor",
-            provider: .cursor,
-            displayName: "Cursor",
-            snapshot: snapshot)
-        let week = SpendDashboardModel.build(inputs: [input], requestedDays: 7, now: now)
-        let month = SpendDashboardModel.build(inputs: [input], requestedDays: 30, now: now)
-        #expect(week.groups[0].meteredCost == nil)
-        #expect(month.groups[0].meteredCost == 4.5)
-    }
-
-    @Test
-    func `vendor reported daily spend keeps vendor metered provenance`() throws {
-        let snapshot = CostUsageTokenSnapshot(
-            sessionTokens: nil,
-            sessionCostUSD: nil,
-            last30DaysTokens: 10,
-            last30DaysCostUSD: 3.5,
-            costProvenance: .vendorMetered,
-            daily: [Self.entry(day: "2026-07-16", cost: 3.5)],
-            updatedAt: Self.now)
-        let input = SpendDashboardModel.ProviderInput(
-            provider: .openrouter,
-            displayName: "OpenRouter",
-            snapshot: snapshot)
-
-        let model = SpendDashboardModel.build(inputs: [input], requestedDays: 30, now: Self.now)
-        let group = try #require(model.groups.first)
-
-        #expect(group.totalCost == 3.5)
-        #expect(group.provenance == .vendorMetered)
-        #expect(group.meteredCost == nil)
     }
 
     @Test

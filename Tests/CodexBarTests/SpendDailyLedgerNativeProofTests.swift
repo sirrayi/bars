@@ -134,7 +134,7 @@ final class SpendDailyLedgerNativeProofTests: XCTestCase {
         let model = SpendDashboardModel.build(
             inputs: [
                 .init(provider: .codex, displayName: "Synthetic Codex", snapshot: snapshot),
-                .init(provider: .antigravity, displayName: "Synthetic Antigravity", snapshot: unpricedSnapshot),
+                .init(provider: .deepseek, displayName: "Synthetic DeepSeek", snapshot: unpricedSnapshot),
             ],
             requestedDays: 3,
             now: now,

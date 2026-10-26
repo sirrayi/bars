@@ -19,88 +19,6 @@ struct MenuBarLayoutEditorTests {
     }
 
     @Test
-    @MainActor
-    func `all scope discloses only enabled saved overrides in provider order including equal layouts`() throws {
-        let settings = try Self.overrideSettings()
-        let global = MenuBarLayout(lines: [[.providerName, .percent(window: .session)]])
-        settings.setMenuBarLayout(global, for: nil)
-        settings.setMenuBarLayout(global, for: .cursor)
-        settings.setMenuBarLayout(MenuBarLayout(lines: [[.percent(window: .weekly)]]), for: .claude)
-        settings.setMenuBarLayout(global, for: .codex)
-
-        #expect(MenuBarLayoutEditorScope.all.providersWithOverrides(settings: settings) == [.claude, .cursor])
-        #expect(MenuBarLayoutEditorScope.provider(.claude).providersWithOverrides(settings: settings).isEmpty)
-        #expect(MenuBarLayoutEditorScope.all.previewLabel == L("menu_bar_layout_default_preview"))
-        #expect(MenuBarLayoutEditorScope.provider(.claude).previewLabel == L("menu_bar_layout_live_preview"))
-    }
-
-    @Test
-    @MainActor
-    func `editor reset removes only its enabled provider and updates observed disclosure`() throws {
-        let settings = try Self.overrideSettings()
-        let global = MenuBarLayout(lines: [[.providerName]])
-        let override = MenuBarLayout(lines: [[.percent(window: .weekly)]])
-        settings.setMenuBarLayout(global, for: nil)
-        settings.setMenuBarLayout(override, for: .claude)
-        settings.setMenuBarLayout(global, for: .cursor)
-        settings.setMenuBarLayout(override, for: .codex)
-        let changed = LockIsolated(false)
-        withObservationTracking {
-            _ = MenuBarLayoutEditorScope.all.providersWithOverrides(settings: settings)
-        } onChange: {
-            changed.setValue(true)
-        }
-
-        MenuBarLayoutEditorPersistence.useAllProvidersLayout(for: .claude, settings: settings)
-
-        #expect(changed.value)
-        #expect(settings.menuBarLayout(for: .claude) == global)
-        #expect(settings.menuBarLayoutOverrides == [.cursor: global, .codex: override])
-        #expect(MenuBarLayoutEditorScope.all.providersWithOverrides(settings: settings) == [.cursor])
-
-        MenuBarLayoutEditorPersistence.useAllProvidersLayout(for: .cursor, settings: settings)
-        #expect(MenuBarLayoutEditorScope.all.providersWithOverrides(settings: settings).isEmpty)
-        #expect(settings.menuBarLayoutOverrides == [.codex: override])
-    }
-
-    @Test
-    @MainActor
-    func `editor reset leaves disabled and no longer enabled providers untouched`() throws {
-        let settings = try Self.overrideSettings()
-        let override = MenuBarLayout(lines: [[.percent(window: .weekly)]])
-        settings.setMenuBarLayout(override, for: .claude)
-        settings.setMenuBarLayout(override, for: .codex)
-        let metadata = try #require(ProviderDefaults.metadata[.claude])
-        settings.setProviderEnabled(provider: .claude, metadata: metadata, enabled: false)
-
-        MenuBarLayoutEditorPersistence.useAllProvidersLayout(for: .claude, settings: settings)
-        MenuBarLayoutEditorPersistence.useAllProvidersLayout(for: .codex, settings: settings)
-        MenuBarLayoutEditorPersistence.useAllProvidersLayout(for: .cursor, settings: settings)
-
-        #expect(MenuBarLayoutEditorScope.all.providersWithOverrides(settings: settings).isEmpty)
-        #expect(settings.menuBarLayoutOverrides == [.claude: override, .codex: override])
-        #expect(!settings.hasStoredMenuBarLayout)
-        #expect(settings.providerEnablement[.claude] == false)
-        #expect(settings.providerEnablement[.codex] == false)
-    }
-
-    @MainActor
-    private static func overrideSettings() throws -> SettingsStore {
-        try #require(SettingsStore.isRunningTests)
-        let enabled: [UsageProvider] = [.claude, .cursor, .kimi]
-        let order = enabled + UsageProvider.allCases.filter { !enabled.contains($0) }
-        return testSettingsStore(
-            suiteName: "MenuBarLayoutEditorTests-overrides",
-            config: CodexBarConfig(providers: order.map {
-                ProviderConfig(id: $0.instanceID, enabled: enabled.contains($0))
-            }),
-            prepareDefaults: { defaults in
-                defaults.set(AppGroupSupport.migrationVersion, forKey: AppGroupSupport.migrationVersionKey)
-                defaults.set(true, forKey: "debugDisableKeychainAccess")
-            })
-    }
-
-    @Test
     func `time palette lists the compact run out token with a clear label`() {
         #expect(MenuBarLayoutPaletteTokens.time.contains(.runsOutCompact))
         #expect(MenuBarLayoutToken.runsOutCompact.editorLabel(provider: .codex) == "Runs out (compact)")
@@ -130,42 +48,6 @@ struct MenuBarLayoutEditorTests {
             elseToken: .hidden)
         #expect(conditional.editorSummary(provider: nil)
             == "If Cost (History window) >= 5 USD then Cost (History window) else Hide")
-    }
-
-    @Test
-    func `Cursor exposes Grok Bot after its named window is available`() {
-        let grokBot = NamedRateWindow(
-            id: "cursor-grok-bot",
-            title: "Grok Bot",
-            window: RateWindow(usedPercent: 42, windowMinutes: nil, resetsAt: nil, resetDescription: nil))
-        let cursor = UsageSnapshot(primary: nil, secondary: nil, extraRateWindows: [grokBot], updatedAt: Date())
-
-        #expect(MenuBarLayoutPaletteTokens.usage(provider: .cursor, snapshot: cursor) == [
-            .percent(window: .session),
-            .percent(window: .weekly),
-            .percent(window: .scopedWeekly),
-            .percent(window: .spend),
-            .lanePercent(lane: .primary),
-            .lanePercent(lane: .secondary),
-            .extraPercent(id: "cursor-grok-bot"),
-            .percent(window: .automatic),
-            .usageBar,
-            .progressBar(window: .session),
-            .progressBar(window: .weekly),
-            .progressBar(window: .scopedWeekly),
-            .progressBar(window: .automatic),
-            .tokensPerMinute,
-            .tokensSparkline,
-            .pace(window: .session),
-            .pace(window: .weekly),
-            .pace(window: .automatic),
-            .pace(window: .spend),
-        ])
-        #expect(MenuBarLayoutPaletteTokens.conditionalBranch.contains(.progressBar(window: .scopedWeekly)))
-        #expect(!MenuBarLayoutPaletteTokens.usage(provider: .codex, snapshot: cursor)
-            .contains(.extraPercent(id: "cursor-grok-bot")))
-        #expect(!MenuBarLayoutPaletteTokens.usage(provider: .cursor, snapshot: nil)
-            .contains(.extraPercent(id: "cursor-grok-bot")))
     }
 
     @Test
@@ -220,30 +102,6 @@ struct MenuBarLayoutEditorTests {
             == L("menu_bar_layout_token_resets_in"))
         #expect(MenuBarLayoutToken.resetAbsolute.editorLabel(provider: .codex)
             == L("menu_bar_layout_token_reset_at"))
-    }
-
-    @Test
-    func `reset secondary window labels follow provider cadence`() {
-        let countdown = MenuBarLayoutToken.windowResetCountdown(window: .weekly)
-        let absolute = MenuBarLayoutToken.windowResetAbsolute(window: .weekly)
-
-        #expect(countdown.editorLabel(provider: .notion)
-            == L("%@: %@", L("Monthly"), L("menu_bar_layout_token_resets_in")))
-        #expect(absolute.editorAccessibilityLabel(provider: .notion)
-            == L("%@: %@", L("Monthly"), L("menu_bar_layout_token_reset_at")))
-    }
-
-    @Test
-    func `Notion secondary editor labels use monthly cadence`() {
-        let percent = MenuBarLayoutToken.percent(window: .weekly)
-        let pace = MenuBarLayoutToken.pace(window: .weekly)
-        let monthlyPace = L("%@ %@", L("Monthly"), L("display_mode_pace").lowercased())
-
-        #expect(percent.editorLabel(provider: .notion) == L("%@ %@", L("Monthly"), "%"))
-        #expect(pace.editorLabel(provider: .notion) == monthlyPace)
-        #expect(pace.editorAccessibilityLabel(provider: .notion) == monthlyPace)
-        #expect(percent.editorLabel(provider: .codex) == L("menu_bar_layout_token_weekly"))
-        #expect(pace.editorLabel(provider: .codex) == L("menu_bar_layout_token_weekly_pace"))
     }
 
     @Test
@@ -413,31 +271,6 @@ struct MenuBarLayoutEditorTests {
             .conditional(id: conditionalID),
             to: initial)
         #expect(appended.lines == [[.icon, .resetCountdown, .conditional(id: conditionalID)]])
-    }
-
-    @Test
-    func `balance token is provider aware`() throws {
-        let row = try ProviderDetailSection.Row(label: "Remaining", value: "$12.34")
-        let section = try ProviderDetailSection(title: "Credits", rows: [row])
-        let snapshot = UsageSnapshot(
-            primary: nil,
-            secondary: nil,
-            details: [section],
-            updatedAt: Date())
-
-        #expect(MenuBarLayoutBalanceResolver.balance(provider: .openrouter, snapshot: snapshot) == "$12.34")
-        #expect(MenuBarLayoutBalanceResolver.balance(provider: .codex, snapshot: snapshot) == nil)
-        #expect(MenuBarLayoutBalanceResolver.balance(
-            provider: .codex,
-            snapshot: snapshot,
-            codexCredits: CreditsSnapshot(
-                remaining: 1234,
-                events: [],
-                updatedAt: Date(),
-                balanceReadSucceeded: true,
-                creditsAvailable: true,
-                balanceIsWorkspace: true)) == "1,234")
-        #expect(MenuBarLayoutToken.balance.editorLabel(provider: .openrouter) == L("Balance"))
     }
 
     @Test

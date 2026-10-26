@@ -76,38 +76,11 @@ extension UsageMenuCardView.Model {
             costSummaryInlineEnabled: input.costSummaryInlineEnabled,
             showOptionalUsage: input.showOptionalCreditsAndExtraUsage))
         {
-        case let .openAIAPI(usage):
-            return self.openAIAPIUsageNotes(usage)
         case let .localized(keys):
             return keys.map { L($0) }
         case .unhandled:
             return nil
         }
-    }
-
-    static func openAIAPIUsageNotes(_ usage: OpenAIAPIUsageSnapshot) -> [String] {
-        let today = usage.currentDay
-        let seven = usage.last7Days
-        let thirty = usage.last30Days
-        let historyLabel = usage.historyWindowLabel
-        let todayNote = String(
-            format: L("Today: %@ · %@ tokens"),
-            UsageFormatter.usdString(today.costUSD),
-            UsageFormatter.tokenCountString(today.totalTokens))
-        let sevenDayNote = "7d: \(UsageFormatter.usdString(seven.costUSD)) · " +
-            "\(UsageFormatter.tokenCountString(seven.requests)) \(L("requests"))"
-        let thirtyDayNote =
-            "\(historyLabel): \(UsageFormatter.tokenCountString(thirty.totalTokens)) \(L("tokens")) · " +
-            "\(UsageFormatter.tokenCountString(thirty.requests)) \(L("requests"))"
-        var notes: [String] = [
-            todayNote,
-            sevenDayNote,
-            thirtyDayNote,
-        ]
-        if let topModel = usage.topModels.first {
-            notes.append("\(L("Top model")): \(topModel.name)")
-        }
-        return notes
     }
 
     static func inlineUsageDashboard(input: Input) -> InlineUsageDashboardModel? {
@@ -384,14 +357,7 @@ extension UsageMenuCardView.Model {
                 kpis.append(contentsOf: trailingKPIs)
             }
         }
-        if input.provider == .cursor, let meteredCostUSD = snapshot.meteredCostUSD {
-            kpis.insert(
-                .init(
-                    title: L("Cursor-metered"),
-                    value: convertedString(meteredCostUSD),
-                    emphasis: true),
-                at: 0)
-        }
+
         var model = InlineUsageDashboardModel(
             accessibilityLabel: accessibilityLabel,
             valueStyle: Self.costValueStyle(currencyCode: displayCurrencyCode),

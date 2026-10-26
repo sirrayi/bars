@@ -210,42 +210,6 @@ struct SpendDashboardPublicationTests {
     }
 
     @Test
-    func `controller atomically publishes canonical inputs and source truth states`() async {
-        let fixture = Self.fixture()
-        let controller = SpendDashboardController(
-            requestBuilder: { _ in fixture.request },
-            loader: { _ in fixture.result })
-
-        controller.update(configuration: fixture.request.configuration)
-        await Self.waitUntil { !controller.isRefreshing }
-
-        let publication = controller.publication
-        let sources = Dictionary(uniqueKeysWithValues: publication.sources.map { ($0.id, $0) })
-        let inputs = Dictionary(uniqueKeysWithValues: publication.inputs.map { ($0.id, $0) })
-
-        #expect(Set(sources.keys) == ["openai", "claude", "gemini", "codex:first", "codex:second"])
-        #expect(sources["openai"]?.state == .available)
-        #expect(inputs["openai"]?.id == "openai")
-        #expect(sources["claude"]?.state == .confirmedEmpty)
-        #expect(inputs["claude"]?.id == nil)
-        #expect(sources["gemini"]?.state == .unavailable)
-        #expect(inputs["gemini"]?.id == nil)
-        #expect(sources["codex:first"]?.state == .available)
-        #expect(inputs["codex:first"]?.id == "codex:first")
-        #expect(sources["codex:second"]?.state == .available)
-        #expect(inputs["codex:second"]?.id == "codex:second")
-        #expect(publication.subscriptionCount(providerScope: [.codex, .openai, .claude, .gemini]) == 5)
-        let model = publication.model(
-            requestedDays: 30,
-            now: Self.now,
-            calendar: Self.calendar,
-            preferredCurrencyCode: "USD")
-        #expect(publication.knownCostSubscriptionCount(
-            model: model,
-            providerScope: [.codex, .openai, .claude, .gemini]) == 4)
-    }
-
-    @Test
     func `profile-home path containing pipe preserves full account identity`() async {
         let pipeContainingPath = "profile:/Users/test|data|home"
         let configuration = SpendDashboardConfiguration(
@@ -333,90 +297,6 @@ struct SpendDashboardPublicationTests {
     }
 
     @Test
-    func `confirmed empty subscription completes the subtotal without adding spend`() {
-        let publication = SpendDashboardPublication(
-            revision: 1,
-            generation: 1,
-            configuration: nil,
-            loadedAt: Self.now,
-            isRefreshing: false,
-            inputs: [Self.input(id: "openai", provider: .openai, cost: 7)],
-            sources: [
-                SpendSourcePublication(
-                    id: "openai",
-                    provider: .openai,
-                    displayName: "OpenAI",
-                    role: .subscription,
-                    state: .available),
-                SpendSourcePublication(
-                    id: "claude",
-                    provider: .claude,
-                    displayName: "Claude",
-                    role: .subscription,
-                    state: .confirmedEmpty),
-            ])
-        let scope: Set<UsageProvider> = [.openai, .claude]
-        let model = publication.model(
-            requestedDays: 30,
-            now: Self.now,
-            calendar: Self.calendar,
-            preferredCurrencyCode: "USD",
-            providerScope: scope)
-        let summary = OverviewSpendSummary(
-            model: model,
-            providerCount: publication.subscriptionCount(providerScope: scope),
-            knownCostProviderCount: publication.knownCostSubscriptionCount(model: model, providerScope: scope),
-            knownTokenProviderCount: publication.knownTokenSubscriptionCount(model: model, providerScope: scope))
-
-        #expect(summary.providerCoverageText == "1 of 2 subscriptions have spend")
-        #expect(!summary.isPartial)
-        #expect(summary.primarySpendText == "$7.00")
-    }
-
-    @Test
-    func `available unpriced source keeps cost subtotal partial`() {
-        let publication = SpendDashboardPublication(
-            revision: 1,
-            generation: 1,
-            configuration: nil,
-            loadedAt: Self.now,
-            isRefreshing: false,
-            inputs: [
-                Self.input(id: "openai", provider: .openai, cost: 7),
-                Self.input(id: "claude", provider: .claude, cost: nil),
-            ],
-            sources: [
-                SpendSourcePublication(
-                    id: "openai",
-                    provider: .openai,
-                    displayName: "OpenAI",
-                    role: .subscription,
-                    state: .available),
-                SpendSourcePublication(
-                    id: "claude",
-                    provider: .claude,
-                    displayName: "Claude",
-                    role: .subscription,
-                    state: .available),
-            ])
-        let scope: Set<UsageProvider> = [.openai, .claude]
-        let model = publication.model(
-            requestedDays: 30,
-            now: Self.now,
-            calendar: Self.calendar,
-            preferredCurrencyCode: "USD",
-            providerScope: scope)
-        let summary = OverviewSpendSummary(
-            model: model,
-            providerCount: publication.subscriptionCount(providerScope: scope),
-            knownCostProviderCount: publication.knownCostSubscriptionCount(model: model, providerScope: scope),
-            knownTokenProviderCount: publication.knownTokenSubscriptionCount(model: model, providerScope: scope))
-
-        #expect(summary.isPartial)
-        #expect(summary.primarySpendText == "~$7.00")
-    }
-
-    @Test
     func `hiding every account source leaves no phantom provider denominator`() {
         let publication = SpendDashboardPublication(
             revision: 1,
@@ -493,60 +373,6 @@ struct SpendDashboardPublicationTests {
             providerScope: [.codex])
 
         #expect(model.groups.flatMap(\.providers).map(\.id) == [SpendDashboardModel.openCodexSourceID])
-        #expect(publication.subscriptionCount(
-            providerScope: [.codex],
-            hideNativeCodexWhenOpenCodexPresent: true) == 1)
-        #expect(publication.knownCostSubscriptionCount(
-            model: model,
-            providerScope: [.codex],
-            hideNativeCodexWhenOpenCodexPresent: true) == 1)
-    }
-
-    @Test
-    func `non-Codex OpenCodex enrichment does not replace native Codex`() {
-        let nativeCodex = Self.input(id: "codex:first", provider: .codex, cost: 2)
-        let openCodexKimi = SpendDashboardModel.ProviderInput(
-            id: "kimi",
-            provider: .kimi,
-            displayName: "Kimi",
-            snapshot: Self.input(id: "unused", provider: .kimi, cost: 8).snapshot,
-            sourceKind: .openCodex)
-        let publication = SpendDashboardPublication(
-            revision: 1,
-            generation: 1,
-            configuration: nil,
-            loadedAt: Self.now,
-            isRefreshing: false,
-            inputs: [nativeCodex, openCodexKimi],
-            sources: [
-                SpendSourcePublication(
-                    id: nativeCodex.id,
-                    provider: .codex,
-                    displayName: nativeCodex.displayName,
-                    role: .subscription,
-                    state: .available),
-                SpendSourcePublication(
-                    id: SpendDashboardModel.openCodexSourceID,
-                    provider: .codex,
-                    displayName: "OpenCodex",
-                    role: .enrichment,
-                    state: .available),
-                SpendSourcePublication(
-                    id: openCodexKimi.id,
-                    provider: .kimi,
-                    displayName: openCodexKimi.displayName,
-                    role: .enrichment,
-                    state: .available),
-            ])
-        let model = publication.model(
-            requestedDays: 30,
-            now: Self.now,
-            calendar: Self.calendar,
-            preferredCurrencyCode: "USD",
-            hideNativeCodexWhenOpenCodexPresent: true,
-            providerScope: [.codex, .kimi])
-
-        #expect(Set(model.groups.flatMap(\.providers).map(\.id)) == [nativeCodex.id, openCodexKimi.id])
         #expect(publication.subscriptionCount(
             providerScope: [.codex],
             hideNativeCodexWhenOpenCodexPresent: true) == 1)
@@ -733,35 +559,6 @@ struct SpendDashboardPublicationTests {
         #expect(model.groups.first?.totalCost == 5)
     }
 
-    private static func fixture() -> (request: SpendDashboardLoadRequest, result: SpendDashboardLoadResult) {
-        let configuration = SpendDashboardConfiguration(
-            costUsageEnabled: true,
-            providerIDs: [
-                UsageProvider.codex.rawValue,
-                UsageProvider.openai.rawValue,
-                UsageProvider.claude.rawValue,
-                UsageProvider.gemini.rawValue,
-            ],
-            codexAccountIdentities: ["first|first-cache", "second|second-cache"])
-        let openAI = Self.input(id: "openai", provider: .openai, cost: 7)
-        return (
-            request: SpendDashboardLoadRequest(
-                configuration: configuration,
-                capturedInputs: [openAI],
-                unavailableSourceIDs: ["gemini"],
-                confirmedEmptySourceIDs: ["claude"],
-                codexRequests: [],
-                now: Self.now,
-                force: false),
-            result: SpendDashboardLoadResult(
-                inputs: [
-                    openAI,
-                    Self.input(id: "codex:first", provider: .codex, cost: 2),
-                    Self.input(id: "codex:second", provider: .codex, cost: 3),
-                ],
-                failedSourceIDs: ["gemini"]))
-    }
-
     private static func configuration(revision: String) -> SpendDashboardConfiguration {
         SpendDashboardConfiguration(
             costUsageEnabled: true,
@@ -855,6 +652,35 @@ struct SpendDashboardPublicationTests {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0)!
         return calendar
+    }
+
+    private static func fixture() -> (request: SpendDashboardLoadRequest, result: SpendDashboardLoadResult) {
+        let configuration = SpendDashboardConfiguration(
+            costUsageEnabled: true,
+            providerIDs: [
+                UsageProvider.codex.rawValue,
+                UsageProvider.deepseek.rawValue,
+                UsageProvider.claude.rawValue,
+                UsageProvider.opencode.rawValue,
+            ],
+            codexAccountIdentities: ["first|first-cache", "second|second-cache"])
+        let deepseek = Self.input(id: "deepseek", provider: .deepseek, cost: 7)
+        return (
+            request: SpendDashboardLoadRequest(
+                configuration: configuration,
+                capturedInputs: [deepseek],
+                unavailableSourceIDs: ["opencode"],
+                confirmedEmptySourceIDs: ["claude"],
+                codexRequests: [],
+                now: Self.now,
+                force: false),
+            result: SpendDashboardLoadResult(
+                inputs: [
+                    deepseek,
+                    Self.input(id: "codex:first", provider: .codex, cost: 2),
+                    Self.input(id: "codex:second", provider: .codex, cost: 3),
+                ],
+                failedSourceIDs: ["opencode"]))
     }
 }
 

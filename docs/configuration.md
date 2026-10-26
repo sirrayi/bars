@@ -89,9 +89,6 @@ between `0.1` and `300`. Hook processes receive only a small allowlist of genera
 event's `CODEXBAR_*` variables; CodexBar provider keys and tokens are not inherited. The same event is also encoded as
 JSON on stdin. Only configure executables you trust.
 
-Installed user plugins can be selected by manifest ID (or by an any-provider rule). Their successful, current app
-refreshes support `usage_updated`, `quota_low`, `quota_reached`, and `quota_reset` through the same command and payload
-contract. See [plugin hooks](plugins.md#external-hooks) for window semantics and lifecycle behavior.
 
 Events:
 
@@ -151,7 +148,7 @@ All provider fields are optional unless noted.
 - `cookieSource`: cookie selection policy.
   - `auto` (browser import), `manual` (use `cookieHeader`), `off` (disable cookies)
 - `cookieHeader`: raw cookie header value (e.g. `key=value; other=...`).
-- `region`: provider-specific region (e.g. `zai`, `minimax`). Kimi accepts `china` (default, `kimi.com`) or `international` (`kimi.ai`); see [Kimi setup](kimi.md). This selects API, web, cookie discovery, and dashboard hosts. Automatic CLI credential reuse is limited to China because the credential file has no issuing-host metadata.
+- `region`: provider-specific region (e.g. `minimax`). This selects API, web, cookie discovery, and dashboard hosts.
 - `workspaceID`: provider-specific workspace/deployment/project ID (e.g. Azure OpenAI deployment, OpenAI API project,
   `opencode`, Notion space).
 - `modelRateLimits`: optional per-model organization rate limits for the provider-level key (`apiKey` or environment
@@ -212,23 +209,10 @@ For another provider, use its registered [ID](provider-ids.md) and the cookie fo
 
 ```bash
 codexbar config providers
-codexbar config enable --provider grok
-codexbar config disable --provider cursor
-printf '%s' "$ELEVENLABS_API_KEY" | codexbar config set-api-key --provider elevenlabs --stdin
+codexbar config enable --provider deepseek
+codexbar config disable --provider devin
+printf '%s' "$DEEPSEEK_API_KEY" | codexbar config set-api-key --provider deepseek --stdin
 ```
-
-Use the same `set-api-key --provider <id> --stdin` command with these provider/key pairs:
-
-| Provider ID | Key environment variable | Additional configuration |
-| --- | --- | --- |
-| `openai` | `OPENAI_ADMIN_KEY` | `workspaceID` maps to `OPENAI_PROJECT_ID` for Admin API usage; applies to the configured key, not selected token accounts. |
-| `groq` | `GROQ_API_KEY` | See [Groq](groq.md). |
-| `llmproxy` | `LLM_PROXY_API_KEY` | Required base URL: `enterpriseHost` or `LLM_PROXY_BASE_URL`. |
-| `litellm` | `LITELLM_API_KEY` | Required base URL: `enterpriseHost` or `LITELLM_BASE_URL`. |
-| `clawrouter` | `CLAWROUTER_API_KEY` | Defaults to the hosted service; override with `enterpriseHost` or `CLAWROUTER_BASE_URL`. |
-| `sub2api` | `SUB2API_API_KEY` | Required self-hosted base URL: `enterpriseHost` or `SUB2API_BASE_URL`. Use labeled token accounts for multiple group keys. |
-| `aiand` | `AIAND_API_KEY` | See [ai&](aiand.md). |
-| `xai` | `XAI_MANAGEMENT_API_KEY` | See [xAI](xai.md). |
 
 See [CLI configuration](cli-configuration.md) for scripting examples and output formats.
 
@@ -274,8 +258,6 @@ inheritance. Settings edits the selected account's limits, and switching account
   }
 }
 ```
-
-z.ai team accounts also use `usageScope`, `organizationId`, and `workspaceID`; see [z.ai](zai.md).
 
 ## Provider IDs
 

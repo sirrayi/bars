@@ -312,9 +312,9 @@ extension UsageStore {
         } else {
             nil
         }
-        // Provider-specific by design: DeepSeek and OpenRouter expose their widget value as balance text.
+        // Provider-specific by design: DeepSeek exposes its widget value as balance text.
         let balanceText: String? = switch provider {
-        case .deepseek, .openrouter:
+        case .deepseek:
             MenuBarLayoutBalanceResolver.balance(provider: provider, snapshot: snapshot)
         default:
             nil
@@ -401,7 +401,6 @@ extension UsageStore {
         let fallbackTokens = CheckedSum.integers(snapshot.daily.compactMap(\.totalTokens))
             .flatMap { $0 > 0 ? $0 : nil }
         let sessionLabel = switch provider {
-        case .bedrock, .mistral: "Latest billing day"
         default: "Today"
         }
         let defaultMonthLabel = snapshot.historyDays == 1 ? "Today" : "\(snapshot.historyDays)d"
@@ -423,20 +422,6 @@ extension UsageStore {
         snapshot: UsageSnapshot,
         metadata: ProviderMetadata?) -> String
     {
-        let dynamicTitle: String? = switch provider {
-        // Legacy request-based Cursor plans track a request quota, not the token-based "Total" pool.
-        case .cursor where snapshot.detailRow(label: "Request quota") != nil: "Requests"
-        case .cursor: CursorProviderDescriptor.primaryLabel(snapshot: snapshot)
-        case .grok: GrokProviderDescriptor.displayLabel(window: snapshot.primary)
-        case .doubao: DoubaoProviderDescriptor.primaryLabel(window: snapshot.primary)
-        case .amp: AmpProviderDescriptor.primaryLabel(snapshot: snapshot)
-        case .alibabatokenplan: AlibabaTokenPlanProviderDescriptor.primaryLabel(window: snapshot.primary)
-        case .ollama: OllamaProviderDescriptor.primaryLabel(window: snapshot.primary)
-        default: nil
-        }
-        if let dynamicTitle {
-            return dynamicTitle
-        }
         guard let metadata else { return "Session" }
         return ProviderDescriptorRegistry.descriptor(for: provider).presentation
             .rateWindowLabels(metadata: metadata, snapshot: snapshot).primary
@@ -480,24 +465,11 @@ extension UsageStore {
                     window: spendLimit),
             ]
         }
-        if provider == .antigravity,
-           let rows = Self.antigravityWidgetRows(snapshot: snapshot)
-        {
-            return rows
-        }
-
         let primaryTitle = Self.widgetPrimaryTitle(provider: provider, snapshot: snapshot, metadata: metadata)
-        let secondaryTitle = if provider == .amp {
-            AmpProviderDescriptor.secondaryLabel(snapshot: snapshot) ?? metadata?.weeklyLabel ?? "Weekly"
-        } else if provider == .alibabatokenplan {
-            AlibabaTokenPlanProviderDescriptor.secondaryLabel(window: snapshot.secondary) ??
-                metadata?.weeklyLabel ?? "Weekly"
-        } else {
-            metadata.map {
-                ProviderDescriptorRegistry.descriptor(for: provider).presentation
-                    .rateWindowLabels(metadata: $0, snapshot: snapshot, now: now).secondary
-            } ?? "Weekly"
-        }
+        let secondaryTitle = metadata.map {
+            ProviderDescriptorRegistry.descriptor(for: provider).presentation
+                .rateWindowLabels(metadata: $0, snapshot: snapshot, now: now).secondary
+        } ?? "Weekly"
 
         var rows: [WidgetSnapshot.WidgetUsageRowSnapshot] = [
             WidgetSnapshot.WidgetUsageRowSnapshot(
@@ -518,19 +490,9 @@ extension UsageStore {
         var extraWindows: [NamedRateWindow] = []
         var includesWindow = true
         // Provider-specific by design: keep each provider's existing selection and wire shape.
-        if provider == .cursor {
-            extraWindows = (snapshot.extraRateWindows ?? []).filter { $0.id == CursorSandUsageStatus.extraWindowID }
-        }
         if provider == .claude, self.settings.claudeModelScopedWeeklyUsageVisible {
             extraWindows = (snapshot.extraRateWindows ?? []).filter {
                 $0.id.hasPrefix(Self.claudeModelScopedWeeklyWindowIDPrefix)
-            }
-        }
-        if provider == .kimi {
-            // Kimi persists its subscription lanes in this order, without the optional raw window.
-            includesWindow = false
-            extraWindows = ["kimi-monthly", "kimi-code-7d"].compactMap { id in
-                snapshot.extraRateWindows?.first { $0.id == id }
             }
         }
         rows.append(contentsOf: extraWindows.compactMap { namedWindow in
@@ -550,34 +512,6 @@ extension UsageStore {
 
     /// Identifier prefix Claude fetchers use for model-scoped weekly carve-outs (for example, Fable).
     private nonisolated static let claudeModelScopedWeeklyWindowIDPrefix = "claude-weekly-scoped-"
-
-    private nonisolated static let antigravityQuotaSummaryWindowIDPrefix = "antigravity-quota-summary-"
-    private nonisolated static let antigravityCompactFallbackWindowIDPrefix = "antigravity-compact-fallback-"
-
-    private nonisolated static func antigravityWidgetRows(
-        snapshot: UsageSnapshot) -> [WidgetSnapshot.WidgetUsageRowSnapshot]?
-    {
-        let windows = snapshot.extraRateWindows ?? []
-        // Match the menu card and drop model families the account never touches.
-        let idleIDs = AntigravityQuotaFamilyVisibility.idleWindowIDs(in: snapshot)
-        var visible = windows.filter {
-            $0.id.hasPrefix(Self.antigravityQuotaSummaryWindowIDPrefix) && !idleIDs.contains($0.id)
-        }
-        if visible.isEmpty, snapshot.primary == nil, snapshot.secondary == nil {
-            visible = windows.filter {
-                $0.id.hasPrefix(Self.antigravityCompactFallbackWindowIDPrefix) && $0.usageKnown
-            }
-        }
-        guard !visible.isEmpty else { return nil }
-        return visible.map { namedWindow in
-            WidgetSnapshot.WidgetUsageRowSnapshot(
-                id: namedWindow.id,
-                title: namedWindow.title,
-                percentLeft: namedWindow.usageKnown ? namedWindow.window.remainingPercent : nil,
-                // Unknown buckets have placeholder capacity; only measured windows may supply it.
-                window: namedWindow.usageKnown ? namedWindow.window : nil)
-        }
-    }
 
     /// Reproject the last published source without changing its measurement time.
     private func preservedWidgetEntryForCurrentMetric(

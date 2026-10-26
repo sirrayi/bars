@@ -13,8 +13,7 @@ struct UsageStorePathDebugTests {
         let configStore = testConfigStore(suiteName: suite)
         let settings = SettingsStore(
             userDefaults: defaults,
-            configStore: configStore,
-            zaiTokenStore: NoopZaiTokenStore())
+            configStore: configStore)
         let store = UsageStore(
             fetcher: UsageFetcher(),
             browserDetection: BrowserDetection(cacheTTL: 0),
@@ -38,8 +37,7 @@ struct UsageStorePathDebugTests {
         let configStore = testConfigStore(suiteName: suite)
         let settings = SettingsStore(
             userDefaults: defaults,
-            configStore: configStore,
-            zaiTokenStore: NoopZaiTokenStore())
+            configStore: configStore)
         settings.addTokenAccount(provider: .deepseek, label: "Primary", token: "sk-deepseek-test")
         let store = UsageStore(
             fetcher: UsageFetcher(),

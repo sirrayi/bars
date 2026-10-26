@@ -652,8 +652,7 @@ enum MenuBarLayoutNamedExtra {
     static func windows(provider: UsageProvider?, snapshot: UsageSnapshot?) -> [NamedRateWindow] {
         guard let provider else { return [] }
         let definitions = ProviderDescriptorRegistry.descriptor(for: provider).menuBarMetrics.namedExtras
-        let windows = provider == .cursor
-            ? snapshot.map(CursorProviderDescriptor.menuBarExtras) ?? [] : snapshot?.extraRateWindows ?? []
+        let windows = snapshot?.extraRateWindows ?? []
         return windows.filter {
             definitions[$0.id] != nil && $0.usageKnown && !$0.window.isSyntheticPlaceholder
         }
@@ -697,26 +696,9 @@ enum MenuBarLayoutBalanceResolver {
                 .number.precision(.fractionLength(0)).locale(Locale(identifier: "en_US")))
         case .deepseek:
             return MenuBarDisplayText.deepSeekBalanceText(snapshot: snapshot)
-        case .deepinfra:
-            guard let detail = snapshot?.primary?.resetDescription?.trimmingCharacters(in: .whitespacesAndNewlines),
-                  let balanceDetail = detail.components(separatedBy: " · ").dropLast().last?
-                      .trimmingCharacters(in: .whitespacesAndNewlines),
-                      balanceDetail.hasPrefix("$"),
-                      let value = balanceDetail.split(separator: " ", maxSplits: 1).first
-            else { return nil }
-            return (balanceDetail.contains(" owed") ? "-" : "") + String(value)
-        case .moonshot:
-            return MenuBarDisplayText.prefixedValue(
-                from: snapshot?.loginMethod(for: provider), prefix: "Balance:", removingSuffix: "")?
-                .split(separator: "·", maxSplits: 1).first?.trimmingCharacters(in: .whitespacesAndNewlines)
-        case .mistral:
-            return MenuBarDisplayText.prefixedValue(
-                from: snapshot?.identity?.loginMethod, prefix: "API spend:", removingSuffix: " this month")
         case .opencodego:
             guard let cost = snapshot?.providerCost, cost.period == "Zen balance" else { return nil }
             return UsageFormatter.currencyString(cost.used, currencyCode: cost.currencyCode)
-        case .mimo, .hyper:
-            return snapshot?.detailRow(label: "Balance")?.value.components(separatedBy: " (Paid:").first
         default:
             let descriptor = ProviderDescriptorRegistry.descriptor(for: provider)
             let labels = descriptor.presentation.menuBarBalanceDetailLabels
@@ -738,27 +720,21 @@ enum MenuBarLayoutBalanceResolver {
         }
     }
 
-    /// USD amounts for balance predicates. OpenRouter retains its displayed detail-row precision;
-    /// providers declaring prepaid cost balances use the reported amount without currency conversion.
+    /// USD amounts for balance predicates; providers declaring prepaid cost balances use the reported
+    /// amount without currency conversion.
     static func balanceAmountsUSD(
         provider: UsageProvider,
         snapshot: UsageSnapshot?,
         showsOptionalCredits: Bool = true)
         -> (remaining: Double?, used: Double?)
     {
-        // Provider-specific by design: OpenRouter reports credit amounts in its "Credits" detail rows.
-        guard provider == .openrouter else {
-            let prepaid = self.prepaidBalanceCost(
-                provider: provider,
-                snapshot: snapshot,
-                showsOptionalCredits: showsOptionalCredits)
-            guard let cost = prepaid, cost.currencyCode.caseInsensitiveCompare("USD") == .orderedSame
-            else { return (nil, nil) }
-            return (cost.balance, nil)
-        }
-        return (
-            self.amount(snapshot?.detailRow(label: "Remaining")?.value),
-            self.amount(snapshot?.detailRow(label: "Used")?.value))
+        let prepaid = self.prepaidBalanceCost(
+            provider: provider,
+            snapshot: snapshot,
+            showsOptionalCredits: showsOptionalCredits)
+        guard let cost = prepaid, cost.currencyCode.caseInsensitiveCompare("USD") == .orderedSame
+        else { return (nil, nil) }
+        return (cost.balance, nil)
     }
 
     /// Providers declaring `menuBarBalanceUsesPrepaidCost` get the Balance token without a case above. Like the
@@ -993,10 +969,6 @@ extension MenuBarLayout {
         -> MenuBarLayout
     {
         let icon: MenuBarLayoutToken = .icon
-        // Provider-specific by design: OpenRouter Automatic historically renders remaining credit balance.
-        if provider == .openrouter, metricPreference == .automatic {
-            return MenuBarLayout(lines: [[icon, .balance]])
-        }
         switch displayMode {
         case .percent:
             if metricPreference == .primaryAndSecondary {

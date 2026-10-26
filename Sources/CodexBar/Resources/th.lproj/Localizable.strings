@@ -1797,7 +1797,7 @@
 "Credits + percent" = "เครดิต และเปอร์เซ็นต์ที่เหลืออยู่";
 "Credits left" = "เครดิต ที่เหลือ";
 "Cursor-metered" = "การใช้งานแบบมิเตอร์ใน Cursor";
-"Cursor-metered: %@ (%@)" = "มิเตอร์ Cursor: %1$@ (%2$@)";
+"Plan metered: %@ (%@)" = "มิเตอร์ Cursor: %1$@ (%2$@)";
 "DATA THROUGH %@" = "ข้อมูลถึง %@";
 "Daily usage" = "การใช้งานรายวัน";
 "Default uses AZURE_OPENAI_API_VERSION when set." = "ค่าเริ่มต้นจะใช้ AZURE_OPENAI_API_VERSION เมื่อตั้งค่า";

@@ -52,12 +52,6 @@ extension UsageStore {
         if case let .networkError(underlyingError) = error as? CodexTokenRefresher.RefreshError {
             return underlyingError
         }
-        if case let .networkError(underlyingError) = error as? VertexAIFetchError {
-            return underlyingError
-        }
-        if case let .networkError(underlyingError) = error as? VertexAITokenRefresher.RefreshError {
-            return underlyingError
-        }
         return error
     }
 

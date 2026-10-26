@@ -98,6 +98,12 @@ final class SpendTrendChartRenderTests: XCTestCase {
         }
     }
 
+    fileprivate static var calendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Asia/Shanghai") ?? .gmt
+        return calendar
+    }
+
     private func inputs(days: Int = 14, multipleProviders: Bool = false) throws -> [SpendDashboardModel.ProviderInput] {
         let calendar = Self.calendar
         let now = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 10, day: 5, hour: 18)))
@@ -110,8 +116,8 @@ final class SpendTrendChartRenderTests: XCTestCase {
             ? [
                 ("account-a", .codex, "Codex · #1"),
                 ("account-b", .codex, "Codex"),
-                ("cursor", .cursor, "Cursor"),
-                ("antigravity", .antigravity, "Antigravity"),
+                ("deepseek", .deepseek, "DeepSeek"),
+                ("opencode", .opencode, "OpenCode"),
             ]
             : [("account-a", .codex, "Codex · #1"), ("account-b", .codex, "Codex")]
         return try accounts.enumerated().map { source, account in
@@ -156,11 +162,5 @@ final class SpendTrendChartRenderTests: XCTestCase {
                 displayName: account.2,
                 snapshot: snapshot)
         }
-    }
-
-    fileprivate static var calendar: Calendar {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "Asia/Shanghai") ?? .gmt
-        return calendar
     }
 }

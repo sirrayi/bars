@@ -4,25 +4,6 @@ import Testing
 @testable import CodexBar
 
 struct UserFacingLocalizationCoverageTests {
-    @MainActor
-    @Test
-    func `shared provider error presentation follows the app language`() {
-        let settings = testSettingsStore(
-            suiteName: "ProviderErrorLocalization",
-            userDefaults: InMemoryUserDefaults(),
-            config: CodexBarConfig(providers: []))
-        let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
-            browserDetection: BrowserDetection(cacheTTL: 0),
-            settings: settings,
-            startupBehavior: .testing)
-        store.errors[.parallel] = "Login failed"
-        CodexBarLocalizationOverride.$appLanguage.withValue("de") {
-            #expect(store.userFacingError(for: .parallel) == L("Login failed"))
-            #expect(store.userFacingError(for: .parallel) != "Login failed")
-        }
-    }
-
     @Test
     func `OpenAI credential scope captions are translated and preserve the account label`() throws {
         let root = URL(fileURLWithPath: #filePath)
@@ -253,43 +234,6 @@ struct UserFacingLocalizationCoverageTests {
         #expect(section.chart?.title == "用量")
         #expect(section.chart?.unit == "token")
         #expect(section.chart?.points.first?.label == "2026-08-20")
-    }
-
-    @Test
-    func `kiro cap phrases localize of prefixes`() throws {
-        let details = try [
-            ProviderDetailSection(
-                title: "Usage",
-                rows: [
-                    .init(label: "Overage usage", value: "3603.49 credits", secondaryValue: "of 10000"),
-                    .init(label: "Overage cost", value: "$144.14", secondaryValue: "of $400.00"),
-                ]),
-        ]
-
-        let localized = CodexBarLocalizationOverride.$appLanguage.withValue("zh-Hans") {
-            UsageMenuCardView.Model.localizedProviderDetails(details, provider: .kiro)
-        }
-
-        let section = try #require(localized.first)
-        #expect(section.rows.map(\.label) == ["超额用量", "超额费用"])
-        #expect(section.rows.map(\.value) == ["3603.49 额度", "$144.14"])
-        #expect(section.rows.map(\.secondaryValue) == ["/ 10000", "/ $400.00"])
-    }
-
-    @Test
-    func `grok reset coupon count and expiry localize at presentation`() throws {
-        let now = Date(timeIntervalSince1970: 1_800_000_000)
-        let snapshot = GrokRateLimitResetCreditsSnapshot(
-            expirations: [now.addingTimeInterval(172_800), now.addingTimeInterval(432_000)],
-            updatedAt: now)
-        try CodexBarLocalizationOverride.$appLanguage.withValue("ru") {
-            let presentation = try #require(LimitResetCreditsPresentation.make(
-                snapshot: snapshot, resetStyle: .countdown, now: now))
-            #expect(presentation.accessibilityLabel.contains("Кредиты сброса лимита"))
-            #expect(presentation.text == "2 доступен")
-            #expect(presentation.items.count == 2)
-            #expect(presentation.helpText.contains("Истекает"))
-        }
     }
 
     @Test

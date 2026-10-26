@@ -58,14 +58,6 @@ struct SwitcherExhaustedQuotaTests {
             preference: preference) == 60)
     }
 
-    @Test(arguments: [UsageProvider.claude, .codex, .factory, .kimi, .litellm])
-    func `provider policies retain separate tertiary pools`(_ provider: UsageProvider) {
-        #expect(StatusItemController.switcherWeeklyMetricPercent(
-            for: provider,
-            snapshot: Self.snapshot(monthly: 100),
-            showUsed: false) == 60)
-    }
-
     @MainActor
     @Test
     func `native switcher empties the exhausted bar and restores weekly progress after refresh`() throws {

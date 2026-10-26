@@ -6,8 +6,6 @@ struct UsageCommandContext {
     let format: OutputFormat
     let includeCredits: Bool
     var sourceModeOverride: ProviderSourceMode?
-    let antigravityPlanDebug: Bool
-    let augmentDebug: Bool
     let webDebugDumpHTML: Bool
     let webTimeout: TimeInterval
     let verbose: Bool
@@ -56,7 +54,6 @@ private struct UsageSuccessRenderInput {
     let status: ProviderStatusPayload?
     let usage: UsageSnapshot
     let credits: CreditsSnapshot?
-    let antigravityPlanInfo: AntigravityPlanInfoSummary?
     let dashboard: OpenAIDashboardSnapshot?
     let effectiveSourceMode: ProviderSourceMode
     let command: UsageCommandContext
@@ -202,7 +199,6 @@ extension CodexBarCLI {
                         status: status,
                         usage: usage,
                         credits: nil,
-                        antigravityPlanInfo: nil,
                         dashboard: nil,
                         effectiveSourceMode: .auto,
                         command: command,
@@ -408,7 +404,6 @@ extension CodexBarCLI {
                 status: input.status,
                 usage: input.usage,
                 credits: input.credits,
-                antigravityPlanInfo: input.antigravityPlanInfo,
                 openaiDashboard: input.dashboard,
                 error: nil,
                 diagnostic: input.diagnostic,
@@ -469,8 +464,7 @@ extension CodexBarCLI {
             selectedTokenAccountID: account?.id,
             tokenAccountTokenUpdater: tokenContext.tokenUpdater(for: account),
             providerManualTokenUpdater: tokenContext.manualTokenUpdater(),
-            settingsWriter: Self.pluginSettingsWriter(provider: provider, config: tokenContext.config),
-            persistsCLISessions: Self.persistsCLISessions(provider: provider, command: command),
+            persistsCLISessions: Self.persistsCLISessions(command: command),
             persistentCLISessionIdleWindow: command.persistentCLISessionIdleWindow,
             resolvedCLIVersion: resolvedCLIVersion)
         #if !os(macOS)
@@ -494,11 +488,6 @@ extension CodexBarCLI {
 
         switch outcome.result {
         case let .success(result):
-            let antigravityPlanInfo = await Self.fetchAntigravityPlanInfoIfNeeded(
-                provider: provider,
-                command: command)
-            await Self.emitAugmentDebugIfNeeded(provider: provider, command: command)
-
             var usage = result.usage.scoped(to: provider)
             if let account {
                 usage = usage.withAccountLabel(account.label, for: provider)
@@ -538,7 +527,6 @@ extension CodexBarCLI {
                     status: status,
                     usage: usage,
                     credits: result.credits,
-                    antigravityPlanInfo: antigravityPlanInfo,
                     dashboard: dashboard,
                     effectiveSourceMode: effectiveSourceMode,
                     command: command,
@@ -566,7 +554,6 @@ extension CodexBarCLI {
                         status: status,
                         usage: usage,
                         credits: nil,
-                        antigravityPlanInfo: nil,
                         dashboard: nil,
                         effectiveSourceMode: effectiveSourceMode,
                         command: command,
@@ -602,17 +589,6 @@ extension CodexBarCLI {
                 } else {
                     Self.writeStderr("Error: \(error.localizedDescription)\n")
                 }
-                let autoFallbackSummary = Self.kiloAutoFallbackSummary(
-                    provider: provider,
-                    sourceMode: effectiveSourceMode,
-                    attempts: outcome.attempts)
-                    ?? Self.antigravityAutoFallbackSummary(
-                        provider: provider,
-                        sourceMode: effectiveSourceMode,
-                        attempts: outcome.attempts)
-                if let summary = autoFallbackSummary {
-                    Self.writeStderr("\(summary)\n")
-                }
             }
         }
 
@@ -627,35 +603,10 @@ extension CodexBarCLI {
         return !(provider == .claude && result.strategyKind == .oauth)
     }
 
-    private static func holdsAntigravitySession(
-        provider: UsageProvider,
-        command: UsageCommandContext) -> Bool
-    {
-        self.holdsAntigravityCLISessionForPlanDebug(
-            provider: provider,
-            planDebugEnabled: command.antigravityPlanDebug,
-            jsonOnly: command.jsonOnly,
-            persistsCLISessions: command.persistCLISessions)
-    }
-
     private static func persistsCLISessions(
-        provider: UsageProvider,
         command: UsageCommandContext) -> Bool
     {
-        command.persistCLISessions || self.holdsAntigravitySession(provider: provider, command: command)
-    }
-
-    static func holdsAntigravityCLISessionForPlanDebug(
-        provider: UsageProvider,
-        planDebugEnabled: Bool,
-        jsonOnly: Bool,
-        persistsCLISessions: Bool) -> Bool
-    {
-        // Provider-specific by design: --antigravity-plan-debug interrogates its persistent helper session.
-        provider == .antigravity
-            && planDebugEnabled
-            && !jsonOnly
-            && !persistsCLISessions
+        command.persistCLISessions
     }
 
     private static func finishUsageOutput(
@@ -663,42 +614,7 @@ extension CodexBarCLI {
         provider: UsageProvider,
         command: UsageCommandContext) async -> UsageCommandOutput
     {
-        if self.holdsAntigravitySession(provider: provider, command: command) {
-            await ProviderCLISessionLifecycle.shutdownPersistentSessions()
-        }
-        return output
-    }
-
-    private static func fetchAntigravityPlanInfoIfNeeded(
-        provider: UsageProvider,
-        command: UsageCommandContext) async -> AntigravityPlanInfoSummary?
-    {
-        // Provider-specific by design: --antigravity-plan-debug requests its plan-only diagnostic.
-        guard command.antigravityPlanDebug,
-              provider == .antigravity,
-              !command.jsonOnly
-        else {
-            return nil
-        }
-        let info = try? await AntigravityStatusProbe().fetchPlanInfoSummary()
-        if command.format == .text, let info {
-            Self.printAntigravityPlanInfo(info)
-        }
-        return info
-    }
-
-    private static func emitAugmentDebugIfNeeded(
-        provider: UsageProvider,
-        command: UsageCommandContext) async
-    {
-        // Provider-specific by design: --augment-debug emits Augment's explicit diagnostic dump.
-        guard command.augmentDebug, provider == .augment else { return }
-        #if os(macOS)
-        let dump = await AugmentStatusProbe.latestDumps()
-        if command.format == .text, !dump.isEmpty, !command.jsonOnly {
-            Self.writeStderr("Augment API responses:\n\(dump)\n")
-        }
-        #endif
+        output
     }
 
     private static func webSourceUnsupportedOutput(
@@ -789,23 +705,6 @@ extension CodexBarCLI {
             return true
         case .cli, .oauth, .api:
             return false
-        }
-    }
-}
-
-extension CodexBarCLI {
-    fileprivate static func pluginSettingsWriter(
-        provider: UsageProvider,
-        config: CodexBarConfig) -> ProviderFetchContext.SettingsWriter
-    {
-        let expected = config.providerConfig(for: provider.instanceID)
-        return { target, values in
-            guard target == provider else { return .stale }
-            return await ProviderPluginConfigWriter.shared.save(
-                provider: target,
-                values: values,
-                expected: expected,
-                store: CodexBarConfigStore())
         }
     }
 }

@@ -1797,7 +1797,7 @@
 "Credits + percent" = "اعتبارات و درصد باقیمانده";
 "Credits left" = "باقیمانده اعتبارات";
 "Cursor-metered" = "میزان استفاده در Cursor";
-"Cursor-metered: %@ (%@)" = "Cursor-metered: %1$@ (%2$@)";
+"Plan metered: %@ (%@)" = "Cursor-metered: %1$@ (%2$@)";
 "DATA THROUGH %@" = "داده‌ها تا %@";
 "Daily usage" = "استفاده روزانه";
 "Default uses AZURE_OPENAI_API_VERSION when set." = "پیش‌فرض هنگام تنظیم از AZURE_OPENAI_API_VERSION استفاده می‌کند.";

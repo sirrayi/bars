@@ -342,7 +342,6 @@ public struct ProviderDescriptor: Sendable {
     public let presentation: ProviderUsagePresentation
     public let settingsSection: ProviderSettingsSectionRegistration
     public let credentials: ProviderCredentialAdapter?
-    public let pluginResultPolicy: ProviderPluginResultPolicy
     public let config: ProviderConfigCapabilities
     public let menuBarMetrics: ProviderMenuBarMetricCapabilities
     public let fetchPlan: ProviderFetchPlan
@@ -355,7 +354,6 @@ public struct ProviderDescriptor: Sendable {
         menuBarMetrics: ProviderMenuBarMetricCapabilities? = nil,
         settingsSection: ProviderSettingsSectionRegistration? = nil,
         credentials: ProviderCredentialAdapter? = nil,
-        pluginResultPolicy: ProviderPluginResultPolicy = ProviderPluginResultPolicy(),
         config: ProviderConfigCapabilities = ProviderConfigCapabilities(),
         metadata: ProviderMetadata,
         branding: ProviderBranding,
@@ -377,7 +375,6 @@ public struct ProviderDescriptor: Sendable {
         self.history = history
         self.presentation = presentation
         self.credentials = credentials
-        self.pluginResultPolicy = pluginResultPolicy
         self.config = config
         self.menuBarMetrics = menuBarMetrics ?? (metadata.balanceOnly ? .automaticOnly : .standard)
         self.fetchPlan = fetchPlan

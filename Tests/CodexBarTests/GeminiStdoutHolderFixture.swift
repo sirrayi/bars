@@ -173,7 +173,7 @@ final class GeminiStdoutHolderFixture {
     }
 
     func runProducer(pidFile: URL? = nil, blockAfterAcknowledgment: Bool = false) -> String? {
-        GeminiStatusProbe.runProcess(
+        Self.runProcess(
             executable: "/usr/bin/python3",
             arguments: [
                 "-I", self.helper.path, blockAfterAcknowledgment ? "produce-timeout" : "produce",
@@ -309,7 +309,40 @@ final class GeminiStdoutHolderFixture {
                 select.select([], [], [])
             print("/tmp/gemini-package", flush=True)
             print("ignored trailing output", flush=True)
+
+
     """#
+
+    private static func runProcess(
+        executable: String,
+        arguments: [String],
+        environment: [String: String],
+        timeout: TimeInterval) -> String?
+    {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: executable)
+        process.arguments = arguments
+        process.environment = environment
+        let stdout = Pipe()
+        process.standardOutput = stdout
+        process.standardError = FileHandle.nullDevice
+        do {
+            try process.run()
+        } catch {
+            return nil
+        }
+        stdout.fileHandleForWriting.closeFile()
+        let data = stdout.fileHandleForReading.readDataToEndOfFile()
+        let deadline = DispatchTime.now() + max(0, timeout)
+        while process.isRunning, DispatchTime.now() < deadline {
+            usleep(10000)
+        }
+        if process.isRunning {
+            process.terminate()
+            return nil
+        }
+        return String(data: data, encoding: .utf8)
+    }
 }
 
 /// Durable exit observation lets readiness and cleanup inspect the same event without consuming it.

@@ -487,16 +487,12 @@ extension UsageStore {
         let semanticWindows = MenuBarLayoutSemanticWindowResolver.windows(
             provider: provider,
             snapshot: snapshot)
-        // Provider-specific by design: Mistral's automatic lane can explicitly select its Monthly Plan window.
-        let automaticPreference = provider == .mistral
-            ? self.settings.menuBarMetricPreference(for: provider, snapshot: snapshot)
-            : .automatic
+        let automaticPreference: MenuBarMetricPreference = .automatic
         let automatic = MenuBarMetricWindowResolver.rateWindow(
             preference: automaticPreference,
             provider: provider,
             snapshot: snapshot,
             supportsAverage: self.settings.menuBarMetricSupportsAverage(for: provider),
-            antigravityPrioritizeExhaustedQuotas: self.settings.antigravityPrioritizeExhaustedQuotas,
             now: now)
         return MenuBarLayoutWindows(
             primary: snapshot?.primary,

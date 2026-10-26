@@ -18,43 +18,10 @@ struct ProviderPaletteRegressionTests {
     }
 
     static let palettes: [Palette] = [
-        .init(.abacus, 0x38BDF8, 0x814EE8, 0x814EE8),
-        .init(.aiand, 0xE25C2B, 0xE25C2B, 0xE25C2B),
-        .init(.amp, 0xDC2626, 0xF34E3F, 0xF34E3F),
-        .init(.augment, 0x6366F1, 0x1AA049, 0x1AA049),
-        .init(.bedrock, 0xFF9900, 0x01A88D, 0x01A88D),
-        .init(.chutes, 0x3184FF, 0x3184FF, 0x18A058),
-        .init(.clawrouter, 0x596EF6, 0x596EF6, 0x596EF6),
-        .init(.clinepass, 0x61A3FA, 0x5487C8, 0x5487C8),
-        .init(.codebuff, 0x44FF00, 0x00FF95, 0x00FF95),
-        .init(.commandcode, 0xA04DFD, 0x8C4EDD, 0x000000),
-        .init(.copilot, 0xA855F7, 0xA855F7, 0xA855F7),
-        .init(.cursor, 0x00BFA5, 0xF54E00, 0xF54E00),
         .init(.deepseek, 0x527DF0, 0x4D6BFE, 0x4D6BFE),
-        .init(.deepgram, 0x6467F2, 0x6467F2, 0x0A121B),
         .init(.devin, 0x46B482, 0x317CFF, 0x317CFF),
-        .init(.doubao, 0x3370FF, 0x3370FF, 0x2D88FF),
-        .init(.fireworks, 0xF25B1C, 0xF25B1C, 0xF25B1C),
-        .init(.groq, 0xF56844, 0xF56844, 0xF56844),
-        .init(.jetbrains, 0xFF3399, 0xFF3399, 0xFF3399),
-        .init(.kilo, 0xF27027, 0xF27027, 0xF27027),
-        .init(.kimi, 0xFE603C, 0xFE603C, 0xFE603C),
-        .init(.kiro, 0xFF9900, 0x9046FF, 0x9046FF),
-        .init(.litellm, 0x4C89F0, 0x4C89F0, 0x4C89F0),
-        .init(.longcat, 0xFFD100, 0x29E154, 0x29E154),
-        .init(.mistral, 0xFF500F, 0xFF5229, 0xFF5229),
-        .init(.moonshot, 0x205DEB, 0x205DEB, 0x205DEB),
-        .init(.neuralwatt, 0x38D98C, 0xD55934, 0xD55934),
-        .init(.notion, 0x337EA9, 0x337EA9, 0x337EA9),
         .init(.opencode, 0x3B82F6, 0x3B82F6, 0x3B82F6),
-        .init(.perplexity, 0x20B2AA, 0x20B2AA, 0x20B2AA),
         .init(.pi, 0x7C3AED, 0x4D9ABF, 0x4D9ABF),
-        .init(.qoder, 0x10B981, 0x10B981, 0x10B981),
-        .init(.sakana, 0x2975DB, 0x2975DB, 0x2975DB),
-        .init(.sub2api, 0x2DC6D8, 0x14B8A6, 0x14B8A6),
-        .init(.t3chat, 0xF56647, 0xF56647, 0xF56647),
-        .init(.venice, 0x3399FF, 0x3C8FDD, 0x3C8FDD),
-        .init(.warp, 0x938BB4, 0x938BB4, 0x938BB4),
     ]
 
     @Test(arguments: Self.palettes)
@@ -76,12 +43,6 @@ struct ProviderPaletteRegressionTests {
         }
     }
 
-    @Test
-    func `moonshot keeps its original confetti ink`() {
-        let palette = ProviderDescriptorRegistry.descriptor(for: .moonshot).branding.confettiPalette
-        #expect(palette.first == ProviderColor(hex: 0x121212))
-    }
-
     @Test(arguments: Self.palettes)
     func `website and audit table match the app accent`(_ palette: Palette) throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
@@ -100,7 +61,7 @@ struct ProviderPaletteRegressionTests {
         #expect(row.split(separator: "|")[3].trimmingCharacters(in: .whitespaces) == "`\(hex)`")
 
         let social = try String(contentsOf: root.appendingPathComponent("docs/social.html"), encoding: .utf8)
-        let name = palette.provider == .kimi ? "Kimi" : ProviderDefaults.metadata[palette.provider]?.displayName
+        let name = palette.provider == .deepseek ? "DeepSeek" : ProviderDefaults.metadata[palette.provider]?.displayName
         if let name, let tile = social.split(separator: "\n").first(where: {
             $0.contains("<div class=\"name\">\(name)</div>")
         }) {

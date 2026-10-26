@@ -196,7 +196,6 @@ struct CLIUnificationGoldenTests {
                 status: nil,
                 usage: fixture.snapshot,
                 credits: nil,
-                antigravityPlanInfo: nil,
                 openaiDashboard: nil,
                 error: nil,
                 pace: CLIRenderer.providerPacePayload(
@@ -426,35 +425,6 @@ struct CLIUnificationGoldenTests {
 
     private static var textFixtures: [Fixture] {
         [
-            Fixture(provider: .factory, snapshot: snapshot(
-                primary: window(used: 10, minutes: 300),
-                secondary: window(used: 20, minutes: 10080),
-                tertiary: window(used: 30, minutes: 43200))),
-            Fixture(provider: .grok, snapshot: snapshot(
-                primary: window(used: 11, minutes: 120))),
-            Fixture(provider: .sub2api, snapshot: snapshot(
-                primary: window(used: 13, minutes: 1440),
-                secondary: window(used: 14, minutes: 10080))),
-            Fixture(provider: .amp, snapshot: snapshot(
-                primary: window(used: 15, minutes: 43200),
-                secondary: window(used: 16, minutes: 43200))),
-            Fixture(provider: .kilo, snapshot: snapshot(
-                primary: RateWindow(
-                    usedPercent: 17,
-                    windowMinutes: nil,
-                    resetsAt: nil,
-                    resetDescription: "Renews after top-up"),
-                loginMethod: "Kilo Pass · Auto top-up: enabled")),
-            Fixture(provider: .qoder, snapshot: snapshot(
-                primary: RateWindow(
-                    usedPercent: 18,
-                    windowMinutes: nil,
-                    resetsAt: nil,
-                    resetDescription: "500 weighted tokens"))),
-            Fixture(provider: .clawrouter, snapshot: costSnapshot(
-                used: 1,
-                limit: 10,
-                period: "Monthly")),
             Fixture(provider: .devin, snapshot: costSnapshot(
                 used: 25,
                 limit: 0,
@@ -464,10 +434,6 @@ struct CLIUnificationGoldenTests {
                 limit: 0,
                 period: "Extra usage",
                 balance: 40)),
-            Fixture(provider: .xai, snapshot: costSnapshot(
-                used: 30,
-                limit: 0,
-                period: "Prepaid credits")),
         ] + paceFixtures
     }
 
@@ -485,23 +451,6 @@ struct CLIUnificationGoldenTests {
                 secondary: window(used: 50, minutes: 10080, resetAfter: 5 * 24 * 60 * 60))),
             Fixture(provider: .opencode, snapshot: snapshot(
                 secondary: window(used: 30, minutes: 10080, resetAfter: 5 * 24 * 60 * 60))),
-            Fixture(provider: .ollama, snapshot: snapshot(
-                primary: window(used: 10, minutes: nil, resetAfter: 4 * 60 * 60),
-                secondary: window(used: 20, minutes: 10080, resetAfter: 5 * 24 * 60 * 60))),
-            Fixture(provider: .kimi, snapshot: snapshot(
-                primary: window(
-                    used: 30,
-                    minutes: KimiProviderDescriptor.weeklyWindowMinutes,
-                    resetAfter: 4 * 24 * 60 * 60),
-                secondary: window(
-                    used: 10,
-                    minutes: KimiProviderDescriptor.sessionWindowMinutes,
-                    resetAfter: 4 * 60 * 60))),
-            Fixture(provider: .notion, snapshot: snapshot(
-                primary: window(
-                    used: 20,
-                    minutes: NotionProviderDescriptor.rollingWindowMaxMinutes,
-                    resetAfter: 5 * 60 * 60))),
         ]
     }
 
@@ -526,7 +475,7 @@ struct CLIUnificationGoldenTests {
             updatedAt: self.now,
             identity: loginMethod.map {
                 ProviderIdentitySnapshot(
-                    providerID: .kilo,
+                    providerID: .opencode,
                     accountEmail: nil,
                     accountOrganization: nil,
                     loginMethod: $0)

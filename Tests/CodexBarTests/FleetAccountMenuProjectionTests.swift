@@ -133,40 +133,6 @@ struct FleetAccountMenuProjectionTests {
     }
 
     @Test
-    func `identity less local snapshot owns the legacy default account`() {
-        let settings = testSettingsStore(suiteName: "FleetAccountMenuProjectionTests-legacy-default")
-        let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
-            browserDetection: BrowserDetection(cacheTTL: 0),
-            settings: settings,
-            startupBehavior: .testing,
-            environmentBase: [:])
-        store.snapshots[.openrouter] = UsageSnapshot(
-            primary: RateWindow(
-                usedPercent: 25,
-                windowMinutes: 300,
-                resetsAt: nil,
-                resetDescription: nil),
-            secondary: nil,
-            updatedAt: Date(timeIntervalSince1970: 100))
-        let remote = Self.snapshot(
-            provider: .openrouter,
-            accountKey: AccountSnapshotSyncPayload.accountKey(for: nil),
-            fetchedAt: Date(timeIntervalSince1970: 200))
-
-        let projection = FleetAccountMenuPlanner.projection(
-            provider: .openrouter,
-            snapshots: [remote],
-            currentDeviceID: settings.iCloudSyncDeviceID,
-            localAccountKeys: store.cloudSyncLocalAccountKeys(for: .openrouter),
-            hasLocalUsage: true)
-
-        #expect(store.cloudSyncLocalAccountKeys(for: .openrouter) == ["default"])
-        #expect(projection.fallback == nil)
-        #expect(projection.additionalAccounts.isEmpty)
-    }
-
-    @Test
     func `identity less local snapshot also owns the provider email alias`() {
         let settings = testSettingsStore(suiteName: "FleetAccountMenuProjectionTests-default-email-alias")
         let store = UsageStore(
@@ -291,33 +257,6 @@ struct FleetMenuBarSourceTests {
     }
 
     @Test
-    func `fleet usage does not enable credential gated local refresh`() throws {
-        let settings = testSettingsStore(
-            suiteName: "FleetMenuBarSourceTests-availability",
-            userDefaults: InMemoryUserDefaults())
-        let metadata = try #require(ProviderRegistry.shared.metadata[.openrouter])
-        settings.setProviderEnabled(provider: .openrouter, metadata: metadata, enabled: true)
-        let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
-            browserDetection: BrowserDetection(cacheTTL: 0),
-            settings: settings,
-            startupBehavior: .testing,
-            environmentBase: [:])
-        let projection = FleetAccountMenuPlanner.projection(
-            provider: .openrouter,
-            snapshots: [self.remote(provider: .openrouter)],
-            currentDeviceID: "local-device",
-            localAccountKeys: [],
-            hasLocalUsage: false)
-        let source = MenuBarUsageSource.resolve(localSnapshot: nil, fleetFallback: projection.fallback)
-        #expect(source.isFleet)
-        #expect(source.snapshot?.primary?.usedPercent == 25)
-        #expect(!store.isEnabled(.openrouter))
-        #expect(store.enabledFirstPartyProvidersForDisplay().contains(.openrouter))
-        #expect(!store.enabledFirstPartyProvidersForBackgroundWork().contains(.openrouter))
-    }
-
-    @Test
     func `remote layout renders quota without identity local credits cost or pace`() {
         let settings = testSettingsStore(suiteName: "FleetMenuBarSourceTests", userDefaults: InMemoryUserDefaults())
         let store = UsageStore(
@@ -351,35 +290,6 @@ struct FleetMenuBarSourceTests {
         #expect(output.attributedTitle.string == "5h 75%")
         #expect(store.snapshots.isEmpty)
         #expect(store.cloudSyncAccountSnapshots().isEmpty)
-    }
-
-    @Test
-    func `highest usage includes fleet providers without local credentials`() throws {
-        let settings = testSettingsStore(
-            suiteName: "FleetMenuBarSourceTests-highest",
-            userDefaults: InMemoryUserDefaults())
-        for provider in [UsageProvider.claude, .openrouter] {
-            let metadata = try #require(ProviderRegistry.shared.metadata[provider])
-            settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: true)
-        }
-        let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
-            browserDetection: BrowserDetection(cacheTTL: 0),
-            settings: settings,
-            startupBehavior: .testing,
-            environmentBase: [:])
-        store._setSnapshotForTesting(self.remote(provider: .claude, usedPercent: 10).usage, provider: .claude)
-        let remote = self.remote(provider: .openrouter, usedPercent: 90)
-        let highest = store.providerWithHighestUsage(
-            candidateProviders: [.claude, .openrouter],
-            usageSource: { provider in
-                provider == .openrouter ? .fleet(remote) : .local(store.menuBarSnapshot(for: provider.instanceID))
-            },
-            now: self.now)
-        #expect(highest?.provider == .openrouter)
-        #expect(highest?.usedPercent == 90)
-        #expect(!store.isEnabled(.openrouter))
-        #expect(store.snapshots[.openrouter] == nil)
     }
 
     private func remote(

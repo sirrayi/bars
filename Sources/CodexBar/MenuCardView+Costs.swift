@@ -231,11 +231,7 @@ extension UsageMenuCardView.Model {
                 providerCurrency: snapshot.currencyCode)
         } ?? "—"
         let sessionTokens = snapshot.sessionTokens.map { UsageFormatter.tokenCountString($0) }
-        let sessionLabel = if provider == .bedrock || provider == .mistral {
-            Self.latestBillingDayLabel(from: snapshot)
-        } else {
-            L("Today")
-        }
+        let sessionLabel = L("Today")
         let sessionLine: String = {
             if tokensOnly { return Self.tokenWindowLine(label: sessionLabel, tokens: snapshot.sessionTokens) }
             if let sessionTokens {
@@ -263,11 +259,6 @@ extension UsageMenuCardView.Model {
         let monthTokens = monthTokensValue.map { UsageFormatter.tokenCountString($0) }
         let windowLabel = if let historyLabel = snapshot.historyLabel {
             historyLabel
-        } else if provider == .mistral,
-                  snapshot.historyDays == 1,
-                  Self.bedrockLatestBillingDay(from: snapshot.daily) != nil
-        {
-            L("Latest billing day")
         } else {
             Self.costHistoryWindowLabel(days: snapshot.historyDays)
         }
@@ -278,14 +269,12 @@ extension UsageMenuCardView.Model {
             }
             return "\(windowLabel): \(monthCost)"
         }()
-        // Plan-metered spend over the same window (what the provider actually deducts);
-        // only providers that report it (currently Cursor) populate `meteredCostUSD`.
         let meteredLine: String? = (tokensOnly ? nil : snapshot.meteredCostUSD).map {
             let amount = UsageFormatter.convertedCostString(
                 $0,
                 preferredCurrency: preferredCurrencyCode,
                 providerCurrency: snapshot.currencyCode)
-            return String(format: L("Cursor-metered: %@ (%@)"), amount, windowLabel.lowercased())
+            return String(format: L("Plan metered: %@ (%@)"), amount, windowLabel.lowercased())
         }
         let incompleteCount = CostUsageIncompleteRequests.sum(snapshot.daily.map(\.incompleteRequestCount))
         let todayIncompleteCount = snapshot.summary(forLastDays: 1, calendar: calendar).incompleteRequestCount
@@ -375,81 +364,10 @@ extension UsageMenuCardView.Model {
         days == 1 ? L("Today") : String(format: L("Last %d days"), days)
     }
 
-    private static func latestBillingDayLabel(from snapshot: CostUsageTokenSnapshot) -> String {
-        guard let entry = bedrockLatestBillingDay(from: snapshot.daily),
-              let displayDate = bedrockDisplayDate(from: entry.date)
-        else { return L("Latest billing day") }
-        return String(format: L("Latest billing day (%@)"), displayDate)
-    }
-
-    private static func bedrockLatestBillingDay(from entries: [CostUsageDailyReport.Entry])
-        -> CostUsageDailyReport.Entry?
-    {
-        entries.compactMap { entry -> (entry: CostUsageDailyReport.Entry, dayKey: String)? in
-            guard let dayKey = bedrockBillingDayKey(from: entry.date) else { return nil }
-            return (entry, dayKey)
-        }
-        .max { lhs, rhs in
-            if lhs.dayKey != rhs.dayKey {
-                return lhs.dayKey < rhs.dayKey
-            }
-            let lCost = lhs.entry.costUSD ?? -1
-            let rCost = rhs.entry.costUSD ?? -1
-            if lCost != rCost {
-                return lCost < rCost
-            }
-            let lTokens = lhs.entry.totalTokens ?? -1
-            let rTokens = rhs.entry.totalTokens ?? -1
-            if lTokens != rTokens {
-                return lTokens < rTokens
-            }
-            return lhs.entry.date < rhs.entry.date
-        }?.entry
-    }
-
-    private static func bedrockDisplayDate(from text: String) -> String? {
-        guard let dayKey = bedrockBillingDayKey(from: text) else { return nil }
-        let monthStart = dayKey.index(dayKey.startIndex, offsetBy: 5)
-        let monthEnd = dayKey.index(monthStart, offsetBy: 2)
-        let dayStart = dayKey.index(dayKey.startIndex, offsetBy: 8)
-        guard
-            let month = Int(dayKey[monthStart..<monthEnd]),
-            let day = Int(dayKey[dayStart...]),
-            (1...Self.bedrockMonthAbbreviations.count).contains(month),
-            (1...31).contains(day)
-        else { return nil }
-        return "\(Self.bedrockMonthAbbreviations[month - 1]) \(day)"
-    }
-
     private static let bedrockMonthAbbreviations = [
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
     ]
-
-    private static func bedrockBillingDayKey(from text: String) -> String? {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed.count == 10 else { return nil }
-        for (offset, character) in trimmed.enumerated() {
-            switch offset {
-            case 4, 7:
-                guard character == "-" else { return nil }
-            default:
-                guard character.isNumber else { return nil }
-            }
-        }
-        let monthStart = trimmed.index(trimmed.startIndex, offsetBy: 5)
-        let monthEnd = trimmed.index(monthStart, offsetBy: 2)
-        let dayStart = trimmed.index(trimmed.startIndex, offsetBy: 8)
-        let yearEnd = trimmed.index(trimmed.startIndex, offsetBy: 4)
-        guard
-            let year = Int(trimmed[..<yearEnd]),
-            let month = Int(trimmed[monthStart..<monthEnd]),
-            let day = Int(trimmed[dayStart...]),
-            (1...Self.bedrockMonthAbbreviations.count).contains(month),
-            (1...Self.daysInBedrockBillingMonth(month, year: year)).contains(day)
-        else { return nil }
-        return trimmed
-    }
 
     private static func daysInBedrockBillingMonth(_ month: Int, year: Int) -> Int {
         switch month {

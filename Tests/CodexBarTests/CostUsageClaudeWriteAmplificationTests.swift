@@ -492,34 +492,6 @@ struct CostUsageClaudeWriteAmplificationTests {
         #expect(CostUsageClaudeCacheIO.load(provider: .claude, cacheRoot: fixture.env.cacheRoot).usage.files.isEmpty)
     }
 
-    @Test
-    func `memo separates provider report context and cache root`() throws {
-        let fixture = try Fixture(rowCount: 2)
-        defer { fixture.env.cleanup() }
-        _ = try fixture.load(context: .regular)
-        var cache = CostUsageClaudeCacheIO.load(provider: .claude, cacheRoot: fixture.env.cacheRoot)
-        let scopes: [(UsageProvider, CostUsageReportContext, URL)] = [
-            (.claude, .regular, fixture.env.cacheRoot),
-            (.claude, .spendDashboard, fixture.env.cacheRoot),
-            (.vertexai, .regular, fixture.env.cacheRoot),
-            (.vertexai, .spendDashboard, fixture.env.cacheRoot),
-            (.claude, .regular, fixture.env.root.appendingPathComponent("other-cache")),
-        ]
-        for (index, scope) in scopes.enumerated() {
-            cache.usage.lastScanUnixMs = Int64(index + 1)
-            _ = try CostUsageClaudeCacheIO.save(
-                provider: scope.0, cache: cache, cacheRoot: scope.2, reportContext: scope.1)
-        }
-        for _ in 0..<2 {
-            for (index, scope) in scopes.enumerated().reversed() {
-                #expect(CostUsageClaudeCacheIO.load(
-                    provider: scope.0,
-                    cacheRoot: scope.2,
-                    reportContext: scope.1).usage.lastScanUnixMs == Int64(index + 1))
-            }
-        }
-    }
-
     @Test(.enabled(if: ProcessInfo.processInfo.environment["CODEXBAR_ARTIFACT_BENCHMARK"] == "1"))
     func `synthetic artifact decode benchmark`() throws {
         let fixture = try Fixture(rowCount: 4096)

@@ -236,8 +236,6 @@ struct SettingsStoreRefreshDefaultTests {
     {
         SettingsStore(
             userDefaults: defaults,
-            configStore: configStore,
-            zaiTokenStore: NoopZaiTokenStore(),
-            syntheticTokenStore: NoopSyntheticTokenStore())
+            configStore: configStore)
     }
 }

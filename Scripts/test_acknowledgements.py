@@ -20,10 +20,8 @@ class AcknowledgementsTests(unittest.TestCase):
         notices.check(notices.ROOT, self.entries)
         rendered = notices.render(self.entries)
         for expected in ['Commander', 'KeyboardShortcuts', 'SweetCookieKit', 'swift-log',
-                         'swift-crypto', 'swift-asn1', 'Vortex', 'QuickJS', 'UNICODE LICENSE V3',
-                         'BoringSSL', 'XKCP', 'Brian Gladman', 'Sucrase', '@jridgewell/gen-mapping',
-                         '@jridgewell/resolve-uri', '@jridgewell/sourcemap-codec',
-                         '@jridgewell/trace-mapping', 'lines-and-columns', 'ts-interface-checker']:
+                         'swift-crypto', 'swift-asn1', 'Vortex', 'BoringSSL', 'XKCP',
+                         'Brian Gladman']:
             self.assertIn(expected, rendered)
 
     def test_dependency_addition_or_pin_change_requires_refresh(self):

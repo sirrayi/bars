@@ -57,7 +57,7 @@ struct ProviderDetailSectionsContentTests {
         details: [ProviderDetailSection],
         hidePersonalInfo: Bool = false) -> UsageMenuCardView.Model.Input
     {
-        let provider: UsageProvider = .synthetic
+        let provider: UsageProvider = .deepseek
         return UsageMenuCardView.Model.Input(
             provider: provider,
             metadata: ProviderDescriptorRegistry.descriptor(for: provider).metadata,

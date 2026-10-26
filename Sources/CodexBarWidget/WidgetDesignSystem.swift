@@ -104,23 +104,11 @@ enum ProviderMonogram {
     /// Provider-specific by design: the widget-selectable providers get curated marks because a
     /// mechanical abbreviation collides (Codex/Copilot/Cursor/Claude all start with "C").
     private static let curated: [UsageProvider: String] = [
-        .alibaba: "AL",
-        .alibabatokenplan: "AT",
-        .antigravity: "AG",
         .claude: "CL",
         .codex: "CX",
-        .copilot: "CP",
-        .cursor: "CU",
         .devin: "DV",
-        .gemini: "GE",
-        .kilo: "KL",
-        .kimi: "KM",
-        .minimax: "MX",
-        .mistral: "MS",
         .opencode: "OC",
         .opencodego: "OG",
-        .qwencloud: "QW",
-        .zai: "ZA",
     ]
 
     static func text(for provider: UsageProvider) -> String {

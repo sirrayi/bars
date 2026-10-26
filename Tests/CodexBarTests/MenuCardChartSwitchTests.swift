@@ -162,83 +162,6 @@ struct MenuCardChartSwitchTests {
         print(measurements.joined(separator: "\n"))
     }
 
-    private static func model(
-        throughput: Bool = true,
-        history: Bool = true,
-        limited: Bool = true) -> UsageMenuCardView.Model
-    {
-        let minutes = (0..<60).map { index in
-            ProviderThroughputSnapshot.Minute(
-                start: Self.now.addingTimeInterval(Double(index - 60) * 60),
-                totalTokens: index == 41 ? 151_000_000 : 30_000_000 + ((index * 17) % 50) * 1_000_000,
-                requests: 50,
-                isPending: index >= 57)
-        }
-        let live = ProviderThroughputSnapshot(
-            minutes: minutes,
-            frontier: minutes[56].start,
-            latestTokensPerMinute: minutes[56].totalTokens,
-            peakTokensPerMinute: 151_000_000,
-            peakAt: minutes[41].start,
-            fiveMinuteAverageTokensPerMinute: 45_000_000,
-            models: [],
-            windowMinutes: 60,
-            fetchedAt: Self.now,
-            projectID: nil)
-        let daily = OpenAIAPIUsageSnapshot(
-            daily: (0..<30).map { index in
-                let start = Self.now.addingTimeInterval(Double(index - 29) * 86400)
-                return .init(
-                    day: start.formatted(.iso8601.year().month().day().dateSeparator(.dash)),
-                    startTime: start,
-                    endTime: start.addingTimeInterval(86400),
-                    costUSD: Double(5 + (index * 7) % 20),
-                    requests: 1200,
-                    inputTokens: 700_000_000,
-                    cachedInputTokens: 650_000_000,
-                    outputTokens: 30_000_000,
-                    totalTokens: 730_000_000,
-                    lineItems: [],
-                    models: [.init(
-                        name: "synthetic-model",
-                        requests: 1200,
-                        inputTokens: 700_000_000,
-                        cachedInputTokens: 650_000_000,
-                        outputTokens: 30_000_000,
-                        totalTokens: 730_000_000)])
-            }, updatedAt: Self.now)
-        let snapshot = UsageSnapshot(
-            primary: nil,
-            secondary: nil,
-            throughput: throughput ? live : nil,
-            openAIAPIUsage: history ? daily : nil,
-            updatedAt: Self.now)
-        return UsageMenuCardView.Model.make(.init(
-            provider: .openai,
-            throughputPresentation: .init(
-                limitLine: limited ? "Peak org limit: 38% · 15M / 40M · synthetic-model" : nil,
-                limitPercent: limited ? 38 : nil,
-                action: .openOpenAILiveUsage),
-            metadata: ProviderDefaults.metadata[.openai]!,
-            snapshot: snapshot,
-            credits: nil,
-            creditsError: nil,
-            dashboardError: nil,
-            tokenSnapshot: nil,
-            tokenError: nil,
-            account: .init(email: nil, plan: nil),
-            isRefreshing: false,
-            lastError: nil,
-            usageBarsShowUsed: false,
-            resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
-            costSummaryInlineEnabled: true,
-            showOptionalCreditsAndExtraUsage: true,
-            hidePersonalInfo: false,
-            preferredCurrencyCode: "USD",
-            now: Self.now))
-    }
-
     private static func host(
         model: UsageMenuCardView.Model,
         mode: ProviderMenuChartMode,
@@ -273,5 +196,110 @@ struct MenuCardChartSwitchTests {
         hosting.cacheDisplay(in: hosting.bounds, to: bitmap)
         try #require(bitmap.representation(using: .png, properties: [:])).write(to: url)
         return height
+    }
+
+    private static func model(
+        throughput: Bool = true,
+        history: Bool = true,
+        limited: Bool = true) -> UsageMenuCardView.Model
+    {
+        let minutes = (0..<60).map { index in
+            ProviderThroughputSnapshot.Minute(
+                start: Self.now.addingTimeInterval(Double(index - 60) * 60),
+                totalTokens: index == 41 ? 151_000_000 : 30_000_000 + ((index * 17) % 50) * 1_000_000,
+                requests: 50,
+                isPending: index >= 57)
+        }
+        let live = ProviderThroughputSnapshot(
+            minutes: minutes,
+            frontier: minutes[56].start,
+            latestTokensPerMinute: minutes[56].totalTokens,
+            peakTokensPerMinute: 151_000_000,
+            peakAt: minutes[41].start,
+            fiveMinuteAverageTokensPerMinute: 45_000_000,
+            models: [],
+            windowMinutes: 60,
+            fetchedAt: Self.now,
+            projectID: nil)
+        let dailyEntries = (0..<30).map { index in
+            let start = Self.now.addingTimeInterval(Double(index - 29) * 86400)
+            return CostUsageDailyReport.Entry(
+                date: start.formatted(.iso8601.year().month().day().dateSeparator(.dash)),
+                inputTokens: 700_000_000,
+                outputTokens: 30_000_000,
+                cacheReadTokens: 650_000_000,
+                cacheCreationTokens: nil,
+                reasoningTokens: nil,
+                totalTokens: 730_000_000,
+                requestCount: 1200,
+                costUSD: Double(5 + (index * 7) % 20),
+                modelsUsed: ["synthetic-model"],
+                modelBreakdowns: nil,
+                unpricedRequestCount: nil,
+                unmeteredRequestCount: nil,
+                estimatedRequestCount: nil,
+                pricedRequestCount: nil)
+        }
+        let tokenSnapshot = CostUsageTokenSnapshot(
+            sessionTokens: nil,
+            sessionCostUSD: nil,
+            last30DaysTokens: nil,
+            last30DaysCostUSD: nil,
+            daily: dailyEntries,
+            updatedAt: Self.now)
+        let snapshot = UsageSnapshot(
+            primary: nil,
+            secondary: nil,
+            throughput: throughput ? live : nil,
+            updatedAt: Self.now)
+        return UsageMenuCardView.Model.make(.init(
+            provider: .codex,
+            throughputPresentation: .init(
+                limitLine: limited ? "Peak org limit: 38% · 15M / 40M · synthetic-model" : nil,
+                limitPercent: limited ? 38 : nil,
+                action: nil),
+            metadata: ProviderDefaults.metadata[.codex]!,
+            snapshot: snapshot,
+            credits: nil,
+            creditsError: nil,
+            dashboardError: nil,
+            tokenSnapshot: history ? tokenSnapshot : nil,
+            tokenError: nil,
+            account: AccountInfo(email: "synthetic@example.test", plan: nil),
+            accountIsAuthoritative: true,
+            accountPrivacyOrdinal: nil,
+            planOverride: .automatic,
+            planEmphasis: .none,
+            lastKnownUsageCapturedAt: nil,
+            isRefreshing: false,
+            lastError: nil,
+            limitsAvailability: nil,
+            usageBarsShowUsed: false,
+            resetTimeDisplayStyle: .countdown,
+            tokenCostUsageEnabled: true,
+            tokenCostIsRefreshing: false,
+            codexLocalSessionCostLedgerEnabled: false,
+            costSummaryInlineEnabled: true,
+            tokenCostMenuSectionEnabled: false,
+            costComparisonPeriodsEnabled: false,
+            showOptionalCreditsAndExtraUsage: false,
+            claudeDailyRoutinesUsageVisible: false,
+            codexSparkUsageVisible: false,
+            showsAllUsageLanes: false,
+            sourceLabel: nil,
+            subtitleOverride: nil,
+            kiloAutoMode: false,
+            hidePersonalInfo: true,
+            weeklyPace: nil,
+            sessionEquivalentForecast: nil,
+            quotaWarningThresholds: [:],
+            workDaysPerWeek: nil,
+            workdayTickAppearance: .hidden,
+            paceVisible: true,
+            usesLiveSubtitle: false,
+            preferredCurrencyCode: "USD",
+            costUsageBucketCalendar: .autoupdatingCurrent,
+            now: Self.now,
+            observedWeeklyResets: []))
     }
 }

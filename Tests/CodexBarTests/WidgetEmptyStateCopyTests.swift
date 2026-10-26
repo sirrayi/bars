@@ -31,13 +31,4 @@ struct WidgetEmptyStateCopyTests {
                 W("Enable a provider in CodexBar → Settings → Providers."))
         }
     }
-
-    @Test
-    func `switcher recovery points at settings rather than a nonexistent provider editor`() throws {
-        let snapshot = WidgetSnapshot(entries: [], enabledProviders: [.grok], generatedAt: Date())
-        let resolved = try #require(CodexBarSwitcherTimelineProvider.supportedProviders(from: snapshot).first)
-        #expect(WidgetEmptyStateCopy.switcherMessage(provider: resolved, snapshot: snapshot) ==
-            W("Enable a provider in CodexBar → Settings → Providers."))
-        #expect(WidgetEmptyStateCopy.switcherMessage(provider: .grok, snapshot: snapshot) == W("No data"))
-    }
 }

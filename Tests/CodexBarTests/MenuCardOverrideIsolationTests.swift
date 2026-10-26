@@ -167,62 +167,6 @@ struct MenuCardOverrideIsolationTests {
         #expect(leftText != "Est. 2 session quotas left")
     }
 
-    @Test
-    func `failed stacked token account card keeps its configured label`() throws {
-        let store = self.makeStore()
-        let account = ProviderTokenAccount(
-            id: UUID(),
-            label: "Rejected group",
-            token: "fixture",
-            addedAt: 0,
-            lastUsed: nil)
-        let accountSnapshot = TokenAccountUsageSnapshot(
-            account: account,
-            snapshot: nil,
-            error: "sub2api rejected the API key.",
-            sourceLabel: nil,
-            cacheKey: "fixture-cache")
-
-        let model = try #require(store.tokenAccountMenuCardModel(
-            for: .sub2api,
-            accountSnapshot: accountSnapshot))
-
-        #expect(model.email == "Rejected group")
-        #expect(model.subtitleStyle == .error)
-    }
-
-    @Test
-    func `successful stacked token account card prefers fetched identity over configured label`() throws {
-        let store = self.makeStore()
-        let account = ProviderTokenAccount(
-            id: UUID(),
-            label: "Configured group",
-            token: "fixture",
-            addedAt: 0,
-            lastUsed: nil)
-        let usage = UsageSnapshot(
-            primary: RateWindow(usedPercent: 25, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
-            secondary: nil,
-            updatedAt: Date(),
-            identity: ProviderIdentitySnapshot(
-                providerID: .sub2api,
-                accountEmail: "fetched@example.com",
-                accountOrganization: nil,
-                loginMethod: nil))
-        let accountSnapshot = TokenAccountUsageSnapshot(
-            account: account,
-            snapshot: usage,
-            error: nil,
-            sourceLabel: "api",
-            cacheKey: "fixture-cache")
-
-        let model = try #require(store.tokenAccountMenuCardModel(
-            for: .sub2api,
-            accountSnapshot: accountSnapshot))
-
-        #expect(model.email == "fetched@example.com")
-    }
-
     private func makeStore() -> UsageStore {
         let settings = testSettingsStore(
             suiteName: "MenuCardOverrideIsolationTests",

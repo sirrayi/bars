@@ -39,58 +39,6 @@ struct ProviderBrowsingTests {
     }
 
     @Test
-    func `visible move preserves hidden slots and rejects stale or invalid positions`() throws {
-        let plugin = try #require(ProviderInstanceID(rawValue: "synthetic-plugin"))
-        let full: [ProviderInstanceID] = [.codex, plugin, .claude, .gemini]
-        let visible: [ProviderInstanceID] = [.codex, .claude, .gemini]
-        #expect(ProviderOrderMutation.moving(
-            visibleOrder: visible, fromOffsets: [1], toOffset: 0, in: full) == [.claude, plugin, .codex, .gemini])
-        #expect(ProviderOrderMutation.moving(
-            visibleOrder: visible, fromOffsets: [0, 2], toOffset: 3, in: full) == [.claude, plugin, .codex, .gemini])
-        #expect(ProviderOrderMutation.moving(
-            visibleOrder: visible, fromOffsets: [3], toOffset: 0, in: full) == nil)
-        #expect(ProviderOrderMutation.moving(
-            visibleOrder: visible, fromOffsets: [1], toOffset: 4, in: full) == nil)
-        #expect(ProviderOrderMutation.moving(
-            visibleOrder: visible, fromOffsets: [1], toOffset: 0, in: full.reversed()) == nil)
-        #expect(ProviderOrderMutation.merging(visibleOrder: [.claude, .claude], into: full) == nil)
-        #expect(ProviderOrderMutation.merging(visibleOrder: [.moonshot], into: full) == nil)
-    }
-
-    @Test
-    func `move and restore preserve provider values and undo only order`() throws {
-        let settings = self.store(config: CodexBarConfig(providers: [
-            ProviderConfig(id: .gemini, enabled: false, apiKey: "synthetic-gemini-key"),
-            ProviderConfig(id: .codex, enabled: true),
-        ]))
-        let original = settings.configSnapshot.providers.map(\.id)
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.sortedKeys]
-        let beforeByID = Dictionary(uniqueKeysWithValues: settings.configSnapshot.providers.map {
-            ($0.id, try? encoder.encode($0))
-        })
-        settings.providersSortedAlphabetically = true
-        #expect(settings.restoreDefaultProviderOrder())
-        #expect(!settings.providersSortedAlphabetically)
-        #expect(settings.configSnapshot.providers.map(\.id) == UsageProvider.allCases.map(\.instanceID))
-        for entry in settings.configSnapshot.providers {
-            #expect(try encoder.encode(entry) == beforeByID[entry.id])
-        }
-        settings.updateProviderConfig(provider: .gemini) { $0.apiKey = "synthetic-updated-key" }
-        #expect(settings.undoProviderOrderChange())
-        #expect(settings.configSnapshot.providers.map(\.id) == original)
-        #expect(settings.configSnapshot.providerConfig(for: .gemini)?.apiKey == "synthetic-updated-key")
-        #expect(settings.providersSortedAlphabetically)
-        #expect(!settings.canUndoProviderOrderChange)
-
-        settings.providersSortedAlphabetically = false
-        let visible = settings.orderedFirstPartyProviders().map(\.instanceID)
-        #expect(settings.moveVisibleProviders(visible, fromOffsets: [0], toOffset: visible.count))
-        #expect(settings.undoProviderOrderChange())
-        #expect(settings.configSnapshot.providers.map(\.id) == original)
-    }
-
-    @Test
     func `stale undo cannot overwrite an external order or a later mode choice`() {
         let settings = self.store()
         let initial = settings.orderedFirstPartyProviders().map(\.instanceID)

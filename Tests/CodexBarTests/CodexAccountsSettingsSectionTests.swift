@@ -313,19 +313,9 @@ struct CodexAccountsSettingsSectionTests {
         return SettingsStore(
             userDefaults: defaults,
             configStore: configStore,
-            zaiTokenStore: NoopZaiTokenStore(),
-            syntheticTokenStore: NoopSyntheticTokenStore(),
             codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
-            cursorCookieStore: InMemoryCookieHeaderStore(),
             opencodeCookieStore: InMemoryCookieHeaderStore(),
-            factoryCookieStore: InMemoryCookieHeaderStore(),
-            minimaxCookieStore: InMemoryMiniMaxCookieStore(),
-            minimaxAPITokenStore: InMemoryMiniMaxAPITokenStore(),
-            kimiTokenStore: InMemoryKimiTokenStore(),
-            augmentCookieStore: InMemoryCookieHeaderStore(),
-            ampCookieStore: InMemoryCookieHeaderStore(),
-            copilotTokenStore: InMemoryCopilotTokenStore(),
             tokenAccountStore: InMemoryTokenAccountStore())
     }
 
@@ -339,28 +329,6 @@ struct CodexAccountsSettingsSectionTests {
         store._test_providerRefreshOverride = { _ in }
         store._test_codexCreditsLoaderOverride = { throw UsageError.noRateLimitsFound }
         return store
-    }
-}
-
-extension CodexAccountsSettingsSectionTests {
-    private static func writeCodexAuthFile(
-        homeURL: URL,
-        email: String,
-        plan: String,
-        accountID: String? = nil) throws
-    {
-        try FileManager.default.createDirectory(at: homeURL, withIntermediateDirectories: true)
-        var tokens: [String: Any] = [
-            "accessToken": "access-token",
-            "refreshToken": "refresh-token",
-            "idToken": Self.fakeJWT(email: email, plan: plan, accountID: accountID),
-        ]
-        if let accountID {
-            tokens["account_id"] = accountID
-        }
-        let auth = ["tokens": tokens]
-        let data = try JSONSerialization.data(withJSONObject: auth)
-        try data.write(to: homeURL.appendingPathComponent("auth.json"))
     }
 
     private static func fakeJWT(email: String, plan: String, accountID: String? = nil) -> String {
@@ -384,6 +352,28 @@ extension CodexAccountsSettingsSectionTests {
         }
 
         return "\(base64URL(header)).\(base64URL(payload))."
+    }
+}
+
+extension CodexAccountsSettingsSectionTests {
+    private static func writeCodexAuthFile(
+        homeURL: URL,
+        email: String,
+        plan: String,
+        accountID: String? = nil) throws
+    {
+        try FileManager.default.createDirectory(at: homeURL, withIntermediateDirectories: true)
+        var tokens: [String: Any] = [
+            "accessToken": "access-token",
+            "refreshToken": "refresh-token",
+            "idToken": Self.fakeJWT(email: email, plan: plan, accountID: accountID),
+        ]
+        if let accountID {
+            tokens["account_id"] = accountID
+        }
+        let auth = ["tokens": tokens]
+        let data = try JSONSerialization.data(withJSONObject: auth)
+        try data.write(to: homeURL.appendingPathComponent("auth.json"))
     }
 }
 

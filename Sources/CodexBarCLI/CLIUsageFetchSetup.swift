@@ -42,8 +42,6 @@ struct CLIUsageFetchSetup {
             format: format,
             includeCredits: format == .json || !values.flags.contains("noCredits"),
             sourceModeOverride: sourceMode,
-            antigravityPlanDebug: values.flags.contains("antigravityPlanDebug"),
-            augmentDebug: values.flags.contains("augmentDebug"),
             webDebugDumpHTML: values.flags.contains("webDebugDumpHtml"),
             webTimeout: webTimeout,
             verbose: values.flags.contains("verbose"),

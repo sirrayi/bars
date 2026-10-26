@@ -4,45 +4,6 @@ import Testing
 
 struct PiBedrockPricingTests {
     @Test
-    func `bedrock keeps regional prices and stays out of native provider mirrors`() throws {
-        let env = try CostUsageTestEnvironment()
-        defer { env.cleanup() }
-        let day = try env.makeLocalNoon(year: 2026, month: 9, day: 29)
-        let global = "global.anthropic.claude-sonnet-4-6"
-        let regional = "us.anthropic.claude-sonnet-4-6"
-        let unknownRegion = "eu.anthropic.claude-sonnet-4-6"
-        let other = "global.openai.gpt-5.4"
-        let catalog = try self.catalog(models: [global: 3, regional: 3.3, other: 2, "claude-sonnet-4-6": 3])
-        #expect(ModelsDevCache.save(catalog: catalog, fetchedAt: day, cacheRoot: env.cacheRoot))
-        let rows = [global, regional, other, unknownRegion].map {
-            self.row(env: env, day: day, provider: "amazon-bedrock", model: $0)
-        }
-        _ = try env.writePiSessionFile(relativePath: "bedrock.jsonl", contents: env.jsonl(rows))
-        let result = try self.scan(env: env, day: day)
-        #expect(result.isComplete)
-        #expect(result.report.summary?.totalTokens == 4 * 140)
-        let models = try #require(result.report.data.first?.modelBreakdowns)
-        #expect(models.first { $0.modelName == global }?.costUSD == 0.000435)
-        #expect(models.first { $0.modelName == regional }?.costUSD == 0.000465)
-        #expect(models.first { $0.modelName == other }?.costUSD == 0.000335)
-        #expect(models.first { $0.modelName == unknownRegion }?.costUSD == nil)
-        #expect(result.report.data.first?.unpricedRequestCount == 1)
-        for provider in [UsageProvider.codex, .claude] {
-            #expect(try self.scan(env: env, day: day, provider: provider).report.data.isEmpty)
-        }
-        let cached = PiSessionCostScanner.loadCachedDailyReport(
-            provider: .pi, since: day, until: day, now: day, cacheRoot: env.cacheRoot)
-        #expect(cached?.summary?.totalTokens == 560)
-
-        #expect(try ModelsDevCache.save(
-            catalog: self.catalog(models: [global: 6, regional: 3.3, other: 2]),
-            fetchedAt: day,
-            cacheRoot: env.cacheRoot))
-        let repriced = try self.scan(env: env, day: day)
-        #expect(repriced.report.data.first?.modelBreakdowns?.first { $0.modelName == global }?.costUSD == 0.000735)
-    }
-
-    @Test
     func `one hour cache writes are a subset of total writes for anthropic and bedrock`() throws {
         for provider in ["anthropic", "amazon-bedrock"] {
             let env = try CostUsageTestEnvironment()

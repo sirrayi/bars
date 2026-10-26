@@ -140,7 +140,7 @@ struct StatusItemBlinkGatingTests {
                     self.settings.setProviderEnabled(
                         provider: provider,
                         metadata: metadata,
-                        enabled: provider == .codex || (merged && provider == .openrouter))
+                        enabled: provider == .codex || (merged && provider == .deepseek))
                 }
             }
             let fetcher = UsageFetcher(environment: [:])

@@ -181,21 +181,6 @@ struct CodexUserFacingErrorTests {
     }
 
     @Test
-    func `successful provider diagnostic does not make usage stale`() {
-        let settings = self.makeSettingsStore(suite: "CodexUserFacingErrorTests-success-diagnostic")
-        let store = self.makeUsageStore(settings: settings)
-        store.diagnostics[.grok] = GrokStatusProbe.teamUsageUnavailableMessage
-
-        #expect(store.userFacingError(for: .grok) == GrokStatusProbe.teamUsageUnavailableMessage)
-        #expect(!store.isStale(provider: .grok))
-
-        let pane = ProvidersPane(settings: settings, store: store)
-        let display = pane._test_providerErrorDisplay(for: .grok)
-        #expect(display?.preview == GrokStatusProbe.teamUsageUnavailableMessage)
-        #expect(display?.full == GrokStatusProbe.teamUsageUnavailableMessage)
-    }
-
-    @Test
     func `providers pane codex model uses sanitized values`() {
         let settings = self.makeSettingsStore(suite: "CodexUserFacingErrorTests-pane-model")
         let store = self.makeUsageStore(settings: settings)
@@ -290,19 +275,9 @@ struct CodexUserFacingErrorTests {
         return SettingsStore(
             userDefaults: defaults,
             configStore: configStore,
-            zaiTokenStore: NoopZaiTokenStore(),
-            syntheticTokenStore: NoopSyntheticTokenStore(),
             codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
-            cursorCookieStore: InMemoryCookieHeaderStore(),
             opencodeCookieStore: InMemoryCookieHeaderStore(),
-            factoryCookieStore: InMemoryCookieHeaderStore(),
-            minimaxCookieStore: InMemoryMiniMaxCookieStore(),
-            minimaxAPITokenStore: InMemoryMiniMaxAPITokenStore(),
-            kimiTokenStore: InMemoryKimiTokenStore(),
-            augmentCookieStore: InMemoryCookieHeaderStore(),
-            ampCookieStore: InMemoryCookieHeaderStore(),
-            copilotTokenStore: InMemoryCopilotTokenStore(),
             tokenAccountStore: InMemoryTokenAccountStore())
     }
 }

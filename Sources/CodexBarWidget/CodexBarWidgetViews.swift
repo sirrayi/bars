@@ -428,35 +428,6 @@ struct WidgetUsageRow: Identifiable, Equatable {
             rows = defaultRows.filter { $0.percentLeft != nil }
         }
         guard let limit else { return rows }
-        // Provider-specific by design: Antigravity medium widgets select one constrained row per model family.
-        if entry.provider == .antigravity,
-           limit >= 2,
-           rows.contains(where: { $0.id.hasPrefix("antigravity-quota-summary-") })
-        {
-            var selected = AntigravityQuotaFamilyVisibility.KnownFamily.allCases.compactMap { family in
-                rows.filter {
-                    AntigravityQuotaFamilyVisibility.knownFamily(windowID: $0.id, title: $0.title) == family
-                }.min(by: self.isMoreConstrained)
-            }
-            let selectedIDs = Set(selected.map(\.id))
-            let fallbackRows = rows.enumerated()
-                .filter { !selectedIDs.contains($0.element.id) }
-                .sorted { lhs, rhs in
-                    switch (lhs.element.percentLeft, rhs.element.percentLeft) {
-                    case let (.some(left), .some(right)):
-                        left == right ? lhs.offset < rhs.offset : left < right
-                    case (.some, .none):
-                        true
-                    case (.none, .some):
-                        false
-                    case (.none, .none):
-                        lhs.offset < rhs.offset
-                    }
-                }
-                .map(\.element)
-            selected.append(contentsOf: fallbackRows.prefix(max(0, limit - selected.count)))
-            return selected
-        }
         return Array(rows.prefix(max(0, limit)))
     }
 
@@ -709,7 +680,7 @@ struct WidgetBalanceLine: Equatable {
 enum WidgetBalanceFormatter {
     static func providerBalance(for entry: WidgetSnapshot.ProviderEntry) -> WidgetBalanceLine? {
         // Provider-specific by design: these providers publish their widget value through the balance-text field.
-        guard entry.provider == .deepseek || entry.provider == .openrouter,
+        guard entry.provider == .deepseek,
               let value = entry.balanceText?.trimmingCharacters(in: .whitespacesAndNewlines),
               !value.isEmpty
         else { return nil }

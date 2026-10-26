@@ -1797,7 +1797,7 @@
 "Credits + percent" = "Crèdits i percentatge restant";
 "Credits left" = "Crèdits restant";
 "Cursor-metered" = "Ús mesurat a Cursor";
-"Cursor-metered: %@ (%@)" = "Mesurat amb Cursor: %1$@ (%2$@)";
+"Plan metered: %@ (%@)" = "Mesurat amb Cursor: %1$@ (%2$@)";
 "DATA THROUGH %@" = "Dades fins al %@";
 "Daily usage" = "Ús diari";
 "Default uses AZURE_OPENAI_API_VERSION when set." = "El valor per defecte utilitza AZURE_OPENAI_API_VERSION quan s'estableix.";

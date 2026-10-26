@@ -280,34 +280,6 @@ struct CloudSyncSettingsTests {
     }
 
     @Test
-    func `sync persistence never writes encrypted provider secrets and uses private permissions`() throws {
-        let directory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CloudSyncPersistenceTests-\(UUID().uuidString)", isDirectory: true)
-        defer { try? FileManager.default.removeItem(at: directory) }
-        let fileURL = directory.appendingPathComponent("engine-state.json")
-        let persistence = CloudSyncPersistence(fileURL: fileURL)
-        let config = ProviderConfig(id: .openai, apiKey: "SENTINEL-SECRET")
-        let recordID = CKRecord.ID(
-            recordName: ProviderIntentPayload.recordName(for: config.id),
-            zoneID: CloudSyncEngine.zoneID)
-        let record = CKRecord(recordType: SyncRecordType.providerIntent.rawValue, recordID: recordID)
-        record["payload"] = try CanonicalSyncJSON.string(ProviderIntentPayload(config: config)) as CKRecordValue
-        record.encryptedValues[ProviderIntentSecretField.apiKey.rawValue] = config.apiKey as CKRecordValue?
-
-        var envelope = CloudSyncPersistence.Envelope(stateSerialization: nil, encodedSystemFields: [:])
-        CloudSyncPersistence.cacheSystemFields(of: record, in: &envelope)
-        try persistence.save(envelope)
-        let loaded = persistence.load()
-        let bytes = try Data(contentsOf: fileURL)
-        let contents = try #require(String(bytes: bytes, encoding: .utf8))
-        let attributes = try FileManager.default.attributesOfItem(atPath: fileURL.path)
-
-        #expect(!contents.contains("SENTINEL-SECRET"))
-        #expect(loaded.encodedSystemFields[recordID.recordName] != nil)
-        #expect((attributes[.posixPermissions] as? NSNumber)?.intValue == 0o600)
-    }
-
-    @Test
     func `legacy sync persistence defaults dirty state to clean`() throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("CloudSyncPersistenceLegacyTests-\(UUID().uuidString)", isDirectory: true)

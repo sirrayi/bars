@@ -6,9 +6,9 @@ extension UsageMenuCardView.Model {
         _ details: [ProviderDetailSection],
         provider: UsageProvider) -> [ProviderDetailSection]
     {
-        // Provider-specific by design: DeepSeek, z.ai, Kiro, and Grok rewrite value phrasing.
+        // Provider-specific by design: DeepSeek rewrites value phrasing.
         // Other providers localize section titles and row labels through the shared catalog; values stay canonical.
-        guard provider == .deepseek || provider == .zai || provider == .kiro || provider == .grok else {
+        guard provider == .deepseek else {
             return details.compactMap { section in
                 let rows = section.rows.compactMap { row in
                     try? ProviderDetailSection.Row(
@@ -57,22 +57,7 @@ extension UsageMenuCardView.Model {
         _ row: ProviderDetailSection.Row,
         provider: UsageProvider) -> String?
     {
-        if provider == .kimi {
-            return row.secondaryValue.map { self.localizedResetCreditValue($0) }
-        }
-        if provider == .amp {
-            switch row.secondaryValue {
-            case "For agent and orb usage": return L("For agent and orb usage")
-            case "a1.small-equivalent hours": return L("a1.small-equivalent hours")
-            default: return row.secondaryValue
-            }
-        }
-        // Only this plugin-owned disclosure is copy; arbitrary provider values stay canonical.
-        guard provider == .openrouter,
-              row.label == "API key limit",
-              row.secondaryValue == "Spending cap, not balance"
-        else { return row.secondaryValue }
-        return L("Spending cap, not balance")
+        row.secondaryValue
     }
 
     static func localizedDeepSeekBalanceDescription(_ description: String) -> String {
@@ -121,86 +106,15 @@ extension UsageMenuCardView.Model {
         switch provider {
         case .deepseek:
             self.localizedTokenSuffix(value)
-        case .zai:
-            self.localizedZaiValue(value)
-        case .kiro:
-            self.localizedKiroCapPhrase(value)
-        case .grok:
-            self.localizedResetCreditValue(value)
         default:
             value
         }
-    }
-
-    private static func localizedResetCreditValue(_ value: String) -> String {
-        if value == "1 available" {
-            return L("1 available")
-        }
-        let availableSuffix = " available"
-        if value.hasSuffix(availableSuffix),
-           let count = Int(value.dropLast(availableSuffix.count))
-        {
-            return L("%d available", count)
-        }
-        let expiryPrefix = "Expires "
-        if value.hasPrefix(expiryPrefix) {
-            return L("Expires %@", String(value.dropFirst(expiryPrefix.count)))
-        }
-        return value
-    }
-
-    private static func localizedKiroCapPhrase(_ value: String) -> String {
-        let prefix = "of "
-        if value.hasPrefix(prefix) {
-            return L("of %@", String(value.dropFirst(prefix.count)))
-        }
-        let suffix = " credits"
-        guard value.hasSuffix(suffix) else { return value }
-        return "\(String(value.dropLast(suffix.count))) \(L("credits"))"
     }
 
     private static func localizedTokenSuffix(_ value: String) -> String {
         let suffix = " tokens"
         guard value.hasSuffix(suffix) else { return value }
         return L("%@ tokens", String(value.dropLast(suffix.count)))
-    }
-
-    private static func localizedZaiValue(_ value: String) -> String {
-        if value == "Peak" || value == "Off-peak" {
-            return L(value)
-        }
-        for rate in ["peak", "off-peak"] {
-            let prefix = "\(rate) "
-            if value.hasPrefix(prefix) {
-                let countdown = String(value.dropFirst(prefix.count))
-                return "\(L(rate)) \(self.localizedZaiCountdown(countdown))"
-            }
-        }
-
-        let usedSuffix = " used"
-        if value.hasSuffix(usedSuffix) {
-            return L("%@ used", String(value.dropLast(usedSuffix.count)))
-        }
-
-        let limitSeparator = " limit · "
-        let remainingSuffix = " remaining"
-        if let limitRange = value.range(of: limitSeparator),
-           value.hasSuffix(remainingSuffix)
-        {
-            let limit = String(value[..<limitRange.lowerBound])
-            let remainingEnd = value.index(value.endIndex, offsetBy: -remainingSuffix.count)
-            let remaining = String(value[limitRange.upperBound..<remainingEnd])
-            return L("%@ limit · %@ remaining", limit, remaining)
-        }
-
-        let limitSuffix = " limit"
-        if value.hasSuffix(limitSuffix) {
-            return L("%@ limit", String(value.dropLast(limitSuffix.count)))
-        }
-        if value.hasSuffix(remainingSuffix) {
-            return L("%@ remaining", String(value.dropLast(remainingSuffix.count)))
-        }
-        return value
     }
 
     private static func localizedZaiCountdown(_ value: String) -> String {

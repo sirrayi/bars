@@ -46,17 +46,8 @@ let package = Package(
     targets: {
         var targets: [Target] = [
             .target(
-                name: "CQuickJS",
-                path: "Sources/CQuickJS",
-                exclude: ["README.md", "LICENSE"],
-                publicHeadersPath: "include",
-                cSettings: [
-                    .define("_GNU_SOURCE"),
-                ]),
-            .target(
                 name: "CodexBarCore",
                 dependencies: [
-                    "CQuickJS",
                     .product(name: "Crypto", package: "swift-crypto"),
                     .product(name: "Logging", package: "swift-log"),
                     .product(name: "SweetCookieKit", package: "SweetCookieKit"),
@@ -132,25 +123,6 @@ let package = Package(
                     .enableUpcomingFeature("StrictConcurrency"),
                     .enableExperimentalFeature("SwiftTesting"),
                 ]),
-            .testTarget(
-                name: "CodexBarPluginTests",
-                dependencies: ["CodexBarCore"],
-                path: "TestsPlugin",
-                swiftSettings: [
-                    .enableUpcomingFeature("StrictConcurrency"),
-                    .enableExperimentalFeature("SwiftTesting"),
-                ]),
-            .testTarget(
-                name: "CodexBarLinuxTests",
-                dependencies: [
-                    "CodexBarCore",
-                    "CodexBarCLI",
-                ],
-                path: "TestsLinux",
-                swiftSettings: [
-                    .enableUpcomingFeature("StrictConcurrency"),
-                    .enableExperimentalFeature("SwiftTesting"),
-                ]),
         ]
 
         #if os(macOS)
@@ -206,11 +178,6 @@ let package = Package(
             exclude: [
                 "AdaptiveReplayCLITests",
                 "AdaptiveReplayKitTests",
-                "CodexBarTests/ProviderPluginDetailsParityTests.swift",
-                "CodexBarTests/ProviderPluginExtensionParityTests.swift",
-                "CodexBarTests/ProviderPluginParityTests.swift",
-                "CodexBarTests/ProviderPluginRuntimeTests.swift",
-                "CodexBarTests/Sub2APIPluginGoldenTests.swift",
             ],
             resources: [
                 .copy("CodexBarTests/Fixtures"),

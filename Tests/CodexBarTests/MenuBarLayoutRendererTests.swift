@@ -57,27 +57,6 @@ struct MenuBarLayoutRendererTests {
         #expect(unavailable.accessibilityLabel == L("%@ unavailable", L("Session")))
     }
 
-    @Test
-    func `window label preference preserves named provider labels and progress bars`() {
-        let renderer = MenuBarLayoutRenderer()
-        let layout = MenuBarLayout(lines: [[
-            .percent(window: .session), .percent(window: .weekly), .lanePercent(lane: .tertiary),
-            .extraPercent(id: "cursor-grok-bot"), .progressBar(window: .session),
-        ]])
-        let data = self.data(provider: .cursor)
-        let visible = renderer.render(layout: layout, data: data, icon: nil, options: self.options())
-        let hidden = renderer.render(
-            layout: layout, data: data, icon: nil, options: self.options(showWindowLabels: false))
-        #expect(hidden.attributedTitle.string == visible.attributedTitle.string)
-        #expect(hidden.accessibilityLabel == visible.accessibilityLabel)
-        let bar = renderer.render(
-            layout: MenuBarLayout(lines: [[.progressBar(window: .session)]]),
-            data: self.data(),
-            icon: nil,
-            options: self.options(showWindowLabels: false))
-        #expect(bar.attributedTitle.string == "5h \u{FFFC}")
-    }
-
     @Test(arguments: [UsageProvider.codex, .claude], [false, true])
     func `provider weekly lane token renders without a window prefix`(provider: UsageProvider, showUsed: Bool) {
         let token = MenuBarLayoutToken.lanePercent(lane: .secondary)
@@ -144,56 +123,6 @@ struct MenuBarLayoutRendererTests {
     }
 
     @Test
-    func `Notion secondary percentage renders and announces monthly cadence`() {
-        let renderer = MenuBarLayoutRenderer()
-        let output = renderer.render(
-            layout: MenuBarLayout(lines: [[.percent(window: .weekly)]]),
-            data: self.data(provider: .notion),
-            icon: nil,
-            options: self.options())
-
-        #expect(output.attributedTitle.string == "M 60%")
-        #expect(output.accessibilityLabel == L("%@ %@", L("Monthly"), "60%"))
-    }
-
-    @Test
-    func `Cursor lane percentages render independently`() {
-        let renderer = MenuBarLayoutRenderer()
-        let output = renderer.render(
-            layout: MenuBarLayout(lines: [[
-                .lanePercent(lane: .primary),
-                .lanePercent(lane: .secondary),
-                .lanePercent(lane: .tertiary),
-            ]]),
-            data: self.data(provider: .cursor),
-            icon: nil,
-            options: self.options())
-
-        #expect(output.attributedTitle.string == "T 10%\u{2009}C 9%\u{2009}TP 17%")
-        #expect(output.accessibilityLabel == "Total 10%, Cursor 9%, Third Party 17%")
-    }
-
-    @Test
-    func `Cursor semantic percentages reuse explicit lane tags`() {
-        let renderer = MenuBarLayoutRenderer()
-        let expected: [(PercentWindow, String, String)] = [
-            (.session, "T 25%", "Total 25%"),
-            (.weekly, "C 60%", "Cursor 60%"),
-            (.automatic, "50%", "\(L("Usage")) 50%"),
-        ]
-        for (window, value, accessibility) in expected {
-            let output = renderer.render(
-                layout: MenuBarLayout(lines: [[.percent(window: window)]]),
-                data: self.data(provider: .cursor),
-                icon: nil,
-                options: self.options())
-            #expect(output.attributedTitle.string == value)
-            // Cursor's lanes reset monthly, so the tagged weekly slot must not be announced as "Weekly".
-            #expect(output.accessibilityLabel == accessibility)
-        }
-    }
-
-    @Test
     func `providers without short labels keep bare lane percentages`() {
         let renderer = MenuBarLayoutRenderer()
         for descriptor in ProviderDescriptorRegistry.all where descriptor.menuBarMetrics.laneShortLabels.isEmpty {
@@ -205,142 +134,6 @@ struct MenuBarLayoutRendererTests {
                 options: self.options())
             #expect(output.attributedTitle.string == "10%\u{2009}9%")
             #expect(output.accessibilityLabel == "\(data.laneLabels.primary) 10%, \(data.laneLabels.secondary) 9%")
-        }
-    }
-
-    @Test
-    func `Cursor Grok Bot extra percentage renders independently`() {
-        let renderer = MenuBarLayoutRenderer()
-        let output = renderer.render(
-            layout: MenuBarLayout(lines: [[
-                .lanePercent(lane: .primary),
-                .lanePercent(lane: .secondary),
-                .lanePercent(lane: .tertiary),
-                .extraPercent(id: "cursor-grok-bot"),
-            ]]),
-            data: self.data(
-                provider: .cursor,
-                extraRateWindows: [MenuBarLayoutRenderExtra(NamedRateWindow(
-                    id: "cursor-grok-bot",
-                    title: "Grok Bot",
-                    window: RateWindow(usedPercent: 42, windowMinutes: nil, resetsAt: nil, resetDescription: nil)))]),
-            icon: nil,
-            options: self.options())
-
-        #expect(output.attributedTitle.string == "T 10%\u{2009}C 9%\u{2009}TP 17%\u{2009}GB 42%")
-        #expect(output.accessibilityLabel == "Total 10%, Cursor 9%, Third Party 17%, Grok Bot 42%")
-    }
-
-    @Test
-    func `Cursor semantic tokens follow real resolver windows`() {
-        // Cursor's resolver leaves session empty and backs weekly with the secondary (monthly Cursor) lane.
-        let renderer = MenuBarLayoutRenderer()
-        let data = self.data(provider: .cursor, omitsSession: true, weeklyUsedPercent: 9)
-        let expected: [(PercentWindow, String, String)] = [
-            (.session, "T –", "Total unavailable"),
-            (.weekly, "C 9%", "Cursor 9%"),
-        ]
-        for (window, value, accessibility) in expected {
-            let output = renderer.render(
-                layout: MenuBarLayout(lines: [[.percent(window: window)]]),
-                data: data,
-                icon: nil,
-                options: self.options())
-            #expect(output.attributedTitle.string == value)
-            #expect(output.accessibilityLabel == accessibility)
-        }
-
-        let reset = renderer.render(
-            layout: MenuBarLayout(lines: [[.windowResetCountdown(window: .weekly)]]),
-            data: data,
-            icon: nil,
-            options: self.options())
-        #expect(reset.accessibilityLabel.hasPrefix("Cursor: "))
-
-        let bar = renderer.render(
-            layout: MenuBarLayout(lines: [[.progressBar(window: .weekly)]]),
-            data: data,
-            icon: nil,
-            options: self.options())
-        #expect(bar.attributedTitle.string.hasPrefix("C "))
-        #expect(bar.accessibilityLabel == "Cursor 9%")
-    }
-
-    @Test
-    func `named extras without short labels keep their full title`() {
-        let id = "antigravity-quota-summary-gemini-weekly"
-        let output = MenuBarLayoutRenderer().render(
-            layout: MenuBarLayout(lines: [[.extraPercent(id: id)]]),
-            data: self.data(
-                provider: .antigravity,
-                extraRateWindows: [MenuBarLayoutRenderExtra(NamedRateWindow(
-                    id: id,
-                    title: "Gemini weekly",
-                    window: RateWindow(usedPercent: 30, windowMinutes: nil, resetsAt: nil, resetDescription: nil)))]),
-            icon: nil,
-            options: self.options())
-
-        #expect(output.attributedTitle.string == "Gemini weekly 30%")
-        #expect(output.accessibilityLabel == "Gemini weekly 30%")
-    }
-
-    @Test
-    func `missing Grok Bot extra percentage shows unknown beside sibling tokens`() {
-        let renderer = MenuBarLayoutRenderer()
-        let output = renderer.render(
-            layout: MenuBarLayout(lines: [[.lanePercent(lane: .primary), .extraPercent(id: "cursor-grok-bot")]]),
-            data: self.data(provider: .cursor),
-            icon: nil,
-            options: self.options())
-
-        #expect(output.attributedTitle.string == "T 10%\u{2009}GB –")
-        #expect(output.accessibilityLabel == "Total 10%, Grok Bot unavailable")
-    }
-
-    @Test
-    func `Grok Bot respects remaining mode provider ownership and cache refresh`() {
-        let renderer = MenuBarLayoutRenderer()
-        let layout = MenuBarLayout(lines: [[.lanePercent(lane: .primary)], [.extraPercent(id: "cursor-grok-bot")]])
-        for used in [42.0, 43.0] {
-            let extra = MenuBarLayoutRenderExtra(NamedRateWindow(
-                id: "cursor-grok-bot",
-                title: "Grok Bot",
-                window: RateWindow(usedPercent: used, windowMinutes: nil, resetsAt: nil, resetDescription: nil)))
-            let output = renderer.render(
-                layout: layout,
-                data: self.data(provider: .cursor, extraRateWindows: [extra]),
-                icon: nil,
-                options: self.options(showUsed: false))
-            #expect(output.attributedTitle.string == "T 90%\nGB \(Int(100 - used))%")
-            let other = renderer.render(
-                layout: layout,
-                data: self.data(provider: .codex, extraRateWindows: [extra]),
-                icon: nil,
-                options: self.options())
-            #expect(other.attributedTitle.string == "10%")
-        }
-        let missing = renderer.render(
-            layout: layout, data: self.data(provider: .cursor), icon: nil, options: self.options())
-        #expect(missing.attributedTitle.string == "T 10%\nGB –")
-    }
-
-    @Test(arguments: [0.0, 42.0])
-    func `extra unknown readings stay distinct from a real zero`(used: Double) {
-        let renderer = MenuBarLayoutRenderer()
-        let layout = MenuBarLayout(lines: [[.extraPercent(id: "cursor-grok-bot")]])
-        for known in [false, true] {
-            let extra = MenuBarLayoutRenderExtra(NamedRateWindow(
-                id: "cursor-grok-bot",
-                title: "Grok Bot",
-                window: RateWindow(usedPercent: used, windowMinutes: 10080, resetsAt: nil, resetDescription: nil),
-                usageKnown: known))
-            let rendered = renderer.render(
-                layout: layout,
-                data: self.data(provider: .cursor, extraRateWindows: [extra]),
-                icon: nil,
-                options: self.options())
-            #expect(rendered.attributedTitle.string == (known ? "GB \(Int(used))%" : "GB –"))
-            #expect(rendered.accessibilityLabel == (known ? "Grok Bot \(Int(used))%" : "Grok Bot unavailable"))
         }
     }
 
@@ -427,40 +220,6 @@ struct MenuBarLayoutRendererTests {
             icon: nil,
             options: self.options())
         #expect(output.attributedTitle.string == "5h 25%")
-    }
-
-    @Test
-    func `Amp lane percentages announce snapshot presentation labels`() {
-        let renderer = MenuBarLayoutRenderer()
-        let snapshot = UsageSnapshot(
-            primary: RateWindow(usedPercent: 10, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
-            secondary: RateWindow(usedPercent: 9, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
-            updatedAt: Date())
-        let output = renderer.render(
-            layout: MenuBarLayout(lines: [[
-                .lanePercent(lane: .primary),
-                .lanePercent(lane: .secondary),
-            ]]),
-            data: self.data(
-                provider: .amp,
-                laneLabels: MenuBarLayoutLaneLabels(provider: .amp, snapshot: snapshot)),
-            icon: nil,
-            options: self.options())
-
-        #expect(output.accessibilityLabel == "Other usage 10%, Orb usage 9%")
-    }
-
-    @Test
-    func `Notion secondary pace announces monthly cadence`() {
-        let renderer = MenuBarLayoutRenderer()
-        let output = renderer.render(
-            layout: MenuBarLayout(lines: [[.pace(window: .weekly)]]),
-            data: self.data(provider: .notion),
-            icon: nil,
-            options: self.options())
-
-        #expect(output.attributedTitle.string == "+11%")
-        #expect(output.accessibilityLabel == L("%@ %@ %@", L("Monthly"), L("display_mode_pace").lowercased(), "+11%"))
     }
 
     @Test

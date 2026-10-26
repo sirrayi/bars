@@ -162,66 +162,6 @@ final class StatusMenuProviderNativeProofTests: XCTestCase {
         }
     }
 
-    private static func seedProviderMenu(
-        in fixture: CodexWorkspacesNavigationFixture,
-        overview: Bool,
-        compact: Bool)
-    {
-        let providers: [UsageProvider] = compact ? [.claude]
-            : overview ? [.claude, .codex, .grok, .kimi, .zai, .huggingface] : [.claude, .codex, .grok]
-        for provider in providers {
-            fixture.settings.setProviderEnabled(
-                provider: provider,
-                metadata: ProviderDescriptorRegistry.descriptor(for: provider).metadata,
-                enabled: true)
-            _ = fixture.settings.setMergedOverviewProviderSelection(
-                provider: provider.instanceID,
-                isSelected: overview,
-                activeProviders: providers.map(\.instanceID))
-        }
-        fixture.settings.mergeIcons = true
-        fixture.settings.selectedMenuProvider = .claude
-        fixture.settings.mergedMenuLastSelectedWasOverview = overview
-        fixture.settings.statusChecksEnabled = true
-        for provider in providers {
-            let detailOnly = overview && provider == .huggingface
-            let details = detailOnly ? [try? ProviderDetailSection(
-                title: "Inference charges", rows: [.init(label: "This month", value: "$4.20")])].compactMap(\.self) : []
-            fixture.store._setSnapshotForTesting(
-                UsageSnapshot(
-                    primary: detailOnly ? nil : RateWindow(
-                        usedPercent: 25,
-                        windowMinutes: 300,
-                        resetsAt: Date().addingTimeInterval(3600),
-                        resetDescription: nil),
-                    secondary: overview && !detailOnly ? RateWindow(
-                        usedPercent: 60,
-                        windowMinutes: 10080,
-                        resetsAt: Date().addingTimeInterval(172_800),
-                        resetDescription: nil) : nil,
-                    details: details,
-                    updatedAt: Date()),
-                provider: provider)
-        }
-        if overview { Self.seedOverviewHistory(in: fixture) }
-        if compact {
-            fixture.settings.setProviderEnabled(
-                provider: .codex,
-                metadata: ProviderDescriptorRegistry.descriptor(for: .codex).metadata,
-                enabled: false)
-            Self.seedCompactAccounts(in: fixture)
-            if ProcessInfo.processInfo.environment["CODEXBAR_STATUS_PROVIDER_PROOF_HIDE_SESSION"] == "1" {
-                fixture.settings.setUsageItemVisible(false, itemID: .metric("primary"), for: .claude)
-            }
-        }
-        fixture.store.statusComponents[.claude] = [
-            ProviderStatusComponent(id: "claude", name: "Claude.ai", indicator: .none, status: "operational"),
-        ]
-        fixture.store.statusComponents[.codex] = [
-            ProviderStatusComponent(id: "codex", name: "Codex", indicator: .none, status: "operational"),
-        ]
-    }
-
     private static func nativeReceipt(
         menu: NSMenu,
         host: NSWindow,
@@ -351,6 +291,66 @@ final class StatusMenuProviderNativeProofTests: XCTestCase {
                     updatedAt: now),
                 provider: provider)
         }
+    }
+
+    private static func seedProviderMenu(
+        in fixture: CodexWorkspacesNavigationFixture,
+        overview: Bool,
+        compact: Bool)
+    {
+        let providers: [UsageProvider] = compact ? [.claude]
+            : overview ? [.claude, .codex, .deepseek, .devin, .opencode] : [.claude, .codex, .deepseek]
+        for provider in providers {
+            fixture.settings.setProviderEnabled(
+                provider: provider,
+                metadata: ProviderDescriptorRegistry.descriptor(for: provider).metadata,
+                enabled: true)
+            _ = fixture.settings.setMergedOverviewProviderSelection(
+                provider: provider.instanceID,
+                isSelected: overview,
+                activeProviders: providers.map(\.instanceID))
+        }
+        fixture.settings.mergeIcons = true
+        fixture.settings.selectedMenuProvider = .claude
+        fixture.settings.mergedMenuLastSelectedWasOverview = overview
+        fixture.settings.statusChecksEnabled = true
+        for provider in providers {
+            let detailOnly = overview && provider == .opencodego
+            let details = detailOnly ? [try? ProviderDetailSection(
+                title: "Inference charges", rows: [.init(label: "This month", value: "$4.20")])].compactMap(\.self) : []
+            fixture.store._setSnapshotForTesting(
+                UsageSnapshot(
+                    primary: detailOnly ? nil : RateWindow(
+                        usedPercent: 25,
+                        windowMinutes: 300,
+                        resetsAt: Date().addingTimeInterval(3600),
+                        resetDescription: nil),
+                    secondary: overview && !detailOnly ? RateWindow(
+                        usedPercent: 60,
+                        windowMinutes: 10080,
+                        resetsAt: Date().addingTimeInterval(172_800),
+                        resetDescription: nil) : nil,
+                    details: details,
+                    updatedAt: Date()),
+                provider: provider)
+        }
+        if overview { Self.seedOverviewHistory(in: fixture) }
+        if compact {
+            fixture.settings.setProviderEnabled(
+                provider: .codex,
+                metadata: ProviderDescriptorRegistry.descriptor(for: .codex).metadata,
+                enabled: false)
+            Self.seedCompactAccounts(in: fixture)
+            if ProcessInfo.processInfo.environment["CODEXBAR_STATUS_PROVIDER_PROOF_HIDE_SESSION"] == "1" {
+                fixture.settings.setUsageItemVisible(false, itemID: .metric("primary"), for: .claude)
+            }
+        }
+        fixture.store.statusComponents[.claude] = [
+            ProviderStatusComponent(id: "claude", name: "Claude.ai", indicator: .none, status: "operational"),
+        ]
+        fixture.store.statusComponents[.codex] = [
+            ProviderStatusComponent(id: "codex", name: "Codex", indicator: .none, status: "operational"),
+        ]
     }
 }
 

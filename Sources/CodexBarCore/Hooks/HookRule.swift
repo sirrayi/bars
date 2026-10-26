@@ -90,7 +90,7 @@ public struct HookRule: Codable, Sendable, Equatable, Identifiable {
     public var hasKnownProvider: Bool {
         guard let provider = self.provider else { return true }
         guard let instanceID = ProviderInstanceID(rawValue: provider) else { return false }
-        return instanceID.firstPartyProvider != nil || UserProviderPluginRegistry.plugin(for: instanceID) != nil
+        return instanceID.firstPartyProvider != nil
     }
 
     public var hasValidThreshold: Bool {

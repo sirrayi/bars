@@ -1796,7 +1796,7 @@
 "Credits + percent" = "Krediler ve kalan yüzde";
 "Credits left" = "Kalan Krediler";
 "Cursor-metered" = "Cursor'de ölçülü kullanım";
-"Cursor-metered: %@ (%@)" = "Cursor ölçümlü: %1$@ (%2$@)";
+"Plan metered: %@ (%@)" = "Cursor ölçümlü: %1$@ (%2$@)";
 "DATA THROUGH %@" = "%@ tarihine kadar veriler";
 "Daily usage" = "Günlük kullanım";
 "Default uses AZURE_OPENAI_API_VERSION when set." = "Ayarlandığında varsayılan AZURE_OPENAI_API_VERSION'yi kullanır.";

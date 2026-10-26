@@ -127,7 +127,6 @@ struct MenuCardHeightFingerprintTests {
                     sessionEquivalentDetail: sessionEquivalentDetail),
             ],
             usageNotes: ["Secret note"],
-            openAIAPIUsage: nil,
             inlineUsageDashboard: nil,
             creditsText: nil,
             creditsRemaining: nil,

@@ -91,9 +91,6 @@ struct HookRuleRow: View {
                         Text(ProviderDescriptorRegistry.descriptor(for: provider).metadata.displayName)
                             .tag(String?.some(provider.rawValue))
                     }
-                    ForEach(UserProviderPluginRegistry.all, id: \.manifest.id) { plugin in
-                        Text(plugin.manifest.name).tag(String?.some(plugin.manifest.id.rawValue))
-                    }
                 }
                 .labelsHidden()
 

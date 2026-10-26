@@ -123,22 +123,4 @@ struct ProviderDetailSectionTests {
         #expect(row.usageValue == nil)
         #expect(row.label == "Credits used")
     }
-
-    @Test
-    func `current snapshot fixture decodes with empty details`() throws {
-        let url = try #require(Bundle.module.url(
-            forResource: "usage-snapshot-current",
-            withExtension: "json",
-            subdirectory: "Fixtures"))
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-
-        let snapshot = try decoder.decode(UsageSnapshot.self, from: Data(contentsOf: url))
-
-        #expect(snapshot.primary?.usedPercent == 42)
-        #expect(snapshot.identity?.providerID == .synthetic)
-        #expect(snapshot.details.isEmpty)
-        let encoded = try JSONEncoder().encode(snapshot)
-        #expect(String(bytes: encoded, encoding: .utf8)?.contains("\"details\"") == false)
-    }
 }

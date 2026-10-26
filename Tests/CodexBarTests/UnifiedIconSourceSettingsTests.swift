@@ -29,34 +29,6 @@ struct UnifiedIconSourceSettingsTests {
         #expect(identifiers.count == Set(identifiers).count)
     }
 
-    @Test(arguments: [false, true])
-    func `legacy highest usage choice migrates without altering menu selection`(highestUsage: Bool) {
-        let defaults = InMemoryUserDefaults()
-        defaults.set(highestUsage, forKey: "menuBarShowsHighestUsage")
-        defaults.set(ProviderInstanceID.copilot.rawValue, forKey: "selectedMenuProvider")
-        defaults.set(true, forKey: "mergedMenuLastSelectedWasOverview")
-        let settings = testSettingsStore(
-            suiteName: "UnifiedIconSourceSettingsTests-upgrade",
-            userDefaults: defaults,
-            keychainAccessPolicy: self.keychainPolicy)
-        defer { settings.configFileWatcher?.stop() }
-
-        #expect(settings.unifiedIconSource == (highestUsage ? .highestUsage : .currentSelection))
-        #expect(defaults.object(forKey: "unifiedIconSource") == nil)
-        #expect(settings.selectedMenuProvider == .copilot)
-        #expect(settings.mergedMenuLastSelectedWasOverview)
-
-        settings.addTokenAccount(provider: .copilot, label: "Selected", token: "test-token")
-        let selectedAccountID = settings.selectedTokenAccount(for: .copilot)?.id
-        #expect(selectedAccountID != nil)
-        settings.unifiedIconSource = .frontmostApp
-        #expect(defaults.string(forKey: "unifiedIconSource") == UnifiedIconSource.frontmostApp.rawValue)
-        #expect(settings.selectedMenuProvider == .copilot)
-        #expect(settings.mergedMenuLastSelectedWasOverview)
-        #expect(settings.selectedTokenAccount(for: .copilot)?.id == selectedAccountID)
-        #expect(!defaults.bool(forKey: "menuBarShowsHighestUsage"))
-    }
-
     @Test
     func `new source wins over legacy preference on reload`() {
         let defaults = InMemoryUserDefaults()

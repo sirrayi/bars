@@ -1796,7 +1796,7 @@
 "Credits + percent" = "Kredyty i pozostały procent";
 "Credits left" = "Pozostało Kredyty";
 "Cursor-metered" = "Zmierzone zużycie w Cursor";
-"Cursor-metered: %@ (%@)" = "Cursor z pomiarem: %1$@ (%2$@)";
+"Plan metered: %@ (%@)" = "Cursor z pomiarem: %1$@ (%2$@)";
 "DATA THROUGH %@" = "Dane na %@";
 "Daily usage" = "Codzienne użytkowanie";
 "Default uses AZURE_OPENAI_API_VERSION when set." = "Domyślnie używany jest AZURE_OPENAI_API_VERSION, gdy jest ustawiony.";

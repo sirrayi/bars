@@ -1793,7 +1793,7 @@
 "Credits + percent" = "クレジット と残りの割合";
 "Credits left" = "残りクレジット";
 "Cursor-metered" = "Cursor の従量制使用量";
-"Cursor-metered: %@ (%@)" = "Cursor メーター制: %1$@ (%2$@)";
+"Plan metered: %@ (%@)" = "Cursor メーター制: %1$@ (%2$@)";
 "DATA THROUGH %@" = "%@ 時点のデータ";
 "Daily usage" = "毎日の使用量";
 "Default uses AZURE_OPENAI_API_VERSION when set." = "設定されている場合、デフォルトでは AZURE_OPENAI_API_VERSION が使用されます。";

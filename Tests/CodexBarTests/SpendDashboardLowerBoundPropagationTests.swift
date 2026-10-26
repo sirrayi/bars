@@ -134,6 +134,14 @@ struct SpendDashboardLowerBoundPropagationTests {
         try self.model(historyScanIsPartial: false, unpricedRequestCount: 0)
     }
 
+    /// 2026-07-16, one day after the fixture row, so the recorded usage falls inside the window.
+    private static let now = Date(timeIntervalSince1970: 1_784_179_200)
+    private static var calendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        return calendar
+    }
+
     private static func model(
         historyScanIsPartial: Bool,
         unpricedRequestCount: Int) throws -> SpendDashboardModel
@@ -161,17 +169,9 @@ struct SpendDashboardLowerBoundPropagationTests {
             daily: [entry],
             updatedAt: Self.now)
         return SpendDashboardModel.build(
-            inputs: [.init(provider: .antigravity, displayName: "Antigravity", snapshot: snapshot)],
+            inputs: [.init(provider: .deepseek, displayName: "DeepSeek", snapshot: snapshot)],
             requestedDays: 30,
             now: Self.now,
             calendar: Self.calendar)
-    }
-
-    /// 2026-07-16, one day after the fixture row, so the recorded usage falls inside the window.
-    private static let now = Date(timeIntervalSince1970: 1_784_179_200)
-    private static var calendar: Calendar {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "UTC")!
-        return calendar
     }
 }

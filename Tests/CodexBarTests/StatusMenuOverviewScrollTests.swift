@@ -63,8 +63,6 @@ struct StatusMenuOverviewScrollTests {
         let settings = SettingsStore(
             userDefaults: defaults,
             configStore: configStore,
-            zaiTokenStore: NoopZaiTokenStore(),
-            syntheticTokenStore: NoopSyntheticTokenStore(),
             tokenAccountStore: InMemoryTokenAccountStore(),
             performInitialProviderDetection: false)
         settings.statusChecksEnabled = false

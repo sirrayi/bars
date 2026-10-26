@@ -797,33 +797,6 @@ extension StatusMenuPersistentRefreshTests {
     }
 
     @Test
-    func `refresh monitor preserves multiline workspace credit text`() throws {
-        let settings = self.makeSettings()
-        let controller = self.makeController(settings: settings)
-        controller.store.snapshots[.amp] = AmpUsageSnapshot(
-            freeQuota: nil,
-            freeUsed: nil,
-            hourlyReplenishment: nil,
-            windowHours: nil,
-            individualCredits: 12,
-            workspaceBalances: [AmpWorkspaceBalance(name: "Team", remaining: 7)],
-            updatedAt: Date()).toUsageSnapshot()
-        let fallback = try #require(controller.menuCardModel(for: .amp))
-
-        controller.store.snapshots[.amp] = AmpUsageSnapshot(
-            freeQuota: nil,
-            freeUsed: nil,
-            hourlyReplenishment: nil,
-            windowHours: nil,
-            individualCredits: 10,
-            workspaceBalances: [AmpWorkspaceBalance(name: "Team", remaining: 3)],
-            updatedAt: Date()).toUsageSnapshot()
-        let refreshed = controller.menuCardRefreshMonitor.model(for: .amp, fallback: fallback)
-
-        #expect(refreshed.providerDetails == fallback.providerDetails)
-    }
-
-    @Test
     func `refresh monitor preserves tracked layout when refresh adds usage sections`() throws {
         let settings = self.makeSettings()
         let controller = self.makeController(settings: settings)
@@ -1105,34 +1078,6 @@ extension StatusMenuPersistentRefreshTests {
         let providerTask = try #require(controller.manualRefreshTasks[.provider(.claude)])
         providerGate.resume()
         await providerTask.value
-    }
-
-    @Test
-    func `provider scoped refresh updates status and widget snapshot`() async {
-        let settings = self.makeSettings()
-        settings.refreshFrequency = .manual
-        settings.statusChecksEnabled = true
-        enableTestProviders([.synthetic], settings: settings)
-
-        let controller = self.makeController(settings: settings)
-        controller.store._test_providerRefreshOverride = { _ in }
-        controller.store._test_providerStatusFetchOverride = { provider in
-            #expect(provider == .synthetic)
-            return ProviderStatus(indicator: .none, description: "Operational", updatedAt: Date())
-        }
-        var savedSnapshots = 0
-        controller.store._test_widgetSnapshotSaveOverride = { _ in
-            savedSnapshots += 1
-        }
-
-        await controller.performStoreRefresh(
-            for: .synthetic,
-            refreshOpenMenusWhenComplete: false,
-            interaction: .userInitiated)
-        _ = await controller.store.widgetSnapshotPersistTask?.result
-
-        #expect(controller.store.statuses[.synthetic]?.description == "Operational")
-        #expect(savedSnapshots == 1)
     }
 
     @Test

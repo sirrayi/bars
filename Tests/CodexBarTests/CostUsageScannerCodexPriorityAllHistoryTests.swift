@@ -22,7 +22,7 @@ struct CostUsageScannerCodexPriorityAllHistoryTests {
         try CostUsageScannerCodexPriorityTests.insertTestLog(
             dbURL: dbURL,
             timestamp: ISO8601DateFormatter().string(from: now),
-            body: CostUsageScannerCodexPriorityCursorTests.priorityRequestBody(
+            body: Self.priorityRequestBody(
                 threadID: "thread-all",
                 turnID: "turn-all"))
 
@@ -57,13 +57,13 @@ struct CostUsageScannerCodexPriorityAllHistoryTests {
         try CostUsageScannerCodexPriorityTests.insertTestLog(
             dbURL: dbURL,
             epochSeconds: oldEpoch,
-            body: CostUsageScannerCodexPriorityCursorTests.priorityRequestBody(
+            body: Self.priorityRequestBody(
                 threadID: "thread-old",
                 turnID: "turn-old"))
         try CostUsageScannerCodexPriorityTests.insertTestLog(
             dbURL: dbURL,
             timestamp: ISO8601DateFormatter().string(from: now),
-            body: CostUsageScannerCodexPriorityCursorTests.priorityRequestBody(
+            body: Self.priorityRequestBody(
                 threadID: "thread-new",
                 turnID: "turn-new"))
         let oldDay = CostUsageScanner.CostUsageDayRange.dayKey(
@@ -134,6 +134,15 @@ struct CostUsageScannerCodexPriorityAllHistoryTests {
             until: now,
             now: now,
             options: options)
+    }
+
+    static func priorityRequestBody(
+        threadID: String,
+        turnID: String,
+        model: String = "gpt-5.5") -> String
+    {
+        "thread_id=\(threadID) turn.id=\(turnID) websocket request: "
+            + #"{"type":"response.create","model":"\#(model)","service_tier":"priority"}"#
     }
 }
 #endif

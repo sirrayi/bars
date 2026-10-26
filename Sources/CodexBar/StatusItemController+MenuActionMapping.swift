@@ -6,7 +6,6 @@ extension StatusItemController {
         case .installUpdate: (#selector(self.installUpdate), nil)
         case .checkForUpdates: (#selector(self.checkForUpdates), nil)
         case .refresh: (#selector(self.refreshMenuItem(_:)), nil)
-        case .refreshAugmentSession: (#selector(self.refreshAugmentSession), nil)
         case .dashboard: (#selector(self.openDashboard), nil)
         case .statusPage: (#selector(self.openStatusPage), nil)
         case .changelog: (#selector(self.openChangelog), nil)
@@ -33,8 +32,6 @@ extension StatusItemController {
         switch action {
         case .openCodexWorkspaces:
             (#selector(self.openCodexWorkspaces(_:)), CodexWorkspacesWindowIdentity.menuItem)
-        case .openOpenAILiveUsage:
-            (#selector(self.openOpenAILiveUsage(_:)), OpenAILiveUsageWindowIdentity.menuItem)
         default:
             preconditionFailure("Expected a window menu action")
         }

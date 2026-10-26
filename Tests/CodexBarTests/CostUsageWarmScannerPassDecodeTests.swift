@@ -68,6 +68,33 @@ struct CostUsageWarmScannerPassDecodeTests {
         print("[warm-scanner-pass] refreshMin=\(refreshMinIntervalSeconds)s warm_pass_decodes=\(warmDecodes)")
         #expect(warmDecodes.dropFirst().allSatisfy { $0 == 0 })
     }
+
+    private static func incoming(
+        _ cache: CostUsageCache,
+        change: MetadataChange,
+        fixture: ReadWorkFixture) -> CostUsageCache
+    {
+        var incoming = cache
+        if change == .freshness || change == .both {
+            incoming.lastScanUnixMs += 1000
+        }
+        if change == .cursor || change == .both {
+            incoming.codexPriorityTurnsCursor = .init(
+                databasePath: fixture.env.root.appendingPathComponent("synthetic-trace.sqlite").path,
+                coverageSinceEpoch: 0,
+                lastRowID: 7,
+                fileIdentity: 1,
+                anchorRowID: 7,
+                anchorDigest: "synthetic",
+                turns: [:],
+                requestSourcesByTurnID: [:],
+                priorityCompletedModelsByTurnID: [:],
+                completedModelsByTurnID: [:],
+                completedTurnIDInsertionOrder: [],
+                completedTurnIDInsertionOrderStartIndex: 0)
+        }
+        return incoming
+    }
 }
 
 extension CostUsageWarmScannerPassDecodeTests {
@@ -268,33 +295,6 @@ extension CostUsageWarmScannerPassDecodeTests {
         #expect(!save(retry).catchUpRequired)
         #expect(await store.fetchMetadata().lastScanUnixMs == retry.cache.lastScanUnixMs + 1000)
         #expect(await store.rebuildCount == 0)
-    }
-
-    private static func incoming(
-        _ cache: CostUsageCache,
-        change: MetadataChange,
-        fixture: ReadWorkFixture) -> CostUsageCache
-    {
-        var incoming = cache
-        if change == .freshness || change == .both {
-            incoming.lastScanUnixMs += 1000
-        }
-        if change == .cursor || change == .both {
-            incoming.codexPriorityTurnsCursor = .init(
-                databasePath: fixture.env.root.appendingPathComponent("synthetic-trace.sqlite").path,
-                coverageSinceEpoch: 0,
-                lastRowID: 7,
-                fileIdentity: 1,
-                anchorRowID: 7,
-                anchorDigest: "synthetic",
-                turns: [:],
-                requestSourcesByTurnID: [:],
-                priorityCompletedModelsByTurnID: [:],
-                completedModelsByTurnID: [:],
-                completedTurnIDInsertionOrder: [],
-                completedTurnIDInsertionOrderStartIndex: 0)
-        }
-        return incoming
     }
 }
 

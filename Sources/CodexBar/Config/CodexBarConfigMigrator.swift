@@ -3,19 +3,9 @@ import Foundation
 
 struct CodexBarConfigMigrator {
     struct LegacyStores {
-        let zaiTokenStore: any ZaiTokenStoring
-        let syntheticTokenStore: any SyntheticTokenStoring
         let codexCookieStore: any CookieHeaderStoring
         let claudeCookieStore: any CookieHeaderStoring
-        let cursorCookieStore: any CookieHeaderStoring
         let opencodeCookieStore: any CookieHeaderStoring
-        let factoryCookieStore: any CookieHeaderStoring
-        let minimaxCookieStore: any MiniMaxCookieStoring
-        let minimaxAPITokenStore: any MiniMaxAPITokenStoring
-        let kimiTokenStore: any KimiTokenStoring
-        let augmentCookieStore: any CookieHeaderStoring
-        let ampCookieStore: any CookieHeaderStoring
-        let copilotTokenStore: any CopilotTokenStoring
         let tokenAccountStore: any ProviderTokenAccountStoring
     }
 
@@ -42,7 +32,6 @@ struct CodexBarConfigMigrator {
         // applyLegacyCookieSources reads only UserDefaults — cheap, runs unconditionally so
         // newly-added cookie-source keys are picked up on every launch.
         self.applyLegacyCookieSources(userDefaults: userDefaults, config: &config, state: &state)
-        self.bindLegacyMoonshotAPIKeyRegion(config: &config, state: &state)
         self.applyLegacyUsageVisibility(userDefaults: userDefaults, config: &config, state: &state)
         self.preserveClaudeResetCreditVisibility(userDefaults: userDefaults, config: &config, state: &state)
 
@@ -159,26 +148,12 @@ struct CodexBarConfigMigrator {
     {
         // Provider-specific by design: this one-shot migration names the retired per-provider secret stores.
         let sources: [(UsageProvider, String, () throws -> String?, WritableKeyPath<ProviderConfig, String?>)] = [
-            (.zai, "zai-token", stores.zaiTokenStore.loadToken, \.apiKey),
-            (.synthetic, "synthetic-token", stores.syntheticTokenStore.loadToken, \.apiKey),
-            (.copilot, "copilot-token", stores.copilotTokenStore.loadToken, \.apiKey),
             (.codex, "codex-cookie", stores.codexCookieStore.loadCookieHeader, \.cookieHeader),
             (.claude, "claude-cookie", stores.claudeCookieStore.loadCookieHeader, \.cookieHeader),
-            (.cursor, "cursor-cookie", stores.cursorCookieStore.loadCookieHeader, \.cookieHeader),
-            (.factory, "factory-cookie", stores.factoryCookieStore.loadCookieHeader, \.cookieHeader),
-            (.augment, "augment-cookie", stores.augmentCookieStore.loadCookieHeader, \.cookieHeader),
-            (.amp, "amp-cookie", stores.ampCookieStore.loadCookieHeader, \.cookieHeader),
-            (.minimax, "minimax-api-token", stores.minimaxAPITokenStore.loadToken, \.apiKey),
-            (.minimax, "minimax-cookie", stores.minimaxCookieStore.loadCookieHeader, \.cookieHeader),
-            (.kimi, "kimi-token", stores.kimiTokenStore.loadToken, \.cookieHeader),
             (.opencode, "opencode-cookie", stores.opencodeCookieStore.loadCookieHeader, \.cookieHeader),
         ]
         for (provider, store, loader, field) in sources {
             var value = self.loadLegacyString(provider: provider, store: store, state: &state, log: log, loader: loader)
-            // Provider-specific by design: Kimi also accepted a cookie in UserDefaults.
-            if provider == .kimi, value?.isEmpty ?? true {
-                value = userDefaults.string(forKey: "kimiManualCookieHeader")
-            }
             if value != nil {
                 state.sawLegacySecrets = true
             }
@@ -189,7 +164,6 @@ struct CodexBarConfigMigrator {
 
         // Provider-specific by design: these metadata fields accompanied the retired secret stores.
         let fields: [(UsageProvider, String, WritableKeyPath<ProviderConfig, String?>)] = [
-            (.minimax, "minimaxAPIRegion", \.region),
             (.opencode, "opencodeWorkspaceID", \.workspaceID),
         ]
         for (provider, key, field) in fields {
@@ -211,13 +185,7 @@ struct CodexBarConfigMigrator {
         let sources: [(UsageProvider, String)] = [
             (.codex, "codexCookieSource"),
             (.claude, "claudeCookieSource"),
-            (.cursor, "cursorCookieSource"),
             (.opencode, "opencodeCookieSource"),
-            (.factory, "factoryCookieSource"),
-            (.minimax, "minimaxCookieSource"),
-            (.kimi, "kimiCookieSource"),
-            (.augment, "augmentCookieSource"),
-            (.amp, "ampCookieSource"),
         ]
 
         for (provider, key) in sources {
@@ -238,18 +206,6 @@ struct CodexBarConfigMigrator {
                 entry.cookieSource = .off
                 return true
             }
-        }
-    }
-
-    private static func bindLegacyMoonshotAPIKeyRegion(
-        config: inout CodexBarConfig,
-        state: inout MigrationState)
-    {
-        // Provider-specific by design: old Moonshot API keys stored region separately from the unified config.
-        self.updateProvider(.moonshot, config: &config, state: &state) { entry in
-            guard entry.sanitizedAPIKey != nil, entry.sanitizedAPIKeyRegion == nil else { return false }
-            entry.apiKeyRegion = entry.sanitizedRegion ?? MoonshotRegion.international.rawValue
-            return true
         }
     }
 
@@ -352,19 +308,9 @@ struct CodexBarConfigMigrator {
     {
         var success = true
         do {
-            try stores.zaiTokenStore.storeToken(nil)
-            try stores.syntheticTokenStore.storeToken(nil)
-            try stores.copilotTokenStore.storeToken(nil)
-            try stores.minimaxAPITokenStore.storeToken(nil)
-            try stores.kimiTokenStore.storeToken(nil)
             try stores.codexCookieStore.storeCookieHeader(nil)
             try stores.claudeCookieStore.storeCookieHeader(nil)
-            try stores.cursorCookieStore.storeCookieHeader(nil)
             try stores.opencodeCookieStore.storeCookieHeader(nil)
-            try stores.factoryCookieStore.storeCookieHeader(nil)
-            try stores.minimaxCookieStore.storeCookieHeader(nil)
-            try stores.augmentCookieStore.storeCookieHeader(nil)
-            try stores.ampCookieStore.storeCookieHeader(nil)
         } catch {
             log.error("Failed to clear legacy secrets: \(error)")
             success = false

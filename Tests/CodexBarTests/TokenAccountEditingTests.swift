@@ -49,36 +49,6 @@ struct TokenAccountEditingTests {
     }
 
     @Test
-    func `editing a dormant account does not activate it`() throws {
-        let settings = testSettingsStore(
-            suiteName: "TokenAccountEditingTests-dormant",
-            userDefaults: InMemoryUserDefaults(),
-            config: testConfigWithAllProvidersDisabled())
-        settings.addTokenAccount(
-            provider: .cursor,
-            label: "Saved",
-            token: "WorkosCursorSessionToken=fixture-old")
-        let account = try #require(settings.selectedTokenAccount(for: .cursor))
-        settings.cursorCookieSource = .auto
-        #expect(settings.effectiveSelectedTokenAccount(for: .cursor) == nil)
-
-        settings.updateTokenAccount(
-            provider: .cursor,
-            accountID: account.id,
-            label: "Renamed",
-            token: "WorkosCursorSessionToken=fixture-new")
-
-        #expect(settings.cursorCookieSource == .auto)
-        #expect(settings.effectiveSelectedTokenAccount(for: .cursor) == nil)
-        #expect(settings.selectedTokenAccount(for: .cursor)?.id == account.id)
-        #expect(settings.selectedTokenAccount(for: .cursor)?.label == "Renamed")
-        #expect(settings.selectedTokenAccount(for: .cursor)?.token == "WorkosCursorSessionToken=fixture-new")
-        settings.setActiveTokenAccountIndex(0, for: .cursor)
-        #expect(settings.cursorCookieSource == .manual)
-        #expect(settings.effectiveSelectedTokenAccount(for: .cursor)?.id == account.id)
-    }
-
-    @Test
     func `invalid moves and blank replacement tokens leave accounts unchanged`() throws {
         let settings = testSettingsStore(
             suiteName: "TokenAccountEditingTests-invalid",

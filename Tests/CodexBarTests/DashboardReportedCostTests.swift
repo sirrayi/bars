@@ -98,7 +98,7 @@ struct DashboardReportedCostTests {
     private static func dashboard(
         history: CostUsageTokenSnapshot?,
         local: CostPayload? = nil,
-        provider: UsageProvider = .openrouter) -> DashboardSnapshotPayload
+        provider: UsageProvider = .deepseek) -> DashboardSnapshotPayload
     {
         DashboardSnapshotBuilder.makeSnapshot(
             usagePayloads: [ProviderPayload(
@@ -109,7 +109,6 @@ struct DashboardReportedCostTests {
                 status: nil,
                 usage: UsageSnapshot(primary: nil, secondary: nil, costUsage: history, updatedAt: self.now),
                 credits: nil,
-                antigravityPlanInfo: nil,
                 openaiDashboard: nil,
                 error: nil)],
             costPayloads: local.map { [$0] } ?? [],

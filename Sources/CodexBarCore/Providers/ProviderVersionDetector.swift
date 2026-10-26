@@ -238,22 +238,6 @@ public enum ProviderVersionDetector {
         return nil
     }
 
-    public static func geminiVersion() -> String? {
-        let env = ProcessInfo.processInfo.environment
-        guard let path = BinaryLocator.resolveGeminiBinary(env: env, loginPATH: nil)
-            ?? TTYCommandRunner.which(GeminiProviderDescriptor.descriptor.cli.name) else { return nil }
-        let candidates = [
-            ["--version"],
-            ["-v"],
-        ]
-        for args in candidates {
-            if let version = Self.run(path: path, args: args) {
-                return version
-            }
-        }
-        return nil
-    }
-
     /// Provider-specific by design: Kimi ships its CLI in dedicated standalone installation directories.
     public static func kimiVersion() -> String? {
         self.kimiVersion(

@@ -82,31 +82,6 @@ struct RPCChildProcessTeardownTests {
     }
 
     @Test
-    func `Grok RPC requests after child shutdown fail without aborting`() async throws {
-        let client = try GrokRPCClient(
-            executable: "/bin/cat",
-            arguments: [],
-            environment: [
-                "PATH": "/usr/bin:/bin",
-                "GROK_CLI_PATH": "/bin/cat",
-            ],
-            initializeTimeoutSeconds: 5,
-            requestTimeoutSeconds: 2)
-
-        client.shutdown()
-
-        let error = await #expect(throws: GrokRPCError.self) {
-            try await client.initialize()
-        }
-        guard case let .requestFailed(message, code) = error else {
-            Issue.record("Expected a normal Grok request failure, got \(String(describing: error))")
-            return
-        }
-        #expect(message.contains("stdin closed"))
-        #expect(code == nil)
-    }
-
-    @Test
     func `Codex RPC shutdown kills an app-server child that ignores SIGTERM`() async throws {
         let temporaryDirectory = FileManager.default.temporaryDirectory
         let scriptURL = temporaryDirectory.appendingPathComponent("codex-stub-\(UUID().uuidString)")
@@ -153,56 +128,6 @@ struct RPCChildProcessTeardownTests {
             })
 
         _ = try await fetcher.loadLatestCLIAccountSnapshot()
-
-        let pidText = try String(contentsOf: pidURL, encoding: .utf8)
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        let pid = try #require(pid_t(pidText))
-        let deadline = ContinuousClock.now.advanced(by: .seconds(30))
-        while kill(pid, 0) == 0, ContinuousClock.now < deadline {
-            try await Task.sleep(for: .milliseconds(20))
-        }
-        #expect(kill(pid, 0) == -1)
-        #expect(errno == ESRCH)
-    }
-
-    @Test(.timeLimit(.minutes(1)))
-    func `Grok RPC shutdown kills a stdio child that ignores SIGTERM`() async throws {
-        let temporaryDirectory = FileManager.default.temporaryDirectory
-        let scriptURL = temporaryDirectory.appendingPathComponent("grok-stub-\(UUID().uuidString)")
-        let pidURL = temporaryDirectory.appendingPathComponent("grok-stub-pid-\(UUID().uuidString)")
-        defer {
-            try? FileManager.default.removeItem(at: scriptURL)
-            try? FileManager.default.removeItem(at: pidURL)
-        }
-
-        let script = """
-        #!/bin/sh
-        printf '%s\n' "$$" > "$CODEXBAR_PROOF_PID_FILE"
-        trap '' TERM
-        while IFS= read -r line; do
-          case "$line" in
-            *'"initialize"'*) printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{}}' ;;
-            *) printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{}}' ;;
-          esac
-        done
-        while :; do sleep 0.2; done
-        """
-        try script.write(to: scriptURL, atomically: true, encoding: .utf8)
-        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: scriptURL.path)
-
-        let client = try GrokRPCClient(
-            executable: scriptURL.path,
-            arguments: [],
-            environment: [
-                "PATH": "/usr/bin:/bin",
-                "GROK_CLI_PATH": scriptURL.path,
-                "CODEXBAR_PROOF_PID_FILE": pidURL.path,
-            ],
-            initializeTimeoutSeconds: 5,
-            requestTimeoutSeconds: 2)
-        try await client.initialize()
-
-        client.shutdown()
 
         let pidText = try String(contentsOf: pidURL, encoding: .utf8)
             .trimmingCharacters(in: .whitespacesAndNewlines)

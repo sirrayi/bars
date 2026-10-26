@@ -168,54 +168,6 @@ struct MenuBarLayoutV6PersistenceTests {
     }
 
     @Test
-    func `an older V5 reader keeps its copy and returning restores spend while its edits win`() throws {
-        let defaults = InMemoryUserDefaults()
-        let settings = testSettingsStore(suiteName: "spend-v6", userDefaults: defaults)
-        let readable = Self.rule(metric: .session, thenToken: .resetCountdown)
-        let spendRule = Self.rule(metric: .spend, thenToken: .percent(window: .spend))
-        settings.menuBarLayoutConditionals = [readable, spendRule]
-        settings.setMenuBarLayout(Self.spendLayout, for: nil)
-        settings.setMenuBarLayout(Self.spendLayout, for: .claude)
-        settings.setMenuBarLayout(Self.spendLayout, for: .cursor)
-        let full = try #require(defaults.data(forKey: "menuBarLayoutV6"))
-
-        // 0.75.0 decodes every V5 key, so its startup finds all its generations and rewrites nothing.
-        let decoder = JSONDecoder()
-        #expect(try decoder.decode(V5Layout.self, from: #require(defaults.data(forKey: "menuBarLayoutV5")))
-            == Self.spendLayoutV5)
-        let v5Overrides = try decoder.decode(
-            [String: V5Layout].self,
-            from: #require(defaults.data(forKey: "menuBarLayoutOverridesV5")))
-        #expect(v5Overrides["claude"] == Self.spendLayoutV5)
-        let v5Rules = try decoder.decode(
-            [V5Rule].self,
-            from: #require(defaults.data(forKey: "menuBarLayoutConditionalsV5")))
-        #expect(v5Rules.map(\.id) == [readable.id])
-
-        let returned = testSettingsStore(suiteName: "spend-v6-return", userDefaults: defaults)
-        #expect(returned.menuBarLayout == Self.spendLayout)
-        #expect(returned.menuBarLayoutOverrides[.claude] == Self.spendLayout)
-        #expect(returned.menuBarLayoutConditionals == [readable, spendRule])
-
-        // An edit saved by 0.75.0 writes V5 and older, leaving the unknown V6 keys untouched.
-        let edited = MenuBarLayout(lines: [[.usageBar]])
-        let projected = try decoder.decode(MenuBarLayout.self, from: #require(defaults.data(forKey: "menuBarLayoutV5")))
-        var editedRule = readable
-        editedRule.thenToken = .usageBar
-        try self.saveV5(
-            layout: edited,
-            overrides: ["claude": edited, "cursor": projected],
-            rules: [editedRule],
-            defaults: defaults)
-        #expect(defaults.data(forKey: "menuBarLayoutV6") == full)
-        let editedReturn = testSettingsStore(suiteName: "spend-v6-edited-return", userDefaults: defaults)
-        #expect(editedReturn.menuBarLayout == edited)
-        #expect(editedReturn.menuBarLayoutOverrides[.claude] == edited)
-        #expect(editedReturn.menuBarLayoutOverrides[.cursor] == Self.spendLayout)
-        #expect(editedReturn.menuBarLayoutConditionals == [editedRule, spendRule])
-    }
-
-    @Test
     func `a V5 library edit wins on return while spend rules survive it`() {
         let readable = Self.rule(metric: .session, thenToken: .windowResetCountdown(window: .weekly))
         let spendRule = Self.rule(metric: .spend, thenToken: .percent(window: .spend))

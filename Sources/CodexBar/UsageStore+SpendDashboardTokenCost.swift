@@ -45,8 +45,6 @@ extension UsageStore {
         guard Self.usesSpendDashboardIndependentTokenSnapshot(provider),
               self.settings.isCostUsageEffectivelyEnabled(for: provider), self.isEnabled(provider)
         else { return false }
-        // Provider-specific by design: Cursor Off has no independent cost source to refresh.
-        if provider == .cursor, self.settings.cursorCookieSource == .off { return false }
         let trigger = self.spendDashboardTokenRefreshTrigger(for: provider)
         // A failed attempt is not an acknowledgment. Retry on new data or explicit refresh, not observation churn.
         guard self.spendDashboardTokenFailedTriggers[provider.instanceID] != trigger else { return false }
@@ -79,24 +77,13 @@ extension UsageStore {
             return
         }
 
-        // Provider-specific by design: Cursor Off skips dashboard cost the same way status fetching does.
-        if provider == .cursor, self.settings.cursorCookieSource == .off {
-            self.clearSpendDashboardTokenSnapshot(for: provider)
-            return
-        }
-
         guard await self.refreshPiHistoryScope(for: provider) else { return }
 
         guard !self.spendDashboardTokenRefreshInFlight.contains(provider.instanceID) else { return }
 
         let now = Date()
         let historyDays = SpendDashboardSource.scanDays
-        guard case let .proceed(cursorCookieHeaderOverride) = self.prepareCursorCostCookie(for: provider) else {
-            self.clearSpendDashboardTokenSnapshot(for: provider)
-            self.spendDashboardTokenFailedTriggers[provider.instanceID] = self.spendDashboardTokenRefreshTrigger(
-                for: provider)
-            return
-        }
+
         let costScope = self.tokenCostScope(for: provider)
         let costScopeSignature = self.spendDashboardTokenSnapshotScopeSignature(for: provider)
         let publicationRevision = self.providerPublicationRevision(for: provider)
@@ -126,7 +113,6 @@ extension UsageStore {
                 now: now,
                 codexHomePath: costScope.codexHomePath,
                 historyDays: historyDays,
-                cursorCookieHeaderOverride: cursorCookieHeaderOverride,
                 includePiSessions: self.shouldIncludePiSessionsInTokenSnapshot(for: provider),
                 reportContext: .spendDashboard)
             let snapshot = result.snapshot
@@ -134,18 +120,12 @@ extension UsageStore {
             guard self.tokenAccountingScopeIsCurrent(result.accounting, for: provider) else {
                 throw TokenSnapshotError.historyUnavailable
             }
-            let completedCostScopeSignature = self.completedTokenCostScopeSignature(
-                provider: provider,
-                historyDays: historyDays,
-                initialSignature: costScopeSignature,
-                snapshot: snapshot,
-                includeSettingsRevision: false)
+            let completedCostScopeSignature = costScopeSignature
             guard self.spendDashboardTokenRefreshPublicationIsCurrent(
                 provider: provider,
                 publicationRevision: publicationRevision,
                 providerConfigRevision: providerConfigRevision,
-                costScopeSignature: costScopeSignature,
-                fetchedCredentialScopeFingerprint: snapshot.credentialScopeFingerprint)
+                costScopeSignature: costScopeSignature)
             else {
                 self.clearSpendDashboardTokenFetchMetadataIfMatching(
                     provider: provider,
@@ -156,14 +136,6 @@ extension UsageStore {
             let hasUsage = !snapshot.daily.isEmpty || snapshot.meteredCostUSD != nil
             guard hasUsage || snapshot.historyCoverageIsEstablished else {
                 throw TokenSnapshotError.historyUnavailable
-            }
-            // Provider-specific by design: partial Antigravity scans cannot replace this scope's complete history.
-            if provider == .antigravity, snapshot.historyScanIsPartial,
-               self.spendDashboardTokenSnapshotPublicationForCurrentConfig(for: provider)?
-                   .snapshot?.historyCoverageIsEstablished == true
-            {
-                self.spendDashboardTokenFailedTriggers[provider.instanceID] = trigger
-                return
             }
             self.lastSpendDashboardTokenFetchScope[provider.instanceID] = completedCostScopeSignature
             self.spendDashboardTokenIncorporatedTriggers[provider.instanceID] = SpendDashboardTokenRefreshTrigger(
@@ -237,8 +209,7 @@ extension UsageStore {
         provider: UsageProvider,
         publicationRevision: ProviderPublicationRevision,
         providerConfigRevision: UInt64,
-        costScopeSignature: String,
-        fetchedCredentialScopeFingerprint: String? = nil) -> Bool
+        costScopeSignature: String) -> Bool
     {
         guard self.providerPublicationRevisionIsCurrent(publicationRevision, for: provider),
               self.settings.providerConfigRevision(for: provider) == providerConfigRevision,
@@ -248,19 +219,6 @@ extension UsageStore {
             return false
         }
         let currentSignature = self.spendDashboardTokenSnapshotScopeSignature(for: provider)
-        // Provider-specific by design: Cursor auto cookies complete the spend scope with the fetched fingerprint.
-        if provider == .cursor,
-           self.settings.cursorCookieSource == .auto,
-           costScopeSignature.contains("|cursorCookie=auto:"),
-           let fetchedCredentialScopeFingerprint
-        {
-            let resolvedSignature = self.cursorCostScopeSignature(
-                historyDays: SpendDashboardSource.scanDays,
-                source: .auto,
-                credentialFingerprint: fetchedCredentialScopeFingerprint,
-                includeSettingsRevision: false)
-            return currentSignature == resolvedSignature
-        }
         return currentSignature == costScopeSignature
     }
 

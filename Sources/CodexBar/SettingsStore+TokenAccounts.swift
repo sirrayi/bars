@@ -211,10 +211,6 @@ extension SettingsStore {
                 entry.apiKey = nil
             }
         }
-        self.applyTokenAccountRemovalSideEffectsIfNeeded(
-            provider: provider,
-            removedAccount: removedAccount,
-            remainingAccounts: filtered)
         CodexBarLog.logger(LogCategories.tokenAccounts).info(
             "Token account removed",
             metadata: [
@@ -248,96 +244,6 @@ extension SettingsStore {
               support.requiresManualCookieSource
         else { return }
         ProviderCatalog.implementation(for: provider)?.applyTokenAccountCookieSource(settings: self)
-    }
-
-    private func applyTokenAccountRemovalSideEffectsIfNeeded(
-        provider: UsageProvider,
-        removedAccount: ProviderTokenAccount,
-        remainingAccounts: [ProviderTokenAccount])
-    {
-        // Provider-specific by design: removing the final Antigravity account must delete its shared OAuth cache.
-        guard provider == .antigravity else { return }
-        guard let removedCredentials = AntigravityOAuthCredentialsStore.credentials(
-            fromTokenAccountValue: removedAccount.token)
-        else {
-            return
-        }
-        let hasMatchingRemainingAccount = remainingAccounts.contains { account in
-            guard let credentials = AntigravityOAuthCredentialsStore.credentials(fromTokenAccountValue: account.token)
-            else {
-                return false
-            }
-            return Self.antigravityCredentialsMatchAccount(credentials, removedCredentials)
-        }
-        guard !hasMatchingRemainingAccount else { return }
-
-        Self.clearMatchingAntigravitySharedCredentials(
-            store: self.antigravityOAuthCredentialsStore,
-            removedCredentials: removedCredentials)
-    }
-
-    private nonisolated static func clearMatchingAntigravitySharedCredentials(
-        store: AntigravityOAuthCredentialsStore,
-        removedCredentials: AntigravityOAuthCredentials)
-    {
-        do {
-            try store.deleteIfPresent { sharedCredentials in
-                self.antigravitySharedCredentialsMatchRemovedAccount(
-                    sharedCredentials,
-                    removedCredentials)
-            }
-        } catch {
-            CodexBarLog.logger(LogCategories.tokenAccounts).warning(
-                "Failed to clear Antigravity OAuth cache after account removal",
-                metadata: ["error": error.localizedDescription])
-        }
-    }
-
-    private nonisolated static func antigravitySharedCredentialsMatchRemovedAccount(
-        _ shared: AntigravityOAuthCredentials,
-        _ removed: AntigravityOAuthCredentials) -> Bool
-    {
-        if let sharedRefreshToken = self.normalizedConfigField(shared.refreshToken),
-           let removedRefreshToken = self.normalizedConfigField(removed.refreshToken)
-        {
-            return sharedRefreshToken == removedRefreshToken
-        }
-        if let sharedAccessToken = self.normalizedConfigField(shared.accessToken),
-           let removedAccessToken = self.normalizedConfigField(removed.accessToken)
-        {
-            return sharedAccessToken == removedAccessToken
-        }
-        guard self.normalizedConfigField(shared.refreshToken) == nil,
-              self.normalizedConfigField(removed.refreshToken) == nil,
-              self.normalizedConfigField(shared.accessToken) == nil,
-              self.normalizedConfigField(removed.accessToken) == nil
-        else {
-            return false
-        }
-        return self.normalizedAntigravityAccountEmail(shared.resolvedAccountEmail)
-            == self.normalizedAntigravityAccountEmail(removed.resolvedAccountEmail)
-    }
-
-    private nonisolated static func antigravityCredentialsMatchAccount(
-        _ lhs: AntigravityOAuthCredentials,
-        _ rhs: AntigravityOAuthCredentials) -> Bool
-    {
-        if let lhsEmail = self.normalizedAntigravityAccountEmail(lhs.resolvedAccountEmail),
-           let rhsEmail = self.normalizedAntigravityAccountEmail(rhs.resolvedAccountEmail)
-        {
-            return lhsEmail == rhsEmail
-        }
-        if let lhsRefreshToken = self.normalizedConfigField(lhs.refreshToken),
-           let rhsRefreshToken = self.normalizedConfigField(rhs.refreshToken)
-        {
-            return lhsRefreshToken == rhsRefreshToken
-        }
-        if let lhsAccessToken = self.normalizedConfigField(lhs.accessToken),
-           let rhsAccessToken = self.normalizedConfigField(rhs.accessToken)
-        {
-            return lhsAccessToken == rhsAccessToken
-        }
-        return false
     }
 
     private nonisolated static func normalizedAntigravityAccountEmail(_ email: String?) -> String? {

@@ -44,26 +44,6 @@ struct ExecutableSearchSecurityTests {
     }
 
     @Test
-    func `explicit relative shell and PTY executables remain usable`() throws {
-        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: root) }
-        let planted = root.appendingPathComponent("synthetic-tool")
-        try FakeExecutable.install("printf planted", at: planted)
-        let relative = String(repeating: "../", count: URL(fileURLWithPath: FileManager.default
-                .currentDirectoryPath).pathComponents.count - 1) + planted.path.dropFirst()
-        let shell = try #require(ShellCommandLocator.test_runShellCommand(
-            shell: relative, arguments: [], timeout: 5))
-        #expect(String(data: shell, encoding: .utf8) == "planted")
-        #expect(TTYCommandRunner.which(relative) == planted.standardizedFileURL.path)
-        let result = try TTYCommandRunner().run(
-            binary: relative,
-            send: "",
-            options: .init(timeout: 5, baseEnvironment: ["PATH": "/usr/bin:/bin"], initialDelay: 0))
-        #expect(result.text == "planted")
-    }
-
-    @Test
     func `tailscale candidates exclude relative search directories`() {
         let candidates = RemoteSessionFetcher.tailscaleBinaryCandidates(path: ":.:tools:/usr/bin")
         #expect(candidates.allSatisfy { $0.hasPrefix("/") })

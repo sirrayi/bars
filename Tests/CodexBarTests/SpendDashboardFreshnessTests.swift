@@ -51,33 +51,6 @@ struct SpendDashboardFreshnessTests {
     }
 
     @Test
-    func `ordinary refresh targets only outdated independent providers`() async throws {
-        let fixture = try SpendDashboardFreshnessFixture(providers: [.claude, .vertexai])
-        defer { fixture.cleanup() }
-        fixture.store._test_tokenUsageSnapshotLoaderOverride = { provider, _, _, _, days in
-            fixture.providerRequests.append("\(provider.rawValue):\(days)")
-            return fixture.snapshot(days: days, recentCost: 2)
-        }
-        await fixture.store.refreshSpendDashboardTokenUsageNow(for: .claude, force: true)
-        await fixture.store.refreshSpendDashboardTokenUsageNow(for: .vertexai, force: true)
-        await fixture.store.refreshTokenUsageNow(for: .claude, force: true)
-        _ = await fixture.request()
-        #expect(fixture.providerRequests == [
-            "claude:\(SpendDashboardSource.scanDays)",
-            "vertexai:\(SpendDashboardSource.scanDays)",
-            "claude:30",
-            "claude:\(SpendDashboardSource.scanDays)",
-        ])
-        await fixture.store.refreshTokenUsageNow(for: .vertexai, force: true)
-        _ = await fixture.request()
-        #expect(fixture.providerRequests == [
-            "claude:\(SpendDashboardSource.scanDays)", "vertexai:\(SpendDashboardSource.scanDays)", "claude:30",
-            "claude:\(SpendDashboardSource.scanDays)",
-            "vertexai:30", "vertexai:\(SpendDashboardSource.scanDays)",
-        ])
-    }
-
-    @Test
     func `shared observation coalesces newer publications after a suspended scan drains`() async throws {
         let fixture = try SpendDashboardFreshnessFixture()
         defer { fixture.cleanup() }

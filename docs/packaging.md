@@ -24,5 +24,3 @@ read_when:
 
 ## Releases
 - Full checklist in `docs/RELEASING.md`.
-
-See also: `docs/sparkle.md`.

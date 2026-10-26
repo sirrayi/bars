@@ -28,8 +28,6 @@ struct SyncModelTests {
         local.claudeSwapExecutablePath = "/machine/bin/cswap"
         local.codexActiveSource = .managedAccount(id: UUID())
         local.codexProfileHomePaths = ["/machine/codex"]
-        local.awsProfile = "machine-profile"
-        local.awsAuthMode = "machine-auth"
 
         let payload = ProviderIntentPayload(config: local)
         let encoded = try CanonicalSyncJSON.string(payload)
@@ -38,7 +36,6 @@ struct SyncModelTests {
 
         #expect(!encoded.contains("api-secret"))
         #expect(!encoded.contains("machine/bin"))
-        #expect(!encoded.contains("machine-profile"))
         #expect(!encoded.contains("source"))
         #expect(secrets["apiKey"] == "api-secret")
         #expect(secrets["cookieHeader"] == "session=secret")
@@ -53,8 +50,6 @@ struct SyncModelTests {
         baseline.claudeSwapExecutablePath = "/local/cswap"
         baseline.codexActiveSource = .liveSystem
         baseline.codexProfileHomePaths = ["/local/home"]
-        baseline.awsProfile = "local-profile"
-        baseline.awsAuthMode = "local-auth"
         let applied = try decoded.applying(to: baseline, secretFields: secrets) { _, _ in true }
 
         #expect(applied.enabled == true)
@@ -65,8 +60,6 @@ struct SyncModelTests {
         #expect(applied.claudeSwapExecutablePath == "/local/cswap")
         #expect(applied.codexActiveSource == .liveSystem)
         #expect(applied.codexProfileHomePaths == ["/local/home"])
-        #expect(applied.awsProfile == "local-profile")
-        #expect(applied.awsAuthMode == "local-auth")
         #expect(applied.apiKey == "api-secret")
         #expect(applied.tokenAccounts?.accounts.first?.token == "account-secret")
         #expect(applied.hiddenUsageItemIDs == ["metric:primary", "section:credits"])
@@ -143,19 +136,6 @@ struct SyncModelTests {
     }
 
     @Test
-    func `absent secrets preserve local values and empty markers delete them`() throws {
-        let payload = ProviderIntentPayload(config: ProviderConfig(id: .openai))
-        let local = ProviderConfig(id: .openai, apiKey: "keep", secretKey: "remove")
-        let preserved = try payload.applying(to: local, secretFields: [:]) { _, _ in true }
-        #expect(preserved.apiKey == "keep")
-        #expect(preserved.secretKey == "remove")
-
-        let deleted = try payload.applying(to: local, secretFields: ["secretKey": ""]) { _, _ in true }
-        #expect(deleted.apiKey == "keep")
-        #expect(deleted.secretKey == nil)
-    }
-
-    @Test
     func `conflict resolver picks higher edit count then later modified date`() {
         let older = SyncConflictValue(value: "older", editCount: 3, modifiedAt: Date(timeIntervalSince1970: 20))
         let higher = SyncConflictValue(value: "higher", editCount: 4, modifiedAt: Date(timeIntervalSince1970: 10))
@@ -196,50 +176,6 @@ struct SyncModelTests {
         #expect(decoded.recordName.hasSuffix("-device-id"))
         #expect(decoded.usage.primary?.usedPercent == 42)
         #expect(decoded.fetchedAt == usage.updatedAt)
-    }
-
-    @Test
-    func `Grok fleet snapshots omit live reset coupon details`() throws {
-        let now = Date(timeIntervalSince1970: 1_800_000_000)
-        let details = try [
-            ProviderDetailSection(rows: [
-                ProviderDetailSection.Row(
-                    label: "Limit Reset Credits",
-                    value: "1 available",
-                    secondaryValue: "Expires Sep 12"),
-                ProviderDetailSection.Row(
-                    label: "Plan",
-                    value: "SuperGrok"),
-            ]),
-        ]
-        let usage = UsageSnapshot(
-            primary: nil,
-            secondary: nil,
-            details: details,
-            grokResetCredits: GrokRateLimitResetCreditsSnapshot(
-                expirations: [now.addingTimeInterval(86400)],
-                updatedAt: now),
-            updatedAt: now,
-            identity: ProviderIdentitySnapshot(
-                providerID: .grok,
-                accountEmail: nil,
-                accountOrganization: nil,
-                loginMethod: "SuperGrok"))
-        let payload = AccountSnapshotSyncPayload(
-            provider: .grok,
-            deviceID: "device-id",
-            accountIdentity: "grok-account",
-            displayLabel: "Grok",
-            usage: usage)
-        let decoded = try CanonicalSyncJSON.decode(
-            AccountSnapshotSyncPayload.self,
-            from: CanonicalSyncJSON.encode(payload))
-
-        #expect(payload.usage.grokResetCredits != nil)
-        #expect(payload.usage.detailRow(label: "Limit Reset Credits") != nil)
-        #expect(decoded.usage.grokResetCredits == nil)
-        #expect(decoded.usage.detailRow(label: "Limit Reset Credits") == nil)
-        #expect(decoded.usage.detailRow(label: "Plan")?.value == "SuperGrok")
     }
 
     @Test
@@ -386,50 +322,6 @@ struct SyncModelTests {
             email: "owner@example.com")
 
         #expect(payload.emailKeyedPredecessorRecordName() == nil)
-    }
-
-    @Test
-    func `account snapshot ignores retired provider payload keys`() throws {
-        let legacy = #"""
-        {
-          "schemaVersion": 1,
-          "provider": "openrouter",
-          "deviceID": "device-id",
-          "accountKey": "default",
-          "fetchedAt": "2026-08-04T12:00:00Z",
-          "displayLabel": "OpenRouter",
-          "usage": {
-            "primary": null,
-            "secondary": null,
-            "tertiary": null,
-            "mimoUsage": {"legacy": true},
-            "openRouterUsage": {"balance": 42},
-            "sakanaPayAsYouGo": {"creditBalance": 12},
-            "clawRouterUsage": {"requestCount": 3},
-            "sub2APIUsage": {"kind": "wallet"},
-            "wayfinderUsage": {"gatewayStatus": "ok"},
-            "cursorRequests": {"used": 3, "limit": 10},
-            "zaiUsage": {"legacy": true},
-            "zoommateCreditsHistory": {"records": []},
-            "minimaxUsage": {"planName": "legacy"},
-            "groqConsoleUsage": {"daily": []},
-            "deepgramUsage": {"requests": 3},
-            "poeUsage": {"daily": []},
-            "xaiUsage": {"balanceUSD": 4},
-            "kiroUsage": {"creditsRemaining": 4},
-            "ampUsage": {"individualCredits": 4},
-            "deepseekUsage": {"todayTokens": 4},
-            "claudeAdminAPIUsage": {"daily": []},
-            "updatedAt": "2026-08-04T12:00:00Z"
-          }
-        }
-        """#
-
-        let decoded = try CanonicalSyncJSON.decode(AccountSnapshotSyncPayload.self, from: legacy)
-
-        #expect(decoded.provider == .openrouter)
-        #expect(decoded.usage.details.isEmpty)
-        #expect(decoded.usage.updatedAt == decoded.fetchedAt)
     }
 
     private static func claudeSnapshot(accountID: String, email: String) -> AccountSnapshotSyncPayload {

@@ -97,7 +97,6 @@ git push origin feature/my-feature
 - `.github/workflows/release.yml` - CI release and Sparkle publication
 
 ### Documentation
-- `docs/augment.md` - Augment provider guide
 - `docs/FORK_ROADMAP.md` - Development roadmap
 - `docs/RELEASING.md` - Release process
 - `docs/DEVELOPMENT.md` - Build instructions
@@ -119,8 +118,6 @@ git push origin feature/my-feature
 ### Debugging Augment Issues
 1. Enable debug logging: `export CODEXBAR_LOG_LEVEL=debug`
 2. Check Console.app for "com.steipete.codexbar"
-3. Use Settings → Debug → Augment → Show Debug Info
-4. Check `docs/augment.md` troubleshooting section
 
 ### Testing Changes
 ```bash
@@ -165,10 +162,6 @@ swiftlint --strict
 ```
 
 ### Cookie Issues (Augment)
-1. Check browser is logged into app.augmentcode.com
-2. Verify cookie source in Settings → Providers → Augment
-3. Try manual cookie import (see `docs/augment.md`)
-4. Check debug logs for cookie import details
 
 ### Keychain Permission Prompts
 - This fork includes fixes to eliminate prompts
@@ -234,7 +227,6 @@ See `docs/FORK_ROADMAP.md` for contribution strategy.
 
 1. **Read the Roadmap:** `docs/FORK_ROADMAP.md`
 2. **Set Up Development:** `./Scripts/compile_and_run.sh`
-3. **Review Augment Docs:** `docs/augment.md`
 4. **Check Current Issues:** GitHub Issues tab
 5. **Join Development:** Pick a task from Phase 2-5
 
@@ -244,11 +236,6 @@ See `docs/FORK_ROADMAP.md` for contribution strategy.
 
 Want to contribute but not sure where to start? Try these:
 
-- [ ] Add more test coverage for Augment provider
-- [ ] Improve error messages in cookie import
-- [ ] Add screenshots to `docs/augment.md`
-- [ ] Test on different macOS versions
-- [ ] Report bugs you find
 - [ ] Suggest UI improvements
 
 Happy coding! 🚀

@@ -258,7 +258,6 @@ struct UsageMenuCardLayoutTests {
             planText: "Pro 20x",
             metrics: metrics,
             usageNotes: usageNotes,
-            openAIAPIUsage: nil,
             inlineUsageDashboard: nil,
             creditsText: creditsText,
             creditsRemaining: nil,

@@ -99,6 +99,17 @@ struct CodexPlanTransitionPublicationTests {
         #expect(admission.outcome == nil)
     }
 
+    private func outcome(_ snapshot: UsageSnapshot) -> ProviderFetchOutcome {
+        let result = ProviderFetchResult(
+            usage: snapshot,
+            credits: nil,
+            dashboard: nil,
+            sourceLabel: "oauth",
+            strategyID: "codex.oauth",
+            strategyKind: .oauth)
+        return ProviderFetchOutcome(result: .success(result), attempts: [])
+    }
+
     fileprivate func snapshot(plan: String, usedPercent: Int, offset: Int, resetOffset: Int) throws -> UsageSnapshot {
         let epoch = self.epoch
         let payload = try JSONSerialization.data(withJSONObject: [
@@ -122,17 +133,6 @@ struct CodexPlanTransitionPublicationTests {
             credentials: credentials,
             updatedAt: Date(timeIntervalSince1970: Double(epoch + offset))))
         return reconciled.toUsageSnapshot().withDataConfidence(.exact)
-    }
-
-    private func outcome(_ snapshot: UsageSnapshot) -> ProviderFetchOutcome {
-        let result = ProviderFetchResult(
-            usage: snapshot,
-            credits: nil,
-            dashboard: nil,
-            sourceLabel: "oauth",
-            strategyID: "codex.oauth",
-            strategyKind: .oauth)
-        return ProviderFetchOutcome(result: .success(result), attempts: [])
     }
 }
 

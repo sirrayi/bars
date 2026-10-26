@@ -69,22 +69,6 @@ struct ProviderAccentColorTests {
     }
 
     @Test
-    func `overrides collect only the providers that carry a parsable color`() {
-        let config = CodexBarConfig(providers: [
-            ProviderConfig(id: .codex, accentColor: "#60BA7E"),
-            ProviderConfig(id: .claude, accentColor: "nonsense"),
-            ProviderConfig(id: .antigravity),
-        ])
-
-        let overrides = ProviderAccentColors.overrides(in: config)
-
-        #expect(overrides.count == 1)
-        #expect(overrides[.codex] == ProviderColor(hex: 0x60BA7E))
-        #expect(overrides[.claude] == nil)
-        #expect(overrides[.antigravity] == nil)
-    }
-
-    @Test
     func `the mirrored payload round trips through its string encoding`() {
         let overrides: [ProviderInstanceID: ProviderColor] = [
             .codex: ProviderColor(hex: 0x60BA7E),

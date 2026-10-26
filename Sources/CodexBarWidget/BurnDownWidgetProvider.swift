@@ -6,230 +6,25 @@ import WidgetKit
 /// runtime presentation policy still comes from each provider descriptor below this literal WidgetKit surface.
 enum BurnProviderChoice: String, AppEnum {
     case codex
-    case openai
-    case azureopenai
     case claude
-    case clinepass
-    case cursor
+    case devin
     case opencode
     case opencodego
-    case alibaba
-    case alibabatokenplan
-    case qwencloud
-    case factory
-    case fireworks
-    case gemini
-    case antigravity
-    case copilot
-    case devin
-    case zai
-    case minimax
-    case manus
-    case kimi
-    case kilo
-    case kiro
-    case langdock
-    case vertexai
-    case augment
-    case jetbrains
-    case moonshot
-    case amp
-    case t3chat
-    case ollama
-    case synthetic
-    case openrouter
-    case elevenlabs
-    case warp
-    case windsurf
-    case zed
-    case perplexity
-    case mimo
-    case doubao
-    case sakana
-    case abacus
-    case mistral
     case deepseek
-    case deepinfra
-    case codebuff
-    case venice
-    case commandcode
-    case qoder
-    case stepfun
-    case bedrock
-    case grok
-    case groq
-    case llmproxy
-    case litellm
-    case bifrost
-    case aixy
-    case deepgram
-    case soniox
-    case poe
-    case chutes
-    case neuralwatt
-    case helmcode
-    case clawrouter
-    case longcat
-    case sub2api
-    case wayfinder
-    case zenmux
-    case aiand
-    case zoommate
-    case xai
-    case xapi
-    case notion
-    case ibmbob
-    case nous
-    case muse
-    case coderabbit
-    case replicate
-    case huggingface
-    case raycast
     case pi
-    case v0
-    case typesafe
-    case hyper
-    case gitkraken
-    case devpass
-    case atlascloud
-    case vercel
-    case llmman
-    case xkiro
-    case futureagi
-    case museai
-    case lithosai
-    case workbuddy
-    case tavily
-    case linkup
-    case tinyapi
-    case exa
-    case cosmic
-    case aerostack
-    case sailresearch
-    case sofya
-    case fal
-    case flora
-    case parallel
-    case claudeplatform
-    case munito
-    case traecn
-    case chatbox
-
     static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Provider")
 
     static let caseDisplayRepresentations: [BurnProviderChoice: DisplayRepresentation] = [
         // Provider-specific by design: AppIntents requires literal catalog titles; snapshot data gates eligibility.
         .codex: DisplayRepresentation(title: "Codex"),
-        .openai: DisplayRepresentation(title: "OpenAI"),
-        .azureopenai: DisplayRepresentation(title: "Azure OpenAI"),
         .claude: DisplayRepresentation(title: "Claude"),
-        .clinepass: DisplayRepresentation(title: "ClinePass"),
-        .cursor: DisplayRepresentation(title: "Cursor"),
         .opencode: DisplayRepresentation(title: "OpenCode"),
         .opencodego: DisplayRepresentation(title: "OpenCode Go"),
-        .alibaba: DisplayRepresentation(title: "Alibaba"),
-        .alibabatokenplan: DisplayRepresentation(title: "Alibaba Token Plan"),
-        .qwencloud: DisplayRepresentation(title: "Qwen Cloud"),
-        .factory: DisplayRepresentation(title: "Droid"),
-        .fireworks: DisplayRepresentation(title: "Fireworks"),
-        .gemini: DisplayRepresentation(title: "Gemini"),
-        .antigravity: DisplayRepresentation(title: "Antigravity"),
-        .copilot: DisplayRepresentation(title: "Copilot"),
         .devin: DisplayRepresentation(title: "Devin"),
-        .zai: DisplayRepresentation(title: "z.ai / GLM"),
-        .minimax: DisplayRepresentation(title: "MiniMax"),
-        .manus: DisplayRepresentation(title: "Manus"),
-        .kimi: DisplayRepresentation(title: "Kimi Code"),
-        .kilo: DisplayRepresentation(title: "Kilo"),
-        .kiro: DisplayRepresentation(title: "Kiro"),
-        .langdock: DisplayRepresentation(title: "Langdock"),
-        .vertexai: DisplayRepresentation(title: "Vertex AI"),
-        .augment: DisplayRepresentation(title: "Augment"),
-        .jetbrains: DisplayRepresentation(title: "JetBrains AI"),
-        .moonshot: DisplayRepresentation(title: "Moonshot / Kimi Open Platform"),
-        .amp: DisplayRepresentation(title: "Amp"),
-        .t3chat: DisplayRepresentation(title: "T3 Chat"),
-        .ollama: DisplayRepresentation(title: "Ollama"),
-        .synthetic: DisplayRepresentation(title: "Synthetic"),
-        .openrouter: DisplayRepresentation(title: "OpenRouter"),
-        .elevenlabs: DisplayRepresentation(title: "ElevenLabs"),
-        .warp: DisplayRepresentation(title: "Warp"),
-        .windsurf: DisplayRepresentation(title: "Windsurf"),
-        .zed: DisplayRepresentation(title: "Zed"),
-        .perplexity: DisplayRepresentation(title: "Perplexity"),
-        .mimo: DisplayRepresentation(title: "Xiaomi MiMo"),
-        .doubao: DisplayRepresentation(title: "Doubao"),
         // Provider-specific by design: AppIntents requires literal catalog titles; snapshot data gates eligibility.
-        .sakana: DisplayRepresentation(title: "Sakana AI"),
-        .abacus: DisplayRepresentation(title: "Abacus AI"),
-        .mistral: DisplayRepresentation(title: "Mistral"),
         .deepseek: DisplayRepresentation(title: "DeepSeek"),
-        .deepinfra: DisplayRepresentation(title: "DeepInfra"),
-        .codebuff: DisplayRepresentation(title: "Codebuff"),
-        .venice: DisplayRepresentation(title: "Venice"),
-        .commandcode: DisplayRepresentation(title: "Command Code"),
-        .qoder: DisplayRepresentation(title: "Qoder"),
-        .stepfun: DisplayRepresentation(title: "StepFun"),
-        .bedrock: DisplayRepresentation(title: "AWS Bedrock"),
-        .grok: DisplayRepresentation(title: "Grok"),
-        .groq: DisplayRepresentation(title: "Groq"),
-        .llmproxy: DisplayRepresentation(title: "LLM Proxy"),
-        .litellm: DisplayRepresentation(title: "LiteLLM"),
-        .bifrost: DisplayRepresentation(title: "Bifrost"),
-        .aixy: DisplayRepresentation(title: "Aixy"),
-        .deepgram: DisplayRepresentation(title: "Deepgram"),
-        .soniox: DisplayRepresentation(title: "Soniox"),
-        .poe: DisplayRepresentation(title: "Poe"),
-        .chutes: DisplayRepresentation(title: "Chutes"),
-        .neuralwatt: DisplayRepresentation(title: "Neuralwatt"),
-        .helmcode: DisplayRepresentation(title: "Helmcode"),
-        .clawrouter: DisplayRepresentation(title: "ClawRouter"),
-        .longcat: DisplayRepresentation(title: "LongCat"),
-        .sub2api: DisplayRepresentation(title: "sub2api"),
-        .wayfinder: DisplayRepresentation(title: "Wayfinder"),
-        .zenmux: DisplayRepresentation(title: "ZenMux"),
-        .aiand: DisplayRepresentation(title: "ai&"),
-        .zoommate: DisplayRepresentation(title: "ZoomMate"),
-        .xai: DisplayRepresentation(title: "xAI"),
-        .xapi: DisplayRepresentation(title: "X API"),
-        .notion: DisplayRepresentation(title: "Notion AI"),
-        .ibmbob: DisplayRepresentation(title: "IBM Bob"),
-        .nous: DisplayRepresentation(title: "Nous Portal"),
-        .muse: DisplayRepresentation(title: "Muse Code"),
-        .coderabbit: DisplayRepresentation(title: "CodeRabbit"),
-        .replicate: DisplayRepresentation(title: "Replicate"),
-        .huggingface: DisplayRepresentation(title: "Hugging Face"),
-        .raycast: DisplayRepresentation(title: "Raycast"),
         // Provider-specific by design: AppIntents requires literal catalog titles; snapshot data gates eligibility.
         .pi: DisplayRepresentation(title: "Pi"),
-        .v0: DisplayRepresentation(title: "v0"),
-        .typesafe: DisplayRepresentation(title: "TypeSafe"),
-        .hyper: DisplayRepresentation(title: "Charm Hyper"),
-        .gitkraken: DisplayRepresentation(title: "GitKraken AI"),
-        .devpass: DisplayRepresentation(title: "DevPass"),
-        .atlascloud: DisplayRepresentation(title: "Atlas Cloud"),
-        .vercel: DisplayRepresentation(title: "Vercel AI Gateway"),
-        .llmman: DisplayRepresentation(title: "llmman"),
-        .xkiro: DisplayRepresentation(title: "xKiro"),
-        .futureagi: DisplayRepresentation(title: "Future AGI"),
-        .museai: DisplayRepresentation(title: "Muse (muse.ai)"),
-        .lithosai: DisplayRepresentation(title: "LithosAI"),
-        .workbuddy: DisplayRepresentation(title: "WorkBuddy"),
-        .tavily: DisplayRepresentation(title: "Tavily"),
-        .linkup: DisplayRepresentation(title: "Linkup"),
-        .tinyapi: DisplayRepresentation(title: "TinyApi"),
-        .exa: DisplayRepresentation(title: "Exa"),
-        .cosmic: DisplayRepresentation(title: "Cosmic AI"),
-        .aerostack: DisplayRepresentation(title: "Aerostack"),
-        .sailresearch: DisplayRepresentation(title: "Sail Research"),
-        .sofya: DisplayRepresentation(title: "Sofya"),
-        .fal: DisplayRepresentation(title: "fal"),
-        .flora: DisplayRepresentation(title: "FLORA"),
-        .parallel: DisplayRepresentation(title: "Parallel"),
-        .claudeplatform: DisplayRepresentation(title: "Claude Platform"),
-        .munito: DisplayRepresentation(title: "Munito"),
-        .traecn: DisplayRepresentation(title: "Trae CN"),
-        .chatbox: DisplayRepresentation(title: "Chatbox AI"),
     ]
 
     var provider: UsageProvider {

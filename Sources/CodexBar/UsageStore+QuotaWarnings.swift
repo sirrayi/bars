@@ -56,34 +56,11 @@ extension UsageStore {
             discriminator: accountDiscriminator,
             displayName: self.warningAccountDisplayName(provider: provider, snapshot: snapshot),
             observedAt: snapshot.updatedAt)
-        // Provider-specific by design: warning lanes follow Antigravity families, balance-only suppression, and
-        // provider-authored dynamic labels rather than the generic primary/secondary pair.
-        let source: SessionQuotaWindowSource? = if provider == .antigravity {
-            Self.hasAntigravityQuotaSummaryWindows(snapshot: snapshot)
-                ? .antigravityQuotaSummary
-                : .antigravityLegacy
-        } else {
-            nil
-        }
-        let primaryWindow: RateWindow?
-        let secondaryWindow: RateWindow?
-        if provider == .antigravity {
-            primaryWindow = Self.antigravityWindow(snapshot: snapshot, windowMinutes: 5 * 60)
-            secondaryWindow = Self.antigravityWindow(snapshot: snapshot, windowMinutes: 7 * 24 * 60)
-        } else if provider == .cursor, let weekly = CursorProviderDescriptor.sharedWeeklyPool(snapshot: snapshot) {
-            primaryWindow = nil
-            secondaryWindow = weekly
-        } else {
-            let suppressWindows = provider == .mimo || provider == .qoder
-            primaryWindow = suppressWindows ? nil : snapshot.primary
-            secondaryWindow = suppressWindows ? nil : snapshot.secondary
-        }
-        let primaryWindowDisplayLabel = provider == .amp
-            ? AmpProviderDescriptor.primaryLabel(snapshot: snapshot)
-            : nil
-        let secondaryWindowDisplayLabel = provider == .amp
-            ? AmpProviderDescriptor.secondaryLabel(snapshot: snapshot)
-            : nil
+        let source: SessionQuotaWindowSource? = nil
+        let primaryWindow = snapshot.primary
+        let secondaryWindow = snapshot.secondary
+        let primaryWindowDisplayLabel: String? = nil
+        let secondaryWindowDisplayLabel: String? = nil
         let extraWindows = provider == .claude
             ? (snapshot.extraRateWindows ?? []).filter(Self.isClaudeNotifiableExtraWindow)
             : []

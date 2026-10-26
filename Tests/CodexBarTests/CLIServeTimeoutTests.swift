@@ -637,64 +637,6 @@ struct CLIServeTimeoutTests {
     }
 
     @Test
-    func `provider timeout preserves healthy rows and cannot stack provider work`() async {
-        let clock = ServeManualDeadlineClock()
-        let blocked = ServeFetchGate<UsageCommandOutput>()
-        let healthy = ServeFetchGate<UsageCommandOutput>()
-        let operations: CLIServeOperationCoordinator<UsageCommandOutput> = self.makeCoordinator(clock: clock)
-        let deadline = clock.now().advanced(by: .seconds(30))
-        await healthy.releaseAll()
-
-        let first = Task {
-            await CodexBarCLI.serveCollectUsageOutputs(
-                providers: [.claude, .gemini],
-                configFingerprint: "config-a",
-                deadline: deadline,
-                operations: operations)
-            { provider in
-                if provider == .claude {
-                    return await blocked.run(UsageCommandOutput(sections: ["late:claude"]))
-                }
-                return await healthy.run(UsageCommandOutput(sections: ["ok:gemini"]))
-            }
-        }
-        await blocked.waitForStarts(1)
-        await healthy.waitForStarts(1)
-        await self.waitForOperationCount(1, coordinator: operations)
-        await clock.waitForPendingSleeps(1)
-        clock.advance(by: .seconds(30))
-        await clock.fireAll()
-        let firstOutput = await first.value
-        #expect(firstOutput.sections == ["ok:gemini"])
-        #expect(firstOutput.payload.count == 1)
-        #expect(firstOutput.payload.first?.provider == UsageProvider.claude.rawValue)
-        #expect(firstOutput.payload.first?.error?.kind == .provider)
-
-        let second = Task {
-            await CodexBarCLI.serveCollectUsageOutputs(
-                providers: [.claude],
-                configFingerprint: "config-a",
-                deadline: deadline.advanced(by: .seconds(30)),
-                operations: operations)
-            { _ in
-                await blocked.run(UsageCommandOutput(sections: ["overlap"]))
-            }
-        }
-        await self.waitForOperationCount(2, coordinator: operations)
-        await clock.waitForPendingSleeps(1)
-        clock.advance(by: .seconds(30))
-        await clock.fireAll()
-        let secondOutput = await second.value
-        #expect(secondOutput.payload.first?.error?.kind == .provider)
-        #expect(await blocked.startCount() == 1)
-        #expect(await blocked.peakCount() == 1)
-
-        await blocked.releaseAll()
-        await blocked.waitForActive(0)
-        await self.waitForOperationCount(0, coordinator: operations)
-    }
-
-    @Test
     func `cost route variants cannot stack the same provider scan`() async {
         let clock = ServeManualDeadlineClock()
         let late = CodexBarCLI.makeCostPayload(provider: .claude, snapshot: nil, error: nil)

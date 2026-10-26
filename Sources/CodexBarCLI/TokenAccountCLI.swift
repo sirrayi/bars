@@ -91,10 +91,6 @@ struct TokenAccountCLIContext {
     {
         guard let support = TokenAccountSupportCatalog.support(for: provider) else { return [] }
         let effectiveSourceMode = sourceMode ?? self.preferredSourceMode(for: provider)
-        // Provider-specific by design: agy owns its login; saved Google accounts cannot select its local identity.
-        if provider == .antigravity, effectiveSourceMode == .cli, self.selection.usesOverride {
-            throw TokenAccountCLIError.antigravityCLIAccountSelectionUnsupported
-        }
         if !self.selection.usesOverride,
            support.passiveSourceModes.contains(effectiveSourceMode)
         {

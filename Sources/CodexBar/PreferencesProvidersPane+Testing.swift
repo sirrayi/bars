@@ -104,38 +104,22 @@ enum ProvidersPaneTestHarness {
     private static func prepareTestState(settings: SettingsStore, store: UsageStore) {
         store.versions[.codex] = "1.0.0"
         store.versions[.claude] = "2.0.0 (build 123)"
-        store.versions[.cursor] = nil
         store._setSnapshotForTesting(
             UsageSnapshot(primary: nil, secondary: nil, updatedAt: Date()),
             provider: .codex)
-        store._setSnapshotForTesting(
-            UsageSnapshot(primary: nil, secondary: nil, updatedAt: Date()),
-            provider: .minimax)
-        store._setErrorForTesting(String(repeating: "x", count: 200), provider: .cursor)
-        store.lastSourceLabels[.minimax] = "cookies"
         store.refreshingProviders.insert(.codex)
 
         settings.claudeCookieSource = .manual
-        settings.cursorCookieSource = .manual
         settings.opencodeCookieSource = .manual
         settings.opencodegoCookieSource = .manual
-        settings.factoryCookieSource = .manual
-        settings.minimaxCookieSource = .manual
-        settings.augmentCookieSource = .manual
     }
 
     private static func exercisePaneBasics(pane: ProvidersPane) {
         _ = pane._test_binding(for: .codex).wrappedValue
         _ = pane._test_providerSubtitle(.codex)
         _ = pane._test_providerSubtitle(.claude)
-        _ = pane._test_providerSubtitle(.cursor)
         _ = pane._test_providerSubtitle(.opencode)
         _ = pane._test_providerSubtitle(.opencodego)
-        _ = pane._test_providerSubtitle(.zai)
-        _ = pane._test_providerSubtitle(.synthetic)
-        _ = pane._test_providerSubtitle(.minimax)
-        _ = pane._test_providerSubtitle(.kimi)
-        _ = pane._test_providerSubtitle(.gemini)
 
         if let descriptor = pane._test_tokenAccountDescriptor(for: .claude) {
             _ = descriptor.isVisible?()

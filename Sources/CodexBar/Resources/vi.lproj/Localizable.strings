@@ -1794,7 +1794,7 @@
 "Credits + percent" = "Tín dụng và phần trăm còn lại";
 "Credits left" = "Còn lại Tín dụng";
 "Cursor-metered" = "Mức sử dụng được đo trong Cursor";
-"Cursor-metered: %@ (%@)" = "Cursor có đồng hồ đo: %1$@ (%2$@)";
+"Plan metered: %@ (%@)" = "Cursor có đồng hồ đo: %1$@ (%2$@)";
 "DATA THROUGH %@" = "Dữ liệu đến %@";
 "Daily usage" = "sử dụng hàng ngày";
 "Default uses AZURE_OPENAI_API_VERSION when set." = "Mặc định sử dụng AZURE_OPENAI_API_VERSION khi được đặt.";

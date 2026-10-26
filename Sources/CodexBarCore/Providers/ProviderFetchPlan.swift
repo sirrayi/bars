@@ -114,10 +114,10 @@ public struct ProviderFetchContext: Sendable {
 }
 
 public enum ProviderCLISessionLifecycle {
-    public static func shutdownPersistentSessions() async {
-        await AntigravityCLISession.shared.reset()
-    }
+    public static func shutdownPersistentSessions() async {}
 }
+
+public enum ProviderSupplementalUsageUpdate: Sendable {}
 
 public struct ProviderFetchResult: Sendable {
     public let usage: UsageSnapshot
@@ -232,10 +232,6 @@ public struct ProviderFetchResult: Sendable {
     }
 }
 
-public enum ProviderSupplementalUsageUpdate: Sendable {
-    case grokResetCredits(GrokRateLimitResetCreditsSnapshot?)
-}
-
 public struct ProviderFetchAttempt: Sendable {
     /// What happened to one strategy during a pipeline run.
     public enum Outcome: String, Sendable {
@@ -283,10 +279,7 @@ public enum ProviderFetchError: LocalizedError, Sendable {
     public var errorDescription: String? {
         switch self {
         case let .noAvailableStrategy(provider):
-            if provider == .kiro {
-                return "Kiro usage requires the Kiro CLI. Install it from https://kiro.dev/docs/cli/ and run 'kiro-cli login' first."
-            }
-            return "No available fetch strategy for \(provider.rawValue)."
+            "No available fetch strategy for \(provider.rawValue)."
         }
     }
 }
@@ -525,5 +518,17 @@ public struct ProviderFetchPlan: Sendable {
 
     public func fetchOutcome(context: ProviderFetchContext, provider: UsageProvider) async -> ProviderFetchOutcome {
         await self.pipeline.fetch(context: context, provider: provider)
+    }
+}
+
+public enum ProviderSettingsSaveOutcome: Sendable, Equatable {
+    case saved, unchanged, stale, failed
+
+    var diagnostic: String? {
+        switch self {
+        case .saved, .unchanged: nil
+        case .stale: "Discovered provider settings were not saved because the account settings changed."
+        case .failed: "Usage refreshed, but discovered provider settings could not be saved."
+        }
     }
 }

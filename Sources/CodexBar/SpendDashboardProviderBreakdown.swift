@@ -308,11 +308,7 @@ struct SpendProviderIcon: View {
     private func artworkScale(for icon: NSImage) -> CGFloat {
         // Provider-specific by design: normalize each bundled mark's transparent padding in the shared icon slot.
         switch self.provider {
-        case .cursor: 1.25
         case .codex: icon.isTemplate ? 1.24 : 1.17
-        case .antigravity: icon.isTemplate ? 1.14 : 1.38
-        case .bedrock: icon.isTemplate ? 1 : 0.84
-        case .muse, .vertexai: icon.isTemplate ? 1 : 1.08
         default: 1
         }
     }

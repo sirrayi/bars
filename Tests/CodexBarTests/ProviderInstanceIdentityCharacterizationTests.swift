@@ -51,18 +51,6 @@ struct ProviderInstanceIdentityCharacterizationTests {
         #expect(store.load().keys.sorted(by: { $0.rawValue < $1.rawValue }) == [.claude])
     }
 
-    @Test
-    func `provider config ordering remains the menu and status ordering contract`() {
-        let config = CodexBarConfig(providers: [
-            ProviderConfig(id: .gemini, enabled: true),
-            ProviderConfig(id: .claude, enabled: false),
-            ProviderConfig(id: .codex, enabled: true),
-        ])
-
-        #expect(config.orderedProviders() == [.gemini, .claude, .codex])
-        #expect(config.enabledProviders() == [.gemini, .codex])
-    }
-
     @MainActor
     @Test
     func `settings pane selection persists the provider prefixed raw value`() throws {
@@ -144,7 +132,6 @@ struct ProviderInstanceIdentityCharacterizationTests {
             status: nil,
             usage: nil,
             credits: nil,
-            antigravityPlanInfo: nil,
             openaiDashboard: nil,
             error: nil)
 

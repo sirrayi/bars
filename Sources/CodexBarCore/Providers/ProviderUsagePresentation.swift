@@ -237,7 +237,6 @@ public struct ProviderUsageNotesContext: Sendable {
 
 public enum ProviderUsageNotesResolution: Sendable {
     case unhandled
-    case openAIAPI(OpenAIAPIUsageSnapshot)
     case localized([String])
 }
 

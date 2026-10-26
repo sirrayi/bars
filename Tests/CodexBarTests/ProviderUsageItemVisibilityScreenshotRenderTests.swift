@@ -89,7 +89,6 @@ final class ProviderUsageItemVisibilityScreenshotRenderTests: XCTestCase {
             planText: "Pro 20x",
             metrics: metrics,
             usageNotes: [],
-            openAIAPIUsage: nil,
             inlineUsageDashboard: nil,
             creditsText: "$12.34 remaining",
             creditsRemaining: 12.34,

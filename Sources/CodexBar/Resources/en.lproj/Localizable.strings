@@ -1797,7 +1797,7 @@
 "Credits + percent" = "Credits + percent";
 "Credits left" = "Credits left";
 "Cursor-metered" = "Cursor-metered";
-"Cursor-metered: %@ (%@)" = "Cursor-metered: %@ (%@)";
+"Plan metered: %@ (%@)" = "Cursor-metered: %@ (%@)";
 "DATA THROUGH %@" = "DATA THROUGH %@";
 "Daily usage" = "Daily usage";
 "Default uses AZURE_OPENAI_API_VERSION when set." = "Default uses AZURE_OPENAI_API_VERSION when set.";

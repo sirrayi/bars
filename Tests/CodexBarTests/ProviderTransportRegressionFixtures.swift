@@ -131,22 +131,10 @@ enum ProviderTransportRegressionSupport {
         let settings = SettingsStore(
             userDefaults: InMemoryUserDefaults(),
             configStore: configStore,
-            zaiTokenStore: NoopZaiTokenStore(),
-            syntheticTokenStore: NoopSyntheticTokenStore(),
             codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
-            cursorCookieStore: InMemoryCookieHeaderStore(),
             opencodeCookieStore: InMemoryCookieHeaderStore(),
-            factoryCookieStore: InMemoryCookieHeaderStore(),
-            minimaxCookieStore: InMemoryMiniMaxCookieStore(),
-            minimaxAPITokenStore: InMemoryMiniMaxAPITokenStore(),
-            kimiTokenStore: InMemoryKimiTokenStore(),
-            augmentCookieStore: InMemoryCookieHeaderStore(),
-            ampCookieStore: InMemoryCookieHeaderStore(),
-            copilotTokenStore: InMemoryCopilotTokenStore(),
             tokenAccountStore: InMemoryTokenAccountStore(fileURL: root.appendingPathComponent("accounts.json")),
-            antigravityOAuthCredentialsStore: AntigravityOAuthCredentialsStore(
-                fileURL: root.appendingPathComponent("antigravity.json")),
             keychainAccessPolicy: SettingsStoreKeychainAccessPolicy(
                 setDisabled: { _ in }, isExplicitlyDisabled: { false }),
             performInitialProviderDetection: false)
@@ -155,9 +143,8 @@ enum ProviderTransportRegressionSupport {
         settings.statusChecksEnabled = false
         settings.openAIWebAccessEnabled = false
         settings.claudeUsageDataSource = .oauth
-        settings.ollamaUsageDataSource = .api
         settings.updateProviderConfig(provider: provider) { config in
-            config.source = provider == .cursor ? .web : provider == .ollama ? .api : .oauth
+            config.source = .oauth
         }
         enableTestProviders([provider], settings: settings)
         let environment = Self.environment
@@ -170,7 +157,6 @@ enum ProviderTransportRegressionSupport {
             planUtilizationHistoryStore: PlanUtilizationHistoryStore(directoryURL: nil),
             startupBehavior: .testing,
             environmentBase: environment,
-            pluginApprovalStore: ProviderPluginApprovalStore(fileURL: root.appendingPathComponent("plugins.json")),
             widgetSnapshotURL: root.appendingPathComponent("widget.json"),
             widgetTimelineReloader: {})
         defer {
@@ -179,7 +165,7 @@ enum ProviderTransportRegressionSupport {
             store.stopSharedSpendDashboardPublication()
             settings.configFileWatcher?.stop()
         }
-        let hasQuota = provider == .claude || provider == .cursor
+        let hasQuota = provider == .claude
         let prior = UsageSnapshot(
             primary: hasQuota ? RateWindow(
                 usedPercent: 17, windowMinutes: 300, resetsAt: nil, resetDescription: nil) : nil,
@@ -188,9 +174,9 @@ enum ProviderTransportRegressionSupport {
             updatedAt: Self.capturedAt,
             identity: ProviderIdentitySnapshot(
                 providerID: provider.instanceID,
-                accountEmail: provider == .ollama ? nil : "fixture@example.test",
+                accountEmail: "fixture@example.test",
                 accountOrganization: nil,
-                loginMethod: provider == .ollama ? "API key" : "Pro"))
+                loginMethod: "Pro"))
         if hasPriorData { store._setSnapshotForTesting(prior, provider: provider) }
         do {
             try await operation(store, prior)

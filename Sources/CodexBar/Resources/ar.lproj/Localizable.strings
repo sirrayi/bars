@@ -1797,7 +1797,7 @@
 "Credits + percent" = "الاعتمادات والنسبة المئوية المتبقية";
 "Credits left" = "المتبقي الاعتمادات";
 "Cursor-metered" = "الاستخدام المقنن في Cursor";
-"Cursor-metered: %@ (%@)" = "Cursor-المقاسة: %1$@ (%2$@)";
+"Plan metered: %@ (%@)" = "Cursor-المقاسة: %1$@ (%2$@)";
 "DATA THROUGH %@" = "البيانات حتى %@";
 "Daily usage" = "الاستخدام اليومي";
 "Default uses AZURE_OPENAI_API_VERSION when set." = "يستخدم الافتراضي AZURE_OPENAI_API_VERSION عند التعيين.";

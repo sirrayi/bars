@@ -152,6 +152,13 @@ struct CodexManagedRemoteOwnerReconciliationTests {
         #expect(decision.allowedEffects.isEmpty)
     }
 
+    private static func base64URL(_ data: Data) -> String {
+        data.base64EncodedString()
+            .replacingOccurrences(of: "=", with: "")
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+    }
+
     private static func writeCodexAuthFile(homeURL: URL, email: String, accountID: String?) throws {
         try FileManager.default.createDirectory(at: homeURL, withIntermediateDirectories: true)
         let header = try JSONSerialization.data(withJSONObject: ["alg": "none"])
@@ -174,13 +181,6 @@ struct CodexManagedRemoteOwnerReconciliationTests {
         }
         let data = try JSONSerialization.data(withJSONObject: ["tokens": tokens])
         try data.write(to: homeURL.appendingPathComponent("auth.json"))
-    }
-
-    private static func base64URL(_ data: Data) -> String {
-        data.base64EncodedString()
-            .replacingOccurrences(of: "=", with: "")
-            .replacingOccurrences(of: "+", with: "-")
-            .replacingOccurrences(of: "/", with: "_")
     }
 }
 

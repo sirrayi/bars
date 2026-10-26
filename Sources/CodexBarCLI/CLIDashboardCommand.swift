@@ -115,14 +115,11 @@ struct DashboardSnapshotProducer: Sendable {
                     providers: providers,
                     config: config,
                     context: context.costCollection)
-                { provider, cursorCookieHeaderOverride in
+                { provider in
                     do {
                         let snapshot = try await costFetcher.loadTokenSnapshot(
                             provider: provider,
-                            antigravityAdditionalProfileHomes:
-                            config.providerConfig(for: provider.instanceID)?.antigravityAdditionalProfileHomes ?? [],
                             forceRefresh: false,
-                            cursorCookieHeaderOverride: cursorCookieHeaderOverride,
                             refreshPricingInBackground: context.costRefreshesPricingInBackground,
                             includePiSessions: CodexBarCLI.costIncludePiSessions(
                                 provider: provider,

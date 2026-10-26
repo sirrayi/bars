@@ -44,30 +44,6 @@ struct MenuBarSpendLimitTests {
         UsageSnapshot(primary: nil, secondary: nil, providerCost: cost, updatedAt: self.now)
     }
 
-    /// The Spend window is whatever the Extra usage menu bar metric resolves, so a provider that projects its
-    /// own window for that metric (Claude's calendar month) governs percent, reset, and period here too.
-    @Test(arguments: [UsageProvider.claude, .cursor, .munito])
-    func `a provider reported budget resolves through the extra usage metric window`(provider: UsageProvider) throws {
-        let store = self.makeStore()
-        defer { store.stopSharedSpendDashboardPublication() }
-        let snapshot = self.snapshot(self.monthlyBudget())
-
-        let limit = try #require(store.spendLimit(for: provider, snapshot: snapshot, now: self.now))
-        let metric = try #require(MenuBarMetricWindowResolver.rateWindow(
-            preference: .extraUsage,
-            provider: provider,
-            snapshot: snapshot,
-            supportsAverage: false,
-            now: self.now))
-
-        #expect(limit.cost.used == 460)
-        #expect(limit.cost.limit == 1000)
-        #expect(limit.window == metric)
-        #expect(limit.window.usedPercent == 46)
-        let expectedMinutes: Int? = provider == .claude ? ProviderPaceCapability.monthlyWindowSentinelMinutes : nil
-        #expect(limit.window.windowMinutes == expectedMinutes)
-    }
-
     @Test
     func `the show credits and extra usage switch hides the budget`() {
         let store = self.makeStore(showOptionalCreditsAndExtraUsage: false)
@@ -90,23 +66,6 @@ struct MenuBarSpendLimitTests {
             for: .claude,
             snapshot: self.snapshot(self.monthlyBudget(limit: 0)),
             now: self.now) == nil)
-    }
-
-    @Test(arguments: [UsageProvider.opencodego, .deepseek, .openrouter, .gemini])
-    func `providers without the extra usage capability never expose provider cost as a budget`(
-        provider: UsageProvider)
-    {
-        let store = self.makeStore()
-        defer { store.stopSharedSpendDashboardPublication() }
-        // A Zen-style balance carries a positive limit; it must still never become a budget.
-        let balance = ProviderCostSnapshot(
-            used: 12,
-            limit: 100,
-            currencyCode: "USD",
-            period: "Zen balance",
-            updatedAt: self.now)
-
-        #expect(store.spendLimit(for: provider, snapshot: self.snapshot(balance), now: self.now) == nil)
     }
 
     @Test

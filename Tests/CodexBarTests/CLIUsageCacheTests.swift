@@ -27,7 +27,6 @@ struct CLIUsageCacheTests {
                 currencyCode: "USD",
                 balance: 5,
                 updatedAt: Self.fetchedAt),
-            openAIAPIUsage: OpenAIAPIUsageSnapshot(daily: [], updatedAt: Self.fetchedAt, projectID: "proj-secret"),
             updatedAt: Self.fetchedAt,
             identity: ProviderIdentitySnapshot(
                 providerID: .claude,
@@ -143,7 +142,7 @@ struct CLIUsageCacheTests {
         #expect(reader(.claude, true, credential)?.ageSeconds == 90)
         #expect(reader(.claude, false, credential) == nil)
         #expect(reader(.claude, true, URLError(.timedOut)) == nil)
-        #expect(reader(.zai, true, credential) == nil)
+        #expect(reader(.opencode, true, credential) == nil)
     }
 
     @Test
@@ -314,7 +313,7 @@ struct CLIUsageCacheTests {
     }
     #endif
 
-    private static func command(provider: UsageProvider = .zai) throws -> UsageCommandContext {
+    private static func command(provider: UsageProvider = .opencode) throws -> UsageCommandContext {
         let values = try Program(descriptors: CodexBarCLI.commandDescriptors())
             .resolve(argv: ["usage", "--no-color", "--json"]).parsedValues
         return try CLIUsageFetchSetup(

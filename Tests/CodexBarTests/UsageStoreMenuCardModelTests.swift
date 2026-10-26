@@ -43,17 +43,6 @@ struct UsageStoreMenuCardModelTests {
     }
 
     @Test
-    func `non Claude errors retain their existing presentation`() {
-        let store = self.makeStore()
-        store.snapshots[.mistral] = self.snapshot()
-        store.errors[.mistral] = "Mistral request failed"
-        let model = store.menuCardModel(for: .mistral)
-        #expect(model.subtitleText == store.userFacingError(for: .mistral))
-        #expect(model.subtitleText == "Mistral request failed")
-        #expect(model.lastKnownUsageText == nil)
-    }
-
-    @Test
     func `Claude account card keeps its own stale timestamp and error`() {
         let store = self.makeStore()
         let snapshot = self.snapshot()
@@ -63,31 +52,6 @@ struct UsageStoreMenuCardModelTests {
             lastKnownUsageCapturedAt: snapshot.updatedAt)))
         #expect(model.subtitleText == "Account request failed")
         #expect(model.lastKnownUsageText != nil)
-    }
-
-    @Test(arguments: [UsageProvider.claude, .grok])
-    func `empty account context cannot borrow live usage identity or cost`(provider: UsageProvider) {
-        let store = self.makeStore()
-        store.settings.costUsageEnabled = true
-        store.settings.hidePersonalInfo = false
-        store.snapshots[provider.instanceID] = self.snapshot()
-        store.errors[provider.instanceID] = "Live account failed"
-        store._setTokenSnapshotForTesting(.init(
-            sessionTokens: 100,
-            sessionCostUSD: 2,
-            last30DaysTokens: 100,
-            last30DaysCostUSD: 2,
-            daily: [],
-            updatedAt: Date()), provider: provider)
-
-        let model = store.menuCardModel(for: provider, context: .account(.init()))
-
-        #expect(model.metrics.isEmpty)
-        #expect(model.email.isEmpty)
-        #expect(model.tokenUsage == nil)
-        #expect(model.subtitleStyle != .error)
-        #expect(!model.usesLiveSubtitle)
-        #expect(store.menuCardModel(for: provider).subtitleStyle == .error)
     }
 
     @Test

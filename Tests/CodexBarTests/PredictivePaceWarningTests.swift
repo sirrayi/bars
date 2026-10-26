@@ -623,21 +623,6 @@ struct PredictivePaceWarningTests {
     }
 
     @Test
-    func `store ignores providers outside accepted scope`() {
-        let now = Date(timeIntervalSince1970: 1_780_000_000)
-        let settings = self.makeSettings(suiteName: "PredictivePaceWarningTests-scope")
-        settings.predictivePaceWarningNotificationsEnabled = true
-        let notifier = NotifierSpy()
-        let store = self.makeStore(settings: settings, notifier: notifier)
-
-        store.handlePredictivePaceWarningTransitions(
-            provider: .zai,
-            snapshot: self.snapshot(now: now, sessionUsed: 80, weeklyUsed: 90, accountEmail: "person@example.com"))
-
-        #expect(notifier.predictivePosts.isEmpty)
-    }
-
-    @Test
     func `store ignores unsupported tertiary windows`() {
         let now = Date(timeIntervalSince1970: 1_780_000_000)
         let settings = self.makeSettings(suiteName: "PredictivePaceWarningTests-window-scope")
@@ -674,8 +659,6 @@ struct PredictivePaceWarningTests {
         return SettingsStore(
             userDefaults: defaults,
             configStore: testConfigStore(suiteName: suiteName),
-            zaiTokenStore: NoopZaiTokenStore(),
-            syntheticTokenStore: NoopSyntheticTokenStore(),
             tokenAccountStore: InMemoryTokenAccountStore())
     }
 

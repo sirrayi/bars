@@ -60,62 +60,6 @@ struct ClaudeAuthenticatedTransitionLiveProofTests {
             environment: environment))
     }
 
-    @Test
-    func `live cancelled owner fetch preserves and completes the next background Auto fetch`() async throws {
-        guard Self.isEnabled else { return }
-        let binary = try #require(TTYCommandRunner.which("claude"))
-        var environment = ProcessInfo.processInfo.environment
-        environment["CLAUDE_CLI_PATH"] = binary
-        environment[KeychainAccessGate.disableAccessEnvironmentKey] = "1"
-        let browserDetection = BrowserDetection(cacheTTL: 0)
-        let context = ProviderFetchContext(
-            runtime: .app,
-            sourceMode: .auto,
-            includeCredits: false,
-            webTimeout: 1,
-            webDebugDumpHTML: false,
-            verbose: false,
-            env: environment,
-            settings: nil,
-            fetcher: UsageFetcher(environment: environment),
-            claudeFetcher: ClaudeUsageFetcher(
-                browserDetection: browserDetection,
-                environment: environment),
-            browserDetection: browserDetection)
-        let strategy = ClaudeCLIFetchStrategy(
-            useWebExtras: false,
-            includePrepaidBalance: false,
-            manualCookieHeader: nil,
-            browserDetection: browserDetection,
-            hasWebFallback: false)
-
-        _ = try await ProviderInteractionContext.$current.withValue(.userInitiated) {
-            try await strategy.fetch(context)
-        }
-        #expect(await ProviderInteractionContext.$current.withValue(.background) {
-            await strategy.isAvailable(context)
-        })
-
-        let cancelledFetch = Task {
-            try await ProviderInteractionContext.$current.withValue(.background) {
-                try await strategy.fetch(context)
-            }
-        }
-        try await Task.sleep(for: .milliseconds(100))
-        cancelledFetch.cancel()
-        await #expect(throws: CancellationError.self) {
-            try await cancelledFetch.value
-        }
-
-        #expect(await ProviderInteractionContext.$current.withValue(.background) {
-            await strategy.isAvailable(context)
-        })
-        let recovered = try await ProviderInteractionContext.$current.withValue(.background) {
-            try await strategy.fetch(context)
-        }
-        #expect(recovered.usage.scoped(to: .claude).primary != nil)
-    }
-
     @MainActor
     private static func makeLiveOAuthFixture(
         environment: [String: String]) throws -> (store: UsageStore, settings: SettingsStore)

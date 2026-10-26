@@ -717,7 +717,6 @@ struct DashboardClaudeSwapSnapshotTests {
                     accountOrganization: nil,
                     loginMethod: "pro")),
             credits: nil,
-            antigravityPlanInfo: nil,
             openaiDashboard: nil,
             error: nil)
     }
@@ -731,7 +730,6 @@ struct DashboardClaudeSwapSnapshotTests {
             status: nil,
             usage: nil,
             credits: nil,
-            antigravityPlanInfo: nil,
             openaiDashboard: nil,
             error: nil)
     }

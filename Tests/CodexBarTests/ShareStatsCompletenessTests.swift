@@ -4,45 +4,6 @@ import Testing
 @testable import CodexBar
 
 struct ShareStatsCompletenessTests {
-    @Test(arguments: ["complete", "unpriced", "incomplete", "missing-models"])
-    @MainActor
-    func `USD model rankings isolate incomplete providers`(_ scenario: String) throws {
-        let model = Self.dashboard(scenario: scenario)
-        let group = try #require(model.groups.first)
-        let payload = try #require(ShareStatsBuilder.make(model: model))
-        let isPartial = scenario != "complete"
-
-        #expect(model.groups.count == 1)
-        #expect(group.currencyCode == "USD")
-        #expect(group.providers.count == 3)
-        #expect(group.incompleteModelProviders == (isPartial ? [.antigravity] : []))
-        #expect(payload.hasPartialModels == isPartial)
-        #expect(payload.modelRankingDetail == (isPartial ? "PARTIAL" : "BY USAGE"))
-
-        if ["unpriced", "complete"].contains(scenario),
-           let directory = ProcessInfo.processInfo.environment["CODEXBAR_SHARE_STATS_SCREENSHOT_DIR"]
-        {
-            let output = URL(fileURLWithPath: directory, isDirectory: true)
-            try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
-            let name = scenario == "unpriced" ? "share-model-completeness" : "share-model-complete"
-            let png = try #require(ShareStatsRenderer.pngData(for: payload))
-            try png.write(to: output.appendingPathComponent("\(name).png"), options: .atomic)
-            try ShareStatsFormatting.text(payload).write(
-                to: output.appendingPathComponent("\(name).txt"), atomically: true, encoding: .utf8)
-        }
-
-        #expect(payload.topModels.map(\.provider) == (isPartial ? [.codex, .claude] : [.codex, .claude, .antigravity]))
-        #expect(payload.topModels.map(\.modelName) == (isPartial ? ["GPT", "Claude"] : ["GPT", "Claude", "Gemini"]))
-        #expect(payload.topModels.first?.totalTokens == 300)
-        #expect(payload.topModels.first?.estimatedCost == 3)
-        let text = ShareStatsFormatting.text(payload)
-        #expect(text.contains(isPartial ? "Top models (partial):" : "Top models:"))
-        #expect(text.contains("Top models (partial):") == isPartial)
-        #expect(text.contains("GPT (Codex): 300 tokens"))
-        #expect(text.contains("Claude (Claude): 200 tokens"))
-        #expect(text.contains("Gemini (Antigravity)") == !isPartial)
-    }
-
     @Test
     func `one incomplete account excludes only its provider`() throws {
         var calendar = Calendar(identifier: .gregorian)
@@ -88,19 +49,6 @@ struct ShareStatsCompletenessTests {
         #expect(payload.topModels.isEmpty)
         #expect(!payload.hasPartialModels)
         #expect(payload.modelRankingDetail == "BY USAGE")
-    }
-
-    @Test(arguments: ["unknown-cost", "unknown-tokens", "unknown"])
-    func `unavailable full window totals are not idle`(_ scenario: String) throws {
-        let payload = try #require(ShareStatsBuilder.make(model: Self.dashboard(
-            scenario: scenario,
-            selectedDay: Self.now.addingTimeInterval(-86400))))
-        let unavailable = try #require(payload.providers.first { $0.provider == .antigravity })
-
-        #expect(unavailable.totalTokens == (scenario == "unknown-cost" ? 0 : nil))
-        #expect(unavailable.estimatedCost == (scenario == "unknown-tokens" ? 0 : nil))
-        #expect(payload.hasPartialModels)
-        #expect(payload.modelRankingDetail == "PARTIAL")
     }
 
     @Test(arguments: ["missing-cost", "token-overflow", "cost-overflow", "both-overflow"])
@@ -154,41 +102,6 @@ struct ShareStatsCompletenessTests {
         }
     }
 
-    private static func dashboard(scenario: String, selectedDay: Date? = nil) -> SpendDashboardModel {
-        let zeroBaseline = scenario == "idle" || scenario.hasPrefix("unknown")
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = .gmt
-        return SpendDashboardModel.build(
-            inputs: [
-                Self.input(
-                    provider: .codex,
-                    name: "Codex",
-                    model: "gpt-4o",
-                    tokens: zeroBaseline ? 0 : 300,
-                    cost: zeroBaseline ? 0 : 3,
-                    hasModels: !zeroBaseline),
-                Self.input(
-                    provider: .claude,
-                    name: "Claude",
-                    model: "claude-sonnet-4",
-                    tokens: zeroBaseline ? 0 : 200,
-                    cost: zeroBaseline ? 0 : 2,
-                    hasModels: !zeroBaseline),
-                Self.input(
-                    provider: .antigravity,
-                    name: "Antigravity",
-                    model: "gemini-2.5-flash",
-                    tokens: ["unknown", "unknown-tokens"].contains(scenario) ? nil : zeroBaseline ? 0 : 100,
-                    cost: ["unknown", "unknown-cost", "unpriced"].contains(scenario) ? nil : zeroBaseline ? 0 : 1,
-                    incomplete: scenario == "incomplete" ? 1 : 0,
-                    hasModels: !zeroBaseline && scenario != "missing-models"),
-            ],
-            requestedDays: 7,
-            now: Self.now,
-            calendar: calendar,
-            selectedDay: selectedDay)
-    }
-
     private static func input(
         provider: UsageProvider,
         name: String,
@@ -219,4 +132,39 @@ struct ShareStatsCompletenessTests {
     }
 
     private static let now = Date(timeIntervalSince1970: 1_784_179_200)
+
+    private static func dashboard(scenario: String, selectedDay: Date? = nil) -> SpendDashboardModel {
+        let zeroBaseline = scenario == "idle" || scenario.hasPrefix("unknown")
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .gmt
+        return SpendDashboardModel.build(
+            inputs: [
+                Self.input(
+                    provider: .codex,
+                    name: "Codex",
+                    model: "gpt-4o",
+                    tokens: zeroBaseline ? 0 : 300,
+                    cost: zeroBaseline ? 0 : 3,
+                    hasModels: !zeroBaseline),
+                Self.input(
+                    provider: .claude,
+                    name: "Claude",
+                    model: "claude-sonnet-4",
+                    tokens: zeroBaseline ? 0 : 200,
+                    cost: zeroBaseline ? 0 : 2,
+                    hasModels: !zeroBaseline),
+                Self.input(
+                    provider: .opencode,
+                    name: "OpenCode",
+                    model: "gemini-2.5-flash",
+                    tokens: ["unknown", "unknown-tokens"].contains(scenario) ? nil : zeroBaseline ? 0 : 100,
+                    cost: ["unknown", "unknown-cost", "unpriced"].contains(scenario) ? nil : zeroBaseline ? 0 : 1,
+                    incomplete: scenario == "incomplete" ? 1 : 0,
+                    hasModels: !zeroBaseline && scenario != "missing-models"),
+            ],
+            requestedDays: 7,
+            now: Self.now,
+            calendar: calendar,
+            selectedDay: selectedDay)
+    }
 }

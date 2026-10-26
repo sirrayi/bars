@@ -119,66 +119,7 @@ extension CodexBarCLI {
             return ["Quota estimated from local usage history"]
         }
 
-        // Provider-specific by design: Kilo automatic mode reports when its CLI fallback won strategy selection.
-        guard provider == .kilo,
-              sourceMode == .auto,
-              resolvedSourceLabel.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "cli"
-        else {
-            return []
-        }
-        return ["Using CLI fallback"]
-    }
-
-    static func kiloAutoFallbackSummary(
-        provider: UsageProvider,
-        sourceMode: ProviderSourceMode,
-        attempts: [ProviderFetchAttempt]) -> String?
-    {
-        // Provider-specific by design: Kilo exposes its ordered API-to-CLI fallback attempts in verbose output.
-        guard provider == .kilo, sourceMode == .auto, !attempts.isEmpty else { return nil }
-        let parts = attempts.map { attempt in
-            let label = ProviderDiagnosticFetchAttempt.kindLabel(attempt.kind)
-            let message = attempt.errorDescription?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            if !message.isEmpty {
-                return "\(label): \(message)"
-            }
-            return "\(label): \(attempt.wasAvailable ? "success" : "unavailable")"
-        }
-        return "Kilo auto fallback attempts: " + parts.joined(separator: " -> ")
-    }
-
-    /// Provider-specific by design: Antigravity's auto chain probes several
-    /// distinct local servers, so failures are attributed per source strategy
-    /// (app > cli > ide > oauth > offline) rather than by transport kind alone.
-    static func antigravityAutoFallbackSummary(
-        provider: UsageProvider,
-        sourceMode: ProviderSourceMode,
-        attempts: [ProviderFetchAttempt]) -> String?
-    {
-        guard provider == .antigravity, sourceMode == .auto, !attempts.isEmpty else { return nil }
-        let parts = attempts.map { attempt in
-            let source = Self.antigravitySourceShortLabel(attempt.strategyID)
-            switch attempt.outcome {
-            case .failed:
-                let message = attempt.errorDescription?
-                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                return "\(source): \(message.isEmpty ? "failed" : message)"
-            case .skipped:
-                return "\(source): skipped (unavailable)"
-            case .succeeded:
-                return "\(source): success"
-            }
-        }
-        return "Antigravity auto source outcomes: " + parts.joined(separator: " -> ")
-    }
-
-    /// Provider-specific by design: shortens Antigravity strategy IDs to their
-    /// source names (app/cli/ide/oauth/offline).
-    private static func antigravitySourceShortLabel(_ strategyID: String) -> String {
-        guard strategyID.hasPrefix("antigravity.") else { return strategyID }
-        let short = String(strategyID.dropFirst("antigravity.".count))
-        return short.replacingOccurrences(of: "-local", with: "")
-            .replacingOccurrences(of: "-https", with: "")
+        return []
     }
 
     static func fetchStatus(
@@ -403,12 +344,10 @@ extension CodexBarCLI {
         switch error {
         case TTYCommandRunner.Error.binaryNotFound,
              CodexStatusProbeError.codexNotInstalled,
-             ClaudeUsageError.claudeNotInstalled,
-             GeminiStatusProbeError.geminiNotInstalled:
+             ClaudeUsageError.claudeNotInstalled:
             ExitCode(2)
         case CodexStatusProbeError.timedOut,
              TTYCommandRunner.Error.timedOut,
-             GeminiStatusProbeError.timedOut,
              ClaudeWebFetchStrategyError.timedOut,
              CostUsageError.timedOut:
             ExitCode(4)
@@ -416,27 +355,10 @@ extension CodexBarCLI {
              ClaudeUsageError.oauthFailed,
              CostUsageError.unsupportedProvider,
              UsageError.decodeFailed,
-             UsageError.noRateLimitsFound,
-             GeminiStatusProbeError.parseFailed,
-             GeminiStatusProbeError.consumerTierDeprecated:
+             UsageError.noRateLimitsFound:
             ExitCode(3)
         default:
             .failure
-        }
-    }
-
-    static func printAntigravityPlanInfo(_ info: AntigravityPlanInfoSummary) {
-        let fields: [(String, String?)] = [
-            ("planName", info.planName),
-            ("planDisplayName", info.planDisplayName),
-            ("displayName", info.displayName),
-            ("productName", info.productName),
-            ("planShortName", info.planShortName),
-        ]
-        self.writeStderr("Antigravity plan info:\n")
-        for (label, value) in fields {
-            guard let value, !value.isEmpty else { continue }
-            self.writeStderr("  \(label): \(value)\n")
         }
     }
 
@@ -457,7 +379,6 @@ extension CodexBarCLI {
                     status: nil,
                     usage: nil,
                     credits: nil,
-                    antigravityPlanInfo: nil,
                     openaiDashboard: nil,
                     error: self.makeErrorPayload(code: .failure, message: error.localizedDescription, kind: .config))
                 self.printProviderPayloads([payload], output: output)
