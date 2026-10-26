@@ -6,7 +6,7 @@ struct CodexBarCoreResourcesTests {
     @Test
     func `resolver finds bundled plugin resources outside an app context`() throws {
         let bundle = try #require(CodexBarCoreResources.bundle)
-        #expect(bundle.url(forResource: "provider-plugin-prelude", withExtension: "js") != nil)
+        #expect(bundle.url(forResource: "Acknowledgements", withExtension: "json") != nil)
     }
 
     @Test(arguments: ["MacOS", "Helpers"])
@@ -35,7 +35,7 @@ struct CodexBarCoreResourcesTests {
         try Data().write(to: executable)
         let resolved = try #require(CodexBarCoreResources.resolve(mainBundle: fakeApp, executableURL: executable))
         #expect(resolved.bundleURL.path.contains("Contents/Resources/CodexBar_CodexBarCore.bundle"))
-        #expect(resolved.url(forResource: "provider-plugin-prelude", withExtension: "js") != nil)
+        #expect(resolved.url(forResource: "Acknowledgements", withExtension: "json") != nil)
     }
 
     @Test(arguments: ["bundle", "resources"])

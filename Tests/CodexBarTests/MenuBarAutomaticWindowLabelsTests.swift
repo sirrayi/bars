@@ -73,7 +73,7 @@ struct MenuBarAutomaticWindowLabelsTests {
     func `automatic labels include monthly and named provider allowances`() {
         let renderer = MenuBarLayoutRenderer()
         let layout = MenuBarLayout(lines: [[.percent(window: .automatic)], [.pace(window: .automatic)]])
-        for (data, label) in [(self.data(monthly: true), "M"), (self.data(namedAllowance: true), "GB")] {
+        for (data, label) in [(self.data(monthly: true), "M")] {
             let output = renderer.render(layout: layout, data: data, icon: nil, options: self.options())
             #expect(output.attributedTitle.string == "\(label) 84%\n\(label) +7%")
         }
@@ -98,7 +98,6 @@ struct MenuBarAutomaticWindowLabelsTests {
     private func data(
         weekly: Bool = false,
         monthly: Bool = false,
-        namedAllowance: Bool = false,
         used: Double = 84,
         single: Bool = false,
         automaticText: String? = nil) -> MenuBarLayoutRenderData
@@ -118,15 +117,7 @@ struct MenuBarAutomaticWindowLabelsTests {
             windowMinutes: 43200,
             resetsAt: self.now.addingTimeInterval(7200),
             resetDescription: nil)) : nil
-        let extra = namedAllowance ? MenuBarLayoutRenderExtra(NamedRateWindow(
-            id: "cursor-grok-bot",
-            title: "Grok Bot",
-            window: RateWindow(
-                usedPercent: used,
-                windowMinutes: nil,
-                resetsAt: self.now.addingTimeInterval(7200),
-                resetDescription: nil))) : nil
-        let provider: UsageProvider = monthly ? .opencodego : namedAllowance ? .deepseek : .claude
+        let provider: UsageProvider = monthly ? .opencodego : .claude
         return MenuBarLayoutRenderData(
             provider: provider,
             iconKey: "synthetic-auto-label",
@@ -136,12 +127,12 @@ struct MenuBarAutomaticWindowLabelsTests {
             primary: session,
             secondary: week,
             tertiary: month,
-            extraRateWindows: extra.map { [$0] } ?? [],
+            extraRateWindows: [],
             session: session,
             weekly: week,
             scopedWeekly: nil,
             scopedWeeklyTitle: nil,
-            automatic: extra?.window ?? month ?? (weekly ? week : session),
+            automatic: month ?? (weekly ? week : session),
             automaticText: automaticText,
             sessionPace: nil,
             weeklyPace: nil,

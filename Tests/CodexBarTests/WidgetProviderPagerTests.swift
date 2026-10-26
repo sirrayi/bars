@@ -21,7 +21,7 @@ struct WidgetProviderPagerTests {
 
     @Test
     func `an unknown selection falls back to the first provider`() {
-        let pager = ProviderPager.make(providers: self.providers, selected: .devin)
+        let pager = ProviderPager.make(providers: self.providers, selected: .deepseek)
 
         #expect(pager?.selected == .codex)
         #expect(pager?.position == 1)

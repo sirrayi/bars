@@ -73,7 +73,7 @@ struct CLIConfigSourceCommandTests {
             (["--provider", "unknown", "--source", "auto"], "Unknown or missing provider"),
             (["--provider", "claude"], "Unknown or missing source"),
             (["--provider", "claude", "--source", "unknown"], "Unknown or missing source"),
-            (["--provider", "commandcode", "--source", "cli"], "Source cli is not supported for commandcode"),
+            (["--provider", "deepseek", "--source", "cli"], "Source cli is not supported for deepseek"),
         ] {
             do {
                 _ = try await Self.run(root: root, arguments: arguments)

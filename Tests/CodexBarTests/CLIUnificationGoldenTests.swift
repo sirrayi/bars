@@ -22,41 +22,11 @@ struct CLIUnificationGoldenTests {
         }.joined(separator: "\n---\n")
 
         let expected = """
-        == factory ==
-        5-hour: 90% left [==========--]
-        Weekly: 80% left [=========---]
-        Monthly: 70% left [========----]
-        ---
-        == grok ==
-        Credits: 89% left [==========--]
-        ---
-        == sub2api ==
-        Daily quota: 87% left [==========--]
-        Weekly quota: 86% left [==========--]
-        ---
-        == amp ==
-        Other usage: 85% left [==========--]
-        Orb usage: 84% left [==========--]
-        ---
-        == kilo ==
-        Credits: 83% left [=========---]
-        Renews after top-up
-        Plan: Kilo Pass
-        Activity: Auto top-up: enabled
-        ---
-        == qoder ==
-        Credits: 82% left [=========---]
-        500 weighted tokens
-        ---
-        == clawrouter ==
-        ---
         == devin ==
         Extra usage: $25.00
         ---
         == claude ==
         Extra usage balance: $40.00
-        ---
-        == xai ==
         ---
         == codex ==
         Session: 95% left [===========-]
@@ -78,26 +48,6 @@ struct CLIUnificationGoldenTests {
         Weekly: 70% left [========----]
         Pace: On pace | Expected 29% used | Runs out in 4d 16h
         Resets in 5d
-        ---
-        == ollama ==
-        Session: 90% left [==========--]
-        Resets in 4h
-        Weekly: 80% left [=========---]
-        Pace: 9% in reserve | Expected 29% used | Lasts until reset
-        Resets in 5d
-        ---
-        == kimi ==
-        7-day usage: 70% left [========----]
-        Pace: 13% in reserve | Expected 43% used | Lasts until reset
-        Resets in 4d
-        5-hour usage: 90% left [==========--]
-        Pace: 10% in reserve | Expected 20% used | Lasts until reset
-        Resets in 4h
-        ---
-        == notion ==
-        Rolling: 80% left [=========---]
-        Pace: 3% in deficit | Expected 17% used | Projected empty in 4h
-        Resets in 5h
         """
         #expect(output == expected)
     }
@@ -125,66 +75,52 @@ struct CLIUnificationGoldenTests {
 
         let expected = """
         ╭────────────────────────────────────────╮
-        │ Droid [fixture]                        │
+        │ Devin [fixture]                        │
         │ ────────────────────────────────────── │
-        │ 5-hour                        90% left │
-        │ [ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━     ] │
+        │ Extra usage:                    $25.00 │
+        ╰────────────────────────────────────────╯
+        ---
+        ╭────────────────────────────────────────╮
+        │ Claude [fixture]                       │
+        │ ────────────────────────────────────── │
+        │ Extra usage balance:            $40.00 │
+        ╰────────────────────────────────────────╯
+        ---
+        ╭────────────────────────────────────────╮
+        │ Codex [fixture]                        │
+        │ ────────────────────────────────────── │
+        │ Session                       95% left │
+        │ [ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   ] │
+        │ Reset in 4h                            │
         │                                        │
-        │ Weekly                        80% left │
-        │ [ ━━━━━━━━━━━━━━━━━━━━━━━━━━━        ] │
+        │ Weekly                        75% left │
+        │ [ ━━━━━━━━━━━━━━━━━━━━━━━━━          ] │
+        │ Reset in 5d                            │
+        ╰────────────────────────────────────────╯
+        ---
+        ╭────────────────────────────────────────╮
+        │ Claude [fixture]                       │
+        │ ────────────────────────────────────── │
+        │ Session                       60% left │
+        │ [ ━━━━━━━━━━━━━━━━━━━━               ] │
+        │ Reset in 4h                            │
         │                                        │
-        │ Monthly                       70% left │
+        │ Weekly                        50% left │
+        │ [ ━━━━━━━━━━━━━━━━━                  ] │
+        │ Reset in 5d                            │
+        ╰────────────────────────────────────────╯
+        ---
+        ╭────────────────────────────────────────╮
+        │ OpenCode [fixture]                     │
+        │ ────────────────────────────────────── │
+        │ Weekly                        70% left │
         │ [ ━━━━━━━━━━━━━━━━━━━━━━━            ] │
-        ╰────────────────────────────────────────╯
-        ---
-        ╭────────────────────────────────────────╮
-        │ Grok [fixture]                         │
-        │ ────────────────────────────────────── │
-        │ Credits                       89% left │
-        │ [ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━     ] │
-        ╰────────────────────────────────────────╯
-        ---
-        ╭────────────────────────────────────────╮
-        │ sub2api [fixture]                      │
-        │ ────────────────────────────────────── │
-        │ Daily quota                   87% left │
-        │ [ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━      ] │
-        │                                        │
-        │ Weekly quota                  86% left │
-        │ [ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━      ] │
-        ╰────────────────────────────────────────╯
-        ---
-        ╭────────────────────────────────────────╮
-        │ Amp [fixture]                          │
-        │ ────────────────────────────────────── │
-        │ Other usage                   85% left │
-        │ [ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━       ] │
-        │                                        │
-        │ Orb usage                     84% left │
-        │ [ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━       ] │
-        ╰────────────────────────────────────────╯
-        ---
-        ╭────────────────────────────────────────╮
-        │ Kilo [fixture]          PLAN Kilo Pass │
-        │ ────────────────────────────────────── │
-        │ Credits                       83% left │
-        │ [ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━       ] │
-        │ Renews after top-up                    │
-        │ Activity:         Auto top-up: enabled │
-        ╰────────────────────────────────────────╯
-        ---
-        ╭────────────────────────────────────────╮
-        │ Qoder [fixture]                        │
-        │ ────────────────────────────────────── │
-        │ Credits                       82% left │
-        │ [ ━━━━━━━━━━━━━━━━━━━━━━━━━━━        ] │
-        │ 500 weighted tokens                    │
+        │ Reset in 5d                            │
         ╰────────────────────────────────────────╯
         """
         #expect(output == expected)
     }
 
-    // swiftlint:disable function_body_length
     @Test
     func `affected provider JSON output golden`() throws {
         let payloads = Self.paceFixtures.map { fixture in
@@ -315,108 +251,11 @@ struct CLIUnificationGoldenTests {
               "tertiary" : null,
               "updatedAt" : 1700000000
             }
-          },
-          {
-            "pace" : {
-              "secondary" : {
-                "deltaPercent" : -9,
-                "expectedUsedPercent" : 29,
-                "stage" : "behind",
-                "summary" : "9% in reserve | Expected 29% used | Lasts until reset",
-                "willLastToReset" : true
-              }
-            },
-            "provider" : "ollama",
-            "rateWindowLabels" : {
-              "primary" : "Session",
-              "secondary" : "Weekly"
-            },
-            "source" : "fixture",
-            "usage" : {
-              "primary" : {
-                "resetsAt" : 1700014400,
-                "usedPercent" : 10
-              },
-              "secondary" : {
-                "resetsAt" : 1700432000,
-                "usedPercent" : 20,
-                "windowMinutes" : 10080
-              },
-              "tertiary" : null,
-              "updatedAt" : 1700000000
-            }
-          },
-          {
-            "pace" : {
-              "primary" : {
-                "deltaPercent" : -13,
-                "expectedUsedPercent" : 43,
-                "stage" : "farBehind",
-                "summary" : "13% in reserve | Expected 43% used | Lasts until reset",
-                "willLastToReset" : true
-              },
-              "secondary" : {
-                "deltaPercent" : -10,
-                "expectedUsedPercent" : 20,
-                "stage" : "behind",
-                "summary" : "10% in reserve | Expected 20% used | Lasts until reset",
-                "willLastToReset" : true
-              }
-            },
-            "provider" : "kimi",
-            "rateWindowLabels" : {
-              "primary" : "7-day usage",
-              "secondary" : "5-hour usage"
-            },
-            "source" : "fixture",
-            "usage" : {
-              "primary" : {
-                "resetsAt" : 1700345600,
-                "usedPercent" : 30,
-                "windowMinutes" : 10080
-              },
-              "secondary" : {
-                "resetsAt" : 1700014400,
-                "usedPercent" : 10,
-                "windowMinutes" : 300
-              },
-              "tertiary" : null,
-              "updatedAt" : 1700000000
-            }
-          },
-          {
-            "pace" : {
-              "primary" : {
-                "deltaPercent" : 3,
-                "etaSeconds" : 14400,
-                "expectedUsedPercent" : 17,
-                "stage" : "slightlyAhead",
-                "summary" : "3% in deficit | Expected 17% used | Projected empty in 4h",
-                "willLastToReset" : false
-              }
-            },
-            "provider" : "notion",
-            "rateWindowLabels" : {
-              "primary" : "Rolling"
-            },
-            "source" : "fixture",
-            "usage" : {
-              "primary" : {
-                "resetsAt" : 1700018000,
-                "usedPercent" : 20,
-                "windowMinutes" : 360
-              },
-              "secondary" : null,
-              "tertiary" : null,
-              "updatedAt" : 1700000000
-            }
           }
         ]
         """
         #expect(output == expected)
     }
-
-    // swiftlint:enable function_body_length
 
     private struct Fixture {
         let provider: UsageProvider

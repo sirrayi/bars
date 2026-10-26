@@ -23,7 +23,6 @@ struct IconRendererHideCrittersTests {
     @Test(arguments: [
         IconStyle.codex,
         .claude,
-        .combined,
     ])
     func `hiding critters removes every decorated style twist`(style: IconStyle) throws {
         let decorated = self.icon(style: style, hideCritters: false)

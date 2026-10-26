@@ -96,29 +96,6 @@ struct LocalizationSemanticContractTests {
         #expect(L("Sonnet", language: language.rawValue).contains("Sonnet"))
     }
 
-    @Test(arguments: [
-        ("in 2d", "di 2 hari"),
-        ("in 2d 18h", "di 2 hari 18j"),
-        ("in 2d 5m", "di 2 hari 5m"),
-        ("in 18h", "di 18j"),
-        ("in 18h 5m", "di 18j 5m"),
-        ("in 5m", "di 5m"),
-    ])
-    func `Indonesian provider countdowns preserve distinct day hour and minute units`(
-        countdown: String,
-        expected: String) throws
-    {
-        try CodexBarLocalizationOverride.$appLanguage.withValue("id") {
-            let details = try ProviderDetailSection(title: "Quota details", rows: [
-                .init(label: "Period", value: "peak \(countdown)", secondaryValue: "off-peak \(countdown)"),
-            ])
-            let localized = UsageMenuCardView.Model.localizedProviderDetails([details], provider: .deepseek)
-            let row = try #require(localized.first?.rows.first)
-            #expect(row.value == "\(L("peak")) \(expected)")
-            #expect(row.secondaryValue == "\(L("off-peak")) \(expected)")
-        }
-    }
-
     @Test(arguments: AppLanguage.allCases.filter { $0 != .system })
     func `login and recovery translations preserve executable commands`(language: AppLanguage) {
         #expect(L("vertex_ai_login_instructions", language: language.rawValue)

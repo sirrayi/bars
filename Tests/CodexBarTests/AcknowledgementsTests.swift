@@ -19,10 +19,9 @@ struct AcknowledgementsTests {
     @Test
     func `bundled notices include nested licenses for every platform`() throws {
         let byName = Dictionary(uniqueKeysWithValues: Acknowledgement.load().map { ($0.name, $0) })
-        #expect(try #require(byName["QuickJS"]).text.contains("UNICODE LICENSE V3"))
         #expect(try #require(byName["XKCP"]).text.contains("Brian Gladman"))
         #expect(try #require(byName["BoringSSL"]).text.contains("Apache License"))
-        #expect(try #require(byName["@jridgewell/sourcemap-codec"]).text.contains("Permission is hereby granted"))
+        #expect(try #require(byName["Commander"]).text.contains("Permission is hereby granted"))
     }
 
     @Test

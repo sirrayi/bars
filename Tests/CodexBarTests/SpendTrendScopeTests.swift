@@ -47,7 +47,7 @@ struct SpendTrendScopeTests {
         let group = try Self.group()
         let chart = SpendTrendChartModel(group: group, section: .daily, day: nil)
         #expect(group.providers.count == 6)
-        #expect(chart.legendProviders(in: group).map(\.id) == ["native", "opencodex", "cursor", "idle"])
+        #expect(chart.legendProviders(in: group).map(\.id) == ["native", "opencodex", "deepseek", "idle"])
         #expect(chart.total == 17)
         let zero = SpendTrendChartModel(group: group, section: .daily, day: nil, sourceID: "idle")
         #expect(zero.legendProviders(in: group).map(\.id) == ["idle"])
@@ -70,7 +70,7 @@ struct SpendTrendScopeTests {
             section: .daily,
             day: nil,
             overviewInterval: DateInterval(start: first, end: second))
-        #expect(drilled.legendProviders(in: group).map(\.id) == ["native", "cursor"])
+        #expect(drilled.legendProviders(in: group).map(\.id) == ["native", "deepseek"])
         let hourly = try SpendTrendChartModel(
             group: group,
             section: .hourly,

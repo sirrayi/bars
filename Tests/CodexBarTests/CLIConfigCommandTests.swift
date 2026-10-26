@@ -33,25 +33,6 @@ struct CLIConfigCommandTests {
     }
 
     @Test
-    func `config set api key parses zai team account options`() throws {
-        let parser = CommandParser(signature: CodexBarCLI._configSetAPIKeySignatureForTesting())
-        let parsed = try parser.parse(arguments: [
-            "--provider", "zai",
-            "--stdin",
-            "--label", "Team",
-            "--usage-scope", "team",
-            "--organization-id", "org-team",
-            "--workspace-id", "proj-team",
-        ])
-
-        #expect(parsed.options["provider"] == ["zai"])
-        #expect(parsed.options["label"] == ["Team"])
-        #expect(parsed.options["usageScope"] == ["team"])
-        #expect(parsed.options["organizationId"] == ["org-team"])
-        #expect(parsed.options["workspaceId"] == ["proj-team"])
-    }
-
-    @Test
     func `config provider toggle parses provider and json flags`() throws {
         let parser = CommandParser(signature: CodexBarCLI._configProviderToggleSignatureForTesting())
         let parsed = try parser.parse(arguments: [

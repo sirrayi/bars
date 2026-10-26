@@ -11,42 +11,11 @@ struct CLIProviderSelectionTests {
         let expectedProviders = [
             "--provider codex|",
             "|claude|",
-            "|factory|",
-            "|zai|",
-            "|cursor|",
-            "|gemini|",
-            "|antigravity|",
-            "|copilot|",
-            "|synthetic|",
-            "|kiro|",
-            "|warp|",
-            "|ollama|",
-            "|devpass|",
-            "|atlascloud|",
-            "|vercel|",
-            "|llmman|",
-            "|aixy|",
-            "|raycast|",
-            "|xkiro|",
-            "|museai|",
-            "|lithosai|",
-            "|workbuddy|",
-            "|tavily|",
-            "|linkup|",
-            "|tinyapi|",
-            "|exa|",
-            "|cosmic|",
-            "|aerostack|",
-            "|sailresearch|",
-            "|sofya|",
-            "|fal|",
-            "|flora|",
-            "|parallel|",
-            "|claudeplatform|",
-            "|munito|",
-            "|soniox|",
-            "|traecn|",
-            "|chatbox|",
+            "|opencode|",
+            "|opencodego|",
+            "|devin|",
+            "|deepseek|",
+            "|pi|",
             "|both|",
             "|all]",
         ]
@@ -64,9 +33,9 @@ struct CLIProviderSelectionTests {
         #expect(root.contains("--log-level"))
         #expect(usage.contains("--verbose"))
         #expect(root.contains("--verbose"))
-        #expect(usage.contains("codexbar usage --provider gemini"))
+        #expect(usage.contains("codexbar usage --provider deepseek"))
         #expect(usage.contains("codexbar usage --format json --provider all --pretty"))
-        #expect(root.contains("codexbar --provider gemini"))
+        #expect(root.contains("codexbar --provider deepseek"))
     }
 
     @Test

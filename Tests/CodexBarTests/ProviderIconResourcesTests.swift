@@ -7,26 +7,6 @@ import Testing
 @MainActor
 struct ProviderIconResourcesTests {
     @Test
-    func `groq and grok provider icons are distinct`() throws {
-        let root = try Self.repoRoot()
-        let resources = root.appending(path: "Sources/CodexBar/Resources", directoryHint: .isDirectory)
-        let groq = try String(contentsOf: resources.appending(path: "ProviderIcon-groq.svg"), encoding: .utf8)
-        let grok = try String(contentsOf: resources.appending(path: "ProviderIcon-grok.svg"), encoding: .utf8)
-
-        #expect(groq != grok)
-    }
-
-    @Test
-    func `grok and xai provider icons are distinct`() throws {
-        let root = try Self.repoRoot()
-        let resources = root.appending(path: "Sources/CodexBar/Resources", directoryHint: .isDirectory)
-        let grok = try String(contentsOf: resources.appending(path: "ProviderIcon-grok.svg"), encoding: .utf8)
-        let xai = try String(contentsOf: resources.appending(path: "ProviderIcon-xai.svg"), encoding: .utf8)
-
-        #expect(grok != xai)
-    }
-
-    @Test
     func `provider brand icons are cached after first load`() throws {
         ProviderBrandIcon.resetCacheForTesting()
         defer { ProviderBrandIcon.resetCacheForTesting() }
@@ -37,28 +17,6 @@ struct ProviderIconResourcesTests {
         #expect(first === second)
         #expect(first.size == NSSize(width: 18, height: 18))
         #expect(first.isTemplate)
-    }
-
-    @Test
-    func `replicate uses the official glyph across app website and serve`() throws {
-        let root = try Self.repoRoot()
-        let svg = try String(
-            contentsOf: root.appending(path: "Sources/CodexBar/Resources/ProviderIcon-replicate.svg"),
-            encoding: .utf8)
-        #expect(svg.contains("fill=\"currentColor\""))
-        #expect(svg.contains("viewBox=\"-125 -125 1250 1250\""))
-        for points in [
-            "1000,427.6 1000,540.6 603.4,540.6 603.4,1000 477,1000 477,427.6",
-            "1000,213.8 1000,327 364.8,327 364.8,1000 238.4,1000 238.4,213.8",
-            "1000,0 1000,113.2 126.4,113.2 126.4,1000 0,1000 0,0",
-        ] {
-            #expect(svg.contains("points=\"\(points)\""))
-        }
-        let website = try String(contentsOf: root.appending(path: "docs/logos/replicate.svg"), encoding: .utf8)
-        #expect(website == svg)
-        let cli = try String(
-            contentsOf: root.appending(path: "Sources/CodexBarCLI/CLIServeProviderIcons.swift"), encoding: .utf8)
-        #expect(cli.contains("\"ProviderIcon-replicate\": \"\(Data(svg.utf8).base64EncodedString())\""))
     }
 
     @Test

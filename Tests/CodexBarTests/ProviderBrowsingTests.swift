@@ -119,25 +119,6 @@ struct ProviderBrowsingTests {
     }
 
     @Test
-    func `unknown plugin payload survives restoring and undoing order`() throws {
-        let config = try CodexBarConfig.decode(from: Data(#"""
-        {"version":1,"providers":[
-          {"id":"gemini","enabled":false,"apiKey":"synthetic-key"},
-          {"id":"retired-plugin","enabled":true,"opaque":{"large":123456789012345678901234567890}},
-          {"id":"codex","enabled":true}
-        ]}
-        """#.utf8))
-        let settings = self.store(config: config)
-        #expect(settings.restoreDefaultProviderOrder())
-        #expect(settings.undoProviderOrderChange())
-        let data = try settings.configSnapshot.encodedData()
-        let json = try #require(String(data: data, encoding: .utf8))
-        #expect(json.contains("123456789012345678901234567890"))
-        #expect(json.contains("retired-plugin"))
-        #expect(settings.configSnapshot.unavailableProviders.first?.index == 1)
-    }
-
-    @Test
     func `enabled filter persists locally without exporting or rewriting provider configuration`() throws {
         let defaults = InMemoryUserDefaults()
         let settings = self.store(defaults: defaults)

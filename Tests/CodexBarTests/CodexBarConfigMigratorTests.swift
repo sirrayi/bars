@@ -24,7 +24,6 @@ struct CodexBarConfigMigratorTests {
             stores: Self.legacyStores(secrets: secrets, accountStore: CountingTokenAccountStore()))
 
         #expect(migrated.providerConfig(for: .deepseek)?.apiKey == "configured-token")
-        #expect(migrated.providerConfig(for: .deepseek)?.cookieHeader == "fixture-legacy-token")
         #expect(migrated.providerConfig(for: .opencode)?.workspaceID == "configured-workspace")
         #expect(migrated.providerConfig(for: .opencode)?.cookieHeader == "fixture-legacy-token")
     }
@@ -361,9 +360,11 @@ struct CodexBarConfigMigratorTests {
         let readableSecrets = CountingLegacySecretStore(token: "legacy-token")
         let unreadableSecrets = CountingLegacySecretStore(throwOnLoad: true)
         let accountStore = CountingTokenAccountStore()
-        let stores = Self.legacyStores(
-            secrets: readableSecrets,
-            accountStore: accountStore)
+        let stores = CodexBarConfigMigrator.LegacyStores(
+            codexCookieStore: readableSecrets,
+            claudeCookieStore: unreadableSecrets,
+            opencodeCookieStore: readableSecrets,
+            tokenAccountStore: accountStore)
         let configStore = testConfigStore(suiteName: suite)
 
         let first = try CodexBarConfigMigrator.loadOrMigrate(

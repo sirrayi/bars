@@ -13,7 +13,7 @@ struct MonthlyPacingTargetTests {
 
     @Test
     func `monthly allowance shows a daily target beside its existing pace`() throws {
-        let metric = try #require(Self.model(window: Self.window()).metrics.first)
+        let metric = try #require(Self.model(window: Self.window(), provider: .claude).metrics.first)
         #expect(metric.dailyTargetText == "≈ 2% / day to last until reset")
         #expect(metric.detailLeftText != nil)
     }

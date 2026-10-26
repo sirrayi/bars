@@ -69,7 +69,7 @@ extension CLICommonOptionsTests {
         let invocation = try program.resolve(argv: [
             command, "--provider", "codex", "--account", "fixture", "--account-index", "2", "--all-accounts",
             "--source", "api", "--web-timeout", "12", "--no-credits", "--no-color", "--status", "--web",
-            "--web-debug-dump-html", "--antigravity-plan-debug", "--augment-debug", "--log-level", "info", "-v",
+            "--web-debug-dump-html", "--log-level", "info", "-v",
         ])
         #expect(invocation.descriptor.signature.optionGroups.isEmpty)
         #expect(invocation.parsedValues.options == [
@@ -78,7 +78,7 @@ extension CLICommonOptionsTests {
         ])
         #expect(invocation.parsedValues.flags == [
             "allAccounts", "noCredits", "noColor", "status", "web", "webDebugDumpHtml",
-            "antigravityPlanDebug", "augmentDebug", "verbose",
+            "verbose",
         ])
         let ownFlag = command == "usage" ? "--app-auto-verifier" : "--brief"
         let otherFlag = command == "usage" ? "--brief" : "--app-auto-verifier"

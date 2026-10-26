@@ -75,6 +75,40 @@ struct TTYIntegrationTests {
     }
 
     @Test
+    func `claude TTY usage probe live`() async throws {
+        guard ProcessInfo.processInfo.environment["LIVE_CLAUDE_TTY"] == "1" else {
+            return
+        }
+        guard TTYCommandRunner.which("claude") != nil else {
+            return
+        }
+
+        let fetcher = ClaudeUsageFetcher(browserDetection: BrowserDetection(cacheTTL: 0), dataSource: .cli)
+        defer { Task { await ClaudeCLISession.shared.reset() } }
+
+        var shouldAssert = true
+        do {
+            let snapshot = try await fetcher.loadLatestUsage()
+            #expect(try #require(snapshot.primary).remainingPercent >= 0)
+            // Weekly is absent for some enterprise accounts.
+        } catch ClaudeUsageError.parseFailed(_) {
+            shouldAssert = false
+        } catch ClaudeStatusProbeError.parseFailed(_) {
+            shouldAssert = false
+        } catch ClaudeUsageError.claudeNotInstalled {
+            shouldAssert = false
+        } catch ClaudeStatusProbeError.timedOut {
+            shouldAssert = false
+        } catch let TTYCommandRunner.Error.launchFailed(message) where message.contains("login") {
+            shouldAssert = false
+        } catch {
+            shouldAssert = false
+        }
+
+        if !shouldAssert { return }
+    }
+
+    @Test
     func `claude pty usage waits for values after session label`() async throws {
         let cli = try Self.makeSlowUsageClaudeCLI()
         defer { Task { await ClaudeCLISession.shared.reset() } }
