@@ -210,7 +210,7 @@ extension CodexBarCLI {
         // alongside the API-rate estimate. Only providers like Cursor report it.
         let meteredLine: String? = snapshot.meteredCostUSD.map {
             let amount = UsageFormatter.currencyString($0, currencyCode: snapshot.currencyCode)
-            return "Cursor-metered: \(amount) (\(historyLabel.lowercased()))"
+            return "Plan metered: \(amount) (\(historyLabel.lowercased()))"
         }
 
         var lines: [String?] = [

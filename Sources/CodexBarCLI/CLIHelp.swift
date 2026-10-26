@@ -96,8 +96,7 @@ extension CodexBarCLI {
           - Codex: OpenAI web dashboard (usage limits, credits remaining, code review remaining, usage breakdown).
             Auto falls back to Codex CLI only when cookies are missing.
           - Claude: claude.ai API.
-          - Kilo: app.kilo.ai API.
-            Auto falls back to Kilo CLI when API credentials are missing or unauthorized.
+          - DeepSeek: api.deepseek.com balance endpoint.
           Token accounts are loaded from the resolved CodexBar config file.
           Use --account or --account-index to select a specific token account.
           Use --all-accounts to fetch every token account, or every visible Codex account for Codex.
@@ -114,7 +113,7 @@ extension CodexBarCLI {
         Examples:
           codexbar usage
           codexbar usage --provider claude
-          codexbar usage --provider gemini
+          codexbar usage --provider deepseek
           codexbar usage --format json --provider all --pretty
           codexbar usage --provider all --json
           codexbar usage --status
@@ -142,7 +141,7 @@ extension CodexBarCLI {
           Print local token cost usage from Claude/Codex native logs plus supported pi and OMP sessions.
           Antigravity token history is read locally, with API-price estimates for known models; Muse Code remains
           token-only.
-          Local readers need no web or provider CLI access; Cursor uses its authenticated dashboard API.
+          Local readers need no web or provider CLI access.
           Use --refresh to bypass cached scan results.
           Use --breakdown with Claude text output to show daily and model details.
           Experimental: use --provider-native-only to exclude pi and OMP session mirrors.
@@ -332,11 +331,10 @@ extension CodexBarCLI {
           codexbar config validate --format json --pretty
           codexbar config dump --pretty
           codexbar config providers
-          codexbar config enable --provider grok
-          codexbar config disable --provider cursor
+          codexbar config enable --provider deepseek
+          codexbar config disable --provider devin
           codexbar config set-source --provider claude --source cli
-          printf '%s' "$ELEVENLABS_API_KEY" | codexbar config set-api-key --provider elevenlabs --stdin
-          printf '%s' "$Z_AI_API_KEY" | codexbar config set-api-key --provider zai --stdin \\
+          printf '%s' "$DEEPSEEK_API_KEY" | codexbar config set-api-key --provider deepseek --stdin\
             --label Team --usage-scope team --organization-id org_... --workspace-id proj_...
         """
     }
@@ -422,8 +420,8 @@ extension CodexBarCLI {
           account IDs, org IDs, raw responses, and billing-history records.
 
         Examples:
-          codexbar diagnose --provider minimax --format json --redact --output diagnostic.json
-          codexbar diagnose --provider minimax --format json --pretty
+          codexbar diagnose --provider deepseek --format json --redact --output diagnostic.json
+          codexbar diagnose --provider deepseek --format json --pretty
           codexbar diagnose --provider claude --format json --pretty
           codexbar diagnose --provider all --format json
         """
@@ -531,7 +529,7 @@ extension CodexBarCLI {
           codexbar config disable --provider <name>
           codexbar config set-source --provider <name> --source auto|web|cli|oauth|api
           codexbar config set-api-key --provider <name> (--api-key <key>|--stdin)
-          codexbar config set-api-key --provider zai --stdin --usage-scope team
+
                                    --organization-id <org> --workspace-id <project>
           codexbar hooks <list|enable|disable> [--format text|json] [--pretty]
           codexbar hooks test <event> --provider <name>
@@ -554,7 +552,7 @@ extension CodexBarCLI {
           codexbar --format json --provider all --pretty
           codexbar --format toon --provider claude
           codexbar --provider all --json
-          codexbar --provider gemini
+          codexbar --provider deepseek
           codexbar cards --provider all --status
           codexbar cards --brief
           codexbar cost --provider claude --format json --pretty
@@ -562,14 +560,14 @@ extension CodexBarCLI {
           codexbar dashboard --pretty
           codexbar serve --port 8080
           codexbar config validate --format json --pretty
-          codexbar config enable --provider grok
-          codexbar config set-api-key --provider elevenlabs --stdin
+          codexbar config enable --provider deepseek
+          codexbar config set-api-key --provider deepseek --stdin
           codexbar hooks test quota_reached --provider codex
           codexbar plugins list
           codexbar cache clear --cookies
           codexbar cookie refresh --provider opencodego --allow-keychain-prompt
-          codexbar diagnose --provider minimax --format json --redact --output diagnostic.json
-          codexbar diagnose --provider minimax --format json --pretty
+          codexbar diagnose --provider deepseek --format json --redact --output diagnostic.json
+          codexbar diagnose --provider deepseek --format json --pretty
           codexbar diagnose --provider all --format json
           codexbar guard --provider claude --min-remaining 20
         """
