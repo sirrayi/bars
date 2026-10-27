@@ -55,12 +55,7 @@ Codex account quota and local token/cost history are separate data sources. The 
 weekly quota from the signed-in account's remote usage endpoint; those percentages do not come from local session
 logs.
 
-If OpenCode holds your Codex OAuth session, the explicitly enabled **External Codex OAuth sources** setting can
-reuse its `openai` OAuth entry for remote quota. Native Codex credentials take precedence, and an explicit
-`CODEX_HOME` prevents external fallback. External credentials stay read-only; stale credentials fail closed, and
-API-key entries are ignored. See [Codex external OAuth sources](codex.md#optional-external-oauth-sources-off-by-default).
-
-This does not import OpenCode sessions into Codex token or spend totals. The base OpenCode provider tracks its web
+The base OpenCode provider tracks its web
 dashboard, while the local SQLite reader described here selects only records attributed to `opencode-go` for OpenCode Go.
 Ordinary OpenCode sessions using OpenAI/Codex are not currently included in local cost history. OpenAI API-platform
 usage is a separate OpenAI API platform surface, not Codex subscription quota.

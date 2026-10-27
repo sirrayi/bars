@@ -3,14 +3,13 @@
 ## Project Structure & Modules
 - `Sources/Bars`: Swift 6 menu bar app (usage/credits probes, icon renderer, settings). Keep changes small and reuse existing helpers.
 - `Tests/BarsTests`: XCTest coverage for usage parsing, status probes, icon patterns; mirror new logic with focused tests.
-- `Scripts`: build/package helpers (`package_app.sh`, `sign-and-notarize.sh`, `build_icon.sh`, `compile_and_run.sh`). Read-only release helpers call `Scripts/mac-release`, which resolves `MAC_RELEASE_TOOL` or the shared `agent-scripts` checkout; CI owns publication.
-- `docs`: release notes and process (`docs/RELEASING.md`, screenshots). Root-level zips/appcast are generated artifacts—avoid editing except during releases.
+- `Scripts`: build/package helpers (`package_app.sh`, `build_icon.sh`, `compile_and_run.sh`). Builds are ad-hoc signed only; there is no release pipeline.
+- `docs`: provider and architecture notes, plus screenshots.
 
 ## Build, Test, Run
 - Dev loop: `./Scripts/compile_and_run.sh` kills old instances, builds, packages, relaunches `bars.app`, and confirms it stays running; add `--test` for the sharded full suite.
 - Quick build/test: `swift build` (debug) or `swift build -c release`; `make test` for the sharded full suite.
-- Package locally: `./Scripts/package_app.sh` to refresh `bars.app`, then restart with `pkill -x bars || pkill -f bars.app || true; cd /Users/steipete/Projects/bars && open -n /Users/steipete/Projects/bars/bars.app`.
-- Release publication is owned by `.github/workflows/release.yml`; use its default dry-run dispatch to rehearse. Repo build/signing stays in `Scripts/sign-and-notarize.sh`; see `docs/RELEASING.md`.
+- Package locally: `./Scripts/package_app.sh` to refresh `bars.app`, then restart with `pkill -x bars || pkill -f bars.app || true; open -n ./bars.app` from the repo root.
 
 ## Coding Style & Naming
 - Enforce SwiftFormat/SwiftLint: run `swiftformat Sources Tests` and `swiftlint --strict`. 4-space indent, 120-char lines, explicit `self` is intentional—do not remove.
@@ -25,7 +24,7 @@
 - Prefer CLI/focused tests over app-bundle live tests when behavior can be verified without relaunching bars.
 - Never run tests/checks or ad-hoc validation that can display macOS Keychain prompts. Live provider probes, browser-cookie imports, `bars usage` against real accounts, and real SecItem reads must be explicitly requested; otherwise use parser tests, stubs, test stores, or `KeychainNoUIQuery`.
 - App-group migration tests must inject dictionary-backed defaults, both snapshot URLs, a synthetic home, and a contained recording FileManager. UUID defaults suites and Keychain isolation flags do not isolate defaults search domains or filesystem access. Ordinary SettingsStore tests must not discover shared defaults or run app-group migration.
-- macOS CI is brittle around headless AppKit status/menu tests. Prefer covering menu behavior through stable state/model seams (`MenuDescriptor`, `ProvidersPane`, `CodexAccountsSectionState`, etc.) instead of constructing live `NSStatusBar`/`NSMenu` flows unless the AppKit wiring itself is the thing under test.
+- macOS CI is brittle around headless AppKit status/menu tests. Prefer covering menu behavior through stable state/model seams (`MenuDescriptor`, `ProvidersPane`, etc.) instead of constructing live `NSStatusBar`/`NSMenu` flows unless the AppKit wiring itself is the thing under test.
 
 ## CI Efficiency
 - Follow [the direct-test and SwiftPM cache contracts](docs/DEVELOPMENT.md#macos-direct-test-groups) when changing CI or test execution; preserve full test inventory, deadlines, failure handling, cache verification, and clean fallback.
@@ -40,15 +39,13 @@
 - Use the provided scripts and package manager (SwiftPM); avoid adding dependencies or tooling without confirmation.
 - Menu bar automation: capture the target screen first and verify the bars icon is visibly onscreen. Reject `click-extra` success when coordinates fall outside display bounds; hidden menu extras are not click proof.
 - Validate UI/runtime behavior against the freshly built bundle; restart via the pkill+open command above to avoid running stale binaries.
-- To guarantee the right bundle is running after a rebuild, use: `pkill -x bars || pkill -f bars.app || true; cd /Users/steipete/Projects/bars && open -n /Users/steipete/Projects/bars/bars.app`.
+- To guarantee the right bundle is running after a rebuild, use: `pkill -x bars || pkill -f bars.app || true; open -n ./bars.app` from the repo root.
 - For CLI-testable provider/parser/settings behavior, use CLI/focused tests instead of `Scripts/package_app.sh` or `./Scripts/compile_and_run.sh`.
 - Run `./Scripts/compile_and_run.sh` only when UI/runtime behavior needs bundle-level validation; it builds, tests, packages, relaunches, and verifies the app stays running.
 - Widget/Tahoe UI issues: use Parallels macOS VM plus screenshots/clicks for autonomous verification.
-- Release workflow: wait for completion and verify the complete artifact/feed/tap handoff; do not publish locally.
-- Sparkle release key: CI `SPARKLE_PRIVATE_KEY` must match the existing AGCY public key in `.github/release.json`; never substitute another app’s key.
 - Swift concurrency: treat sibling `async let` tasks as a review red flag when one child is required and another is optional/best-effort. Prefer sequential awaits or a drained `withThrowingTaskGroup` that surfaces required failures and explicitly contains optional failures; crash stacks mentioning `swift_task_dealloc` or `asyncLet_finish_after_task_completion` should trigger an audit of nearby `async let` usage.
 - Prefer modern SwiftUI/Observation macros: use `@Observable` models with `@State` ownership and `@Bindable` in views; avoid `ObservableObject`, `@ObservedObject`, and `@StateObject`.
 - Favor modern macOS 15+ APIs over legacy/deprecated counterparts when refactoring (Observation, new display link APIs, updated menu item styling, etc.).
-- Keep provider data siloed: when rendering usage or account info for a provider (Claude vs Codex), never display identity/plan fields sourced from a different provider.
+- Keep provider data siloed: when rendering usage or account info for a provider (e.g. Claude vs Devin), never display identity/plan fields sourced from a different provider.
 - Claude CLI status line is custom + user-configurable; never rely on it for usage parsing by default. A user-enabled, opt-in statusLine JSON feed is permitted as an explicit data source (owner ruling, #2733): it must be off by default, clearly labeled as sourced from the user's own statusLine config, and fail soft when the format drifts.
 - Cookie imports: use the shared default browser order; `BrowserCookieAccessGate` ensures no background/settings prompts, host-matching cookie rows before Safe Storage access, at most one interactive Keychain read per manual action, denial cooldowns even on manual retries (only `bars cookie refresh --allow-keychain-prompt` overrides), and traversal stopping at the first validated session. Restrict a provider to a browser subset only with a documented technical reason next to the code.

@@ -36,39 +36,8 @@ then return to the installed app. No persistent environment or settings change i
 Inspect the JSON file before sharing it; send it with the build commit and the observed symptom. Do not attach
 unrelated application logs. Repeat once with Bartender already quit only if the first capture is inconclusive.
 
-## Maintainer build recipe
+## Diagnostic build
 
-Build **debug only** from the diagnostic commit. A local control build can use
-`BARS_SIGNING=identity ./Scripts/package_app.sh debug`; it does not relaunch the app, but its
-`com.sirrayi.bars.debug` identity cannot establish a fix for the production identity.
-
-For the reporter's production-identity comparison, stage a copy of a current official signed bundle and replace
-only its main executable and SwiftPM resources. The template must use this checkout's dependency versions.
-Run these commands in the diagnostic checkout; no command launches or overwrites the installed app:
-
-```sh
-swift build --configuration debug --jobs 2 --product bars
-diagnostic_bin_dir="$(swift build --configuration debug --show-bin-path)"
-mkdir -p .build/control-center-diagnostic
-codesign -d --entitlements :- /Applications/bars.app \
-  > .build/control-center-diagnostic/entitlements.plist 2>/dev/null
-ditto /Applications/bars.app .build/control-center-diagnostic/bars.app
-cp "$diagnostic_bin_dir/bars" .build/control-center-diagnostic/bars.app/Contents/MacOS/bars
-install_name_tool -add_rpath '@executable_path/../Frameworks' \
-  .build/control-center-diagnostic/bars.app/Contents/MacOS/bars
-for bundle in "$diagnostic_bin_dir"/*.bundle; do
-  ditto "$bundle" ".build/control-center-diagnostic/bars.app/Contents/Resources/$(basename "$bundle")"
-done
-/usr/libexec/PlistBuddy -c "Set :CodexGitCommit $(git rev-parse HEAD)" \
-  .build/control-center-diagnostic/bars.app/Contents/Info.plist
-codesign --force --timestamp --options runtime \
-  --entitlements .build/control-center-diagnostic/entitlements.plist \
-  --sign 'Developer ID Application: Peter Steinberger (Y5PE65HELJ)' \
-  .build/control-center-diagnostic/bars.app
-codesign --verify --deep --strict .build/control-center-diagnostic/bars.app
-```
-
-Use the normal [notarization instructions](RELEASING.md) for any externally delivered artifact, without
-publishing a release or updating the appcast. Do not give a reporter an unsigned/ad-hoc replacement or tell them
-to bypass Gatekeeper. The recipe requires the maintainer's signing identity; a reporter should receive the
-finished signed/notarized artifact. Building and tracing are diagnostics, not a demonstrated fix for #3377.
+Build a debug bundle from the diagnostic commit with `./Scripts/package_app.sh debug`. Its
+`com.sirrayi.bars.debug` identity is separate from the release identity, so a debug trace cannot by itself
+establish a fix for the release build.

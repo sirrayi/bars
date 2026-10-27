@@ -8,13 +8,13 @@ read_when:
 
 # Providers
 
-bars currently registers 5 provider IDs. Some companies expose multiple surfaces, such as Codex vs OpenAI API or
+bars currently registers 5 provider IDs. Some companies expose multiple surfaces, such as
 OpenCode vs OpenCode Go, because the auth source and quota shape differ.
 
 
 ## Fetch strategies (current)
 Legend: web (browser cookies/WebView), cli (RPC/PTy or provider CLI), oauth (provider OAuth), api token, local probe, web dashboard.
-Source labels (CLI/header): `openai-web`, `web`, `oauth`, `api`, `local`, `cli`, plus provider-specific CLI labels (e.g. `codex-cli`, `claude`).
+Source labels (CLI/header): `web`, `oauth`, `api`, `local`, `cli`, plus provider-specific CLI labels (e.g. `claude`).
 
 Cookie-based providers expose a Cookie source picker (Automatic or Manual) in Settings → Providers.
 Some browser cookie imports are cached in Keychain and reused until the session is invalid. API keys, manual cookie
@@ -37,15 +37,15 @@ and daily/hourly chart labels use the bucket time zone. Their ranges end at the 
 Regular token-history publications also refresh outdated independent Usage & Spend sources, including Claude,
 through their own 365-day scan. The dashboard never substitutes the shorter menu history for that scan. Updates
 arriving during a scan coalesce into a follow-up; a failed attempt waits for a new token publication or manual
-dashboard refresh before retrying. Codex account-cache ownership and provider-derived spend sources are unchanged.
+dashboard refresh before retrying. Provider-derived spend sources are unchanged.
 
-Native cost-history sources are the descriptors that advertise token-cost support: Codex, Claude,
+Native cost-history sources are the descriptors that advertise token-cost support: Claude,
 OpenCode Go, and Devin (local CLI sessions). Providers without that contract are omitted instead of
 appearing as empty subscriptions. Each native currency has its own total, ranking, and daily chart; bars never
 adds or ranks amounts across currencies.
 
 The page also shows token mix (input / output / cache / reasoning), priced/unpriced/unmetered/estimated coverage,
-sessions, Codex projects, and a 365-day token heatmap. A heatmap day with no coverage is a gap, not zero activity,
+sessions, projects, and a 365-day token heatmap. A heatmap day with no coverage is a gap, not zero activity,
 and is not clickable. Custom list-price overlays are documented in `docs/model-pricing.md`.
 Cached and combined reports retain token-class details and known request counts. Coverage is combined from each
 source's existing classification, so a priced source cannot hide another source's unpriced or unmetered rows.
@@ -57,13 +57,6 @@ Token sums that exceed the supported integer range remain unavailable for that a
 restore a partial count. Other token classes, pricing, and explicit totals retain their existing meaning. Materialized
 missing values continue to follow the existing partial-data rules; no overflow metadata is added to stored reports.
 
-OpenCodex `~/.opencodex/usage.jsonl` is an opt-in, read-only spend source (off by default). It is not a quota
-Provider. When both OpenCodex logs and native Codex sessions are present they stay on separate rows; merging would
-double-count the same traffic. An optional toggle can hide native Codex while OpenCodex data is present. Export JSON
-emits the currently aggregated model (provenance, mix, coverage). Invalid numeric fields are omitted while valid
-neighboring fields remain available. Existing cached rows are reparsed once after the numeric parser update;
-subsequent unchanged reads continue to reuse the corrected cache.
-
 The view stays local and does not upload usage history. Refreshes retain the last successful model if a replacement
 scan fails, while provider/account configuration changes replace obsolete results. Coverage text reports how many
 days of the selected local calendar window are covered by the scan window; a 30-day selection is not labeled as
@@ -71,13 +64,11 @@ complete when the available scan window covers fewer days.
 
 | Provider | Strategies (ordered for auto) |
 | --- | --- |
-| Codex | App Auto: OAuth API (`oauth`) → CLI RPC/PTy (`codex-cli`). CLI Auto: Web dashboard (`openai-web`) → CLI RPC/PTy (`codex-cli`). |
 | Claude | Admin API key (`api`) when configured; otherwise App Auto: OAuth API (`oauth`) → CLI PTY (`claude`) → Web API (`web`). CLI Auto: Web API (`web`) → CLI PTY (`claude`); on Linux, Web API (`web`) → OAuth API (`oauth`) → CLI PTY (`claude`). |
 | OpenCode | Web dashboard via cookies (`web`). |
 | OpenCode Go | Unscoped Auto: local SQLite cost history with API overlay (`local+api`) → usage API (`api`) → web dashboard (`web`). Scoped Auto (selected account/manual cookie/workspace): web → local → API. Explicit API/Web: selected source only. |
 | Devin | Chromium localStorage session or manual Bearer token → daily and weekly quota API (`web`). |
 | DeepSeek | API key from env or token accounts → balance endpoint (`api`). |
-| [Pi](pi.md) | Local Pi/OMP assistant transcripts → token history and API-rate cost estimates (`local`); no subscription quota. |
 
 <!-- Generated provider additions: Scripts/regenerate-provider-docs.mjs -->
 
@@ -86,21 +77,9 @@ complete when the available scan window covers fewer days.
 
 <!-- End generated provider additions -->
 
-## Codex
-- App Auto: OAuth API first; falls back to CLI only when OAuth credentials are missing or auth/refresh is invalid.
-- Web dashboard (optional, off by default): `https://chatgpt.com/codex/cloud/settings/analytics#usage` via WebView + browser cookies.
-- Battery saver toggle (currently off by default): reduces routine OpenAI web refreshes but still allows explicit manual refreshes.
-- CLI RPC default: `codex ... app-server` JSON-RPC (`account/read`, `account/rateLimits/read`).
-- CLI PTY: manual diagnostics/parser coverage only; automatic refresh does not launch bare Codex TUI.
-- Local cost usage: scans `CODEX_HOME` (or `~/.codex`) `sessions` and sibling `archived_sessions` JSONL files for the configured history window.
-- Completed cost catch-up publishes validated cached history without starting another scan. Native and included Pi/OMP caches must cover the requested window; unavailable or incompatible history preserves existing totals until a later refresh. Token timestamps retain the actual cache scan time. This does not resolve catch-up that remains pending while an active log continuously grows.
-- Status: Statuspage.io (OpenAI).
-- Details: `docs/codex.md`.
-
-
 ## Claude
 - Admin API: `sk-ant-admin...` key in Settings/config, token accounts, or `ANTHROPIC_ADMIN_KEY`.
-- Admin API shows organization spend/messages summaries with the same inline dashboard pattern as OpenAI API.
+- Admin API shows organization spend/messages summaries in an inline dashboard.
 - App Auto: OAuth API (`oauth`) → CLI PTY (`claude`) → Web API (`web`).
 - CLI Auto: Web API (`web`) → CLI PTY (`claude`).
 - Linux CLI Auto: Web API (`web`) → OAuth API (`oauth`) → CLI PTY (`claude`). The OAuth step is skipped without

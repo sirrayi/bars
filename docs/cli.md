@@ -85,9 +85,8 @@ sources and setup guide. The [provider ID list](provider-ids.md) is generated fr
     still applies. The actual winning source gains ` (claude-swap fallback)` (or ` (tcr fallback)`) in text and JSON,
     and the identity remains that of the fallback account. Another swap slot is never substituted. Pooled tcr
     adapters normally report no active slot and therefore use the labeled fallback.
-- `bars cost` prints token cost usage for Claude, Codex, Cursor, Antigravity, Muse Code, and Pi.
-  - Claude and Codex are scanned from local session logs without web/CLI access.
-  - [Pi](pi.md) reads supported Pi/OMP local assistant history. Selecting Pi alongside Claude/Codex keeps those providers native-only so combined totals count each source once.
+- `bars cost` prints token cost usage for Claude, OpenCode Go, and Devin.
+  - Claude is scanned from local session logs without web/CLI access.
     Text output labels priced results as local estimates and token-only results as token history, and distinguishes unavailable or lower-bound history from a complete period with no recorded usage.
   - `--format text|json` (default: text). `--json` includes the same cost concepts as Settings → Usage & Spend (token mix, `provenance`, coverage), but it is not the dashboard Export JSON schema. CLI places mix fields under each provider's `totals` and emits `provenance`/`coverage` on that provider object; Export JSON nests `tokenMix`, `provenance`, and `coverage` under `groups[]`.
   - OpenCodex appears as a separate `opencodex` payload only when **Include OpenCodex usage logs** is on in Settings. That payload does not invent `projects` (OpenCodex logs have no workspace path).

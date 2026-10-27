@@ -28,11 +28,10 @@ remain credential-scoped.
 
 Claude supports three usage data paths plus local cost usage. The main provider pipeline uses runtime-specific
 automatic selection, but the codebase still has multiple active Claude `.auto` decision sites while the refactor is
-pending. For the exact current-state parity contract, see
-[docs/refactor/claude-current-baseline.md](refactor/claude-current-baseline.md).
+pending.
 
 When an Anthropic Admin API key is configured, Claude can also show organization-level spend/messages/tokens in the
-same inline dashboard pattern used by the OpenAI API provider.
+same inline dashboard.
 
 Incomplete proxy records with an explicit null `stop_reason`, positive input, zero output, and no cache counters are excluded from token and cost totals until a completed record arrives. Their day and model stay visible with an **Incomplete** marker and an excluded-request count. Known usage remains a partial subtotal; an incomplete-only period stays unavailable rather than becoming zero. Older caches are rebuilt once to apply this distinction. Missing `stop_reason` alone retains compatibility with older complete logs.
 
@@ -55,8 +54,7 @@ Completed requests for models without a known price keep their token usage and r
 - Explicit OAuth retains the last successful quota measurement through recognized temporary network failures,
   including localized DNS/offline errors. Its original timestamp remains visible; authentication rejection still
   follows the existing invalidation and credential-owner rules.
-- A lower-level direct Claude fetcher still contains a separate `.auto` order. That inconsistency is tracked in
-  [docs/refactor/claude-current-baseline.md](refactor/claude-current-baseline.md).
+- A lower-level direct Claude fetcher still contains a separate `.auto` order.
 
 Usage source picker:
 - Preferences → Providers → Claude → Usage source (Auto/OAuth/Web/CLI).
@@ -321,8 +319,7 @@ is stored on the token account in the config file and does not change quota fetc
   a dormant account does not select it.
 - Claude token accounts accept either `sessionKey` cookies or OAuth access tokens (`sk-ant-oat...`). OAuth-token
   accounts route to the OAuth path and disable cookie mode; session-key or cookie-header accounts stay in manual
-  cookie mode. The exact edge-routing rules are documented in
-  [docs/refactor/claude-current-baseline.md](refactor/claude-current-baseline.md).
+  cookie mode.
 - Cookie source order:
   1) Safari: `~/Library/Cookies/Cookies.binarycookies`
   2) Chrome/Chromium forks: `~/Library/Application Support/Google/Chrome/*/Cookies`
@@ -659,7 +656,7 @@ Model-scoped weekly-window proof (synthetic data, no real accounts or credential
   - App memos record whether every file's rows were selected for their scan window. Older or externally replaced caches without that proof rebuild once, even if their stored bounds already match; app window changes also rebuild to preserve cold-scan duplicate selection. The regular cache filename and row schema remain compatible, and standalone CLI range behavior is unchanged.
   - The Claude/Vertex cache artifact retains source file identities independently of the shared Codex parser fingerprint. Replacing a transcript rebuilds its rows rather than merging an old prefix into a new suffix; genuine appends still use the saved parse offset. Older entries without identity are rebuilt once before reuse, including during the normal refresh debounce.
   - Older Claude/Vertex native caches and report memos are rebuilt once from unchanged transcripts to apply the corrected response deduplication. Corrected reports remain eligible for memo reuse across launches.
-  - pi-compatible session cache: `~/Library/Caches/bars/cost-usage/pi-sessions-v9.json`. Version 8 rebuilds once from transcripts to establish source scope and completeness. Enabling the standalone [Pi provider](pi.md) keeps Claude history native-only in combined views.
+  - pi-compatible session cache: `~/Library/Caches/bars/cost-usage/pi-sessions-v9.json`. Version 8 rebuilds once from transcripts to establish source scope and completeness.
 
 ## Key files
 - OAuth: `Sources/BarsCore/Providers/Claude/ClaudeOAuth/*`

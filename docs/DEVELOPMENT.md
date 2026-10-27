@@ -70,28 +70,6 @@ use the repository's suppression-safe test harness and never query the real Keyc
 
 See [Keychain prompts](keychain-prompts.md) for the current user-facing boundary and safe troubleshooting.
 
-## Augment Cookie Refresh
-
-### How It Works
-bars checks Augment through the provider fetch pipeline. Auto mode tries the Augment CLI first, then the
-browser-cookie web path. The web path reuses cached cookies when possible and imports from supported browsers when
-the cache is missing or rejected.
-
-### Refresh Frequency
-- Fresh-install default: Adaptive, between 2 and 30 minutes (configurable in Preferences → General). Existing installs
-  without a stored cadence retain the legacy 5-minute fallback.
-- Minimum: 1 minute
-- Cookie import happens automatically when cached cookies need refresh
-
-### Supported Browsers
-- Safari, Chrome variants, Edge variants, Brave, Arc variants, Dia, and Firefox.
-
-### Manual Cookie Override
-If automatic import fails:
-1. Open Preferences → Providers → Augment
-2. Change "Cookie source" to "Manual"
-3. Paste cookie header from browser DevTools
-
 ## Project Structure
 
 Key source, test, and packaging paths (not exhaustive):
@@ -118,13 +96,6 @@ bars/
 ├── TestsLinux/                # Portable and Linux-specific CLI/core tests (target exists on macOS too)
 └── Scripts/                   # Build and packaging scripts
 ```
-
-## Linux CLI linkage
-
-The glibc CLI must not depend on `libxml2`: newer distributions use an incompatible SONAME. Keep
-`FoundationXML` imports and XML parsing under `#if os(macOS)`. Plugin SVG icons fall back to their monogram
-on Linux. CI and release builds run `bash Scripts/check-linux-cli-linkage.sh <BarsCLI>` against each glibc
-binary; static musl builds do not have a dynamic dependency table.
 
 ## Common Tasks
 
@@ -527,7 +498,7 @@ resolved file when automatic resolution is disabled.
 
 The `lint-build-test` check in `.github/workflows/ci.yml` keeps its existing name and requires successful lint,
 change detection, and the full `build-linux-cli` glibc matrix (x86_64 and ARM64 build, tests, and smoke checks)
-when the shared macOS/Linux path gate requires it. Both platforms use the same docs/site allowlist; source,
+when the shared macOS/Linux path gate requires it. Both platforms use the same docs allowlist; source,
 test, widget, and workflow paths always require builds, including Markdown resources and fixtures. Linux has
 no draft deferral. Only `required=true / result=success` or `required=false / result=skipped` passes; failure,
 cancellation, missing or unknown values, and unexpected skips or executions fail verification.
@@ -539,14 +510,6 @@ tests deferred for a draft still leave the aggregate incomplete. Whole-workflow 
 dependency, condition, and verifier arguments. `BarsLinuxTests` includes the portable `AntigravityLocalhostSessionLifetimeTests` suite on
 both macOS and Linux. It checks session reuse and concurrent synthetic loopback failures without credentials;
 this coverage does not establish or fix the cause of Linux dispatch crashes.
-
-### Static Linux SDK
-
-CI and release builds install the static Linux SDK through `Scripts/install_swift_static_sdk.sh`. It downloads with
-`curl`, verifies the pinned SHA-256, and passes a local archive to `swift sdk install`, avoiding SwiftPM's Linux
-FoundationNetworking/TLS teardown crash. Portable lint checks cover checksum rejection, download failures, and installer
-failure propagation without downloading an SDK.
-Changes to the installer require a musl CI build.
 
 ### Format Code
 
@@ -560,32 +523,11 @@ swiftlint --strict
 ### Local Development Build
 ```bash
 ./Scripts/package_app.sh
-# Creates: bars.app with ad-hoc signing by default
+# Creates: bars.app (ad-hoc signed)
 ```
 
-For an identity-signed package, set `BARS_SIGNING=identity` and `APP_IDENTITY` to an installed Developer ID Application signing
-identity's full name, unique name substring, or SHA-1 certificate hash. Packaging resolves it through
-`security find-identity -p codesigning -v`, derives the Team ID from the selected identity, and signs with that
-certificate's hash. A missing or ambiguous match, a certificate other than Developer ID Application with a ten-character Team ID, or a conflicting
-`APP_TEAM_ID` fails before entitlements are generated. Self-signed and Apple Development/Distribution certificates are not supported by this
-path; use ad-hoc packaging or a Developer ID Application identity. Developer ID names carry a Team ID, whereas
-development certificate names can carry a personal ID. Explicit identity selections are also validated in LLDB builds.
-
-App and widget entitlements use the resolved team. Only upstream-team identity-signed release builds embed the
-upstream provisioning profile and CloudKit entitlements; other teams package without those upstream resources.
-Widget build failures and timestamp/signature failures still fail packaging. The sandboxed launch smoke check is
-retained; the existing `BARS_SKIP_LAUNCH_SMOKE=1` override explicitly reports that it skipped validation.
-
-### Release Build (Notarized)
-```bash
-./Scripts/sign-and-notarize.sh
-# Creates: bars-<version>.zip and bars-<version>.dSYM.zip
-```
-
-`sign-and-notarize.sh` honors `APP_IDENTITY` and passes the same selection to packaging; it defaults to the upstream
-Developer ID. Timestamping and hardened runtime remain required for all identity-signed releases.
-
-See `docs/RELEASING.md` for full release process.
+Builds are always ad-hoc signed; there is no Developer ID, notarization, or release pipeline. The sandboxed launch
+smoke check is retained; `BARS_SKIP_LAUNCH_SMOKE=1` explicitly reports that it skipped validation.
 
 ## Troubleshooting
 

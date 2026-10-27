@@ -266,29 +266,10 @@ See the [generated provider ID list](provider-ids.md), sourced from `UsageProvid
 ## Ordering
 The order of `providers` controls display/order in the app and CLI. Reorder the array to change ordering.
 
-## iCloud sync
-The three sync sub-options are disabled while the main sync switch is off, iCloud is unavailable, or a newer app version is required. Their saved choices are retained when sync is turned off and restored when it is enabled again.
-
-Opt-in (Settings → iCloud Sync, off by default; requires a signed release build and an iCloud account). When enabled, bars syncs across the user's Macs via CloudKit (private database, container `iCloud.com.sirrayi.bars`):
-
-- **Provider configuration** — portable fields of each provider entry (enabled intent, extras, region, workspace, quota-warning overrides, ordering-relevant metadata). Secrets (`apiKey`, `secretKey`, `cookieHeader`, `tokenAccounts`) sync only when "Include API keys, cookies, and tokens" is on, and travel exclusively in CloudKit `encryptedValues` (end-to-end encrypted; readable only on the user's devices).
-- **A curated preferences subset** — notification/threshold/display settings.
-- **Usage snapshots** — per-device current usage per account, so other Macs can show last-known data ("via <Mac> · 1h ago") and accounts discovered on other Macs.
-
-With Usage snapshots and Show accounts from other Macs enabled, an enabled provider without local usage can also use the freshest fleet fallback in separate, current-selection, highest-usage, and stacked menu bar icons. The menu labels its source and age; accessibility help includes the source Mac and capture time, respecting Hide personal info. Local snapshots remain authoritative. Remote usage does not enable local credential-dependent fetches or populate local costs, pace, credits, or account labels. Highest usage compares the same presentation snapshots without enabling local fetches. Fleet refreshes preserve an open menu's provider switcher until the menu is closed and reopened.
-
-The **Macs** list offers **Remove** for other devices, including stale duplicates left after a reinstall. Removal deletes that device record and its cached usage snapshots from iCloud; it leaves shared settings, credentials, and this Mac intact. Sync must be enabled and available. Failed removals remain visible and report a sync error. A Mac still running bars with sync enabled can publish its records again: if a save finds that its previous record was deleted, it drops the stale server version and retries with a fresh record. If that fresh record is also reported missing, bars surfaces the error instead of retrying indefinitely.
-
-Automatic reception of changes requires a release signed with the macOS Push Notifications entitlement. When that capability is present, enabling sync registers for silent remote notifications; CKSyncEngine manages the CloudKit database subscription. The existing launch, foreground, and 15-minute fetch requests remain, but are not a guarantee of prompt delivery without push support. See [release setup](RELEASING.md#icloud-sync-cloudkit).
-
-Fetched records and removed-record recovery apply together with their local sync bookkeeping. Cancelling sync, turning it off, or accepting a newer batch prevents a suspended older apply from overwriting provider settings, preferences, or fleet records.
-
-Never synced, by design: `hooks` (sync payloads structurally cannot create or modify hook rules — they execute local binaries), machine-local paths (`claudeSwapExecutablePath`, `claudeSwapSource`, `codexProfileHomePaths`, `awsProfile`/`awsAuthMode`, `source`, `codexActiveSource`, `cookieSource`), menu-bar layout/geometry, debug settings, usage history, and cost ledgers. A provider is never auto-enabled on a Mac where its required local CLI is missing. Records carry a schema version; older app versions pause sync instead of rewriting newer payloads. The CLI does not talk to CloudKit — the running app watches `config.json`, applies CLI or hand edits locally, and syncs changed provider payloads to the fleet when iCloud sync is enabled. Remote changes written to the file are recognized as app writes and are not echoed back. The app tracks per-provider dirty state and never re-uploads unchanged state at launch.
-
 ## Notes
 - Fields not relevant to a provider are ignored.
 - Omitted providers are appended with defaults during normalization.
-- Unknown or retired provider entries are retained with all their fields, settings, and secrets in their original array positions during unrelated saves. This also applies when plugin discovery fails or the plugin runtime is unavailable. `config providers` labels unavailable entries as `plugin (not loaded)`; `config dump` includes them but redacts their opaque fields unless `--show-secrets` is explicitly requested. Remove plugin data through explicit plugin deletion, or remove the entry by editing the file.
+- Unknown or retired provider entries are retained with all their fields, settings, and secrets in their original array positions during unrelated saves. `config dump` includes them but redacts their opaque fields unless `--show-secrets` is explicitly requested. Remove an entry by editing the file.
 - When a configuration read reports an error, bars preserves `config.json` during startup and later settings saves. At startup it uses temporary defaults without clearing legacy credentials; repair the file and let bars reload it, or remove it and restart, before saving settings. Temporary defaults and earlier queued or staged saves cannot overwrite the repaired file after a reload. Legacy migration retries on the next launch.
 - Reloading account settings from disk reloads the complete config, preserving unrelated edits. A failed config reload, plugin-settings read, or save-time config validation blocks saving until a valid full reload succeeds.
 - Keep the file private; it contains secrets.
