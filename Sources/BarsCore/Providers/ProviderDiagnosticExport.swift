@@ -358,9 +358,6 @@ public struct ProviderDiagnosticError: Codable, Sendable {
         if case ProviderFetchError.noAvailableStrategy = error {
             return authConfigured ? "configuration" : "auth"
         }
-        if error is ProviderEndpointOverrideError {
-            return "configuration"
-        }
         if let pluginError = error as? ProviderFetchClassifiedError {
             return switch pluginError.kind {
             case .authenticationExpired, .missingCredential, .permissionDenied: "auth"

@@ -326,7 +326,6 @@ final class SpendDashboardFreshnessFixture {
                 ProviderConfig(id: $0.instanceID, enabled: providers.contains($0))
             }),
             prepareDefaults: {
-                $0.set(AppGroupSupport.migrationVersion, forKey: AppGroupSupport.migrationVersionKey)
                 $0.set(true, forKey: "bars.legacySecretsMigrationCompleted")
                 $0.set(true, forKey: "debugDisableKeychainAccess")
                 $0.set(true, forKey: "providerDetectionCompleted")

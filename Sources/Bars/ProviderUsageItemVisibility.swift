@@ -218,7 +218,7 @@ extension SettingsStore {
             return Set(storedIDs.map(ProviderUsageItemID.init(rawValue:)))
         }
 
-        var hiddenIDs = Self.defaultHiddenUsageItemIDs(for: provider)
+        var hiddenIDs: Set<ProviderUsageItemID> = []
         // Provider-specific by design: migrate the legacy Claude Daily Routines visibility toggle.
         if provider == .claude, !self.claudeDailyRoutinesUsageVisible {
             hiddenIDs.insert(.metric("claude-routines"))
@@ -231,12 +231,7 @@ extension SettingsStore {
     }
 
     func hasCustomUsageItemVisibility(for provider: UsageProvider) -> Bool {
-        self.hiddenUsageItemIDs(for: provider) != Self.defaultHiddenUsageItemIDs(for: provider)
-    }
-
-    private static func defaultHiddenUsageItemIDs(for provider: UsageProvider) -> Set<ProviderUsageItemID> {
-        Set(ProviderDescriptorRegistry.descriptor(for: provider).presentation.menuCard.defaultHiddenUsageItemIDs
-            .map(ProviderUsageItemID.init(rawValue:)))
+        !self.hiddenUsageItemIDs(for: provider).isEmpty
     }
 
     func setUsageItemVisible(
@@ -261,7 +256,7 @@ extension SettingsStore {
             self.providerConfig(for: provider)?.hiddenUsageItemIDs == nil
         else { return }
 
-        let defaultIDs = Self.defaultHiddenUsageItemIDs(for: provider)
+        let defaultIDs: Set<ProviderUsageItemID> = []
         self.persistHiddenUsageItemIDs(defaultIDs, for: provider)
         self.updateLegacyUsageVisibility(provider: provider, hiddenItemIDs: defaultIDs)
     }

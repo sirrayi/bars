@@ -12,18 +12,18 @@ read_when:
 On macOS 26 and later, Settings uses the system split-view sidebar, toolbar, search, and scroll-edge effects. The native sidebar toggle and divider can hide or restore the sidebar; its saved width is preserved. The detail scroll view and frosted toolbar backing fill the available column even in wide windows. Earlier macOS versions keep the existing sidebar, titlebar layout, and detail reading-width cap.
 
 - Back and Forward revisit the panes you opened, using Command-[ and Command-] as in System Settings. Selecting a new pane after going back clears forward history; reselecting the current pane preserves it. The last pane still restores at launch, while navigation history lasts only for the current app session. Hidden Debug panes are removed from history. On macOS 26 and later, the controls use the native toolbar; macOS 14/15 retain the native window title and show the controls above the pane content. The native window title stays set on every version for accessibility and the Window menu. About and Acknowledgements share this history. Opening About explicitly returns to its root; reopening Settings preserves the current destination during the session. Only the pane, not a subpage or history, restores after relaunch.
-- Dock presence follows startup and actual window transitions instead of rescanning windows on every app update. Scheduled Sparkle alerts still request temporary Dock presence, including alerts shown behind another app.
+- Dock presence follows startup and actual window transitions instead of rescanning windows on every app update.
 - Menu → Highlight menu cards on hover is on by default. Turn it off to keep normal text and usage-bar colors on provider cards, Overview cards, and Refresh while hovering. Keyboard selection stays visible; clicks and submenus are unchanged. The choice persists locally across restarts.
 - The provider sidebar keeps saved order and the one-click alphabetical toggle (enabled first). The adjacent
   menu offers Only show enabled providers and Restore default order. Restore is disabled when the saved order
   is already the default and alphabetical sorting is off. Search matches service names, provider IDs,
   CLI names, and CLI aliases, ignoring case and accents.
 - Browsing filters do not rewrite provider configuration or menu bar order. Dragging is available only in the
-  unfiltered saved-order view and retains hidden plugin positions. Restore default order resets built-in service
-  positions to the catalog order, preserving provider configuration and plugins. Undo (also available through
+  unfiltered saved-order view. Restore default order resets built-in service
+  positions to the catalog order, preserving provider configuration. Undo (also available through
   the native undo command) reverses the latest sidebar order change without reverting later credential edits;
   external order changes invalidate it. The enabled-only filter stays local, and alphabetical sorting keeps its
-  existing sync and portable-transfer preference.
+  existing portable-transfer preference.
 - App copy, credential-expiry alerts, share cards, number formatting, and layout direction follow the selected app language. Widgets use the system language independently; all 23 supported languages have complete app catalogs and generated widget catalogs. After editing app translations or widget lookup keys, run `node Scripts/sync-widget-locales.mjs`; `make check` verifies key coverage, format arguments, plural branches, and generated resources.
 - Notifications → Reset notifications is off by default and uses confirmed session and weekly resets, independently of confetti. Alerts name the provider and window; account labels appear only when Hide personal info is off. The existing macOS notification permission and Focus/Do Not Disturb settings control delivery; this toggle adds no startup permission request.
 - Enabled reset confetti runs for about 8.5 seconds so upward-launched pieces finish falling offscreen before the overlay closes. It remains click-through throughout the celebration.
@@ -43,7 +43,7 @@ On macOS 26 and later, Settings uses the system split-view sidebar, toolbar, sea
 - Both the application menu and status menu open About in the Settings window. An existing Settings window is reused
   and switches to the About pane.
 - Homebrew-managed installs show an Updates section in About with the automatic-check toggle, Check for Updates, and the owning cask's status: checking, up to date, or "bars x is available" with a prominent "Update to x" button. The menu shows the same "Update to x" action, then "Updating with Homebrew…" while Homebrew runs; the app relaunches after verifying the installed version reached the offered update.
-- The explicit Update action verifies the owning cask, then uses `brew reinstall --cask` if its receipt already matches the latest cask version, or `brew upgrade --cask` otherwise. This repairs an older app bundle behind a current receipt. Automatic and manual update checks never run `brew`; non-Homebrew installs retain Sparkle updates.
+- The explicit Update action verifies the owning cask, then uses `brew reinstall --cask` if its receipt already matches the latest cask version, or `brew upgrade --cask` otherwise. This repairs an older app bundle behind a current receipt. Automatic and manual update checks never run `brew`.
 - If a Homebrew check or update fails, About shows the error and, when the active receipt identifies the cask, a selectable monospaced upgrade command for that cask with a trailing copy control. The control confirms successful copies briefly; copying does not run an update.
 
 ## Menu bar
@@ -56,8 +56,8 @@ Stacked rows with leading window labels align their values and meters after the 
 - LSUIElement app: no Dock icon; status item uses custom NSImage.
 - Cached status menus and previously opened submenus follow macOS appearance changes before reopening, preserving the effective Light/Dark and accessibility appearance.
 - Merge Icons toggle combines providers into one status item with a switcher.
-- Menu Bar → Combined icon source offers Current selection (default), Highest usage, and Frontmost provider app. The last option follows enabled Codex, Claude, Cursor, and Antigravity desktop apps only while the merged icon is collapsed. Unknown or disabled apps fall back to the saved selection or Overview. Opening the menu preserves its provider, account, and Overview selection; focus never saves a new selection. Stacked and separate icons do not monitor focus. Monitoring uses macOS application notifications, without polling, permission prompts, or terminal-tab inspection. Existing highest-usage preferences are preserved, and the choice supports sync and portable preference transfer.
-- **Highest usage** compares quota windows, not cost or token activity. Providers without quota windows, such as Pi, are not candidates; choose **Current selection** and select the provider in the menu to keep it visible in the combined icon.
+- Menu Bar → Combined icon source offers Current selection (default), Highest usage, and Frontmost provider app. The last option follows the Claude desktop app only while the merged icon is collapsed. Unknown or disabled apps fall back to the saved selection or Overview. Opening the menu preserves its provider, account, and Overview selection; focus never saves a new selection. Stacked and separate icons do not monitor focus. Monitoring uses macOS application notifications, without polling, permission prompts, or terminal-tab inspection. Existing highest-usage preferences are preserved, and the choice supports portable preference transfer.
+- **Highest usage** compares quota windows, not cost or token activity. Providers without quota windows are not candidates; choose **Current selection** and select the provider in the menu to keep it visible in the combined icon.
 - With separate icons, explicitly reordering providers in Settings reassigns bars's saved menu bar slots in that order, from right to left. Recreated items retain their stable autosave and accessibility identities. Orders changed while icons are merged also update these saved slots before returning to separate icons. Ordinary refreshes and visibility recovery continue to preserve manual Command-drag placement.
 - With the automatic metric selected, switcher progress honors a provider's exhausted-quota selection before
   showing normal weekly progress. OpenCode Go's automatic percentage and switcher use the least remaining
@@ -84,19 +84,14 @@ Stacked rows with leading window labels align their values and meters after the 
   existing labels; single-window and balance output stays bare. Full window names remain in VoiceOver descriptions.
   Explicit named provider lanes, named allowances, Spend currency symbols, and progress-bar labels remain visible.
   The preference is stored separately as `menuBarLayoutShowWindowLabels`; saved layouts and V5/V6 projections are unchanged.
-- For a provider-specific bare Session percentage, select Codex or Claude in Layout, remove the existing percentage,
+- For a provider-specific bare Session percentage, select Claude in Layout, remove the existing percentage,
   and add the **second Session %** chip from Usage (the provider's primary lane). This works with window labels enabled.
-- For Codex or Claude weekly usage without a `W` prefix, select that provider in Layout, remove the existing percentage,
-  and add the **second Weekly %** chip from Usage (the provider's secondary lane). Repeat for the other provider
-  if needed. The first **Weekly %** is a semantic window token and keeps its prefix; lane tokens omit it.
-  For Antigravity's two independent families, add **Gemini weekly %** and **Claude/GPT weekly %**;
-  both appear when known weekly quota-summary data is available. The separate Gemini provider reports
-  Pro/Flash quotas, not these Antigravity family allowances; it does not synthesize a weekly quota.
+- For Claude weekly usage without a `W` prefix, select that provider in Layout, remove the existing percentage,
+  and add the **second Weekly %** chip from Usage (the provider's secondary lane). The first **Weekly %** is a semantic window token and keeps its prefix; lane tokens omit it.
 - Layout palette chips use their natural label widths and wrap into rows instead of squeezing longer token names into equal-width columns.
 - Time tokens offer Session and Weekly variants of Resets in and Reset at, including in conditional branches.
   The original unqualified reset tokens continue to follow the automatic window. A selected window that is
-  unavailable displays a dash rather than substituting another window. Cursor also exposes **Grok Bot %**
-  while its named allowance is available; a saved token shows its label and a dash when unavailable. Saved layouts use V4 keys
+  unavailable displays a dash rather than substituting another window. Saved layouts use V4 keys
   alongside a V3 projection that drops named-extra tokens but keeps explicit reset selections, and a
   v0.56.8-readable V2 projection, which omits the new tokens and conditional rules that use them while preserving
   existing conditional placements, direct lane selections, and other providers' overrides. Re-upgrading restores
@@ -120,7 +115,6 @@ Stacked rows with leading window labels align their values and meters after the 
 | --- | --- | --- |
 | Identity | Icon, Provider name, Account | Provider-scoped branding and identity |
 | Usage | Session %, Weekly %, Scoped weekly %, Auto %, Spend %, Usage bar | Window percentage or a compact three-glyph usage bar |
-| Usage | Named allowances (Cursor Grok Bot, Antigravity family weekly quotas) | Own label and percentage; a saved selection shows a dash when unavailable |
 | Usage | Session pace, Weekly pace, Auto pace, Spend pace | Signed pace delta for that window |
 | Time | Resets in, Reset at (automatic, Session, Weekly, Spend), Runs out | Selected-window relative reset, absolute reset, or pace estimate |
 | Money | Balance, Cost today, Cost (History window), Spend, Spend / budget | Provider balance or remaining credits, or local cost estimate. Cost (History window) is the total for the selected [History window](cost-reporting-periods.md), and cost thresholds compare that window's total. Spend and Spend / budget show the provider-reported amount spent, alone or against its budget |
@@ -162,11 +156,10 @@ Enable **Color by provider** under **Menu Bar → Icon** to tint each provider s
 
 Provider color falls back to monochrome while a menu is open, data is stale, system Increase Contrast is enabled, or the inactive-display contrast option is enabled. Color returns immediately when the menu closes. Accents must meet a 2:1 contrast threshold against conservative reference backgrounds (25% sRGB gray in dark appearance, 85% in light appearance); this is not a WCAG text-conformance claim or wallpaper sampling. Unsupported or low-contrast accents use the system template rendering. The layout preview follows its own light/dark and accessibility environment.
 
-Balance uses the same provider amount as the menu card: Codex credits, OpenRouter remaining credits, MiMo,
-DeepSeek, DeepInfra, Moonshot, Poe points, Hypercredits, LithosAI prepaid balance, Atlas Cloud and Vercel available balances, or OpenCode Go's
-Zen balance. DevPass shows remaining billing-cycle credits (a plan allowance); Mistral shows monthly API spend.
+Balance uses the same provider amount as the menu card: Claude prepaid credits, DeepSeek balance, or OpenCode Go's
+Zen balance.
 An explicit Balance token remains available alongside quota percentages. Missing amounts render a dash;
-unrelated spend is never substituted. Conditional balance thresholds remain OpenRouter-only. Auto %
+unrelated spend is never substituted. Auto %
 uses the same provider-aware automatic-window resolution as the legacy menu bar metric setting. For balance-only
 providers, Auto % shows the available money, points, or API spend instead of inventing a quota percentage. Both the
 status item and editor preview preserve real quota percentages when a usable limit exists. When a reset token
@@ -207,10 +200,8 @@ model-generic token label while the rendered menu-bar prefix and accessibility l
 - Provider errors use up to three red lines, with inline backtick-delimited commands rendered in monospace and the copy control aligned to the first line. Copy preserves the original error text. Stale Claude usage has a separate, single-line secondary notice; Settings error previews retain the notice with the error.
 - Live pace and metric detail text use the full row width. Updates that exceed the space reserved when the menu opened
   show a trailing ellipsis; reopening the menu measures the updated text again.
-- Codex credits can add a separate “Buy Credits…” menu action.
 - Claude spend-only accounts use one Meter bar and a shared metric row with the used/remaining preference, spend/limit caption, inferred monthly reset, and optional pace. Accounts with quota windows keep the separate Extra usage section. Both follow the existing Extra usage visibility choice.
-- Codex OpenAI web extras: code review remaining and usage breakdown render when dashboard data is attached.
-- Codex and Claude cost cards: a Recent windows list under the daily bars shows each quota window's
+- Claude cost cards: a Recent windows list under the daily bars shows each quota window's
   range, cost, and tokens (Current window, Previous window, N windows ago), split at official and banked resets.
   Inferred boundaries are labeled estimated; incomplete local subtotals show ≥ and a partial-estimate note.
   Without weekly reset metadata, the existing calendar cost history remains visible.
@@ -232,7 +223,7 @@ model-generic token label while the rendered menu-bar prefix and accessibility l
 
 ## Pace tracking
 
-Pace compares your actual usage against the expected consumption rate for the current window. Most providers use an even-consumption budget; Codex can use historical pace data when historical tracking is available.
+Pace compares your actual usage against the expected consumption rate for the current window. Most providers use an even-consumption budget; historical pace data is used when historical tracking is available.
 
 Monthly allowance cards also show a daily target: remaining allowance divided by the local calendar days
 until reset, counting today and any partial reset day (at least one day). A reset exactly at midnight does
@@ -240,7 +231,7 @@ not add another day. The target keeps the reported credits, requests, currency, 
 follows the existing pace visibility setting. Unknown usage, missing resets, and expired windows show no
 target. This is a budget for the remaining period, not a measurement of today's usage or an alert threshold.
 
-The **Work days** setting selects the weekly pace model. **Automatic** uses Codex historical pace when enough data is available. Historical daily credits follow local calendar-day boundaries, including midnight daylight-saving transitions. Selecting 4, 5, 6, or 7 days uses that explicit schedule for pace and ETA instead; bars continues collecting history in the background, but does not use historical predictions until the setting returns to Automatic. Six days counts Monday through Saturday and excludes Sunday, including in the session forecast's remaining capacity.
+The **Work days** setting selects the weekly pace model. **Automatic** uses historical pace when enough data is available. Historical daily credits follow local calendar-day boundaries, including midnight daylight-saving transitions. Selecting 4, 5, 6, or 7 days uses that explicit schedule for pace and ETA instead; bars continues collecting history in the background, but does not use historical predictions until the setting returns to Automatic. Six days counts Monday through Saturday and excludes Sunday, including in the session forecast's remaining capacity.
 
 - **On pace** – usage matches the expected rate.
 - **X% in deficit** – you're consuming faster than the even rate; at this pace you'll run out before the window resets.
@@ -254,7 +245,7 @@ forecast from enough valid later samples.
 
 Pace is calculated for any provider window with enough reset timing data and is hidden when less than 3% of the
 window has elapsed. The weekly menu-bar pace token is the one exception: it may appear after 1% of the weekly
-window has elapsed, including when Codex historical tracking predicts less than 1% usage. Session, automatic, and
+window has elapsed, including when historical tracking predicts less than 1% usage. Session, automatic, and
 Runs out tokens remain hidden until 3% of their window has elapsed.
 
 ## Preferences notes
@@ -276,7 +267,7 @@ Cost-history submenus keep tall histories in a scrollable viewport. Switching To
 
 ### Provider percent window
 
-In Icon and Percent mode, provider settings expose a **Menu bar metric** picker when the provider supports multiple quota windows. Alongside Auto, Session, and Weekly, it offers the provider's declared named allowances: Cursor's Grok Bot and Antigravity's Gemini weekly and Claude/GPT weekly quotas. These choices remain available before a reading arrives. The choice updates top-level percent tokens in that provider’s layout and persists through its existing layout override. Named allowances render their own label and percentage, with an en dash for missing or unknown data and a real zero preserved. Balance, reset, conditional tokens, and other providers’ layouts remain independent; use the layout editor for mixed percent windows.
+In Icon and Percent mode, provider settings expose a **Menu bar metric** picker when the provider supports multiple quota windows. Alongside Auto, Session, and Weekly, it offers any named allowances the provider declares. These choices remain available before a reading arrives. The choice updates top-level percent tokens in that provider’s layout and persists through its existing layout override. Named allowances render their own label and percentage, with an en dash for missing or unknown data and a real zero preserved. Balance, reset, conditional tokens, and other providers’ layouts remain independent; use the layout editor for mixed percent windows.
 
 ### Inline cost chart inspection
 
@@ -288,15 +279,13 @@ Long ranges initially show the newest 30 daily rows. **Show all** expands the co
 
 Usage & Spend includes a daily ledger for each currency group. Rows use the selected bucket time zone and app language, retain priced days when another day is unpriced, and mark unavailable amounts with a dash. When one source on a day has no price, the row shows the known spend of the other sources with a tilde, the same partial marker as the group total. A day with no known spend keeps the dash. Zero-usage rows require established common coverage; unknown activity is not described as idle. Narrow settings windows allow horizontal ledger scrolling. Source filtering and dashboard accounting remain authoritative.
 
-OpenCodex cost and request aggregates cover the selected history window, including All; older activity remains included alongside its token counts. Imported requests without token evidence retain the other models' known subtotals and mark the model breakdown as partial. Missing-usage counts propagate through daily, session, window, CLI, and exported totals; sharing excludes incomplete model rankings. Explicit zero usage stays known, and numeric overflow is not reclassified as missing usage. Cached imports apply the same accounting without rereading unchanged logs.
-
 ### Per-provider usage visibility
 
-In each provider’s settings, **Visible usage items** selects which reported quota, usage, and credit rows appear in its menu, preview, and Overview. Rows are visible by default. Hidden rows that temporarily stop reporting remain individually restorable; **Restore Defaults** shows all rows again. These presentation choices sync with provider settings and do not change fetching, alerts, or quota calculations.
+In each provider’s settings, **Visible usage items** selects which reported quota, usage, and credit rows appear in its menu, preview, and Overview. Rows are visible by default. Hidden rows that temporarily stop reporting remain individually restorable; **Restore Defaults** shows all rows again. These presentation choices are saved with provider settings and do not change fetching, alerts, or quota calculations.
 
 Usage-row visibility also filters compact account constraint details. Overall account headroom, severity, ordering, and recommendations continue to use all quotas.
 
-Visibility and accent-color changes preserve account cache identity and retained spend, including when the changes arrive through config reload or sync. Credential and endpoint changes still invalidate their previous usage ownership.
+Visibility and accent-color changes preserve account cache identity and retained spend, including when the changes arrive through config reload. Credential and endpoint changes still invalidate their previous usage ownership.
 
 ### Optional billing visibility
 
@@ -304,12 +293,12 @@ Visibility and accent-color changes preserve account cache identity and retained
 **Visible usage items** choices still apply. When the global switch hides a supported item, its checkbox
 remains available with an explanation; checking it does not override the global setting.
 
-Codex and Claude have separate **Limit Reset Credits** and **Plan renewal / expiry** choices. These are
+Claude has separate **Limit Reset Credits** and **Plan renewal / expiry** choices. These are
 independent of the global switch. Plan dates appear immediately after the quota rows, before reset credits, labeled
 **Plan renews** or **Plan expires** to distinguish them from quota resets.
 Compact Overview still omits plan dates when quota bars are present. On upgrade, a previously disabled
 global switch initializes Claude's reset-credit choice to hidden; users can then enable it independently.
-The one-time migration preserves other saved choices and travels with provider settings through sync.
+The one-time migration preserves other saved choices and is saved with provider settings.
 Claude also has an **Extra usage** checkbox; it does not hide Admin API spend. Cloud credits retain their
 existing independent checkbox and remain subject to the global switch. Menu cards, Settings previews, and
 Overview use the same visibility projection. Fetching, history, alerts, and CLI output are unchanged.

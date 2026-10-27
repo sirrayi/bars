@@ -212,14 +212,12 @@ public struct RemoteSessionFetcher: Sendable {
         }
     }
 
-    /// Tries the v2 session JSON protocol first, then the legacy v1 form, for both PATH and the
-    /// bundled app CLI. Each fallback is reached only when the preceding command exits non-zero.
+    /// Tries the CLI on PATH first, then the bundled app CLI. The fallback is reached only when the
+    /// preceding command exits non-zero.
     package static func remoteSessionsCommand() -> String {
         let bundledCLI = Self.shellQuote(Self.bundledCLIFallback)
         return [
-            "bars sessions --json-v2",
             "bars sessions --json",
-            "\(bundledCLI) sessions --json-v2",
             "\(bundledCLI) sessions --json",
         ].joined(separator: " || ")
     }

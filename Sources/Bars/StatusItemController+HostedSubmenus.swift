@@ -388,9 +388,7 @@ extension StatusItemController {
                     sessions: tokenSnapshot.sessions,
                     currencyCode: displayConversion.currencyCode,
                     costMultiplier: displayConversion.multiplier,
-                    timeZone: self.settings.costUsageBucketCalendar.timeZone,
-                    activityRange: SessionUsagePresentation.toolActivityRange(
-                        snapshot: tokenSnapshot, calendar: self.settings.costUsageBucketCalendar))
+                    timeZone: self.settings.costUsageBucketCalendar.timeZone)
                 performAfterClosingSessionMenu(submenu) {
                     SessionUsageNavigation.shared.request = .init(context: context, sessionID: sessionID)
                     self.settingsOpenHandler?(.usageSpend)

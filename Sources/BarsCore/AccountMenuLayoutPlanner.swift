@@ -27,7 +27,6 @@ public enum AccountMenuLayoutPlanner {
     public enum ResetPresentation: Equatable, Sendable {
         case standard
         case hidden
-        case providerDescription
     }
 
     public struct WindowDetail: Equatable, Sendable {
@@ -223,19 +222,8 @@ public enum AccountMenuLayoutPlanner {
         window: RateWindow) -> ResetPresentation
     {
         let policy = ProviderDescriptorRegistry.descriptor(for: account.provider).presentation.menuCard
-        if policy.clearsPrimaryReset ||
-            ((policy.hidesPrimaryResetWithoutDate || policy.usesAbacusPace) && window.resetsAt == nil)
-        {
+        if policy.hidesPrimaryResetWithoutDate, window.resetsAt == nil {
             return .hidden
-        }
-        if policy.usesRawPrimaryResetDescription {
-            return .providerDescription
-        }
-        if policy.primaryDescriptionPlacement == .reset,
-           let description = window.resetDescription,
-           !description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        {
-            return .providerDescription
         }
         return .standard
     }

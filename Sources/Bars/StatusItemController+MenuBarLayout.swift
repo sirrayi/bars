@@ -328,20 +328,15 @@ extension UsageStore {
         iconKey: String,
         accountLabel: String?,
         costs: MenuBarLayoutCostValues,
-        includeLocalDerivedData: Bool = true,
         now: Date = .init())
         -> MenuBarLayoutRenderData
     {
         let windows = self.menuBarLayoutWindows(
             provider: provider,
             snapshot: snapshot,
-            includeLocalDerivedData: includeLocalDerivedData,
             now: now)
-        let costs = includeLocalDerivedData
-            ? costs
-            : MenuBarLayoutCostValues(today: nil, last30Days: nil, todayUSD: nil, last30DaysUSD: nil)
         let scopedNamed = MenuBarLayoutSemanticWindowResolver.scopedWeeklyNamedWindow(snapshot: snapshot)
-        let paceWindow = includeLocalDerivedData ? windows.weekly ?? windows.automatic : nil
+        let paceWindow = windows.weekly ?? windows.automatic
         // Bind the pace itself rather than only its label: `etaSeconds` is the numeric run-out that
         // conditional predicates compare, and resolving it twice would score the window twice.
         let pace = paceWindow.flatMap {
@@ -357,8 +352,7 @@ extension UsageStore {
             provider: provider,
             snapshot: snapshot,
             showsOptionalCredits: self.settings.showOptionalCreditsAndExtraUsage)
-        let spend = includeLocalDerivedData
-            ? self.menuBarLayoutSpend(provider: provider, snapshot: snapshot, now: now) : .unavailable
+        let spend = self.menuBarLayoutSpend(provider: provider, snapshot: snapshot, now: now)
         let providerName = L(self.metadata(for: provider).displayName)
         let automatic = MenuBarLayoutRenderWindow(windows.automatic)
 
@@ -367,7 +361,7 @@ extension UsageStore {
             quotaIsEstimated: snapshot?.dataConfidence == .estimated,
             iconKey: iconKey,
             providerName: providerName,
-            accountLabel: includeLocalDerivedData ? accountLabel : nil,
+            accountLabel: accountLabel,
             laneLabels: MenuBarLayoutLaneLabels(provider: provider, snapshot: snapshot),
             primary: MenuBarLayoutRenderWindow(windows.primary),
             secondary: MenuBarLayoutRenderWindow(windows.secondary),
@@ -384,22 +378,22 @@ extension UsageStore {
                 snapshot: snapshot,
                 automatic: automatic,
                 showsOptionalCredits: self.settings.showOptionalCreditsAndExtraUsage),
-            sessionPace: includeLocalDerivedData ? self.menuBarLayoutPaceText(
+            sessionPace: self.menuBarLayoutPaceText(
                 provider: provider,
                 window: windows.session,
                 dataConfidence: snapshot?.dataConfidence ?? .unknown,
-                now: now) : nil,
-            weeklyPace: includeLocalDerivedData ? self.menuBarLayoutPaceText(
+                now: now),
+            weeklyPace: self.menuBarLayoutPaceText(
                 provider: provider,
                 window: windows.weekly,
                 dataConfidence: snapshot?.dataConfidence ?? .unknown,
                 now: now,
-                minimumElapsedPercent: 1) : nil,
-            automaticPace: includeLocalDerivedData ? self.menuBarLayoutPaceText(
+                minimumElapsedPercent: 1),
+            automaticPace: self.menuBarLayoutPaceText(
                 provider: provider,
                 window: windows.automatic,
                 dataConfidence: snapshot?.dataConfidence ?? .unknown,
-                now: now) : nil,
+                now: now),
             runsOut: runsOut,
             balance: MenuBarLayoutBalanceResolver.balance(
                 provider: provider,
@@ -410,22 +404,22 @@ extension UsageStore {
             costToday: costs.today,
             cost30d: costs.last30Days,
             metrics: MenuBarLayoutRenderMetrics(
-                sessionPaceDelta: includeLocalDerivedData ? self.menuBarLayoutPaceDelta(
+                sessionPaceDelta: self.menuBarLayoutPaceDelta(
                     provider: provider,
                     window: windows.session,
                     dataConfidence: snapshot?.dataConfidence ?? .unknown,
-                    now: now) : nil,
-                weeklyPaceDelta: includeLocalDerivedData ? self.menuBarLayoutPaceDelta(
+                    now: now),
+                weeklyPaceDelta: self.menuBarLayoutPaceDelta(
                     provider: provider,
                     window: windows.weekly,
                     dataConfidence: snapshot?.dataConfidence ?? .unknown,
                     now: now,
-                    minimumElapsedPercent: 1) : nil,
-                automaticPaceDelta: includeLocalDerivedData ? self.menuBarLayoutPaceDelta(
+                    minimumElapsedPercent: 1),
+                automaticPaceDelta: self.menuBarLayoutPaceDelta(
                     provider: provider,
                     window: windows.automatic,
                     dataConfidence: snapshot?.dataConfidence ?? .unknown,
-                    now: now) : nil,
+                    now: now),
                 runsOutMinutes: pace?.etaSeconds.map { Int(($0 / 60).rounded()) },
                 balanceRemainingUSD: balanceAmounts.remaining,
                 balanceUsedUSD: balanceAmounts.used,
@@ -444,11 +438,10 @@ extension UsageStore {
     func menuBarLayoutWindows(
         provider: UsageProvider,
         snapshot: UsageSnapshot?,
-        includeLocalDerivedData: Bool = true,
         now: Date)
         -> MenuBarLayoutWindows
     {
-        let spend = includeLocalDerivedData ? self.spendLimit(for: provider, snapshot: snapshot, now: now)?.window : nil
+        let spend = self.spendLimit(for: provider, snapshot: snapshot, now: now)?.window
 
         let semanticWindows = MenuBarLayoutSemanticWindowResolver.windows(
             provider: provider,

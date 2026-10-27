@@ -219,7 +219,7 @@ final class UsageStore {
     @ObservationIgnored private var timerTask: Task<Void, Never>?
     /// In-memory only; resets on every launch.
     @ObservationIgnored private(set) var lastMenuOpenAt: Date?
-    /// Latest local Codex/Claude transcript activity observed by the existing session scanner.
+    /// Latest local Claude transcript activity observed by the existing session scanner.
     /// In-memory only; paths and session identities never enter the refresh policy.
     @ObservationIgnored private(set) var lastCodingActivityAt: Date?
     @ObservationIgnored var adaptiveRefreshScheduledAt: Date?

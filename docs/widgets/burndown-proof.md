@@ -1,10 +1,9 @@
 # Recorded quota burndown
 
-Codex, Claude, and Kiro's **Plan Usage** submenu shows recorded remaining quota above the
+Claude's **Plan Usage** submenu shows recorded remaining quota above the
 existing utilization history when a saved quota window has not expired. Each chart
 keeps its own selector. Labels and saved-window normalization come from the shared
-utilization-chart preparation, including Claude's Sonnet lane and legacy Codex
-30-day windows displayed as Monthly.
+utilization-chart preparation, including Claude's Sonnet lane.
 
 The solid line joins recorded quota percentages; it is not an exact token count.
 The dashed line is an even-use guide from 100% at the window start to 0% at reset,
@@ -17,7 +16,7 @@ while the utilization history remains accessible below it.
 ## Retention and privacy
 
 This view adds no persistent store, setting, provider request, or background task.
-Codex and Claude already record Plan Usage history during normal refreshes. The
+Claude already records Plan Usage history during normal refreshes. The
 menu reads the history selected by the existing provider/account ownership rules.
 
 Existing JSON files live under
@@ -28,9 +27,7 @@ recording caps each account's series at 17,520 samples (roughly 730 days at one
 sample per hour). This is not a strict age expiry, a global byte limit, or an
 account-count bound.
 
-The existing account keys are not all anonymous: Codex provider-account keys can
-contain the provider's account identifier in plain JSON, while email-based and
-Claude keys are hashed. This chart does not change that storage format or add
+Email-based and Claude account keys are hashed. This chart does not change that storage format or add
 identifiers. Treat existing history files as private; display masking does not
 sanitize them for sharing.
 
@@ -49,13 +46,6 @@ env -u OP_SERVICE_ACCOUNT_TOKEN -u SLACK_APP_TOKEN -u SLACK_BOT_TOKEN \
   swift test --filter QuotaBurndownRenderProofTests
 ```
 
-The fixture produces Codex Session, Weekly, and Monthly views, Claude's
-Weekly/Sonnet selector, and a before/after pair with the retained utilization chart.
+The fixture produces Claude's Weekly/Sonnet selector, and a before/after pair with the retained utilization chart.
 These are hosted-view renders, not captures of a running native menu. The hosted
 submenu tests separately cover lazy hydration and refresh after a window expires.
-
-The contributor's earlier synthetic captures remain available for comparison:
-[original chart](burndown-menu-synthetic.png),
-[native submenu](burndown-native-synthetic.png), and
-[weekly endpoints](burndown-weekly-synthetic.png).
-The standalone debug-app proof mode used for those captures has been removed.

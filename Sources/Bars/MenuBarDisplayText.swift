@@ -52,7 +52,7 @@ enum MenuBarDisplayText {
     }
 
     /// Combined "session · weekly" menu-bar text shared by providers that expose both a
-    /// session (5h) and weekly (7d) lane, e.g. Codex and Claude.
+    /// session (5h) and weekly (7d) lane, e.g. Claude.
     static func combinedSessionWeeklyPercentText(
         sessionWindow: RateWindow?,
         weeklyWindow: RateWindow?,

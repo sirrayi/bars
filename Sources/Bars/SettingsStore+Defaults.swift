@@ -348,11 +348,6 @@ extension SettingsStore {
         }
     }
 
-    var kiroMenuBarDisplayMode: KiroMenuBarDisplayMode {
-        get { KiroMenuBarDisplayMode(rawValue: self.defaultsState.kiroMenuBarDisplayModeRaw ?? "") ?? .automatic }
-        set { self.setOptionalDefault(\.kiroMenuBarDisplayModeRaw, newValue.rawValue, key: "kiroMenuBarDisplayMode") }
-    }
-
     var accountWidgetsEnabled: Bool {
         get { self.defaultsState.accountWidgetsEnabled }
         set { self.setDefault(\.accountWidgetsEnabled, newValue, key: "accountWidgetsEnabled") }
@@ -774,11 +769,6 @@ extension SettingsStore {
                 metadata: ["enabled": newValue ? "1" : "0"])
             self.noteBackgroundWorkSettingsChanged()
         }
-    }
-
-    var jetbrainsIDEBasePath: String {
-        get { self.defaultsState.jetbrainsIDEBasePath }
-        set { self.setDefault(\.jetbrainsIDEBasePath, newValue, key: "jetbrainsIDEBasePath") }
     }
 
     var mergeIcons: Bool {

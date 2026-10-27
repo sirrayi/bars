@@ -9,7 +9,6 @@ struct ProviderRuntimeContext {
 
 enum ProviderRuntimeAction {
     case forceSessionRefresh
-    case openAIWebAccessToggled(Bool)
 }
 
 @MainActor

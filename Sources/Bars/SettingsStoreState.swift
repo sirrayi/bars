@@ -42,7 +42,6 @@ struct SettingsDefaultsState {
     var menuBarHighContrastOnInactiveDisplays: Bool
     var menuBarDisplayModeRaw: String?
     var menuBarShowsResetTimeWhenExhausted: Bool
-    var kiroMenuBarDisplayModeRaw: String?
     var historicalTrackingEnabled: Bool
     var multiAccountMenuLayoutRaw: String
     var accountWidgetsEnabled: Bool
@@ -76,7 +75,6 @@ struct SettingsDefaultsState {
     var claudeModelScopedWeeklyUsageVisible: Bool
     var backgroundWorkLowPowerModePreference: LowPowerModePreference
     var providerStorageFootprintsEnabled: Bool
-    var jetbrainsIDEBasePath: String
     var mergeIcons: Bool
     var mergedOverviewLayoutRaw: String
     var mergedOverviewAllAccounts: Bool

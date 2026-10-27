@@ -24,12 +24,6 @@ struct DockIconWindowDescriptor: Equatable, Sendable {
             isKnownSettingsWindow: self.isKnownSettingsWindow)
     }
 
-    var isSparkleWindow: Bool {
-        !self.title.isEmpty && self.classNames.contains { className in
-            className.contains("SPU") || className.contains("SUUpdate") || className.contains("Sparkle")
-        }
-    }
-
     var isRealWindow: Bool {
         guard !self.isPlaceholderSettingsWindow else { return false }
         guard self.isVisible, !self.isMiniaturized, self.canBecomeKey else { return false }
@@ -80,7 +74,7 @@ enum DockIconPolicyDecision {
     }
 
     static func shouldPromoteForPresentedWindow(_ window: DockIconWindowDescriptor) -> Bool {
-        window.isVisible && !window.isPlaceholderSettingsWindow && (window.isSettingsWindow || window.isSparkleWindow)
+        window.isVisible && !window.isPlaceholderSettingsWindow && window.isSettingsWindow
     }
 
     /// Windows that became eligible for Dock promotion since the last evaluation.
@@ -257,7 +251,7 @@ final class DockIconController: NSObject {
                 : nil
         })
         // Capture the delta before updating stored state so we only key newly presented
-        // dialogs. Fronting every eligible window can re-key Settings over a Sparkle alert.
+        // dialogs. Fronting every eligible window can re-key Settings over another dialog.
         let newlyPresentedWindowIDs = DockIconPolicyDecision.newlyPresentedWindowIDs(
             current: presentedWindowIDs,
             previous: self.presentedWindowIDs)

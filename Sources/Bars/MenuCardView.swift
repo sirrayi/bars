@@ -864,9 +864,7 @@ extension UsageMenuCardView.Model {
         let usageNotes = Self.usageNotes(input: input)
         let presentation = ProviderDescriptorRegistry.descriptor(for: input.provider).presentation
         let menuCard = presentation.menuCard
-        let rawCreditsText: String? = if !menuCard.showsCreditsSection ||
-            !input.showOptionalCreditsAndExtraUsage
-        {
+        let rawCreditsText: String? = if !input.showOptionalCreditsAndExtraUsage {
             nil
         } else {
             Self.creditsLine(
@@ -895,7 +893,7 @@ extension UsageMenuCardView.Model {
         let providerCostFollowsSummaryStyle = Self.providerCostFollowsSummaryStyle(
             cost: extraUsageCost,
             style: providerCostStyle,
-            isClaudeAdminAPI: isClaudeAdminAPI) && !menuCard.providerCostIsRequiredUsage
+            isClaudeAdminAPI: isClaudeAdminAPI)
         var providerCost: ProviderCostSection? = if !showsProviderCost ||
             metrics.contains(where: { $0.id == "claude-extra-usage" }) ||
             (providerCostFollowsSummaryStyle && !input.costSummaryInlineEnabled)
@@ -1024,11 +1022,6 @@ extension UsageMenuCardView.Model {
         return cleaned.isEmpty ? text : cleaned
     }
 
-    private static func isKiloActivitySegment(_ text: String) -> Bool {
-        let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        return normalized.hasPrefix("auto top-up:")
-    }
-
     private static func subtitle(
         snapshot: UsageSnapshot?,
         isRefreshing: Bool,
@@ -1139,7 +1132,7 @@ extension UsageMenuCardView.Model {
             input: input,
             percentStyle: percentStyle))
 
-        return Self.blockingQuotaMetrics(metrics, input: input, snapshot: snapshot)
+        return metrics
     }
 
     private static func primaryMetric(
@@ -1152,10 +1145,6 @@ extension UsageMenuCardView.Model {
         var presentation = PrimaryMetricPresentation(
             resetText: Self.resetText(for: primary, style: input.resetTimeDisplayStyle, now: input.now),
             detailText: nil)
-        Self.applyPrimaryQuotaPresentation(
-            &presentation,
-            input: input,
-            primary: primary)
         Self.applyPrimaryBalancePresentation(&presentation, input: input, primary: primary)
         Self.applyPrimaryResetPresentation(&presentation, input: input, primary: primary)
         if bindingProjection == nil {
@@ -1208,18 +1197,7 @@ extension UsageMenuCardView.Model {
             now: input.now,
             pace: input.weeklyPace,
             showUsed: input.usageBarsShowUsed)
-        let presentation = ProviderDescriptorRegistry.descriptor(for: input.provider).presentation
-        var weeklyResetText = Self.resetText(for: weekly, style: input.resetTimeDisplayStyle, now: input.now)
-        var weeklyDetailText: String?
-        if presentation.menuCard.showsSecondaryBalanceDescription,
-           let detail = weekly.resetDescription,
-           !detail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        {
-            weeklyDetailText = detail
-            if weekly.resetsAt == nil {
-                weeklyResetText = nil
-            }
-        }
+        let weeklyResetText = Self.resetText(for: weekly, style: input.resetTimeDisplayStyle, now: input.now)
 
         if let windowPaceDetail = Self.resetWindowPaceDetail(
             window: weekly,
@@ -1236,7 +1214,7 @@ extension UsageMenuCardView.Model {
             percentStyle: percentStyle,
             statusText: nil,
             resetText: weeklyResetText,
-            detailText: weeklyDetailText,
+            detailText: nil,
             detailLeftText: paceDetail?.leftLabel,
             detailRightText: paceDetail?.rightLabel,
             pacePercent: paceDetail?.pacePercent,

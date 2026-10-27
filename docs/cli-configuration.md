@@ -25,90 +25,38 @@ bars config providers --json --pretty
 Enable or disable a provider:
 
 ```bash
-bars config enable --provider grok
-bars config disable --provider cursor
+bars config enable --provider devin
+bars config disable --provider opencode
 ```
 
-These are persistent app/CLI settings. They are different from `bars usage --provider grok`, which is a one-shot
+These are persistent app/CLI settings. They are different from `bars usage --provider devin`, which is a one-shot
 command override and does not edit config.
 
 If every provider is disabled, `bars usage` with no `--provider` prints no text output, and
 `bars usage --json` prints `[]`. Passing `--provider <name>` still fetches that provider for the one command.
-
-## Copilot device login
-
-```bash
-bars config login --provider copilot
-bars config login --provider copilot --json
-```
-
-The command prints GitHub's verification URL and user code. Open the URL on any machine, enter the code,
-and authorize access. bars polls until approval, denial, expiry, or cancellation (Ctrl-C); it does not
-open a browser or access Keychain. A configured Copilot `enterpriseHost` selects the matching GitHub issuer.
-
-On approval, bars verifies the GitHub identity, saves it to the existing `providers[].tokenAccounts`,
-selects that account, and enables Copilot. Repeating login updates the matching account while preserving
-its label and settings. The legacy provider-level API key is cleared, just as when adding an account in
-Settings. If config changes while login is pending, the command fails without overwriting that edit;
-retry against the updated config. Success is reported only after the private, atomic config write succeeds.
-
-JSON mode emits newline-delimited objects (one object per event; `--pretty` has no effect):
-
-```json
-{"expiresIn":900,"status":"authorization_pending","userCode":"ABCD-EFGH","verificationURI":"https://github.com/login/device"}
-{"status":"authorized"}
-```
-
-Failures after argument parsing emit `{"status":"failed","error":"..."}` and exit nonzero. Neither output
-mode prints the access token or device code used for polling. This is an interactive setup command;
-`usage` and `serve` never start login automatically. `BARS_CONFIG` also applies to login.
 
 ## API keys
 
 API keys are stored under the provider entry in config:
 
 ```bash
-printf '%s' "$ELEVENLABS_API_KEY" | bars config set-api-key --provider elevenlabs --stdin
+printf '%s' "$DEEPSEEK_API_KEY" | bars config set-api-key --provider deepseek --stdin
 ```
 
 `set-api-key` enables the provider by default. Add `--no-enable` when you only want to save the key:
 
 ```bash
-printf '%s' "$OPENROUTER_API_KEY" | bars config set-api-key --provider openrouter --stdin --no-enable
+printf '%s' "$OPENCODE_API_KEY" | bars config set-api-key --provider opencodego --stdin --no-enable
 ```
 
-Useful examples:
+Claude also accepts an Anthropic Admin API key for organization spend:
 
 ```bash
-printf '%s' "$OPENAI_ADMIN_KEY" | bars config set-api-key --provider openai --stdin
 printf '%s' "$ANTHROPIC_ADMIN_KEY" | bars config set-api-key --provider claude --stdin
-printf '%s' "$DEEPGRAM_API_KEY" | bars config set-api-key --provider deepgram --stdin
-printf '%s' "$GROQ_API_KEY" | bars config set-api-key --provider groq --stdin
-printf '%s' "$LLM_PROXY_API_KEY" | bars config set-api-key --provider llmproxy --stdin
-printf '%s' "$Z_AI_API_KEY" | bars config set-api-key --provider zai --stdin
-printf '%s' "$XAI_MANAGEMENT_API_KEY" | bars config set-api-key --provider xai --stdin
 ```
 
-For a z.ai team account:
-
-```bash
-printf '%s' "$Z_AI_API_KEY" | bars config set-api-key --provider zai --stdin \
-  --label Team \
-  --usage-scope team \
-  --organization-id org_... \
-  --workspace-id proj_...
-```
-
-
-Only providers that consume config-backed API keys accept this command. Admin API providers may require a key with
-organization/usage permissions, not a normal inference key. The `xai` provider reads xAI developer-platform billing
-with a Management key plus a team ID (set `workspaceID` in the provider entry, `XAI_TEAM_ID`, or the app settings
-pane); inference API keys are not accepted. The separate Grok provider tracks consumer Grok/SuperGrok subscriptions
-through its own browser/CLI session and takes no API key, so enable it with
-`bars config enable --provider grok`.
-
-LLM Proxy also needs a base URL. Use `LLM_PROXY_BASE_URL` for CLI runs, or add `"enterpriseHost"` to the provider entry
-in the bars config file.
+Only providers that consume config-backed API keys accept this command. Admin API keys need organization/usage
+permissions, not a normal inference key.
 
 ## Isolated config files
 
@@ -116,7 +64,7 @@ For tests, demos, and CI, point bars at a temporary config file:
 
 ```bash
 export BARS_CONFIG=/tmp/bars-config.json
-bars config enable --provider grok
+bars config enable --provider devin
 bars config providers --json --pretty
 ```
 
@@ -127,7 +75,6 @@ The override applies to both reads and writes for the current process environmen
 The app setting controls the menu's local cost-history window. For one-off CLI reports, pass `--days`:
 
 ```bash
-bars cost --provider codex --days 90
 bars cost --provider claude --days 180 --format json --pretty
 ```
 
@@ -144,6 +91,6 @@ bars config dump --pretty
 
 `dump` prints normalized config, including providers omitted from a hand-written file.
 
-Missing, empty, or JSON-whitespace-only config files use defaults on macOS and Linux. `validate`, `dump`, and
+Missing, empty, or JSON-whitespace-only config files use defaults. `validate`, `dump`, and
 `usage` leave such files unchanged; the next `config enable`, `disable`, or `set-api-key` writes valid JSON.
 Malformed non-empty JSON still produces a config error and a nonzero exit without overwriting the file.

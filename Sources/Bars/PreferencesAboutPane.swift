@@ -8,7 +8,7 @@ struct AboutPane: View {
     @State private var iconHover = false
 
     private var buildTimestamp: String? {
-        guard let raw = Bundle.main.object(forInfoDictionaryKey: "CodexBuildTimestamp") as? String else { return nil }
+        guard let raw = Bundle.main.object(forInfoDictionaryKey: "BarsBuildTimestamp") as? String else { return nil }
         let parser = ISO8601DateFormatter()
         parser.formatOptions = [.withInternetDateTime]
         guard let date = parser.date(from: raw) else { return raw }

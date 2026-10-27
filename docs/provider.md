@@ -17,10 +17,10 @@ Goal: adding a provider should feel like:
 This doc describes the **current provider architecture** and the exact steps to add a new provider.
 
 ## Terms
-- **Provider**: a source of usage/quota/status data (Codex, Claude, Gemini, Antigravity, Cursor, …).
+- **Provider**: a source of usage/quota/status data (Claude, OpenCode, OpenCode Go, Devin, DeepSeek).
 - **Descriptor**: the single source of truth for labels, URLs, defaults, and fetch strategies.
 - **Fetch strategy**: one concrete way to obtain usage (CLI, web cookies, OAuth API, local probe, etc.).
-- **Host APIs**: shared capabilities we provide to providers (Keychain, browser cookies, PTY, HTTP, WebView scrape, token-cost).
+- **Host APIs**: shared capabilities we provide to providers (Keychain, browser cookies, PTY, HTTP, token-cost).
 - **Identity fields**: email/org/plan/loginMethod. Must stay **siloed per provider**.
 
 ## Architecture overview (now)
@@ -36,8 +36,7 @@ Common building blocks already exist:
 - PTY: `TTYCommandRunner`
 - subprocess: `SubprocessRunner`
 - cookie import: `BrowserCookieImporter` (Safari/Chrome/Firefox adapters)
-- OpenAI dashboard web scrape: `OpenAIDashboardFetcher` (WKWebView + JS)
-- cost usage: local log scanner (Codex + Claude)
+- cost usage: local log scanner (Claude) and OpenCode Go's SQLite history
 
 Browser discovery policy belongs to the provider. Use `ChromiumLocalStorageDiscovery.defaultBrowsers` for
 catalog-derived Chromium storage discovery; the shared traversal handles localStorage, sessionStorage, and
@@ -48,16 +47,15 @@ for cookies matching the provider's hosts before requesting Safe Storage; a manu
 interactive Keychain read across all providers and browsers. Denials retain the six-hour browser and Chromium-family
 cooldown, including manual retries; only `bars cookie refresh --allow-keychain-prompt` explicitly overrides it.
 Session validation is lazy: stop at the first working browser and continue only after a missing or rejected session.
-Plugin permission errors retain recovery advice for each blocked browser. A decryption denial supersedes a profile
+Permission errors retain recovery advice for each blocked browser. A decryption denial supersedes a profile
 denial only for that same browser; Safari points to Full Disk Access while Chromium profile denials point to
 Files & Folders. A working session from another browser still wins over these permission errors.
 Safari needs filesystem access (potentially Full Disk Access), while Firefox and Zen read unencrypted cookie stores;
 none of those browsers needs a Safe Storage Keychain grant. A denied or unavailable store remains skippable.
-Restrict a provider to a browser subset only with a documented technical reason next to the code. WorkBuddy retains
-Chrome because its sessions bind to the Chrome User-Agent supplied by the host; Devin reads Chromium local storage
-rather than cookies. Preserve explicit browser/profile pickers and full-catalog preferred orderings.
-Plugin cookie settings display the provider's catalog-derived supported-browser names and a Manual fallback. Use the
-same `ctx.browser.supportedBrowsers` names in plugin sign-in guidance; never maintain a second browser-name list.
+Restrict a provider to a browser subset only with a documented technical reason next to the code. Devin reads
+Chromium local storage rather than cookies. Preserve explicit browser/profile pickers and full-catalog preferred orderings.
+Cookie settings display the provider's catalog-derived supported-browser names and a Manual fallback; never maintain
+a second browser-name list.
 
 Provider behavior is descriptor-driven. Two flat first-party manifests form the closed bootstrap boundary:
 `ProviderManifest` lists core descriptors and `ProviderImplementationManifest` lists app implementations. The registries
@@ -73,12 +71,11 @@ Credential and config behavior follows the descriptor boundary too. Providers wi
 `ProviderCredentialAdapter` that owns config-to-environment projection, token resolution, token-account support,
 diagnose classification, validation, and missing-credential messaging; a missing adapter means the provider has no
 credential behavior. Typed settings-section registrations optionally expose cookie settings and a CLI credential
-contribution, so the app, CLI, and plugin cookie broker consume the same provider-owned settings shape.
+contribution, so the app and CLI consume the same provider-owned settings shape.
 
 Automatic cookie traversal reads one browser at a time in the provider's existing order. Fetchers validate
 its candidate sessions before requesting another browser; missing or rejected sessions retain fallback.
-The plugin broker applies the same rule to both header and cookie-jar imports, while explicit browser/profile
-selections remain isolated. Public exhaustive import APIs retain their array return types; live fetches consume
+Explicit browser/profile selections remain isolated. Public exhaustive import APIs retain their array return types; live fetches consume
 lazy candidates instead.
 
 ### Provider architecture gatekeeper threat model
@@ -116,7 +113,6 @@ Introduce a single descriptor per provider:
 - capabilities (supportsCredits, supportsTokenCost, supportsStatusPolling, supportsLogin)
 - fetch plan (allowed `--source` modes + ordered strategy pipeline)
 - CLI metadata (cliName, aliases, version provider)
-- account behavior (e.g., `usesAccountFallback` for Codex auth.json)
 - `nativeAppBundleIdentifiers`: exact provider-owned desktop app bundle IDs for the opt-in frontmost merged icon. The shared monitor matches only enabled providers and rejects ambiguous matches; general-purpose browsers and terminals must not claim a provider.
 
 UI and settings should become descriptor-driven:
@@ -154,9 +150,8 @@ Expose a narrow set of protocols/structs that provider implementations can use:
 - `BrowserLocalStorageAPI`: read origin-scoped key/value snapshots across browser profiles
 - `PTYAPI`: run CLI interactions with timeouts + “send on substring” + stop rules
 - `HTTPAPI`: URLSession wrapper with domain allowlist + standard headers + tracing
-- `WebViewScrapeAPI`: WKWebView lease + `evaluateJavaScript` + snapshot dumping
-- `TokenCostAPI`: Cost Usage local-log integration (Codex/Claude today; extend later)
-- `StatusAPI`: status polling helpers (Statuspage + Workspace incidents)
+- `TokenCostAPI`: Cost Usage local-log integration (Claude today; extend later)
+- `StatusAPI`: status polling helpers (Statuspage)
 - `LoggerAPI`: scoped logger + redaction helpers
 
 Rule: providers do not talk to `FileManager`, `Security`, or “browser internals” directly unless they *are* the host API implementation.
@@ -287,7 +282,7 @@ or builder switch changes are needed.
 
 If the provider has credential behavior, define its credential adapter beside the descriptor. Register token-account
 metadata and config validation there, and register any cookie/settings projection through the descriptor's typed
-settings section; do not add provider cases to the generic config, diagnose, CLI, or plugin broker consumers.
+settings section; do not add provider cases to the generic config, diagnose, or CLI consumers.
 
 Descriptor-owned metadata derives icon-style identity, log-category construction, display and compact labels, default
 enablement, fetch/CLI metadata, config capabilities, menu-bar metric capabilities, and icon validation. Generated

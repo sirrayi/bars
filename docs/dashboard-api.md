@@ -35,8 +35,8 @@ On the default loopback bind, `/usage` and `/cost` are unchanged and unauthentic
 The browser keeps the last successfully merged snapshot in localStorage under `bars.lastSnapshot` and paints that data immediately on the next load, preserving the identity detail served by the configured mode. It then fetches the config-only shell and streams concurrent per-provider snapshot updates into the page as they finish. Signing out clears both the token and cached snapshot.
 
 Usage labels and bar widths follow the app's **Usage bars fill** preference through `host.usageBarsShowUsed`: `true`
-shows used percentages; `false` shows remaining percentages. On macOS the server reads the preference for each request,
-so changes apply without restarting `serve`. The default is remaining when no preference exists, including on Linux;
+shows used percentages; `false` shows remaining percentages. The server reads the preference for each request,
+so changes apply without restarting `serve`. The default is remaining when no preference exists;
 older browser-cached snapshots without this field also use remaining. Earlier web dashboards always showed used
 percentages. The numeric `usedPercent` and `remainingPercent` fields retain their existing meanings.
 
@@ -45,7 +45,7 @@ only in this browser, persisted under `bars.dashboard.usageDisplay` in localStor
 removes the override. Unknown values or unavailable storage fall back to the server preference on load; if saving
 fails, selections still work for the current page. Warning and critical levels always use consumption, regardless
 of display mode. This preference does not change the API payload, identity policy, or provider data.
-The same control works for Linux servers and older cached snapshots without a host fill hint or remaining percentage;
+The same control works for older cached snapshots without a host fill hint or remaining percentage;
 **Follow server** still defaults to remaining, deriving it from consumption when needed. The control adds no external assets.
 
 The UI does not change the transport threat model: `bars serve` is plain HTTP. Off-loopback, a token typed into the page transits the network in cleartext like every other request unless a TLS-terminating reverse proxy protects the connection.
@@ -69,9 +69,8 @@ The UI does not change the transport threat model: `bars serve` is plain HTTP. O
 
 ## Optional live multi-account snapshots
 
-`bars serve --all-accounts` fetches visible Codex accounts/profile homes and configured token accounts into
-`providers[].accounts[]`. Without this flag, managed Codex entries still come from saved metadata and usage as
-specified below. One-shot `bars dashboard` keeps that saved-account behavior. Claude-swap remains authoritative
+`bars serve --all-accounts` fetches configured token accounts into `providers[].accounts[]`. One-shot
+`bars dashboard` does not fetch them. Claude-swap remains authoritative
 when enabled, including empty results and whole-adapter failures; unused Claude token accounts are not fetched.
 
 Expanded snapshots default to no identity, neutral numbered account labels, and generic account/provider/adapter
@@ -79,10 +78,7 @@ errors, independently of the app privacy setting. This includes the selected pro
 explicitly includes emails, aliases and error details. `--identity redacted` retains masked email domains and plan
 labels, but keeps labels neutral and errors generic. Numbering follows discovery order; correlate accounts by ID.
 
-Managed Codex IDs remain `codex-managed:<uuid>` in both modes and survive promotion to the live source. Token
-accounts use persisted UUIDs. Other Codex IDs hash durable source metadata (normalized profile-home path or live
-workspace ID); they never expose raw paths, emails, cache keys or credential fingerprints. Moving a profile home
-changes its ID. An unmanaged live source without a workspace ID has a system-scope ID, not a person-specific ID.
+Token accounts use persisted UUIDs; IDs never expose raw paths, emails, cache keys or credential fingerprints.
 These IDs are correlation handles, not an anonymity guarantee.
 
 Each provider appears once; its top-level usage, identity, credits and error describe the selected account, with
@@ -96,7 +92,7 @@ while retaining available rows. A represented failure or timeout is not missing 
 omits `accounts`; a successful empty adapter response keeps `accounts: []`, with no token-account fallback.
 
 The flag is startup-only, with separate response-cache keys and provider-operation fingerprints. Ordinary snapshots
-keep their existing identity policy. `/usage` retains its existing Codex enumeration; `/cost`, authentication and
+keep their existing identity policy. `/usage`, `/cost`, authentication and
 transport behavior are unchanged. No account creation, selection or credential-storage policy is added.
 
 ## Configuring the token
@@ -168,7 +164,7 @@ Content-Type: application/json; charset=utf-8
 ## Account discovery
 
 `GET /accounts` returns a separate, metadata-only inventory. It includes configured provider token
-accounts and saved managed Codex accounts, including disabled providers. It does not enumerate system
+accounts, including disabled providers. It does not enumerate system
 auth, profile homes, or external account integrations. `GET /accounts/<id>` returns exactly one list
 entry. IDs are stable opaque strings scoped to their source and provider; clients must URL-encode
 them and must not parse their format.
@@ -179,19 +175,17 @@ them and must not parse their format.
   "accounts": [
     {
       "id": "<opaque-id>",
-      "provider": "codex",
-      "source": "codex-managed",
-      "label": "Example Workspace",
-      "active": true,
-      "identity": { "accountEmail": "user@example.com" }
+      "provider": "claude",
+      "source": "token-account",
+      "label": "Work",
+      "active": true
     }
   ]
 }
 ```
 
-`source` is `codex-managed` or `token-account`. Token accounts omit `identity`; managed Codex accounts
-can include `identity.accountEmail`. `active` reflects the configured selection within that provider
-and source, not credential validity, provider enablement, or the system Codex account.
+`source` is `token-account`. Token accounts omit `identity`. `active` reflects the configured selection within
+that provider and source, not credential validity or provider enablement.
 An empty inventory returns `accounts: []`; an unknown ID returns `404` with
 `{"error":"account not found"}`. Unreadable or unsupported stores return a generic `500` error
 without exposing paths or silently returning an incomplete inventory.
@@ -245,8 +239,8 @@ The snapshot is a stable display contract, not a raw dump of provider internals.
   },
   "providers": [
     {
-      "id": "codex",
-      "name": "Codex",
+      "id": "claude",
+      "name": "Claude",
       "enabled": true,
       "source": "oauth",
       "status": {
@@ -256,7 +250,7 @@ The snapshot is a stable display contract, not a raw dump of provider internals.
       },
       "identity": {
         "accountEmail": "user@example.com",
-        "plan": "Pro 20x"
+        "plan": "Max"
       },
       "windows": [
         {
@@ -267,16 +261,12 @@ The snapshot is a stable display contract, not a raw dump of provider internals.
           "resetAt": "2026-07-16T17:15:00Z"
         }
       ],
-      "credits": {
-        "remaining": 112.4,
-        "unit": "credits"
-      },
       "cost": {
         "todayUSD": 1.04,
         "last30DaysUSD": 18.22
       },
       "display": {
-        "accentColor": "#49A3B0",
+        "accentColor": "#CC7C5E",
         "sortKey": 0,
         "priority": "normal"
       },
@@ -294,23 +284,6 @@ is an additive schema-v1 extension: other provider rows and Claude rows without 
 shape. An account's `label` preserves its alias or disambiguated email/organization label, falling back to its slot label. The web dashboard prefers this projected label over the raw identity email; `identity` is present
 whenever claude-swap reports an email, independently of whether that account's usage fetch succeeds. Both fields follow
 the dashboard identity mode: full by default, or redacted with `--identity redacted`.
-When managed Codex accounts exist, the Codex row uses the same array on both `bars dashboard` and
-`GET /dashboard/v1/snapshot`. Entries follow the managed account store's order and have stable
-`codex-managed:<uuid>` IDs, independent of email, workspace labels, and the current selection. `active` identifies
-the managed account selected in bars config; system and profile-home selections leave all managed entries inactive.
-The ambient Codex row remains available separately.
-
-Codex account windows, pace, plan, and `updatedAt` come from the app's last saved account usage, matched to the
-managed UUID, email, and selected workspace. This projection reads only account metadata and saved usage: it does
-not read credentials, refresh accounts, or switch authentication. Missing or mismatched usage leaves the account
-visible with empty windows, null pace/update time, and an account-local diagnostic. Saved refresh failures use a
-fixed diagnostic instead of exporting raw errors that may contain private paths. Refresh the account in bars
-to update its saved usage. No managed accounts means no `accounts` field. The shared identity mode applies to every
-account email and label, including email addresses embedded in workspace labels.
-
-A failure limited to one account stays in that account's `error`; a failure of the whole adapter sets `accountsError`
-while leaving the ambient provider row intact.
-The web dashboard retains local spend totals and the daily chart once per provider group, with provider diagnostics labeled separately. Account cards keep their own usage and errors; ambient account credits are not presented as shared balances.
 
 ```json
 {
@@ -349,21 +322,6 @@ The web dashboard retains local spend totals and the daily chart once per provid
 }
 ```
 
-A managed Codex entry in redacted mode (other account fields use the same shapes as above):
-
-```json
-{
-  "id": "codex-managed:9e122a52-b3db-4a7e-a7a7-c3b8fc9d01e9",
-  "label": "redacted@example.com — Work",
-  "active": true,
-  "identity": { "accountEmail": "redacted@example.com", "plan": "Plus" },
-  "windows": [{ "kind": "session", "label": "Session", "usedPercent": 40, "remainingPercent": 60, "resetAt": "2026-10-04T17:00:00Z" }],
-  "pace": null,
-  "error": null,
-  "updatedAt": "2026-10-04T12:00:00Z"
-}
-```
-
 ## Fields
 
 - `schemaVersion`: Dashboard API schema version.
@@ -379,34 +337,27 @@ A managed Codex entry in redacted mode (other account fields use the same shapes
 - `providers[].source`: Source used for the provider data.
 - `providers[].status`: Provider service status when available (`level`: `ok` | `warning` | `critical` | `unknown`).
 - `providers[].identity`: Account email and plan label, or `null`; the email local part is hidden only in redacted mode.
-- `providers[].windows`: Session, weekly, tertiary, or provider-specific rate windows. Antigravity drops its
-  duplicated representative rows here and emits one row per quota bucket instead.
+- `providers[].windows`: Session, weekly, tertiary, or provider-specific rate windows.
 - `providers[].windows[].idle`: `true` when a display client should skip the row, because the window belongs to a
   model family that reports no usage. The key appears only when it is `true`, so a payload with no idle window keeps
   its previous shape. This is an additive schema-v1 extension. A client that wants every window, such as a script or
   an adapter, ignores the key and keeps the row. The built-in web UI drops these rows so the page matches the app
-  menu, which hides an untouched Antigravity model family. Only the producer can set this: a zero `usedPercent` also
+  menu, which hides an untouched model family. Only the producer can set this: a zero `usedPercent` also
   stands for a lane whose usage the provider never reported, and the payload does not carry that distinction.
 - `providers[].credits`: Remaining credits or balance when available.
-  Grok's purchased wallet is currently exposed by `bars usage --provider grok --json` and `/usage` as
-  `usage.providerCost.balance` with `currencyCode: "USD"`, not by this dashboard projection. It is separate from
-  the included quota: zero is a known balance, absence is unknown, and balance-only `used`/`limit` values of zero
-  do not establish spend or a budget.
 - `providers[].cost`: Local cost data when available, otherwise a provider's reported 30-day USD history.
   Reported history preserves its aggregate, including a known zero, and leaves `todayUSD` null because its day
-  boundaries may differ from the host's local calendar. OpenRouter Activity covers completed UTC days; it must
-  not become local "Today" merely because a daily date string matches. Unsupported currencies or history-window
+  boundaries may differ from the host's local calendar. Unsupported currencies or history-window
   lengths remain unavailable in these USD/30-day fields. Existing local cost rows retain precedence.
 - `providers[].display`: UI hints for ordering and coloring.
 - `providers[].error`: Provider error payload when the latest fetch failed.
 - `providers[].updatedAt`: Best-known update timestamp for the provider row.
 - `providers[].accounts`: Ordered local multi-account entries when an integration supplies them; an enabled claude-swap source
-  with no accounts emits `[]`; Codex omits the field when no managed accounts exist.
-  - `id`: Stable source and slot identifier, such as `claude-swap:2` or `codex-managed:<uuid>`.
+  with no accounts emits `[]`.
+  - `id`: Stable source and slot identifier, such as `claude-swap:2`.
   - `label`: Projected alias or disambiguated email/organization label, otherwise a slot label such as `Account 2`; follows the dashboard identity mode and is preferred for display over `identity.accountEmail`.
   - `active`: Whether this is the source's active account.
-  - `identity`: Account email even when usage is unavailable; otherwise `null`. Claude-swap has a `null` plan;
-    Codex includes the saved plan when available. The email local part is hidden only in redacted mode.
+  - `identity`: Account email even when usage is unavailable; otherwise `null`. Claude-swap has a `null` plan. The email local part is hidden only in redacted mode.
   - `windows`: Account-local session, weekly, and scoped windows in the same shape as `providers[].windows`.
   - `pace`: Account-local primary, secondary, and tertiary pace values when computable. Each pace value contains
     `stage`, `deltaPercent`, `expectedUsedPercent`, `willLastToReset`, `etaSeconds`, `runOutProbability`, and `summary`.

@@ -56,8 +56,8 @@ struct BarsApp: App {
 
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown"
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown"
-        let gitCommit = Bundle.main.object(forInfoDictionaryKey: "CodexGitCommit") as? String ?? "unknown"
-        let buildTimestamp = Bundle.main.object(forInfoDictionaryKey: "CodexBuildTimestamp") as? String ?? "unknown"
+        let gitCommit = Bundle.main.object(forInfoDictionaryKey: "BarsGitCommit") as? String ?? "unknown"
+        let buildTimestamp = Bundle.main.object(forInfoDictionaryKey: "BarsBuildTimestamp") as? String ?? "unknown"
         BarsLog.logger(LogCategories.app).info(
             "bars starting",
             metadata: [

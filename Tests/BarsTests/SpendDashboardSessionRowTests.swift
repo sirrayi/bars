@@ -18,8 +18,6 @@ struct SpendDashboardSessionRowTests {
         let group = try #require(model.groups.first)
         let context = try #require(SpendSessionRows(group: group, hidePersonalInfo: false).context(for: "codex"))
         #expect(context.windowLabel == L("All"))
-        let range = SessionUsagePresentation.toolActivityRange(snapshot: snapshot, calendar: calendar)
-        #expect(context.activityRange == range)
         #expect(context.sessions.first?.totalTokens == 10)
     }
 
@@ -30,12 +28,6 @@ struct SpendDashboardSessionRowTests {
         let firstDay = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 20)))
         let secondDay = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 21)))
         let end = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 22)))
-        let samples = try [firstDay, secondDay].map { date in
-            try #require(CostUsageTurnPerformanceSample(
-                completedAt: date.addingTimeInterval(3600),
-                outputTokens: 10,
-                durationMilliseconds: 1000))
-        }
         let snapshot = CostUsageTokenSnapshot(
             sessionTokens: nil,
             sessionCostUSD: nil,
@@ -65,8 +57,7 @@ struct SpendDashboardSessionRowTests {
                     id: "both-days",
                     cost: 0.3,
                     tokens: 300,
-                    lastActivity: secondDay,
-                    performance: samples),
+                    lastActivity: secondDay),
                 Self.session(id: "first-day-only", cost: 0.1, tokens: 100, lastActivity: firstDay),
             ],
             updatedAt: secondDay.addingTimeInterval(3600))
@@ -79,7 +70,6 @@ struct SpendDashboardSessionRowTests {
                 selectedDay: selectedDay)
             let group = try #require(model.groups.first)
             let context = try #require(SpendSessionRows(group: group, hidePersonalInfo: false).context(for: "codex"))
-            #expect(context.activityRange == firstDay..<end)
             #expect(context.sessions.first { $0.sessionID == "both-days" }?.totalTokens == 300)
             #expect(context.sessions.first { $0.sessionID == "first-day-only" }?.totalTokens == 100)
             let format = Date.FormatStyle(
@@ -90,9 +80,6 @@ struct SpendDashboardSessionRowTests {
                 timeZone: calendar.timeZone)
             #expect(context.windowLabel == firstDay.formatted(format) + " – " + secondDay.formatted(format))
             #expect(!context.windowLabel.contains(end.formatted(format)))
-            if selectedDay == nil {
-                #expect(spendToolActivityRange(group: group) == firstDay..<end)
-            }
         }
     }
 
@@ -347,8 +334,7 @@ struct SpendDashboardSessionRowTests {
         tokens: Int,
         title: String? = nil,
         projectPath: String? = nil,
-        lastActivity: Date = Self.now,
-        performance: [CostUsageTurnPerformanceSample] = []) -> CostUsageSessionBreakdown
+        lastActivity: Date = Self.now) -> CostUsageSessionBreakdown
     {
         CostUsageSessionBreakdown(
             sessionID: id,
@@ -362,8 +348,7 @@ struct SpendDashboardSessionRowTests {
             modelBreakdowns: [],
             projectPath: projectPath,
             projectName: projectPath.map { URL(fileURLWithPath: $0).lastPathComponent },
-            title: title,
-            turnPerformanceSamples: performance)
+            title: title)
     }
 
     private static let now = Date(timeIntervalSince1970: 1_784_179_200) // 2026-07-16 00:00:00 UTC

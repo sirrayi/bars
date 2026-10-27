@@ -245,8 +245,4 @@ extension SettingsStore {
         else { return }
         ProviderCatalog.implementation(for: provider)?.applyTokenAccountCookieSource(settings: self)
     }
-
-    private nonisolated static func normalizedAntigravityAccountEmail(_ email: String?) -> String? {
-        self.normalizedConfigField(email)?.lowercased()
-    }
 }

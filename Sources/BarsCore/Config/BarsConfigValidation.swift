@@ -252,7 +252,7 @@ public enum BarsConfigValidator {
             provider: provider,
             field: "secretKey",
             code: "secret_key_unused",
-            message: "secretKey is set but only bedrock and doubao use secretKey."))
+            message: "secretKey is set but no bundled provider uses secretKey."))
     }
 
     private static func providerSupportsWorkspaceID(_ provider: UsageProvider) -> Bool {

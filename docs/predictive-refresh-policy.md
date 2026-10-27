@@ -18,11 +18,11 @@ bars uses plain `Adaptive` for a missing refresh preference only when no prior-l
 The resolved value is persisted immediately, so later launches preserve that choice. Existing installations without a
 stored cadence, and unrecognized stored values, resolve to the legacy 5-minute fallback. Every valid stored choice,
 including Manual and each fixed interval, remains unchanged. Both adaptive modes adjust the existing provider-batch
-timer between 2 and 30 minutes. Only the separately selected `Adaptive (agent-aware)` mode may use recent local Codex
-or Claude transcript activity to cap otherwise slower unconstrained decisions at 5 minutes.
+timer between 2 and 30 minutes. Only the separately selected `Adaptive (agent-aware)` mode may use recent local Claude
+transcript activity to cap otherwise slower unconstrained decisions at 5 minutes.
 
-The rollout boundary uses an existing config or launch markers that predate this change (`providerDetectionCompleted`
-and the app-group migration version), captured before startup migrations can create them. This covers installations from
+The rollout boundary uses an existing config or launch markers that predate this change (`providerDetectionCompleted`),
+captured before startup migrations can create them. This covers installations from
 v0.4 onward plus any installation with a config. A completely untouched, configless v0.1-v0.3 installation leaves no
 durable signal that can distinguish it from a new install; that historical cohort follows the fresh-install default.
 Selecting a fixed cadence or Manual remains authoritative.
@@ -31,11 +31,6 @@ The original #1861 decision approved a menu-only opt-in policy. The 2026-07-12 e
 in-memory activity timestamp and changes the fallback after the offline replay, timer integration, privacy projection,
 and scanner-cost proof recorded here. It does not approve per-account prediction, persistent interaction history,
 learned ranking, or menu prewarming.
-
-The 2026-09-30 decision in [#4119](https://github.com/steipete/CodexBar/issues/4119) permits recent Codex rollout
-modification times to supply that activity timestamp without a recognized process. Existing agent-aware consent
-covers this contents-free, bounded scan. Process/signature checks remain responsible for identity enrichment;
-Plain Adaptive, remote discovery, persistence, and power constraints keep their existing behavior.
 
 ## Options considered
 
@@ -57,8 +52,8 @@ Current `main` has two independent refresh paths:
    `UsageStore.refresh()`. A refresh is one concurrent batch over `enabledProvidersForBackgroundWork()`.
 2. `StatusItemController.scheduleOpenMenuRefresh(for:)` retries rendered providers with missing/stale data. When the
    default-off **Refresh when the menu opens** setting is enabled, it refreshes every enabled provider instead. Both
-   modes use the background interaction context, coalesce in-flight provider work, and keep prompt-capable OpenAI
-   dashboard work deferred until menu tracking ends.
+   modes use the background interaction context, coalesce in-flight provider work, and keep prompt-capable
+   work deferred until menu tracking ends.
 
 Relevant implementation seams:
 
@@ -186,22 +181,14 @@ Adaptive stores no persistent interaction history.
 - Read Low Power Mode and thermal state at decision time.
 - Log only the selected delay and stable `Reason` code through the existing local logger.
 - After the agent-aware mode is selected and explicit consent is granted, reuse the existing local scanner every 30 seconds.
-  Enumerate today's and yesterday's Codex `rollout-*.jsonl` modification times even without a recognized live process.
-  This cadence signal reads no rollout contents and uses the same bounded enumeration as Agent Sessions. A sync or
-  restore can also update those times and select the five-minute activity cadence; the signal does not establish
-  process or session identity. Inspect running processes through native APIs on macOS (`ps` elsewhere), resolve
-  working directories when needed, and keep Claude transcript inspection process-gated. Codex first-line metadata
-  and identity enrichment remain in the session path, with its existing process/signature checks or explicit Agent
-  Sessions authorization. This is a local metadata scan, not a provider request. Pause agent-aware scans under Low
+  Inspect running processes through native APIs on macOS (`ps` elsewhere), resolve
+  working directories when needed, and keep Claude transcript inspection process-gated. This is a local metadata scan, not a provider request. Pause agent-aware scans under Low
   Power Mode or serious/critical thermal pressure; keep scanning when the user explicitly enables Agent Sessions presentation.
-  Stay Awake retains its live-process scan without enabling process-independent rollout activity while constrained.
-- Bound each scan to the newest 64 agent processes, 128 Codex rollout metadata records, and 64 Claude transcript
-  candidates per project. Share a 512-entry, depth-1, 150 ms budget across agent-aware Codex and Claude directory
-  enumeration, and
+  Stay Awake retains its live-process scan while constrained.
+- Bound each scan to the newest 64 agent processes and 64 Claude transcript candidates per project.
+  Share a 512-entry, depth-1, 150 ms budget across agent-aware directory enumeration, and
   clamp future transcript mtimes to one scanner-lifetime timestamp. The clamp stores no file paths, and repeated scans
   of unchanged future-dated files cannot synthesize newer activity.
-  Activity-only scans inspect process-backed Claude transcripts before spending the remaining shared budget on
-  process-independent Codex rollouts.
 - When Agent Sessions presentation is disabled, discard the full scan result after deriving the newest `Date`. Do not
   retain or publish its PID, CWD, project, transcript path, or session identity fields.
 - Do not log or persist provider identity, account identity, email, workspace, path, credentials, response data, menu
@@ -279,7 +266,7 @@ or menu prewarming as part of these steps.
 - allowing local coding activity enables monitoring only while the agent-aware option remains selected;
 - an agent-aware scan retains the newest attributable timestamp and discards complete session records;
 - agent-aware scans pause under Low Power Mode and serious/critical thermal pressure;
-- scanner limits cap agent processes, Codex rollout parsing, and Claude transcript candidates;
+- scanner limits cap agent processes and Claude transcript candidates;
 - remote fetch remains guarded by the explicit Agent Sessions setting;
 - a refresh-frequency change does not invalidate or retry an in-flight remote refresh.
 
@@ -382,14 +369,14 @@ Replay proves the policy table at reconstructed decision points. It does not rep
 callback, because the frozen trace sampled activity only on decision records. Timer integration tests separately prove
 that a live activity observation can pull a pending 30-minute sleep forward and cannot postpone an earlier refresh.
 
-A 20-run `hyperfine` sample of exact-head `.build/debug/BarsCLI sessions --json`, with one attributable Codex
+A 20-run `hyperfine` sample of exact-head `.build/debug/BarsCLI sessions --json`, with one attributable
 session, measured 153.0 ms ± 14.4 ms wall time and 134.3 ms combined user plus system CPU time per invocation. At the
 30-second unconstrained cadence, that CPU figure extrapolates to 6.5 CPU-minutes per day. Agent-aware scans pause under
 Low Power Mode and serious/critical thermal pressure. The CLI process startup is included, so this is a conservative
 same-machine sample for in-process work, not a scanner upper bound or general energy claim. Simulated refresh counts and
 scanner CPU are reported separately; the replay does not claim net energy savings.
 
-An exact-head synthetic stress fixture then exercised 12 agent-like processes and 512 recent Codex rollout entries.
+An exact-head synthetic stress fixture then exercised 12 agent-like processes and 512 recent transcript entries.
 After bounding the scanner, 20 runs of `.build/debug/BarsCLI sessions --json` measured 231.4 ms ± 12.4 ms wall time
 and 209.3 ms combined user plus system CPU time. At a continuous 30-second cadence that CPU figure extrapolates to 10.1
 CPU-minutes per day. The CLI startup is included. This is a stress sample rather than a population or energy claim, and

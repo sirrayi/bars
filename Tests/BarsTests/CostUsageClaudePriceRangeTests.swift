@@ -80,7 +80,7 @@ struct CostUsageClaudePriceRangeTests {
             Self.expected(day: 699, sidechain: true),
             Self.expected(day: 729),
         ]
-        for filter: CostUsageScanner.ClaudeLogProviderFilter in [.all, .excludeVertexAI, .vertexAIOnly] {
+        for filter: CostUsageScanner.ClaudeLogProviderFilter in [.all, .excludeVertexAI] {
             for offset in [Int64(0), Int64(prefix.utf8.count)] {
                 let parsed = CostUsageScanner.parseClaudeFile(
                     fileURL: file,
@@ -88,7 +88,7 @@ struct CostUsageClaudePriceRangeTests {
                     providerFilter: filter,
                     startOffset: offset,
                     modelsDevCatalog: ModelsDevCatalog(providers: [:]))
-                let keep = filter == .all || (filter == .vertexAIOnly) == vertex
+                let keep = filter == .all || !vertex
                 #expect(parsed.rows == (keep ? expected : []))
                 #expect(parsed.parsedBytes == Int64(complete.utf8.count))
             }

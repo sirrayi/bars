@@ -585,13 +585,6 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
         }
     }
 
-    struct LoginAlertInfo: Equatable {
-        let title: String
-        let message: String
-        /// When set, the alert offers this action alongside Cancel and reports whether it was chosen.
-        var confirmButtonTitle: String?
-    }
-
     /// Cancel is the default button on purpose: confirming clears stored provider credentials, so a
     /// stray Return keypress must not destroy them.
     func presentLoginConfirmation(title: String, message: String, confirmButtonTitle: String) -> Bool {

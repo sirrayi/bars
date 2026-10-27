@@ -775,7 +775,7 @@ struct MenuBarLayoutTests {
         let settings = testSettingsStore(
             suiteName: "MenuBarLayoutTests-global-editor-override-fallback",
             prepareDefaults: { defaults in
-                defaults.set(AppGroupSupport.migrationVersion, forKey: AppGroupSupport.migrationVersionKey)
+                defaults.set(true, forKey: "providerDetectionCompleted")
                 defaults.set(true, forKey: "debugDisableKeychainAccess")
             })
         let override = MenuBarLayout(lines: [[.percent(window: .weekly)]])

@@ -60,25 +60,6 @@ extension UsageMenuCardView.Model {
         var detailIsPaceDerived = false
     }
 
-    static func applyPrimaryQuotaPresentation(
-        _ presentation: inout PrimaryMetricPresentation,
-        input: Input,
-        primary: RateWindow)
-    {
-        let policy = ProviderDescriptorRegistry.descriptor(for: input.provider).presentation.menuCard
-        guard let detail = self.trimmedResetDescription(primary) else { return }
-        switch policy.primaryDescriptionPlacement {
-        case .reset:
-            presentation.resetText = detail
-        case .detailLeft:
-            presentation.detailLeft = detail
-        case .detail:
-            presentation.detailText = detail
-        case .standard:
-            break
-        }
-    }
-
     static func applyPrimaryBalancePresentation(
         _ presentation: inout PrimaryMetricPresentation,
         input: Input,
@@ -90,13 +71,6 @@ extension UsageMenuCardView.Model {
         {
             presentation.detailText = detail
         }
-        switch policy.primaryDetailKind {
-        case .poeBalance, .kiroCredits, .none, .requestQuota:
-            break
-        }
-        if policy.clearsPrimaryReset {
-            presentation.resetText = nil
-        }
     }
 
     static func applyPrimaryResetPresentation(
@@ -105,9 +79,6 @@ extension UsageMenuCardView.Model {
         primary: RateWindow)
     {
         let policy = ProviderDescriptorRegistry.descriptor(for: input.provider).presentation.menuCard
-        if policy.usesRawPrimaryResetDescription {
-            presentation.resetText = primary.resetDescription
-        }
         if policy.hidesPrimaryResetWithoutDate, primary.resetsAt == nil {
             presentation.resetText = nil
         }
@@ -118,7 +89,6 @@ extension UsageMenuCardView.Model {
         input: Input,
         primary: RateWindow)
     {
-        let policy = ProviderDescriptorRegistry.descriptor(for: input.provider).presentation.menuCard
         if let paceDetail = sessionPaceDetail(
             provider: input.provider,
             window: primary,
@@ -127,27 +97,10 @@ extension UsageMenuCardView.Model {
         {
             self.apply(paceDetail, to: &presentation)
         }
-        if policy.usesAbacusPace {
-            if let detail = Self.nonEmptyResetDescription(primary) {
-                presentation.detailText = detail
-            }
-            if primary.resetsAt == nil {
-                presentation.resetText = nil
-            }
-            if let pace = input.weeklyPace,
-               let paceDetail = Self.weeklyPaceDetail(
-                   provider: input.provider,
-                   window: primary,
-                   now: input.now,
-                   pace: pace,
-                   showUsed: input.usageBarsShowUsed)
-            {
-                Self.apply(paceDetail, to: &presentation)
-            }
-        } else if let paceDetail = Self.resetWindowPaceDetail(
+        if let paceDetail = Self.resetWindowPaceDetail(
             window: primary,
             input: input,
-            pace: policy.resetWindowUsesWeeklyPace ? input.weeklyPace : nil)
+            pace: nil)
         {
             Self.apply(paceDetail, to: &presentation)
         }
@@ -159,21 +112,6 @@ extension UsageMenuCardView.Model {
         primary: RateWindow)
     {
         let policy = ProviderDescriptorRegistry.descriptor(for: input.provider).presentation.menuCard
-        // Legacy request-based Cursor plans surface the raw used/limit quota on its own line.
-        if case .requestQuota = policy.primaryDetailKind,
-           let quota = input.snapshot?.detailRow(label: "Request quota")?.value
-        {
-            presentation.detailText = "\(L("Request quota")): \(quota)"
-        }
-        if policy.usesSyntheticRollingRegen,
-           let regen = Self.syntheticRollingRegenDetail(
-               window: primary,
-               now: input.now,
-               showUsed: input.usageBarsShowUsed)
-        {
-            presentation.resetText = regen.resetText
-            Self.apply(regen.pace, to: &presentation)
-        }
         // Provider-specific by design: DeepSeek's balance description is provider-owned copy localized here.
         if input.provider == .deepseek, let detail = presentation.detailText {
             presentation.detailText = Self.localizedDeepSeekBalanceDescription(detail)
@@ -199,46 +137,9 @@ extension UsageMenuCardView.Model {
         return detail
     }
 
-    private static func trimmedResetDescription(_ window: RateWindow) -> String? {
-        guard let detail = window.resetDescription?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !detail.isEmpty
-        else { return nil }
-        return detail
-    }
-
     static func redactedMetricDetail(_ detail: String?, provider _: UsageProvider, metricID _: String) -> String? {
         guard let detail else { return nil }
         return PersonalInfoRedactor.redactEmails(in: detail, isEnabled: true)
-    }
-
-    static func blockingQuotaMetrics(_ metrics: [Metric], input: Input, snapshot: UsageSnapshot) -> [Metric] {
-        guard let policy = ProviderDescriptorRegistry.descriptor(for: input.provider).presentation.menuCard
-            .blockingQuota,
-            let blocker = snapshot.extraRateWindows?.first(where: { $0.id == policy.windowID && $0.usageKnown })
-        else { return metrics }
-        return metrics.map { metric in
-            let window: RateWindow? = switch metric.id {
-            case "primary": snapshot.primary
-            case "secondary": snapshot.secondary
-            case "tertiary": snapshot.tertiary
-            default: snapshot.extraRateWindows?.first { $0.id == metric.id && $0.usageKnown }?.window
-            }
-            guard let window, !window.isSyntheticPlaceholder,
-                  let projection = RateWindow.bindingQuotaProjection(
-                      primary: window, bindingLanes: [blocker.window], now: input.now)
-            else { return metric }
-            var blocked = metric
-            blocked.percent = input.usageBarsShowUsed ? projection.usedPercent : 100 - projection.usedPercent
-            blocked.statusText = L(policy.message)
-            // The blocking quota's own row owns its reset; shorter resets cannot restore access.
-            blocked.resetText = nil
-            blocked.detailText = nil
-            blocked.detailLeftText = nil
-            blocked.detailRightText = nil
-            blocked.pacePercent = nil
-            blocked.sessionEquivalentDetail = nil
-            return blocked
-        }
     }
 
     /// Clear only pace fields, preserving unrelated quota and workday decorations.
@@ -770,7 +671,6 @@ extension UsageMenuCardView.Model {
         {
             extraRateWindows.append(spend)
         }
-        let menuCard = ProviderDescriptorRegistry.descriptor(for: input.provider).presentation.menuCard
         var visibleRateWindows = extraRateWindows
         if input.provider == .claude,
            !input.showOptionalCreditsAndExtraUsage || !input.claudeDailyRoutinesUsageVisible
@@ -783,13 +683,9 @@ extension UsageMenuCardView.Model {
                 window: namedWindow.window,
                 input: input)
             let usageKnown = namedWindow.usageKnown
-            let resolvedResetText = Self.extraRateWindowResetText(
+            let resetText = Self.extraRateWindowResetText(
                 namedWindow: namedWindow,
                 input: input)
-            let usesResetDetail = menuCard.extraRateWindowShowsResetDescriptionAsDetail(namedWindow)
-            let resetText = usesResetDetail && namedWindow.window.resetsAt == nil
-                ? nil
-                : resolvedResetText
             let detailText: String? = if namedWindow.id == "claude-extra-usage" {
                 Self.providerCostSection(
                     cost: snapshot.providerCost,
@@ -797,8 +693,6 @@ extension UsageMenuCardView.Model {
                     preferredCurrencyCode: input.preferredCurrencyCode).map {
                     [$0.spendLine, $0.balanceLine].compactMap(\.self).joined(separator: " · ")
                 }
-            } else if usesResetDetail {
-                namedWindow.window.resetDescription
             } else {
                 nil
             }
@@ -892,78 +786,5 @@ extension UsageMenuCardView.Model {
         default:
             return nil
         }
-    }
-
-    static func syntheticRegenDetail(
-        weekly: RateWindow,
-        cost: ProviderCostSnapshot?,
-        now: Date,
-        showUsed: Bool) -> (resetText: String, pace: PaceDetail)?
-    {
-        guard let cost,
-              cost.limit > 0,
-              let nextRegenAmount = cost.nextRegenAmount,
-              nextRegenAmount > 0,
-              let resetsAt = weekly.resetsAt
-        else { return nil }
-
-        let countdown = UsageFormatter.resetCountdownDescription(from: resetsAt, now: now)
-        let resetText = String(format: L("Regenerates %@"), countdown)
-
-        let nextRegenPercent = (nextRegenAmount / cost.limit) * 100
-        let afterNextRegenRemaining = min(100, weekly.remainingPercent + nextRegenPercent)
-        let afterNextRegen = showUsed ? max(0, 100 - afterNextRegenRemaining) : afterNextRegenRemaining
-        let suffix = showUsed ? L("used after next regen") : L("after next regen")
-        let ticksToFull = max(0, cost.used) / nextRegenAmount
-        let left = String(format: "%.0f%% %@", afterNextRegen, suffix)
-        let right = if ticksToFull <= 0.1 {
-            L("Near full")
-        } else if ticksToFull < 1.5 {
-            L("Full in ~1 regen")
-        } else {
-            String(format: L("Full in ~%.0f regens"), ceil(ticksToFull))
-        }
-        return (resetText, PaceDetail(
-            leftLabel: left,
-            rightLabel: right,
-            pacePercent: nil,
-            paceOnTop: true,
-            isPaceDerived: true))
-    }
-
-    static func syntheticRollingRegenDetail(
-        window: RateWindow,
-        now: Date,
-        showUsed: Bool) -> (resetText: String, pace: PaceDetail)?
-    {
-        guard let resetsAt = window.resetsAt,
-              let nextRegenPercent = window.nextRegenPercent,
-              nextRegenPercent > 0
-        else { return nil }
-
-        let countdown = UsageFormatter.resetCountdownDescription(from: resetsAt, now: now)
-        let resetText = String(format: L("Regenerates %@"), countdown)
-
-        let afterNextRegenRemaining = min(100, window.remainingPercent + nextRegenPercent)
-        let afterNextRegen = showUsed ? max(0, 100 - afterNextRegenRemaining) : afterNextRegenRemaining
-        let suffix = showUsed ? L("used after next regen") : L("after next regen")
-        let left = String(format: "%.0f%% %@", afterNextRegen, suffix)
-
-        let missingPercent = max(0, window.usedPercent)
-        let ticksToFull = missingPercent / nextRegenPercent
-        let right = if ticksToFull <= 0.1 {
-            L("Near full")
-        } else if ticksToFull < 1.5 {
-            L("Full in ~1 regen")
-        } else {
-            String(format: L("Full in ~%.0f regens"), ceil(ticksToFull))
-        }
-
-        return (resetText, PaceDetail(
-            leftLabel: left,
-            rightLabel: right,
-            pacePercent: nil,
-            paceOnTop: true,
-            isPaceDerived: true))
     }
 }

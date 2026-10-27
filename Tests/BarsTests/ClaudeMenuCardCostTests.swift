@@ -112,7 +112,7 @@ struct ClaudeMenuCardCostTests {
         #expect(model.providerCost == nil)
     }
 
-    @Test(arguments: [ProviderCostMenuCardStyle.generic, .clawRouter], [false, true])
+    @Test(arguments: [ProviderCostMenuCardStyle.generic], [false, true])
     func `other capped provider costs keep used fill`(style: ProviderCostMenuCardStyle, showUsed: Bool) throws {
         let section = try #require(UsageMenuCardView.Model.providerCostSection(
             cost: Self.cost(used: 25, limit: 100),

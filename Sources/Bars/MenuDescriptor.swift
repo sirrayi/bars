@@ -318,7 +318,7 @@ struct MenuDescriptor {
                     window: extra.window,
                     resetStyle: resetStyle,
                     showUsed: settings.usageBarsShowUsed,
-                    descriptionIsDetail: presentation.menuCard.extraRateWindowShowsResetDescriptionAsDetail(extra))
+                    descriptionIsDetail: false)
             }
 
             Self.appendProviderUsageSummaries(
@@ -450,11 +450,6 @@ struct MenuDescriptor {
         }
 
         return entries
-    }
-
-    private static func isKiloActivitySegment(_ text: String) -> Bool {
-        let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        return normalized.hasPrefix("auto top-up:")
     }
 
     private static func accountProviderForCombined(store: UsageStore) -> UsageProvider? {

@@ -91,16 +91,7 @@ extension UsageMenuCardView.Model {
         return L("%@ (Paid: %@ / Granted: %@)", total, paid, granted)
     }
 
-    static func localizedZaiPeriodicResetText(_ window: RateWindow) -> String? {
-        guard window.resetsAt == nil,
-              window.resetDescription?.trimmingCharacters(in: .whitespacesAndNewlines) == "5-hour"
-        else {
-            return nil
-        }
-        return L("Resets every 5 hours")
-    }
-
-    /// Provider-specific by design: DeepSeek, z.ai, Kiro, and Grok detail values carry provider-owned
+    /// Provider-specific by design: DeepSeek detail values carry provider-owned
     /// unit phrasing that localizes at the presentation boundary without touching other providers.
     private static func localizedProviderDetailValue(_ value: String, provider: UsageProvider) -> String {
         switch provider {
@@ -115,36 +106,5 @@ extension UsageMenuCardView.Model {
         let suffix = " tokens"
         guard value.hasSuffix(suffix) else { return value }
         return L("%@ tokens", String(value.dropLast(suffix.count)))
-    }
-
-    private static func localizedZaiCountdown(_ value: String) -> String {
-        guard value.hasPrefix("in ") else { return L(value) }
-        let parts = value.dropFirst(3).split(separator: " ").map(String.init)
-        if parts.count == 2 {
-            let first = parts[0]
-            let second = parts[1]
-            if first.hasSuffix("d"), second.hasSuffix("h") {
-                return L("in %@d %@h", String(first.dropLast()), String(second.dropLast()))
-            }
-            if first.hasSuffix("d"), second.hasSuffix("m") {
-                return L("in %@d %@m", String(first.dropLast()), String(second.dropLast()))
-            }
-            if first.hasSuffix("h"), second.hasSuffix("m") {
-                return L("in %@h %@m", String(first.dropLast()), String(second.dropLast()))
-            }
-        }
-        if parts.count == 1 {
-            let part = parts[0]
-            if part.hasSuffix("d") {
-                return L("in %@d", String(part.dropLast()))
-            }
-            if part.hasSuffix("h") {
-                return L("in %@h", String(part.dropLast()))
-            }
-            if part.hasSuffix("m") {
-                return L("in %@m", String(part.dropLast()))
-            }
-        }
-        return value
     }
 }

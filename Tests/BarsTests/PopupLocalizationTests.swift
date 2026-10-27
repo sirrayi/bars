@@ -137,8 +137,6 @@ struct PopupLocalizationTests {
     @Test
     func `settings labels use selected localization`() {
         BarsLocalizationOverride.$appLanguage.withValue("zh-Hant") {
-            #expect(KiroMenuBarDisplayMode.hidden.label == "隱藏")
-            #expect(KiroMenuBarDisplayMode.creditsLeft.label == "剩餘額度")
             #expect(L("(System)") == "（系統）")
         }
     }

@@ -57,9 +57,6 @@ let package = Package(
                 ],
                 swiftSettings: [
                     .enableUpcomingFeature("StrictConcurrency"),
-                ],
-                linkerSettings: [
-                    .linkedFramework("JavaScriptCore", .when(platforms: [.macOS])),
                 ]),
             .executableTarget(
                 name: "BarsCLI",

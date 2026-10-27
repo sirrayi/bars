@@ -275,8 +275,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>LSUIElement</key><true/>
     <key>CFBundleIconFile</key><string>Icon</string>
     <key>NSHumanReadableCopyright</key><string>© 2026 Peter Steinberger. MIT License.</string>
-    <key>CodexBuildTimestamp</key><string>${BUILD_TIMESTAMP}</string>
-    <key>CodexGitCommit</key><string>${GIT_COMMIT}</string>
+    <key>BarsBuildTimestamp</key><string>${BUILD_TIMESTAMP}</string>
+    <key>BarsGitCommit</key><string>${GIT_COMMIT}</string>
     <key>BarsTeamID</key><string>${APP_TEAM_ID}</string>
     <key>UTExportedTypeDeclarations</key>
     <array>
@@ -491,6 +491,8 @@ shopt -u nullglob
 if [[ ${#SWIFTPM_BUNDLES[@]} -gt 0 ]]; then
   for bundle in "${SWIFTPM_BUNDLES[@]}"; do
     bundle_name="$(basename "$bundle")"
+    # Test-target resources are never loaded by the app.
+    [[ "$bundle_name" == *Tests.bundle ]] && continue
     cp -R "$bundle" "$APP/Contents/Resources/"
   done
 fi

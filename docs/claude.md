@@ -42,7 +42,7 @@ Completed requests for models without a known price keep their token usage and r
 ### Default selection (debug menu disabled)
 - If an Admin API key is configured, the Admin API strategy is used for Claude API spend/usage.
 - App runtime main pipeline: OAuth API → CLI PTY → Web API.
-- CLI runtime main pipeline: Web API → CLI PTY (Linux: Web API → OAuth API → CLI PTY).
+- CLI runtime main pipeline: Web API → CLI PTY.
   Since 0.78.0, Auto `usage` first uses the active slot when the claude-swap integration is enabled;
   explicit source/account selection bypasses it. See [CLI precedence](cli.md#command).
 - Explicit Web/CLI modes use the selected source. Explicit OAuth can use Claude Code's own CLI on a manual
@@ -303,7 +303,7 @@ action, and honors denial cooldowns. OAuth and Claude Code login sources are unc
 - Manual mode accepts a `Cookie:` header from a claude.ai request.
 Each Claude token account can optionally select a **Claude config directory** in Settings → Providers → Claude.
 With Track costs enabled, the active account’s local token and API-price cost estimates scan only its `projects` history,
-without default, claude-swap, or Pi history. Selecting a directory declares that its history belongs to the account;
+without default or claude-swap history. Selecting a directory declares that its history belongs to the account;
 bars does not infer ownership or detect mixed/copied history beyond existing scanner deduplication. A missing or
 unreadable history directory leaves its estimate unavailable. Clear the mapping to restore the existing combined
 view; unmapped accounts and claude-swap retain their current behavior. The optional `claudeConfigDirectory` field
@@ -325,18 +325,6 @@ is stored on the token account in the config file and does not change quota fetc
   2) Chrome/Chromium forks: `~/Library/Application Support/Google/Chrome/*/Cookies`
   3) Firefox: `~/Library/Application Support/Firefox/Profiles/*/cookies.sqlite`
 - Domain: `claude.ai`.
-- Linux: the web source supports an explicitly configured manual `sessionKey` cookie. Automatic browser import,
-  including Firefox import, remains unavailable. This enables the same API request path as macOS; it does not
-  bypass Cloudflare challenges, refresh Claude Code OAuth credentials, or guarantee that a browser session will
-  work outside the browser. Use the OAuth source when the web request is challenged.
-- Linux CLI Auto mode: an existing valid manual cookie makes Web eligible ahead of CLI after upgrading.
-  Web success returns without launching Claude Code; authentication rejection or a Cloudflare challenge falls
-  back to an available CLI using the existing Auto policy. Cancellation stops without launching the CLI.
-  Explicit Web mode does not fall back. Use explicit OAuth mode for passive polling that must not launch the CLI.
-- Linux CLI Auto mode: the plan is Web → OAuth → CLI PTY. OAuth runs when Claude Code OAuth credentials
-  (`~/.claude/.credentials.json`) are usable without a prompt, so a logged-in user does not launch an interactive
-  `claude` session. Without usable OAuth credentials, the OAuth step is skipped and CLI remains the fallback.
-  OAuth request failures such as 401 or 429 also fall back to the CLI; cancellation stops without launching it.
 - Cookie name required:
   - `sessionKey` (value prefix `sk-ant-...`).
 - Cached cookies: Keychain cache `com.sirrayi.bars.cache` (account `cookie.claude`, source + timestamp).
@@ -492,8 +480,7 @@ The accepted multi-account design in
   summary row. Clicking a compact row expands that account's full card; clicking an inactive card collapses it again.
   This choice is remembered locally across menu opens and app restarts. The summary row reveals the hidden rows for
   the current menu session. `bars cards` keeps the full per-account output. The same compact layout applies to
-  every stacked multi-account list (token accounts on any provider, and flat Codex account lists; workspace-grouped
-  Codex lists keep their sectioned stacked layout). To use this
+  every stacked multi-account list (token accounts on any provider). To use this
   presentation with one account, enable “Show account card when only one account is available” or set
   `claudeSwapShowSingleAccount: true` on the Claude provider in the resolved config file (normally
   `~/.config/bars/config.json`; legacy installs may use `~/.bars/config.json`). The option defaults off,
@@ -611,7 +598,7 @@ Model-scoped weekly-window proof (synthetic data, no real accounts or credential
 - Source roots:
   - Native Claude logs:
     - `$CLAUDE_CONFIG_DIR` selects one literal directory and uses `<root>/projects`; commas are part of its path.
-    - Also includes claude-swap session profiles at `~/.claude-swap-backup/sessions/<slot>-<label>/projects`. On Linux, also checks `$XDG_DATA_HOME/claude-swap/sessions` (default `~/.local/share/claude-swap/sessions`). Discovery examines only immediate positive-numbered slot directories and their `projects` child; it does not read credentials or run cswap.
+    - Also includes claude-swap session profiles at `~/.claude-swap-backup/sessions/<slot>-<label>/projects`. Discovery examines only immediate positive-numbered slot directories and their `projects` child; it does not read credentials or run cswap.
     - Fallback roots:
       - `~/.config/claude/projects`
       - `~/.claude/projects` (Claude Code and current Claude Desktop Code/Cowork CLI sessions)
@@ -621,14 +608,9 @@ Model-scoped weekly-window proof (synthetic data, no real accounts or credential
       - Cowork `audit.jsonl` files within those Desktop session stores are also scanned, without traversing workspace outputs or dependencies.
     - Current Claude Desktop metadata under `claude-code-sessions` points to shared CLI session JSONL by
       `cliSessionId`; metadata-only directories are not treated as usage sources.
-  - Supported pi-compatible sessions:
-    - `~/.pi/agent/sessions/**/*.jsonl`
-    - `~/.omp/agent/sessions/**/*.jsonl`
-- Files: `**/*.jsonl` under the native project roots, discovered Claude Desktop project roots,
-  plus supported pi-compatible session files.
+- Files: `**/*.jsonl` under the native project roots, and discovered Claude Desktop project roots.
 - Parsing:
   - Native Claude logs parse lines with `type: "assistant"` and `message.usage`.
-  - Claude/Vertex filtering checks raw lines for possible metadata markers before walking decoded metadata. IDs and model names are checked in their decoded fields, so `@` and `_vrtx_` in tool content do not trigger that walk. Vertex-only scans skip decoding lines without any possible marker; escaped markers retain the full classifier and existing attribution rules.
   - Uses per-model token counts (input, cache read/create, output).
   - Oversized local token or cost values cannot crash history scanning. An overflowing token total stays unavailable while independent counts and finite dollar estimates remain visible; raw rows are retained for later repricing.
   - Deduplicates cumulative streaming chunks by `message.id + requestId`, accepting Cowork's `request_id` alias so audit and embedded transcript copies count once. When both request fields are absent,
@@ -636,14 +618,10 @@ Model-scoped weekly-window proof (synthetic data, no real accounts or credential
     IDs and distinct fallback sessions remain separate. Rows without sufficient identity are counted individually.
     Within a file, the final complete cumulative chunk wins, including later appends. Copied records retain the
     existing preference for parent and non-sidechain records.
-  - pi and OMP sessions attribute `anthropic` assistant usage to Claude and bucket it by assistant-turn timestamp, so a
-    single pi-compatible session can contribute to multiple models/days.
-  - Matching assistant entry IDs within the same session are counted once across roots; distinct turns are retained. If a Pi/OMP mirror scan is incomplete, established native spend remains usable as a marked partial estimate. The combined history is still incomplete, and native-only reports keep their own coverage.
   - Claude-swap history contributes to the combined Claude total, including when an explicit `$CLAUDE_CONFIG_DIR` is set. Shared-history symlinks are scanned once, copied responses use the same deduplication as native logs, and missing profile directories do not prevent other homes from contributing. Local cost records do not establish per-account attribution.
 - Quota-week menu cards reuse the immutable snapshot’s day projection, warmed in the background. New snapshots and changed bucket time zones rebuild it; reset observations and the current time remain live on every card build.
 - Cache:
   - Bundled fallback pricing includes Claude Mythos 5.1 and Mythos 5 at [Anthropic's published rates](https://platform.claude.com/docs/en/about-claude/pricing). The report-semantics update reprices retained usage without rereading unchanged transcripts.
-  - GPT usage recorded through Claude Code uses the bundled OpenAI model's long-context boundary (272K for supported models), while retaining catalog rates. Uncached input and cache-read/create tokens all contribute to the prompt length. Saved reports are recalculated after pricing corrections without discarding retained Codex history.
   - Native provider cache: `~/Library/Caches/bars/cost-usage/claude-v6.json`. This is a small manifest; its sibling `claude-v6.json.fragments` directory holds immutable JSON shards grouped by transcript project/directory, including source identities and empty-file parse offsets.
   - Report memo: `~/Library/Caches/bars/cost-usage/claude-v6.report-memo.json` stores the daily report and references project shards for source stamps. It is reused only while transcript inventory, cache/pricing artifacts, requested window, and report-semantics revision still match.
   - An unreadable transcript root or directory fails the refresh without replacing the last valid cache or report memo. Restoring access allows the next refresh to reuse that history; genuinely missing paths still count as removed sources.
@@ -654,9 +632,8 @@ Model-scoped weekly-window proof (synthetic data, no real accounts or credential
   - Existing single-file JSON caches load and migrate on their next save. Migration itself does not require rereading transcripts, and compact row fields and parser revisions are unchanged. Older bars builds can rebuild these caches from the original logs if downgraded. Public report JSON is unchanged.
   - The app's Usage & Spend refresh uses `claude-history-v6.json` and its own report memo. The two app refreshes do not replace each other's retained rows or restart each other's transcript scans. Once both have established their windows, same-day append refreshes read changed tails once per cache.
   - App memos record whether every file's rows were selected for their scan window. Older or externally replaced caches without that proof rebuild once, even if their stored bounds already match; app window changes also rebuild to preserve cold-scan duplicate selection. The regular cache filename and row schema remain compatible, and standalone CLI range behavior is unchanged.
-  - The Claude/Vertex cache artifact retains source file identities independently of the shared Codex parser fingerprint. Replacing a transcript rebuilds its rows rather than merging an old prefix into a new suffix; genuine appends still use the saved parse offset. Older entries without identity are rebuilt once before reuse, including during the normal refresh debounce.
-  - Older Claude/Vertex native caches and report memos are rebuilt once from unchanged transcripts to apply the corrected response deduplication. Corrected reports remain eligible for memo reuse across launches.
-  - pi-compatible session cache: `~/Library/Caches/bars/cost-usage/pi-sessions-v9.json`. Version 8 rebuilds once from transcripts to establish source scope and completeness.
+  - The Claude cache artifact retains source file identities independently of the shared parser fingerprint. Replacing a transcript rebuilds its rows rather than merging an old prefix into a new suffix; genuine appends still use the saved parse offset. Older entries without identity are rebuilt once before reuse, including during the normal refresh debounce.
+  - Older Claude native caches and report memos are rebuilt once from unchanged transcripts to apply the corrected response deduplication. Corrected reports remain eligible for memo reuse across launches.
 
 ## Key files
 - OAuth: `Sources/BarsCore/Providers/Claude/ClaudeOAuth/*`
@@ -664,8 +641,6 @@ Model-scoped weekly-window proof (synthetic data, no real accounts or credential
 - CLI PTY: `Sources/BarsCore/Providers/Claude/ClaudeStatusProbe.swift`,
   `Sources/BarsCore/Providers/Claude/ClaudeCLISession.swift`
 - Cost usage: `Sources/BarsCore/CostUsageFetcher.swift`,
-  `Sources/BarsCore/PiSessionCostScanner.swift`,
-  `Sources/BarsCore/PiSessionCostCache.swift`,
   `Sources/BarsCore/Vendored/CostUsage/*`
 
 ### Displaying resets and billing details

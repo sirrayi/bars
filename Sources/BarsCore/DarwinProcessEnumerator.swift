@@ -1,24 +1,6 @@
 import Foundation
 
 enum DarwinProcessEnumerator {
-    /// Keep this predicate a superset of every executable path that
-    /// `AntigravityStatusProbe.antigravityProcessKind` can classify. The Darwin
-    /// process scan uses it before requesting the more privacy-sensitive argv.
-    static func isAntigravityCandidatePath(_ executablePath: String) -> Bool {
-        let lowercasedPath = executablePath.lowercased()
-        if lowercasedPath.contains("antigravity") {
-            return true
-        }
-
-        var basename = URL(fileURLWithPath: lowercasedPath).lastPathComponent
-        if basename.hasSuffix(".exe") {
-            basename.removeLast(4)
-        }
-        return basename.hasPrefix("language_server") ||
-            basename.hasPrefix("language-server") ||
-            ["agy", "antigravity-cli", "antigravity_cli", "node", "bun"].contains(basename)
-    }
-
     /// Returns the original argv from a `KERN_PROCARGS2` payload. Keeping the
     /// boundaries matters for flags whose values contain whitespace.
     static func parseProcArgs2Arguments(_ data: Data) -> [String]? {

@@ -88,36 +88,6 @@ enum MenuBarMetricPreference: String, CaseIterable, Identifiable {
     }
 }
 
-enum KiroMenuBarDisplayMode: String, CaseIterable, Identifiable {
-    case automatic
-    case hidden
-    case creditsLeft
-    case percentLeft
-    case creditsAndPercent
-    case usedAndTotal
-    case overageCreditsWhenExhausted
-    case overageCostWhenExhausted
-    case overageCreditsAndCostWhenExhausted
-
-    var id: String {
-        self.rawValue
-    }
-
-    var label: String {
-        switch self {
-        case .automatic: L("Automatic")
-        case .hidden: L("Hidden")
-        case .creditsLeft: L("Credits left")
-        case .percentLeft: L("Percent left")
-        case .creditsAndPercent: L("Credits + percent")
-        case .usedAndTotal: L("Used / total")
-        case .overageCreditsWhenExhausted: L("Overage credits at zero")
-        case .overageCostWhenExhausted: L("Overage cost at zero")
-        case .overageCreditsAndCostWhenExhausted: L("Overage credits + cost at zero")
-        }
-    }
-}
-
 enum LowPowerModePreference: String, CaseIterable, Identifiable {
     case off
     case on
@@ -289,23 +259,18 @@ final class SettingsStore {
     {
         // Legacy credential migration must see the saved policy, including shared-defaults fallback.
         keychainAccessPolicy.setDisabled(Self.loadDebugDisableKeychainAccess(userDefaults: userDefaults))
-        // Capture this before app-group/config migrations can create prior-installation state.
+        // Capture this before config migration can create prior-installation state.
         let hadExistingConfig = (try? configStore.load()) != nil
         let hadPreviousInstallationState = hadExistingConfig || Self.hadPreviousAppLaunch(userDefaults: userDefaults)
         // Migration tests inject every dependency directly; ordinary settings tests must not discover user state.
         if !Self.isRunningTests {
             let appGroupID = AppGroupSupport.currentGroupID()
-            Self.scheduleAppGroupMigration()
-            let appGroupMigration = AppGroupSupport.MigrationResult(status: .targetUnavailable)
             let sharedDefaultsAvailable = Self.sharedDefaults != nil
             BarsLog.logger(LogCategories.settings).info(
                 "App group resolved",
                 metadata: [
                     "groupID": appGroupID,
                     "sharedDefaultsAvailable": sharedDefaultsAvailable ? "1" : "0",
-                    "migrationStatus": appGroupMigration.status.rawValue,
-                    "migratedSnapshot": appGroupMigration.copiedSnapshot ? "1" : "0",
-                    "migratedDefaults": "\(appGroupMigration.copiedDefaults)",
                 ])
         }
 
@@ -394,19 +359,6 @@ extension SettingsStore {
         let sessionQuotaNotificationsEnabled: Bool
         let predictivePaceWarningNotificationsEnabled: Bool
         let limitResetNotificationsEnabled: Bool
-    }
-
-    private static func scheduleAppGroupMigration() {
-        Task.detached(priority: .utility) {
-            let result = AppGroupSupport.migrateLegacyDataIfNeeded()
-            BarsLog.logger(LogCategories.settings).info(
-                "App group migration completed",
-                metadata: [
-                    "migrationStatus": result.status.rawValue,
-                    "migratedSnapshot": result.copiedSnapshot ? "1" : "0",
-                    "migratedDefaults": "\(result.copiedDefaults)",
-                ])
-        }
     }
 
     // swiftlint:disable:next function_body_length
@@ -507,8 +459,6 @@ extension SettingsStore {
                 ?? MenuBarDisplayMode.percent.rawValue,
             menuBarShowsResetTimeWhenExhausted: userDefaults.object(
                 forKey: "menuBarShowsResetTimeWhenExhausted") as? Bool ?? false,
-            kiroMenuBarDisplayModeRaw: userDefaults.string(forKey: "kiroMenuBarDisplayMode")
-                ?? KiroMenuBarDisplayMode.automatic.rawValue,
             historicalTrackingEnabled: userDefaults.object(forKey: "historicalTrackingEnabled") as? Bool ?? false,
             multiAccountMenuLayoutRaw: multiAccountMenuLayoutRaw,
             accountWidgetsEnabled: userDefaults.bool(forKey: "accountWidgetsEnabled"),
@@ -559,7 +509,6 @@ extension SettingsStore {
                 "providerStorageFootprintsEnabled",
                 fallback: false,
                 from: userDefaults),
-            jetbrainsIDEBasePath: userDefaults.string(forKey: "jetbrainsIDEBasePath") ?? "",
             mergeIcons: userDefaults.object(forKey: "mergeIcons") as? Bool ?? true,
             mergedOverviewLayoutRaw: userDefaults.string(forKey: "mergedOverviewLayout")
                 ?? MergedOverviewLayout.detailed.rawValue,
@@ -590,8 +539,7 @@ extension SettingsStore {
     }
 
     private static func hadPreviousAppLaunch(userDefaults: UserDefaults) -> Bool {
-        userDefaults.object(forKey: "providerDetectionCompleted") != nil ||
-            userDefaults.object(forKey: AppGroupSupport.migrationVersionKey) != nil
+        userDefaults.object(forKey: "providerDetectionCompleted") != nil
     }
 
     private static func loadRefreshFrequency(
@@ -956,29 +904,6 @@ extension SettingsStore {
         }
         if !enabled, self.selectedMenuProvider == provider.instanceID {
             self.selectedMenuProvider = nil
-        }
-    }
-
-    func isPluginEnabled(_ instanceID: ProviderInstanceID) -> Bool {
-        self.providerEnablement[instanceID] ?? false
-    }
-
-    func setPluginEnabled(_ instanceID: ProviderInstanceID, enabled: Bool) {
-        self.updatePluginConfig(instanceID: instanceID) { $0.enabled = enabled }
-        if !enabled, self.selectedMenuProvider == instanceID {
-            self.selectedMenuProvider = nil
-        }
-    }
-
-    func pluginConfig(_ instanceID: ProviderInstanceID) -> ProviderConfig? {
-        self.configSnapshot.providerConfig(for: instanceID)
-    }
-
-    func updatePluginConfig(instanceID: ProviderInstanceID, mutate: (inout ProviderConfig) -> Void) {
-        self.updateConfig(reason: "plugin-\(instanceID.rawValue)", affectsBackgroundWork: true) { config in
-            var entry = config.providerConfig(for: instanceID) ?? ProviderConfig(id: instanceID, enabled: true)
-            mutate(&entry)
-            config.setProviderConfig(entry)
         }
     }
 

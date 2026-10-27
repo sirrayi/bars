@@ -146,9 +146,6 @@ extension CostUsageScanner {
                     guard line.bytes.containsAscii(#""type":"assistant""#) else { return }
                     guard line.bytes.containsAscii(#""usage""#) else { return }
                     let couldContainMetadata = providerFilter != .all && Self.couldContainVertexAIMetadata(line.bytes)
-                    if providerFilter == .vertexAIOnly, !couldContainMetadata,
-                       !line.bytes.containsAscii("@"), !line.bytes.containsAscii("_vrtx_")
-                    { return }
 
                     autoreleasepool {
                         #if DEBUG
@@ -163,7 +160,7 @@ extension CostUsageScanner {
                         if providerFilter != .all {
                             let isVertex = Self.isVertexAIUsageEntry(
                                 obj: obj, message: message, scanMetadata: couldContainMetadata)
-                            if isVertex != (providerFilter == .vertexAIOnly) { return }
+                            if isVertex { return }
                         }
 
                         guard let tsText = obj["timestamp"] as? String,
@@ -869,7 +866,6 @@ extension CostUsageScanner {
     {
         let providerFilterKey = switch providerFilter {
         case .all: "all"
-        case .vertexAIOnly: "vertex-ai-only"
         case .excludeVertexAI: "exclude-vertex-ai"
         }
         return CostUsageClaudeReportMemoKey(

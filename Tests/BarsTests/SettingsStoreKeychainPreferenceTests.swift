@@ -61,7 +61,7 @@ struct SettingsStoreKeychainPreferenceTests {
     }
 
     @Test(arguments: [false, true])
-    func `settings initialization isolates app group migration and keychain policy`(disabled: Bool) throws {
+    func `settings initialization isolates shared defaults and keychain policy`(disabled: Bool) throws {
         let local = InMemoryUserDefaults()
         local.set(disabled, forKey: "debugDisableKeychainAccess")
         var keychainAccessValues: [Bool] = []
@@ -72,7 +72,6 @@ struct SettingsStoreKeychainPreferenceTests {
             defaults: local,
             keychainAccessPolicy: keychainAccessPolicy)
         { store in
-            #expect(local.object(forKey: AppGroupSupport.migrationVersionKey) == nil)
             #expect(local.object(forKey: "widgetSelectedProvider") == nil)
             #expect(store.debugDisableKeychainAccess == disabled)
             #expect(store.refreshFrequency == .adaptive)
@@ -83,22 +82,18 @@ struct SettingsStoreKeychainPreferenceTests {
             #expect(local.bool(forKey: "debugDisableKeychainAccess") == !disabled)
             store.debugDisableKeychainAccess = disabled
             #expect(local.bool(forKey: "debugDisableKeychainAccess") == disabled)
-            #expect(local.object(forKey: AppGroupSupport.migrationVersionKey) == nil)
             #expect(SettingsStore.sharedDefaults == nil)
             #expect(keychainAccessValues == [disabled, disabled, !disabled, disabled])
         }
     }
 
-    @Test(arguments: ["providerDetectionCompleted", AppGroupSupport.migrationVersionKey])
-    func `existing launch markers still keep the legacy refresh default`(marker: String) throws {
+    @Test
+    func `existing launch marker still keeps the legacy refresh default`() throws {
         let local = InMemoryUserDefaults()
-        local.set(1, forKey: marker)
+        local.set(1, forKey: "providerDetectionCompleted")
         try self.withSettingsStore(defaults: local) { store in
             #expect(store.refreshFrequency == .fiveMinutes)
-            #expect(local.integer(forKey: marker) == 1)
-            if marker != AppGroupSupport.migrationVersionKey {
-                #expect(local.object(forKey: AppGroupSupport.migrationVersionKey) == nil)
-            }
+            #expect(local.integer(forKey: "providerDetectionCompleted") == 1)
         }
     }
 

@@ -142,10 +142,9 @@ struct TailscaleSessionTests {
     }
 
     @Test
-    func `remote session command negotiates v2 then v1 for PATH and bundled CLIs`() {
+    func `remote session command tries PATH then bundled CLI`() {
         #expect(RemoteSessionFetcher.remoteSessionsCommand() ==
-            "bars sessions --json-v2 || bars sessions --json || " +
-            "'/Applications/bars.app/Contents/Helpers/BarsCLI' sessions --json-v2 || " +
+            "bars sessions --json || " +
             "'/Applications/bars.app/Contents/Helpers/BarsCLI' sessions --json")
     }
 }

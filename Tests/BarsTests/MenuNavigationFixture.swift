@@ -19,8 +19,7 @@ struct MenuNavigationFixture {
                 ProviderConfig(id: $0.instanceID, enabled: $0 == .claude)
             }),
             prepareDefaults: {
-                // Isolation must precede SettingsStore's synchronous legacy migration.
-                $0.set(AppGroupSupport.migrationVersion, forKey: AppGroupSupport.migrationVersionKey)
+                // Isolation must precede SettingsStore's synchronous legacy secrets migration.
                 $0.set(true, forKey: "bars.legacySecretsMigrationCompleted")
                 $0.set(true, forKey: "debugDisableKeychainAccess")
                 $0.set(true, forKey: "providerDetectionCompleted")

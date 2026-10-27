@@ -242,14 +242,6 @@ public enum UsageFormatter {
         return number.string(from: NSNumber(value: value)) ?? String(format: "%.2f", value)
     }
 
-    public static func kiroCreditNumber(_ value: Double) -> String {
-        let rounded = value.rounded()
-        if abs(value - rounded) < 0.005 {
-            return String(format: "%.0f", rounded)
-        }
-        return String(format: "%.2f", value)
-    }
-
     /// Formats a USD value into a target currency code with exchange rate conversion applied.
     public static func convertedCostString(_ usdValue: Double, targetCurrency: String) -> String {
         let converted = Self.convertedCost(
@@ -520,7 +512,7 @@ public enum UsageFormatter {
             cleaned = stripped.trimmingCharacters(in: .whitespacesAndNewlines)
         }
         if cleaned.lowercased() == "oauth" {
-            return "Ollama"
+            return "OAuth"
         }
         // Capitalize first letter only if lowercase, preserving acronyms like "AI"
         if let first = cleaned.first, first.isLowercase {

@@ -286,7 +286,6 @@ struct MenuCardChartSwitchTests {
             showsAllUsageLanes: false,
             sourceLabel: nil,
             subtitleOverride: nil,
-            kiloAutoMode: false,
             hidePersonalInfo: true,
             weeklyPace: nil,
             sessionEquivalentForecast: nil,

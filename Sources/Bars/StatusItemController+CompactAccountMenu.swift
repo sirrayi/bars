@@ -4,7 +4,7 @@ import BarsCore
 /// Shared renderer for the compact multi-account menu layout: full cards for the
 /// active and explicitly expanded accounts, compact rows for the rest, and a
 /// summary row standing in for the collapsed healthy tail. Used by every
-/// multi-account presentation (claude-swap, token accounts, Codex accounts).
+/// multi-account presentation (claude-swap, token accounts).
 extension StatusItemController {
     func compactAccountPlan(
         for provider: UsageProvider,
@@ -60,7 +60,7 @@ extension StatusItemController {
         return true
     }
 
-    /// Renders the Codex account list with the compact plan when it applies.
+    /// Renders an account list with the compact plan when it applies.
     /// Workspace-grouped lists keep their sectioned stacked layout; the flat
     /// compact plan would lose the grouping headers.
     func addCompactAccountMenuRows(

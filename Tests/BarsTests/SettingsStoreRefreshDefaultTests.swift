@@ -8,14 +8,11 @@ import Testing
 struct SettingsStoreRefreshDefaultTests {
     enum PreviousLaunchMarker: CaseIterable, Sendable {
         case providerDetection
-        case appGroupMigration
 
         func seed(_ defaults: UserDefaults) {
             switch self {
             case .providerDetection:
                 defaults.set(true, forKey: "providerDetectionCompleted")
-            case .appGroupMigration:
-                defaults.set(AppGroupSupport.migrationVersion, forKey: AppGroupSupport.migrationVersionKey)
             }
         }
     }
@@ -103,7 +100,7 @@ struct SettingsStoreRefreshDefaultTests {
 
     @Test
     func `every valid stored refresh frequency remains authoritative`() throws {
-        let markers: [PreviousLaunchMarker?] = [nil, .providerDetection, .appGroupMigration]
+        let markers: [PreviousLaunchMarker?] = [nil, .providerDetection]
         for frequency in RefreshFrequency.allCases {
             for marker in markers {
                 let suite = "SettingsStoreRefreshDefaultTests-valid-\(UUID().uuidString)"

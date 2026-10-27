@@ -217,14 +217,13 @@ extension StatusItemController {
         let includesOverview = self.includesOverviewTab(enabledProviders: enabledProviders)
         let switcherSelection = self.resolvedMergedMenuSelection(enabledProviders: enabledProviders)
         let isOverviewSelected = switcherSelection == .overview
-        let isPluginSelected = false
         let selectedProvider: UsageProvider? = switch switcherSelection {
         case .overview: self.resolvedMenuProvider(enabledProviders: enabledProviders)
         case let .provider(instanceID): instanceID.firstPartyProvider
         case nil: provider
         }
         let currentProvider = selectedProvider ?? enabledProviders.first ?? .claude
-        let suppressAccountSwitchers = isOverviewSelected || isPluginSelected
+        let suppressAccountSwitchers = isOverviewSelected
         let tokenAccountDisplay = suppressAccountSwitchers ? nil : self.tokenAccountMenuDisplay(for: currentProvider)
         let showAllAccounts = tokenAccountDisplay?.showAll ?? false
         let submenuContext = self.menuSubmenuContext(
@@ -232,7 +231,7 @@ extension StatusItemController {
             showAllAccounts: showAllAccounts)
         let descriptor = self.makeMenuDescriptor(
             provider: selectedProvider,
-            includeContextualActions: !isOverviewSelected && !isPluginSelected)
+            includeContextualActions: !isOverviewSelected)
         let menuWidth = self.menuCardWidth(
             for: enabledProviders,
             selectedProvider: selectedProvider,
@@ -877,7 +876,7 @@ extension StatusItemController {
                     }
                     switch selection {
                     case .overview:
-                        // Provider-specific by design: Codex is the persisted fallback for an empty overview.
+                        // Provider-specific by design: Claude is the persisted fallback for an empty overview.
                         self.lastMenuProvider = (provider ?? .claude).instanceID
                     case let .provider(provider):
                         self.lastMenuProvider = provider

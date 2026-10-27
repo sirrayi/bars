@@ -39,7 +39,6 @@ extension SettingsStore {
         _ = self.unifiedIconSource
         _ = self.menuBarDisplayMode
         _ = self.menuBarShowsResetTimeWhenExhausted
-        _ = self.kiroMenuBarDisplayMode
         _ = self.historicalTrackingEnabled
         _ = self.multiAccountMenuLayout
         _ = self.accountWidgetsEnabled

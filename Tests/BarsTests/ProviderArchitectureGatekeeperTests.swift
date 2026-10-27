@@ -1073,7 +1073,7 @@ struct ProviderArchitectureGatekeeperTests {
             reason: "The monthly cap metric reuses Claude's currency caption instead of duplicating cost formatting."),
         AllowedProviderConstruct(
             path: "Sources/Bars/MenuCardView+Costs.swift",
-            anchor: "if style == .apiSpend || (style == .claude && isClaudeAdminAPI) {",
+            anchor: "if style == .claude, isClaudeAdminAPI {",
             expectedProviderIDs: ["claude"],
             expectedReferenceCount: 2,
             expectedReferenceFingerprint: ["claude@0", "claude@10"],
@@ -1456,7 +1456,7 @@ struct ProviderArchitectureGatekeeperTests {
             anchor: "if input.provider == .claude, input.showOptionalCreditsAndExtraUsage,",
             expectedProviderIDs: ["claude"],
             expectedReferenceCount: 2,
-            expectedReferenceFingerprint: ["claude@0", "claude@8"],
+            expectedReferenceFingerprint: ["claude@0", "claude@7"],
             reason: "This exact provider-owned construct passes a fixed identity to shared infrastructure."),
         AllowedProviderConstruct(
             path: "Sources/Bars/MenuDescriptor.swift",

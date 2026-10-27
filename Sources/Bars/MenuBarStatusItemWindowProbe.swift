@@ -52,7 +52,7 @@ enum MenuBarStatusItemWindowProbe {
             "stage": stage, "sequence": self.diagnosticRecords,
             "uptime": ProcessInfo.processInfo.systemUptime,
             "bundle": Bundle.main.bundleIdentifier ?? "unknown",
-            "git": Bundle.main.object(forInfoDictionaryKey: "CodexGitCommit") as? String ?? "unknown",
+            "git": Bundle.main.object(forInfoDictionaryKey: "BarsGitCommit") as? String ?? "unknown",
             "mainThread": Thread.isMainThread, "running": NSApp?.isRunning ?? false,
             "activationPolicy": NSApp?.activationPolicy().rawValue ?? -1,
             "identity": name, "visible": item?.isVisible ?? false, "length": item?.length ?? 0, "evidence": evidence,

@@ -20,7 +20,6 @@ enum CostUsageScanner {
 
     enum ClaudeLogProviderFilter {
         case all
-        case vertexAIOnly
         case excludeVertexAI
     }
 

@@ -86,14 +86,11 @@ bars/
 ├── Sources/BarsCore/      # Shared business logic used by app, CLI, and widgets
 │   ├── Config/                # Config file model, reader, writer, and validation
 │   ├── Providers/             # Provider descriptors, fetchers, parsers, and status probes
-│   ├── OpenAIWeb/             # OpenAI dashboard integration helpers
-│   ├── WebKit/                # Web session helpers
 │   └── Vendored/              # Embedded support code
 ├── Sources/BarsCLI/       # Bundled bars command-line tool
 ├── Sources/BarsWidget/    # WidgetKit support
 ├── WidgetExtension/           # Xcode wrapper for the packaged widget extension
 ├── Tests/BarsTests/       # macOS app/core test suite (XCTest + Swift Testing)
-├── TestsLinux/                # Portable and Linux-specific CLI/core tests (target exists on macOS too)
 └── Scripts/                   # Build and packaging scripts
 ```
 
@@ -110,14 +107,13 @@ See the canonical [provider authoring guide](provider.md#adding-a-new-provider) 
    protocol defaults when no custom UI or macOS integration is needed.
 5. Run `Scripts/regenerate-provider-manifests.sh` to update the Core descriptor manifest and the immutable app catalog.
 6. Add icon assets under `Sources/Bars/Resources/`.
-7. Add focused tests under `Tests/BarsTests/` and, for CLI/core behavior that must run on Linux, `TestsLinux/`.
+7. Add focused tests under `Tests/BarsTests/`.
 
 ### Debug Cookie Issues
 1. Enable Debug → Logging → "Enable file logging" or raise verbosity in the app settings.
 2. Reproduce with `./Scripts/compile_and_run.sh`.
 3. Check logs in Console.app:
-   - Filter: `subsystem:com.sirrayi.bars category:augment`
-   - Importer messages include the `[augment-cookie]` prefix
+   - Filter: `subsystem:com.sirrayi.bars`
 
 ### Debug Menu Bar Placement
 
@@ -144,7 +140,7 @@ leave a blank Control Center slot on macOS 26.6.2. Status-menu Quit requests ter
 and leaves cleanup to that callback; shutdown detaches menus without hiding or renaming the items before removal.
 The deterministic tests use in-memory defaults, an injected recording status bar, and a hosting probe that misses
 the first startup sample to check recovery and teardown ordering, identity, visibility, and placement restoration.
-They compare already-hosted relaunches with delayed hosting; they do not reproduce Sparkle or Bartender's UUID store.
+They compare already-hosted relaunches with delayed hosting; they do not reproduce Bartender's UUID store.
 Native proof must use a signed, isolated app with visibly hosted
 merged and provider items: record the exact old window IDs, quit normally, confirm those windows disappear, then
 relaunch and check custom positions. Also exercise runtime removal/recreation and hide/show. Unit tests cannot prove
@@ -153,7 +149,7 @@ Control Center host removal or placement after process exit. This does not diagn
 ### Run Tests Only
 
 The shell test runners and all Make test targets source `Scripts/test_environment.sh` before launching Swift.
-The Linux CI test step sources it too. It removes exported variables whose names contain `TOKEN`, `KEY`, `SECRET`,
+It removes exported variables whose names contain `TOKEN`, `KEY`, `SECRET`,
 `PASSWORD`, `PASSWD`, `WEBHOOK`, `CREDENTIAL`, `COOKIE`, `PRIVATE`, or `_PAT`, ignoring case. Explicit non-secret
 exceptions preserve `BARS_ALLOW_TEST_KEYCHAIN_ACCESS`, `BARS_SUPPRESS_TEST_KEYCHAIN_ACCESS`,
 `BARS_DISABLE_KEYCHAIN_ACCESS`, and `BARS_USE_LOCAL_SWEETCOOKIEKIT`. Standard build and loader search paths
@@ -228,9 +224,9 @@ PATH="$(brew --prefix python@3.14)/libexec/bin:$PATH" make test
 
 `Scripts/test.sh --list-only` does not need process containment, but still invokes `swift test list`, which may build.
 
-The macOS test target explicitly links the existing Sparkle product and locates frameworks in the products directory
-beside its XCTest bundle. This supports native focused tests on fresh SwiftPM builds. The sharded runner retains its
-guarded runtime recovery for differing toolchain layouts, and `make test` remains the full validation path.
+The test target locates frameworks in the products directory beside its XCTest bundle. This supports native focused
+tests on fresh SwiftPM builds. The sharded runner retains its guarded runtime recovery for differing toolchain
+layouts, and `make test` remains the full validation path.
 
 Suite commands retain the default 180-second deadline, including SwiftPM startup and discovery.
 The runner reports elapsed time and owned PIDs every 30 seconds even when test output is buffered.
@@ -323,130 +319,12 @@ and nonnegative literal indices. Otherwise the same scalar updater runs before t
 this preserves its checked operations and state when the flush does not reset a negative line count.
 Do not replace this guard with checkpoint normalization or a new corrupt-cache recovery policy.
 
-`CostUsageJsonlDifferentialTests` in the portable `TestsLinux` target compares exact bytes, offsets,
-sorted full Codable state, callback order, and error domain/code with the frozen e236a21b scalar scanner.
-Its bounded default matrix covers every short-input split, threshold/chunk boundaries, mutations,
-cross-version resumes, and safe unusual checkpoints. Keep that oracle frozen and the older scanner
-oracle independently useful. Full optimized scratch parity must copy the final production source;
-prototype results alone do not carry forward through formatting or edits. Scanner parity does not
-establish pipeline performance; signed optimized builds and synthetic pipeline timing are separate proof.
-
-The shared scanner remains a parser-hash input. The warm-refresh cursor repair adopts `9ca89383b9957b07`
-without rebuilding native rows or checkpoints; it changes scheduling, not persisted parsing semantics.
-Published `e0b0319de43e22d7` is also a tested compatible predecessor because LF-span scanning preserves persisted semantics, including the priority
-cursor changes in #3318. The earlier `7e293e8fc9e25700` and existing predecessors remain supported.
-Native adoption retains rows and checkpoints while invalidating old connection receipts.
-Pi/OMP still reparses once when the hash changes,
-with and without a catalog; subsequent unchanged reads use the current cache. No pricing-key alias is added.
-
-Profile the cost-scan queue separately from the main thread. A busy background scan that later settles
-does not establish an infinite loop. Native timestamp conversion uses Foundation's modern ISO parser
-for strict RFC3339 input, retaining the previous formatter's millisecond truncation and rounding.
-Historical spellings and malformed input keep the formatter fallback. Claude reuses the parsed date
-for local day projection only on the strict path.
-
-`CostUsageTimestampTests` compares exact dates with the prior formatter and checks local days, DST,
-deduplication, and dated pricing. `CostUsageTimestampOrderTests` and `CostUsageStoreCutoverTests` count
-timestamp comparisons: a known ordered prefix needs only the append boundary and new events; unknown
-prefixes get one cancellable validation. Keep these assertions deterministic rather than timing gates.
-Run these alongside scanner, cancellation, bounded-progress, fork, and performance-gate suites with
-the test harness's Keychain and credential-file isolation enabled.
-
-An optimized synthetic check on 2026-08-30 compared main `5a18e8ee9` with this change: three cold
-Claude scans of 20,000 messages (5,237,780 bytes) had median CPU time of 3.430 → 1.273 seconds and
-wall time of 5.838 → 2.107 seconds, with identical emitted token/cost totals and daily output. This
-measures ingestion through the public fetcher, not idle-app CPU or the entire Codex scan pipeline.
-
-Native Codex scans carry an opaque receipt from load to save. `CostUsageStore` owns one decoded persisted
-baseline and compact file/count metadata, releasing it on save, superseding loads, mutations, failures,
-or scan exit (including cancellation and debounce). Abandoned receipts also release through the actor.
-No raw historical SQL snapshot or transaction stays alive across JSONL scanning. Filesystem/device,
-anchor, and pending catch-up reconciliation rerun for comparisons; decoded reuse never freezes them.
-
-Reuse requires the same connection generation and database inode, SQLite's open-file identity check,
-same-connection `data_version`, own `total_changes`, and schema/parser metadata. Observations bracket
-a successfully committed short read transaction. Save checks again under `BEGIN IMMEDIATE`, after
-unchanged-path retention; external changes request a rescan without overwriting current content.
-Retention that rewrites identical metadata requires a fresh locked semantic comparison. Existing callers
-without a receipt read a fresh baseline at save and cannot establish freshness back to an earlier load.
-
-`CostUsageStoreReadWorkTests` counts full load/save cycles: an uncontended unchanged receipt cycle reads
-one scanner snapshot and decodes each exact usage row once, without reading raw token snapshots, with
-one freshness write and no aggregate grouping visits. Changed files and fork ancestors hydrate token
-history through the original receipt, validating its stamp after the read transaction commits. Synthetic
-interleavings cover writer races, mutations, retention, replacement and receipt lifetime.
-Initial decoding, semantic equality, filesystem reconciliation, report generation and priority aggregation
-still cost work proportional to retained history. These counters do not measure installed-app idle CPU;
-refresh cadence, scan budgets, timestamp parsing and incremental-order validation are unchanged.
-
-Claude/Vertex metadata classification searches decoded ASCII strings with case-folded bytes, keeping
-the original Foundation lowercase/substring predicate for non-ASCII or noncontiguous strings. Check
-the whole string for ASCII before matching; combining characters after a marker can affect the old
-predicate. The recursive dictionary/array walk visits dictionaries inside arrays without recursing into nested arrays.
-`CostUsageClaudeVertexClassifierTests` compares with the frozen old predicate and checks complete filtered
-rows, persisted daily tokens/costs, and reports, including decoded JSON escapes, Unicode boundaries,
-nested arrays, and false/numeric metadata flags.
-
-`ClaudeJSONObject` shares a shallow decoded-container view between field extraction and classification;
-the parser reuses its message view for primary detection and usage extraction. On Darwin, ASCII-keyed
-objects retain immutable Foundation containers and use scoped CF bulk access and type dispatch. Only
-JSONSerialization results and their decoded descendants enter that path; arbitrary objects and coerced
-entries use Swift casts. CF bridging is Darwin-only, and retained owners outlive all borrowed pointers
-and temporary allocations.
-Empty containers require no pointer arithmetic. Unicode-keyed objects use the actual conditional
-`[String: Any]` coercion at each object boundary, preserving canonical-key collapse and whole-object
-mixed-key rejection. The walker visits only the resolved entries. Independent coercions can choose
-different collision winners, so tests assert resolved-entry behavior rather than a deterministic winner.
-Linux uses the same view and walker with portable Swift coercions, with no CF bridging or separate
-pricing path. `ClaudeJSONObjectTests` also belongs to the portable CLI/core test target.
-
-Claude parsing returns only rows and parsed bytes. The scan owns reconciliation across streaming chunks,
-parent files and subagents, then builds persisted days from the stored row model; there is no discarded
-parser-day aggregation or second normalization. Daily tests exercise the real cache/report boundary.
-Removing the unused field in the shared scanner changes the generated native parser hash, while Codex
-semantics remain unchanged. Published `494eee446bb2e5f9` is a tested compatible predecessor; existing
-predecessors and store receipt logic remain intact. Pi/OMP pricing keys include this hash and therefore
-reparse once under the existing invalidation contract, also tested with and without a catalog.
-
-A second optimized synthetic check against main `354191af9` used three fresh-cache scans per provider
-with 32–128 KiB text bodies. Median CPU decreased by 3–18% across Claude/Vertex cases (the 3% case is
-small); a separate long-provider-string stress case decreased by 73–75%. The isolated decoded metadata
-predicate used about half the CPU on ordinary nested metadata. Every daily token component and cost
-matched, including the existing unset public request counts. Fixture generation was outside timing;
-wall time was recorded separately under host load. These results do not measure idle-app CPU.
-
-Claude and Vertex scans share one synchronous invocation-owned pricing resolver across full/append file
-parsing, row normalization, and report repricing. It lazily snapshots the catalog, including an empty
-sentinel for unavailable artifacts, at the existing changed-file and nonempty-report preparation points.
-An exact report memo hit and an empty inventory with no rows do not load it. The internal standalone
-parser now owns one snapshot per parse, optionally supplied explicitly; the cancellable parser takes
-that owner directly. It does not reread pricing artifacts between rows.
-
-Normalization and positive/negative catalog lookup memos use exact decoded UTF-8 keys, preserving
-Unicode spelling, dated raw versus stored identities, and non-idempotent normalization. Each memo
-retains at most 1,024 entries per invocation; after saturation, uncached inputs still resolve normally.
-This bounds entry growth, not model-string bytes or scan work. Every row still selects its own dated
-tariff and context tier and runs the existing monetary arithmetic. Historical pricing short-circuits
-before model lookup. Independent scalar Pi/Cursor/direct pricing retains its uncached resolution path.
-Both callers share one private tariff-selection helper whose nonescaping lazy lookup closure runs only
-after historical selection. The scalar calls the original normalizer and lookup directly; the scan
-resolver supplies memoized resolution. Both use the original monetary calculation.
-
-DEBUG Claude scan metrics count normalization cache misses and actual catalog-model lookups with
-positive/negative outcomes; the first lookup still normalizes internally. `repricedRows` continues to
-count all rows. Measure through the synchronous scoped recorder because the public dispatch queue
-does not inherit TaskLocal instrumentation. Resolver and scanner memo tests exercise cross-file reuse,
-snapshot replacement, saturation, exact spelling, and report-only repricing against synthetic fixtures.
-The shared pricing source changes the generated Codex parser hash, but Codex algorithms are unchanged;
-`6366caa15c925349` remains an explicitly tested compatible predecessor.
-
 ### Adaptive refresh fixtures
 
 Heuristics and timer tests seed disabled providers through `testSettingsStore(config:)`, which saves the
 file-backed config before settings initialization. They do not replay a synchronous config write for each
-provider toggle during setup. The seed preserves provider defaults and explicitly keeps OpenAI web access
-off; an existing config would otherwise enable it. Reset-boundary tests then enable only the stubbed Codex
-provider. Timer intervals, polling deadlines, and production persistence behavior remain unchanged.
+provider toggle during setup. The seed preserves provider defaults. Reset-boundary tests then enable only the
+stubbed provider under test. Timer intervals, polling deadlines, and production persistence behavior remain unchanged.
 
 ### Claude session fixtures
 
@@ -455,31 +333,6 @@ completion disabled; PTY command echo alone is not functional completion. The pr
 immediate responses and a controlled 0.5-second response delay, beyond the former 0.1-second idle window.
 Capture budgets remain two seconds for profile/reuse and five seconds for overlap. Account, environment,
 launch-count, isolation, and stale-artifact assertions remain independent of the completion condition.
-
-### Provider session fixtures
-
-Cursor, Augment, Factory, and Notion session stores select a process-local temporary directory under Swift Testing
-or XCTest, before creating directories, loading saved files, or repairing permissions. The runtime guard is also
-compiled in release builds; allowing real Keychain access does not disable this file isolation. Production filenames
-and owner-only persistence remain unchanged.
-
-Persistence tests should construct stores with an explicitly owned `fileURL` and clean up that fixture. Use fresh
-writer/reader instances to prove disk reloads. The sharded runner exports `BARS_TEST_SESSION_FILE_ISOLATION=1`
-for child processes; direct test commands that launch children should export it too. This covers these four default
-session stores, not arbitrary file access or provider-owned credential databases.
-
-`bash Scripts/test_provider_session_file_isolation.sh` compiles the actual path policy and runtime detector with
-optimization and without `DEBUG`, then verifies inherited child isolation and unchanged production-relative paths
-against fake Application Support files. It does not launch the app, read real sessions, or exercise a full release CLI.
-
-### WebView ownership regressions
-
-`OpenAIDashboardWebViewCacheTests` uses explicit nonpersistent stores and a DEBUG preparation seam to suspend
-acquisitions without navigation. Controlled continuations exercise eviction/replacement, stale completion, timeout
-retry, store-scoped invalidation, and lease cleanup after cache loss. Host assertions check one cleanup request and
-registration with `WebKitTeardown`; they do not establish WebContent process termination or diagnose CPU/RSS incidents.
-The existing headless CI guards remain in place for these AppKit tests. The suite also contains older persistent-store
-factory tests; exclude those when running a nonpersistent-only focused check.
 
 ### CI Aggregate Contract
 
@@ -496,20 +349,9 @@ xcodebuild -resolvePackageDependencies -project WidgetExtension/BarsWidgetExtens
 The check names each drifted package and prints this repair command before packaging can fail with an out-of-date
 resolved file when automatic resolution is disabled.
 
-The `lint-build-test` check in `.github/workflows/ci.yml` keeps its existing name and requires successful lint,
-change detection, and the full `build-linux-cli` glibc matrix (x86_64 and ARM64 build, tests, and smoke checks)
-when the shared macOS/Linux path gate requires it. Both platforms use the same docs allowlist; source,
-test, widget, and workflow paths always require builds, including Markdown resources and fixtures. Linux has
-no draft deferral. Only `required=true / result=success` or `required=false / result=skipped` passes; failure,
-cancellation, missing or unknown values, and unexpected skips or executions fail verification.
-The musl build retains its separate path gate; required macOS
-tests deferred for a draft still leave the aggregate incomplete. Whole-workflow cancellation retains the existing
-`always() && !cancelled()` condition, so the verifier does not run in that case.
-
-`Scripts/test_ci_path_gate.sh` checks these result combinations, shared path decisions, and the workflow's Linux
-dependency, condition, and verifier arguments. `BarsLinuxTests` includes the portable `AntigravityLocalhostSessionLifetimeTests` suite on
-both macOS and Linux. It checks session reuse and concurrent synthetic loopback failures without credentials;
-this coverage does not establish or fix the cause of Linux dispatch crashes.
+`Scripts/test_ci_path_gate.sh` checks the shared path decisions used by `.github/workflows/ci.yml`: docs-only changes
+skip builds, while source, test, widget, and workflow paths always require them, including Markdown resources and
+fixtures.
 
 ### Format Code
 
@@ -545,9 +387,9 @@ Confirm the prompt's requested item and requesting binary, then check for anothe
 Do not validate a fix by querying the real Keychain from routine tests. See [Keychain prompts](keychain-prompts.md).
 
 ### Cookies Not Refreshing
-1. Check the browser is supported by the Augment provider metadata
-2. Verify you're logged into Augment in that browser
-3. Check Preferences → Providers → Augment → Cookie source is "Automatic"
+1. Check the browser is in the shared default browser order
+2. Verify you're logged into claude.ai in that browser
+3. Check Preferences → Providers → Claude → Cookie source is "Automatic"
 4. Enable debug logging and check Console.app
 
 ### Main-Thread Hangs

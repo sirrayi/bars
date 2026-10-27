@@ -250,11 +250,6 @@ enum BarsCLI {
                         discussion: nil,
                         signature: configProviderToggleSignature),
                     CommandDescriptor(
-                        name: "login",
-                        abstract: "GitHub Copilot Login",
-                        discussion: nil,
-                        signature: configProviderToggleSignature),
-                    CommandDescriptor(
                         name: "set-api-key",
                         abstract: "Store a provider API key",
                         discussion: nil,

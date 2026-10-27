@@ -94,19 +94,6 @@ struct DarwinProcessEnumeratorTests {
         #expect(DarwinProcessEnumerator.parseProcArgs2Arguments(data) == nil)
     }
 
-    @Test
-    func `antigravity candidate paths reject unrelated executables`() {
-        let paths = [
-            "/bin/ps",
-            "/Applications/Xcode.app/Contents/MacOS/Xcode",
-            "/opt/gravity/bin/tool",
-        ]
-
-        for path in paths {
-            #expect(!DarwinProcessEnumerator.isAntigravityCandidatePath(path))
-        }
-    }
-
     #if canImport(Darwin)
     @Test
     func `filtered process enumeration includes this user and process group`() {

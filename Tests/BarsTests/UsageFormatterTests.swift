@@ -411,8 +411,8 @@ struct UsageFormatterTests {
     }
 
     @Test
-    func `clean plan maps O auth to ollama`() {
-        #expect(UsageFormatter.cleanPlanName("oauth") == "Ollama")
+    func `clean plan keeps OAuth capitalization`() {
+        #expect(UsageFormatter.cleanPlanName("oauth") == "OAuth")
     }
 
     // MARK: - Currency Formatting

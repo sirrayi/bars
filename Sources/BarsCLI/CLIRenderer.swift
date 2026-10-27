@@ -629,7 +629,7 @@ enum CLIRenderer {
             context: context,
             now: now,
             lines: &lines,
-            usesResetDescriptionAsDetail: presentation.menuCard.extraRateWindowShowsResetDescriptionAsDetail)
+            usesResetDescriptionAsDetail: { _ in false })
     }
 
     private static func appendNamedRateWindowLines(

@@ -56,7 +56,7 @@ struct InlineUsageDashboardModel: Equatable {
     let kpis: [KPI]
     let points: [Point]
     let detailLines: [String]
-    /// Codex/Claude weekly quota windows, newest first. Empty for other cost dashboards.
+    /// Claude weekly quota windows, newest first. Empty for other cost dashboards.
     var quotaWindows: [QuotaWindow] = []
     /// Provider branding color used to fill the mini usage bars. When nil the bars fall back to a
     /// neutral palette derived from `valueStyle`.
@@ -98,13 +98,6 @@ extension UsageMenuCardView.Model {
 
     private static func resolveInlineUsageDashboard(input: Input) -> InlineUsageDashboardModel? {
         let menuCard = ProviderDescriptorRegistry.descriptor(for: input.provider).presentation.menuCard
-        if menuCard.usesProviderCostHistoryAsPrimaryDashboard,
-           input.costSummaryInlineEnabled,
-           let tokenSnapshot = primaryCostHistorySnapshot(input: input),
-           !tokenSnapshot.daily.isEmpty
-        {
-            return self.costHistoryInlineDashboard(input: input, snapshot: tokenSnapshot)
-        }
         if menuCard.supportsInlineTokenCostDashboard,
            input.costSummaryInlineEnabled,
            let tokenSnapshot = input.tokenSnapshot,
@@ -113,17 +106,6 @@ extension UsageMenuCardView.Model {
             return Self.costHistoryInlineDashboard(input: input, snapshot: tokenSnapshot)
         }
         return nil
-    }
-
-    static func usesProviderCostHistoryAsPrimaryDashboard(_ provider: UsageProvider) -> Bool {
-        ProviderDescriptorRegistry.descriptor(for: provider).presentation.menuCard
-            .usesProviderCostHistoryAsPrimaryDashboard
-    }
-
-    static func primaryCostHistorySnapshot(input: Input) -> CostUsageTokenSnapshot? {
-        ProviderDescriptorRegistry.descriptor(for: input.provider).presentation.menuCard.primaryCostHistory(
-            snapshot: input.snapshot,
-            tokenSnapshot: input.tokenSnapshot)
     }
 
     static func showsQuotaWeekCost(for provider: UsageProvider) -> Bool {
@@ -156,14 +138,8 @@ extension UsageMenuCardView.Model {
         convertedString: (Double) -> String) -> CostHistoryQuotaPresentation
     {
         let weeklyWindow = Self.weeklyQuotaWindow(from: input)
-        // A provider whose surfaced reset is not one stable account-wide quota cannot derive past
-        // boundaries from observed resets: those instants belong to different quotas. Nominal
-        // weekly strides from the live reset remain correct, so only the observations are dropped.
-        let ignoresObservedResets = Self.menuCardPresentation(for: input.provider)
-            .ignoresObservedQuotaResetBoundaries
-        var observations = ignoresObservedResets ? [] : input.observedWeeklyResets
-        if !ignoresObservedResets,
-           let resetAt = CostUsageTokenSnapshot.quotaWeekReset(from: weeklyWindow),
+        var observations = input.observedWeeklyResets
+        if let resetAt = CostUsageTokenSnapshot.quotaWeekReset(from: weeklyWindow),
            let capturedAt = input.snapshot?.updatedAt
         {
             observations.append(.init(capturedAt: capturedAt, resetsAt: resetAt))
@@ -306,14 +282,11 @@ extension UsageMenuCardView.Model {
         let weekCostTitle = quota.boundariesAreEstimated ? L("Estimated: %@", L("Current window")) : L("Current window")
         let rawTokenTitle = L("%@ tokens", L("Current window"))
         let weekTokenTitle = quota.boundariesAreEstimated ? L("Estimated: %@", rawTokenTitle) : rawTokenTitle
-        var details = Self.costHistoryDetailLines(
+        let details = Self.costHistoryDetailLines(
             input: input,
             snapshot: snapshot,
             requestHistoryTitle: requestHistoryTitle,
             displayCurrencyCode: displayCurrencyCode)
-        if !quota.rows.isEmpty, let note = menuCardPresentation(for: input.provider).quotaWindowNote {
-            details.append(L(note))
-        }
         let providerName = ProviderDefaults.metadata[input.provider]?.displayName ?? input.provider.rawValue
         let accessibilityLabel = L(
             "%@: %@",

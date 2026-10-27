@@ -25,13 +25,13 @@ struct CostUsageClaudeMetadataParsingTests {
         let rejectedRoots = ["[\(valid)]", "[]", "null", "2", #"{"type":"assistant","usage":null}"#]
         let content = (malformed + rejectedRoots + [valid]).joined(separator: "\n") + "\n"
         let file = try env.writeClaudeProjectFile(relativePath: "project/malformed.jsonl", contents: content)
-        for filter: CostUsageScanner.ClaudeLogProviderFilter in [.all, .excludeVertexAI, .vertexAIOnly] {
+        for filter: CostUsageScanner.ClaudeLogProviderFilter in [.all, .excludeVertexAI] {
             let parsed = CostUsageScanner.parseClaudeFile(
                 fileURL: file,
                 range: .init(since: day, until: day),
                 providerFilter: filter,
                 modelsDevCatalog: ModelsDevCatalog(providers: [:]))
-            #expect(parsed.rows.count == (filter == .vertexAIOnly ? 0 : 1))
+            #expect(parsed.rows.count == 1)
             #expect(parsed.rows.allSatisfy { $0.input == 2 && $0.model == "claude-test-unknown" })
             #expect(parsed.parsedBytes == Int64(content.utf8.count))
         }

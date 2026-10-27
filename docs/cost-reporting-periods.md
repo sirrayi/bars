@@ -23,15 +23,14 @@ model requests. This view does not estimate a tool's price from its duration or 
 Messages sharing a turn cannot be priced separately. Missing turn ownership or older history without
 request records appears as unattributed usage; unavailable prices remain unknown. Requests outside the
 selected period and usage belonging to separate subagent sessions are not added to a parent's turn.
-For the Codex adapter, automatic approval-review sessions can appear alongside user-created
-conversations because its scanner reads local Codex session logs. A recorded zero-dollar amount does not imply zero tokens.
+A recorded zero-dollar amount does not imply zero tokens.
 
 The inspector uses the existing cost snapshot and preferred currency. Cached input is a subset of input;
 reasoning is a subset of output. Unavailable counters or prices remain unavailable rather than becoming
 zero. Hide personal information also masks the browser's names and prevents search from revealing them.
 
 Ordinary refreshes retain session summaries and a source handle, without building request-detail arrays.
-Selecting a native Codex session reads only that session's existing SQLite rows. The read is limited to
+Selecting a session reads only that session's existing rows. The read is limited to
 5,000 requests, 8 MiB of request payload, 1 MiB of file metadata, and 5,000 day/model aggregates with
 1 MiB of model names. Persisted pricing metadata has a separate 1 MiB limit. If a limit is exceeded or
 the source or its catch-up checkpoint has changed, the summary stays visible and request details are unavailable; totals are never
@@ -49,7 +48,7 @@ Chart summaries describe **recorded spend**, not an authoritative bill. A priced
 
 Month to date starts at midnight on the first day of the current month and includes today. It uses the pinned cost-bucketing time zone from Settings, falling back to the current local zone. Calendar arithmetic handles leap years and 23/25-hour daylight-saving days. Local log scans reuse Gregorian calendars and the latest day interval for up to eight time zones; crossing a day boundary or changing zones resolves the day again without changing stored cost-cache identities. Each operation resolves its window again, and cache identities include the selection, dates, and time zone.
 
-Menu cost and token charts retain one slot for every calendar day in the selected window, for every provider. A missing day is zero only after the history scan covers that window; incomplete scans and recorded unpriced costs remain unknown. OpenAI and Mistral keep their fixed UTC billing-day calendars; local history follows the selected bucket time zone.
+Menu cost and token charts retain one slot for every calendar day in the selected window, for every provider. A missing day is zero only after the history scan covers that window; incomplete scans and recorded unpriced costs remain unknown. Local history follows the selected bucket time zone.
 
 The menu selection also supplies the default for `bars cost`, the HTTP `/cost` endpoint, and widget cost summaries. The widget metric is named **Cost**; its displayed period comes from the app's snapshot. Explicit CLI options override the saved selection:
 
@@ -65,12 +64,10 @@ The existing host-summary protocol (`--remote` and `--summary-only`) remains lim
 
 All reads the available source history, including local logs older than a year. Missing or deleted logs cannot be recovered, provider APIs can impose their own history limits, and incomplete scans remain marked as incomplete. Local priority metadata is reconciled only for recorded days, without a fixed earliest-year cutoff or empty-day cache entries. This is not a permanent ledger or a lifetime bill since installation. The separate token-activity heatmap still covers one year.
 
-Cursor's quota bars keep the billing-cycle dates reported by Cursor. Calendar-month cost is a complementary view of dated usage events; it does not reinterpret a mid-month billing-cycle allowance as a calendar-month quota.
-
 Claude cache updates reconcile transcript rows once per load and reuse that ordered result for cached daily totals and the report. Duplicate winners reference the existing transcript rows until the final ordered result is assembled, reducing temporary memory use for large histories. Winner precedence, report ordering, and cache invalidation remain unchanged; separate reporting windows still retain their own rows.
 
 Within each transcript scan or cache decode, repeated session IDs and model names share string storage without changing their UTF-8 spelling or the saved JSON.
 
-Claude and Vertex reserve the final transcript row count during cache decoding and parsed-row assembly, reducing retained spare capacity without changing cache bytes or report ordering.
+Claude reserves the final transcript row count during cache decoding and parsed-row assembly, reducing retained spare capacity without changing cache bytes or report ordering.
 
-Claude and Vertex cache saves reuse encoded transcript fragments when their metadata bytes and row contents are unchanged. The bounded memo retains byte ranges in the previous artifact instead of encoded values; saves stream those ranges and newly encoded files into a replacement artifact. Reuse requires the same device, inode, size, and nanosecond modification time. Each cache URL has independent fragments; removed files are discarded and the memo can be evicted without changing saved JSON or report results. Transcript-cache loads use mapped input that is released after decoding. Key ordering and escaping still come from the JSON encoder.
+Claude cache saves reuse encoded transcript fragments when their metadata bytes and row contents are unchanged. The bounded memo retains byte ranges in the previous artifact instead of encoded values; saves stream those ranges and newly encoded files into a replacement artifact. Reuse requires the same device, inode, size, and nanosecond modification time. Each cache URL has independent fragments; removed files are discarded and the memo can be evicted without changing saved JSON or report results. Transcript-cache loads use mapped input that is released after decoding. Key ordering and escaping still come from the JSON encoder.

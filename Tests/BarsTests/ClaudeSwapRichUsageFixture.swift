@@ -67,7 +67,7 @@ struct ClaudeSwapRichUsageFixture {
             userDefaults: InMemoryUserDefaults(),
             config: testConfigWithAllProvidersDisabled(),
             prepareDefaults: { defaults in
-                defaults.set(AppGroupSupport.migrationVersion, forKey: AppGroupSupport.migrationVersionKey)
+                defaults.set(true, forKey: "providerDetectionCompleted")
                 defaults.set(true, forKey: "debugDisableKeychainAccess")
             })
         settings.usageBarsShowUsed = true

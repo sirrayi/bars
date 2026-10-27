@@ -347,7 +347,7 @@ public struct TTYCommandRunner {
         public var errorDescription: String? {
             switch self {
             case let .binaryNotFound(bin):
-                "Missing CLI '\(bin)'. Install it (e.g. npm i -g @openai/codex) or add it to PATH."
+                "Missing CLI '\(bin)'. Install it or add it to PATH."
             case let .launchFailed(msg): "Failed to launch process: \(msg)"
             case .timedOut: "PTY command timed out."
             case .outputTooLarge: "PTY command produced more output than bars can safely process."

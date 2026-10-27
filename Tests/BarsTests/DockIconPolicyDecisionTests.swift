@@ -95,16 +95,6 @@ struct DockIconPolicyDecisionTests {
     }
 
     @Test
-    func `Sparkle window requires regular activation policy`() {
-        let sparkle = self.window(
-            title: "A new version is available",
-            classNames: ["Sparkle.SPUStandardUserDriverWindowController"])
-
-        #expect(DockIconPolicyDecision.shouldUseRegularActivationPolicy(windows: [sparkle]))
-        #expect(DockIconPolicyDecision.shouldPromoteForPresentedWindow(sparkle))
-    }
-
-    @Test
     func `another real window keeps regular activation policy after settings closes`() {
         let closedSettings = self.window(
             isVisible: false,

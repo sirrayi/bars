@@ -58,7 +58,6 @@ struct CLIConfigCommandTests {
         #expect(help.contains("config enable --provider <name>"))
         #expect(help.contains("config disable --provider <name>"))
         #expect(help.contains("--stdin"))
-        #expect(help.contains("--usage-scope team"))
         #expect(help.contains("enables that provider by default"))
         #expect(help.contains("--show-secrets"))
     }

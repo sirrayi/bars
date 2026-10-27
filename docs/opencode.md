@@ -13,7 +13,7 @@ read_when:
   enough for an import to succeed, because a migrated workspace may carry only the console cookie.
 - OpenCode Go usage API at `GET https://opencode.ai/zen/go/v1/usage`, authenticated by `OPENCODE_API_KEY` or
   `providers[].apiKey`, or a selected token account's API key.
-- OpenCode Go local history from `~/.local/share/opencode/opencode.db` on macOS and Linux.
+- OpenCode Go local history from `~/.local/share/opencode/opencode.db`.
 - OpenCode Console JSON, used first for OpenCode Go web reads:
   - `GET https://opencode.ai/console/api/orgs` lists workspaces (cookie auth only).
   - `GET https://opencode.ai/console/api/go/status` returns subscription meters and requires the workspace in the
@@ -49,16 +49,11 @@ read_when:
   five-hour, weekly, and monthly quotas, with the selected window's reset metadata. Explicit window selections
   retain their existing behavior, and the separate Zen balance is not ranked against subscription quota.
 
-## Using OpenCode with Codex or OpenAI
+## Local cost history
 
-Codex account quota and local token/cost history are separate data sources. The Codex provider reads session and
-weekly quota from the signed-in account's remote usage endpoint; those percentages do not come from local session
-logs.
-
-The base OpenCode provider tracks its web
-dashboard, while the local SQLite reader described here selects only records attributed to `opencode-go` for OpenCode Go.
-Ordinary OpenCode sessions using OpenAI/Codex are not currently included in local cost history. OpenAI API-platform
-usage is a separate OpenAI API platform surface, not Codex subscription quota.
+The base OpenCode provider tracks its web dashboard, while the local SQLite reader selects only records attributed to
+`opencode-go` for OpenCode Go. Ordinary OpenCode sessions using other model providers are not included in local cost
+history.
 
 ## Notes
 - OpenCode Go token accounts accept raw API keys as well as existing Cookie headers. Add each key with its own

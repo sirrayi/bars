@@ -345,8 +345,6 @@ struct SpendDashboardModel: Equatable, Sendable {
         let totalTokens: Int?
         let totalCost: Double?
         let modelName: String?
-        var turnPerformance: CostUsageTurnPerformanceSummary?
-        var toolActivitySource: SessionToolActivitySource?
         var usage: CostUsageSessionBreakdown?
         var sourceName: String?
         var costMultiplier: Double = 1
@@ -1483,9 +1481,7 @@ struct SpendDashboardModel: Equatable, Sendable {
                     totalTokens: session.totalTokens,
                     totalCost: session.costUSD.map { $0 * summary.costMultiplier },
                     modelName: modelName,
-                    turnPerformance: nil,
-                    toolActivitySource: nil,
-                    usage: session.withInspectionMetadata(toolActivitySource: nil, turnPerformanceSamples: []),
+                    usage: session,
                     sourceName: summary.input.displayName,
                     costMultiplier: summary.costMultiplier,
                     reportingRange: reportingRange,

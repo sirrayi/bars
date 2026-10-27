@@ -655,7 +655,7 @@ public enum CookieHeaderCache {
         return ClearSummary(clearedCount: cleared, failedCount: failed)
     }
 
-    /// Clears all cookie cache scopes for one provider, including managed Codex account scopes.
+    /// Clears all cookie cache scopes for one provider.
     /// Returns keychain/legacy removal and failure counts.
     @discardableResult
     public static func clearAllScopes(provider: UsageProvider) -> Int {

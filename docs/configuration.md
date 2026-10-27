@@ -8,8 +8,8 @@ read_when:
 
 # Configuration
 
-The app's **Help → bars Help** command opens the [README](https://github.com/steipete/CodexBar/blob/main/README.md), including setup instructions and links to provider documentation.
-**Settings → About → Website** opens the project website at [codexbar.app](https://codexbar.app).
+The app's **Help → bars Help** command opens the [README](https://github.com/sirrayi/bars/blob/main/README.md), including setup instructions and links to provider documentation.
+**Settings → About → Website** opens the [project repository](https://github.com/sirrayi/bars).
 
 The app and CLI share one JSON file for API keys, manual cookie headers, source selection, provider ordering, and token accounts. The running app detects external edits, atomic replacements, and restored older contents, including during watcher startup and change callbacks. App writes update the baseline without being treated as external edits.
 Keychain holds runtime cookie caches, browser Safe Storage access, and provider OAuth/device-flow credentials where required.
@@ -22,7 +22,7 @@ App settings writes are coalesced. Normal quit finishes any pending configuratio
 - `~/.config/bars/config.json` by default for new installs.
 - `~/.bars/config.json` for existing legacy installs when no XDG config exists.
 - The directory is created if missing.
-- Writes on macOS and Linux create a `0600` file inside a private `0700` staging directory beside the destination before writing any bytes, then sync and atomically replace the destination. Failed writes preserve the previous file and remove staging.
+- Writes create a `0600` file inside a private `0700` staging directory beside the destination before writing any bytes, then sync and atomically replace the destination. Failed writes preserve the previous file and remove staging.
 - Current app and CLI writers coordinate through a persistent, empty `config.json.lock` beside the config. CLI token refresh compares the saved credential and publishes its replacement under this lock, skipping the update if another writer holds it. Older versions and external editors do not participate in this advisory lock.
 
 A missing, zero-byte, or JSON-whitespace-only file (spaces, tabs, carriage returns, and line feeds) means no
@@ -38,7 +38,7 @@ replaced by `loadOrCreateDefault()`.
   "hooks": null,
   "providers": [
     {
-      "id": "codex",
+      "id": "claude",
       "enabled": true,
       "source": "auto",
       "cookieSource": "auto",
@@ -72,10 +72,10 @@ values and command paths appear only as prompts in empty fields.
         "id": "quota-alert",
         "enabled": true,
         "event": "quota_low",
-        "provider": "codex",
+        "provider": "claude",
         "threshold": 0.9,
         "executable": "/usr/local/bin/quota-alert",
-        "arguments": ["--message", "Codex quota is low", ""],
+        "arguments": ["--message", "Claude quota is low", ""],
         "timeoutSeconds": 10
       }
     ]
@@ -143,22 +143,14 @@ All provider fields are optional unless noted.
   - `auto` uses [provider-specific fallback order](providers.md#fetch-strategies-current).
   - `api` uses the provider's API-backed mode; only some providers consume the `apiKey` field.
 - `apiKey`: raw API token for providers that support config-backed direct API usage.
-- `enterpriseHost`: provider-specific API host/base URL override. Used by Azure OpenAI, Copilot, LLM Proxy, LiteLLM,
-  ClawRouter, sub2api, and Wayfinder.
+- `enterpriseHost`: provider-specific API host/base URL override, for providers that declare an endpoint setting.
 - `cookieSource`: cookie selection policy.
   - `auto` (browser import), `manual` (use `cookieHeader`), `off` (disable cookies)
 - `cookieHeader`: raw cookie header value (e.g. `key=value; other=...`).
-- `region`: provider-specific region (e.g. `minimax`). This selects API, web, cookie discovery, and dashboard hosts.
-- `workspaceID`: provider-specific workspace/deployment/project ID (e.g. Azure OpenAI deployment, OpenAI API project,
-  `opencode`, Notion space).
-- `modelRateLimits`: optional per-model organization rate limits for the provider-level key (`apiKey` or environment
-  key), currently used by OpenAI Live Usage. Token accounts never inherit these limits.
-  Each row has `model`, positive integer `tokensPerMinute`, and optional positive integer `requestsPerMinute`.
-  Model IDs are trimmed; empty IDs and non-positive TPM rows are dropped, non-positive RPM becomes absent,
-  and the last valid row for a duplicate ID wins. Empty arrays are omitted when encoding. Only these manual limits drive
-  organization utilization; API project caps are separate context. Exact IDs match first, then the longest model
-  ID followed by a hyphen (covering dated snapshots).
-  Example: `"modelRateLimits": [{"model": "gpt-5", "tokensPerMinute": 40000000, "requestsPerMinute": 15000}]`.
+- `region`: provider-specific region, for providers that declare one. This selects API, web, cookie discovery, and dashboard hosts.
+- `workspaceID`: provider-specific workspace/project ID (e.g. the `opencode` workspace).
+- `modelRateLimits`: optional per-model organization rate limits. Retained in the config schema; none of the bundled
+  providers currently consume it.
 - `tokenAccounts`: multi-account tokens for providers in `TokenAccountSupportCatalog`.
 - `claudeSwapEnabled`: allow the Claude provider to read account usage from claude-swap.
 - `claudeSwapExecutablePath`: path to the `cswap` executable, or to `tcr` when `claudeSwapSource` is `"tcr"`.
@@ -236,29 +228,6 @@ and never paste real cookie values or readable DevTools screenshots into public 
 }
 ```
 
-Each OpenAI token account can store `tokenAccounts.accounts[].modelRateLimits`: omitted means not set; `[]` means
-explicitly no limits (kept so clears sync and older bars versions cannot erase limits during sync). Rows use
-the same validation as provider-level `modelRateLimits`. Limits belong only to that account; there is no
-inheritance. Settings edits the selected account's limits, and switching accounts switches the list.
-
-```json
-{
-  "id": "openai",
-  "modelRateLimits": [{"model": "gpt-5", "tokensPerMinute": 40000000}],
-  "tokenAccounts": {
-    "version": 1,
-    "activeIndex": 0,
-    "accounts": [{
-      "id": "00000000-0000-0000-0000-000000000001",
-      "label": "Other organization",
-      "token": "<OPENAI_ADMIN_KEY>",
-      "addedAt": 1735123456,
-      "modelRateLimits": [{"model": "gpt-5", "tokensPerMinute": 80000000}]
-    }]
-  }
-}
-```
-
 ## Provider IDs
 
 See the [generated provider ID list](provider-ids.md), sourced from `UsageProvider` in enum order.
@@ -291,7 +260,7 @@ app's defaults); Settings exports the effective preferences. CLI import queues a
 the running app applies it through its normal settings setters, or applies it at its next launch. The CLI
 reports `{"status":"queued"}`. Multiple pending imports merge, with the latest supplied value winning.
 `--defaults-domain` can select an alternate app preferences domain; it defaults to `com.sirrayi.bars`.
-These commands transfer macOS UI preferences and are unavailable on Linux.
+These commands transfer macOS UI preferences.
 
 ```json
 {
@@ -300,7 +269,7 @@ These commands transfer macOS UI preferences and are unavailable on Linux.
     "refreshFrequency": "fiveMinutes",
     "hidePersonalInfo": true,
     "mergeIcons": true,
-    "mergedOverviewSelectedProviders": ["codex", "claude"],
+    "mergedOverviewSelectedProviders": ["claude", "devin"],
     "switcherShortcuts": {
       "previous": "shift+left",
       "next": "shift+right",
@@ -310,7 +279,7 @@ These commands transfer macOS UI preferences and are unavailable on Linux.
 }
 ```
 
-The allowlist covers the existing iCloud preferences projection: refresh frequency and refresh-on-open;
+The allowlist covers the portable preferences projection: refresh frequency and refresh-on-open;
 provider status checks; session, threshold and predictive pace notifications; session/weekly thresholds
 and notification windows; sound, on-screen alerts and threshold markers; pace visibility, workweek days
 and tick appearance; usage/reset display; local cost display, comparisons and summary style; privacy,
@@ -322,16 +291,15 @@ to the receiving Mac's active providers, including an empty selection. `weeklyPr
 restores the seven-day default. Missing keys leave the receiving Mac's settings unchanged. Unknown preference keys,
 unsupported versions, invalid types and invalid shortcut mappings are rejected before applying changes.
 
-Credentials, accounts, hooks, launch at login, global hotkeys, local paths, device identity, iCloud switches,
-debug settings, and consent are excluded. Import does not enable activity-scan consent. Only the existing
-iCloud projection syncs onward; reset notifications, the additional menu settings, and switcher shortcuts stay local
-unless explicitly exported and imported. Import does not modify `config.json` or iCloud's remote-update suppression.
+Credentials, accounts, hooks, launch at login, global hotkeys, local paths, device identity,
+debug settings, and consent are excluded. Import does not enable activity-scan consent. Import does not modify
+`config.json`.
 
 ### Menu bar controls
 
 **Settings → Menu Bar → Show all accounts in Overview** is off by default. When enabled, each selected
 multi-account provider expands into account rows labeled with its account name or email. The provider’s
-current account source stays in use: claude-swap/tcr, managed Codex accounts, or saved token accounts,
+current account source stays in use: claude-swap/tcr or saved token accounts,
 independently of the provider tab’s stacked/segmented layout. The six-provider cap, provider order, and
 Overview selection still apply to providers before expansion; account rows do not use extra provider
 slots. Rows keep each account’s cached usage and errors; missing usage stays unavailable instead of
@@ -348,7 +316,7 @@ This uses reported usage, duration, and reset time; it adds no observation histo
 
 The **Layout** editor applies only to **Icon & percent**. With **Critters** or **Meter bars** selected, its footer explains which style to choose before editing.
 
-The layout editor includes an optional **Tokens / min** value token (for example `49M/min`) using the provider’s latest reported complete minute. OpenAI supplies it through the **Tokens per minute** provider setting. It uses the same unavailable placeholder as other value tokens when no throughput is available. The optional **Tokens / min graph** token shows the last hour as a compact graph, using the maximum minute in each column and excluding minutes that are still reporting. Drag either token into your layout to enable it; default layouts include neither. The graph uses the status item’s own provider data and the standard unavailable placeholder when there are no reported minutes.
+The layout editor includes an optional **Tokens / min** value token (for example `49M/min`) using the provider’s latest reported complete minute. It uses the same unavailable placeholder as other value tokens when no throughput is available. The optional **Tokens / min graph** token shows the last hour as a compact graph, using the maximum minute in each column and excluding minutes that are still reporting. Drag either token into your layout to enable it; default layouts include neither. The graph uses the status item’s own provider data and the standard unavailable placeholder when there are no reported minutes.
 
 Switching from **Icon & percent** back to **Meters** or **Critters** redraws the selected style immediately, even when usage has not changed.
 

@@ -42,7 +42,7 @@ In the bars menu bar app:
 7. From the same request, copy **x-cog-org-id** into **Organization**, then refresh Devin in bars.
 
 The Bearer token field also accepts the bare token or a full `Authorization: Bearer ...` header line. These are Devin
-browser session credentials, not Codex CLI credentials. Signing in to Codex CLI does not sign in to Devin. Keep the token
+browser session credentials. Keep the token
 private; do not include it, a Cookie header, or an unredacted Network screenshot in an issue report.
 
 The organization field also accepts a slug or the full organization URL, but the internal `org-...` or `org_...` ID from
@@ -65,7 +65,7 @@ Environment overrides:
 - `DEVIN_BEARER_TOKEN` or `DEVIN_AUTHORIZATION`
 - `DEVIN_ORGANIZATION` or `DEVIN_ORG`
 
-## CLI (macOS and Linux)
+## CLI
 
 Automatic Chromium session import is macOS-only. For manual auth on either platform, configure
 `~/.config/bars/config.json` (or your existing legacy config):

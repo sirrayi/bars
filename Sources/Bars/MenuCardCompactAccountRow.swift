@@ -36,8 +36,6 @@ struct MenuCardCompactAccountRowView: View {
                     UsageFormatter.resetLine(for: detail.window, style: resetTimeDisplayStyle, now: now)
                 case .hidden:
                     nil
-                case .providerDescription:
-                    detail.window.resetDescription?.trimmingCharacters(in: .whitespacesAndNewlines)
                 }
                 let line = ["\(title) \(percent)", reset].compactMap(\.self).filter { !$0.isEmpty }
                     .joined(separator: " · ")

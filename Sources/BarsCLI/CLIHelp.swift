@@ -34,7 +34,7 @@ extension BarsCLI {
 
         Examples:
           bars cards
-          bars cards --provider codex
+          bars cards --provider claude
           bars cards --provider all --status
           bars cards --brief
           bars cards --no-color
@@ -214,7 +214,7 @@ extension BarsCLI {
           GET /usage?provider=claude
           GET /usage?provider=all
           GET /cost
-          GET /cost?provider=codex
+          GET /cost?provider=claude
           GET /dashboard/v1/snapshot
 
         Examples:
@@ -254,7 +254,6 @@ extension BarsCLI {
           bars config set-source --provider <name> --source auto|web|cli|oauth|api
                                    [--format text|json] [--json] [--json-only] [--pretty]
           bars config set-api-key --provider <name> (--api-key <key>|--stdin)
-                                    [--organization-id <org>] [--workspace-id <project>]
                                     [--no-enable]
                                     [--format text|json] [--json] [--json-only] [--pretty]
 
@@ -268,8 +267,6 @@ extension BarsCLI {
           enable/disable updates the same provider toggle used by Settings.
           set-source stores a supported data source without changing provider enablement; auto clears the override.
           set-api-key stores a provider API key in the resolved config file and enables that provider by default.
-          For z.ai team usage, add --usage-scope team with BigModel organization and project IDs; this stores
-          the key as a token account instead of a provider-level personal key.
 
         Examples:
           bars config validate --format json --pretty
@@ -278,8 +275,7 @@ extension BarsCLI {
           bars config enable --provider deepseek
           bars config disable --provider devin
           bars config set-source --provider claude --source cli
-          printf '%s' "$DEEPSEEK_API_KEY" | bars config set-api-key --provider deepseek --stdin\
-            --label Team --usage-scope team --organization-id org_... --workspace-id proj_...
+          printf '%s' "$DEEPSEEK_API_KEY" | bars config set-api-key --provider deepseek --stdin
         """
     }
 
@@ -340,10 +336,10 @@ extension BarsCLI {
         Examples:
           bars hooks list
           bars hooks enable
-          bars hooks test quota_reached --provider codex
+          bars hooks test quota_reached --provider claude
           bars hooks test quota_low --provider claude
           bars hooks watch --interval 600
-          bars hooks watch --provider codex
+          bars hooks watch --provider claude
         """
     }
 
@@ -427,10 +423,10 @@ extension BarsCLI {
 
         Examples:
           bars guard --provider claude
-          bars guard --provider codex --min-remaining 20
+          bars guard --provider claude --min-remaining 20
           bars guard --provider claude --window weekly --min-remaining 5
           bars guard --provider claude --json
-          bars guard --provider codex --fail-open
+          bars guard --provider claude --fail-open
         """
     }
 
@@ -453,11 +449,9 @@ extension BarsCLI {
                        [--json-only]
                        [--json-output] [--log-level <trace|verbose|debug|info|warning|error|critical>] [-v|--verbose]
                        [--provider \(ProviderHelp.list)] [--no-color] [--pretty] [--refresh] [--breakdown]
-                       [--provider-native-only]
-                       [--period month-to-date|all] [--days <days>] [--group-by project|session]
-          bars sessions [--json|--json-v2] [--pretty]
+                       [--period month-to-date|all] [--days <days>]
+          bars sessions [--json] [--pretty]
           bars sessions focus <id>
-          bars codex-accounts <list|promote> [--json] [--pretty]
           bars dashboard [--pretty] [--timeout <seconds>] [--output <path>]
           bars serve [--host <host>] [--port <port>] [--refresh-interval <seconds>]
                        [--request-timeout <seconds>]
@@ -472,12 +466,9 @@ extension BarsCLI {
           bars config enable --provider <name>
           bars config disable --provider <name>
           bars config set-source --provider <name> --source auto|web|cli|oauth|api
-          bars config set-api-key --provider <name> (--api-key <key>|--stdin)
-
-                                   --organization-id <org> --workspace-id <project>
+          bars config set-api-key --provider <name> (--api-key <key>|--stdin) [--no-enable]
           bars hooks <list|enable|disable> [--format text|json] [--pretty]
           bars hooks test <event> --provider <name>
-          bars plugins <list|fetch <id>> [--json] [--pretty]
           bars cache clear <--cookies|--cost|--all> [--provider <name>]
           bars cookie refresh <--provider <name>|--all> [--allow-keychain-prompt]
           bars diagnose --provider <name|all> --format json [--redact] [--output <path>] [--pretty]
@@ -506,8 +497,7 @@ extension BarsCLI {
           bars config validate --format json --pretty
           bars config enable --provider deepseek
           bars config set-api-key --provider deepseek --stdin
-          bars hooks test quota_reached --provider codex
-          bars plugins list
+          bars hooks test quota_reached --provider claude
           bars cache clear --cookies
           bars cookie refresh --provider opencodego --allow-keychain-prompt
           bars diagnose --provider deepseek --format json --redact --output diagnostic.json

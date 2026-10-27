@@ -936,8 +936,7 @@ struct SpendSessionRows: View {
             },
             currencyCode: self.group.currencyCode,
             costMultiplier: first.costMultiplier,
-            timeZone: self.group.timeZone,
-            activityRange: range)
+            timeZone: self.group.timeZone)
     }
 }
 

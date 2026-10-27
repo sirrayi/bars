@@ -6,15 +6,16 @@ import Testing
 @MainActor
 struct ProviderSettingsIntegrationTests {
     @Test
-    func `reordering visible providers preserves saved configuration for absent plugins`() throws {
-        let absent = try #require(ProviderInstanceID(rawValue: "absent-fixture-plugin"))
+    func `reordering visible providers preserves saved configuration for unknown providers`() throws {
+        let absent = try #require(ProviderInstanceID(rawValue: "absent-fixture-provider"))
         let settings = testSettingsStore(
             suiteName: #function,
             userDefaults: InMemoryUserDefaults())
-        // Model a plugin becoming unavailable after its configuration is already loaded.
-        settings.updatePluginConfig(instanceID: absent) {
-            $0.enabled = false
-            $0.apiKey = "synthetic-plugin-key"
+        // Model a provider entry that is no longer shipped but is already present in the loaded config.
+        settings.updateConfig(reason: "test", affectsBackgroundWork: false) { config in
+            var entry = ProviderConfig(id: absent, enabled: false)
+            entry.apiKey = "synthetic-plugin-key"
+            config.setProviderConfig(entry)
         }
         #expect(settings.configSnapshot.providerConfig(for: absent)?.apiKey == "synthetic-plugin-key")
         let before = settings.orderedProviders()

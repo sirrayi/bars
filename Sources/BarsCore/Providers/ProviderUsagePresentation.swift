@@ -56,17 +56,10 @@ public enum ProviderCostMenuCardStyle: Sendable, Equatable {
     case generic
     case hidden
     case extraUsageBalance
-    /// Codex extra credits: used vs monthly cap in credit units, optional purchased balance.
-    case creditsUsage
     case zenBalance
-    case pointsBalance
-    case prepaidCredits
-    case payAsYouGoBalance
     /// Monthly spend without a configured limit, with the remaining prepaid balance alongside it.
     case payAsYouGoSpend
     case claude
-    case apiSpend
-    case clawRouter
 }
 
 public struct ProviderCostPresentation: Sendable, Equatable {
@@ -155,13 +148,7 @@ public struct ProviderIconDecorations: OptionSet, Sendable {
         self.rawValue = rawValue
     }
 
-    public static let face = Self(rawValue: 1 << 0)
     public static let notches = Self(rawValue: 1 << 1)
-    public static let gemini = Self(rawValue: 1 << 2)
-    public static let antigravity = Self(rawValue: 1 << 3)
-    public static let factory = Self(rawValue: 1 << 4)
-    public static let warp = Self(rawValue: 1 << 5)
-    public static let grok = Self(rawValue: 1 << 6)
 }
 
 public struct ProviderIconWindowContext: Sendable {
@@ -240,13 +227,6 @@ public enum ProviderUsageNotesResolution: Sendable {
     case localized([String])
 }
 
-public enum ProviderCreditsVisibility: Sendable, Equatable {
-    case standard
-    case requiresValueOrError
-    case hiddenWhenUsageSnapshotPresent
-    case hidden
-}
-
 public struct ProviderCostVisibilityContext: Sendable {
     public let snapshot: UsageSnapshot?
     public let showOptionalUsage: Bool
@@ -257,116 +237,35 @@ public struct ProviderCostVisibilityContext: Sendable {
     }
 }
 
-public enum ProviderPrimaryDescriptionPlacement: Sendable {
-    case standard
-    case reset
-    case detail
-    case detailLeft
-}
-
-public enum ProviderPrimaryDetailKind: Sendable {
-    case none
-    case poeBalance
-    case kiroCredits
-    case requestQuota
-}
-
 public struct ProviderMenuCardPresentation: Sendable {
     public typealias UsageNotesResolver = @Sendable (ProviderUsageNotesContext) -> ProviderUsageNotesResolution
     public typealias CostVisibilityResolver = @Sendable (ProviderCostVisibilityContext) -> Bool
     public typealias SnapshotPredicate = @Sendable (_ snapshot: UsageSnapshot?) -> Bool
-    public typealias ExtraRateWindowPredicate = @Sendable (_ namedWindow: NamedRateWindow) -> Bool
-    public typealias PrimaryCostHistoryResolver = @Sendable (
-        _ snapshot: UsageSnapshot?,
-        _ tokenSnapshot: CostUsageTokenSnapshot?) -> CostUsageTokenSnapshot?
-
     private let usageNotesResolver: UsageNotesResolver
     private let costVisibilityResolver: CostVisibilityResolver
     private let movePrimaryDetailToStatus: SnapshotPredicate
-    private let extraRateWindowUsesResetDescriptionAsDetail: ExtraRateWindowPredicate
-    private let primaryCostHistoryResolver: PrimaryCostHistoryResolver
-    public let creditsVisibility: ProviderCreditsVisibility
-    public let showsCreditsSection: Bool
-    public let providerCostIsRequiredUsage: Bool
-    /// Usage items hidden initially and when restoring provider defaults.
-    public let defaultHiddenUsageItemIDs: [String]
-    public let usesProviderCostHistoryAsPrimaryDashboard: Bool
     public let supportsInlineTokenCostDashboard: Bool
-    /// Codex and Claude local cost dashboards split spend by live Weekly quota windows.
+    /// Claude local cost dashboards split spend by live Weekly quota windows.
     public let showsQuotaWeekCost: Bool
-    /// Appended under the quota-window rows when the window shown does not span the same scope as
-    /// the spend bucketed into it — e.g. a per-model-family quota beside all-model spend.
-    public let quotaWindowNote: String?
-    /// Derives past quota-window boundaries from the live reset alone, ignoring previously observed
-    /// resets. Antigravity reports a weekly bucket per model family and surfaces whichever family is
-    /// most constrained, so stored observations name *different* quotas. Feeding them to the boundary
-    /// builder manufactures windows minutes apart that no daily spend can be attributed to. Nominal
-    /// 7-day strides from the live reset stay correct and are still used.
-    public let ignoresObservedQuotaResetBoundaries: Bool
-    public let primaryDescriptionPlacement: ProviderPrimaryDescriptionPlacement
     public let showsPrimaryBalanceDescription: Bool
-    public let showsSecondaryBalanceDescription: Bool
     public let hidesPrimaryResetWithoutDate: Bool
-    public let clearsPrimaryReset: Bool
-    public let primaryDetailKind: ProviderPrimaryDetailKind
-    public let usesAbacusPace: Bool
-    public let usesSyntheticRollingRegen: Bool
-    public let usesRawPrimaryResetDescription: Bool
-    public let resetWindowUsesWeeklyPace: Bool
-    public let blockingQuota: (windowID: String, message: String)?
 
     public init(
         usageNotesResolver: @escaping UsageNotesResolver = { _ in .unhandled },
-        creditsVisibility: ProviderCreditsVisibility = .standard,
-        showsCreditsSection: Bool = true,
         costVisibilityResolver: @escaping CostVisibilityResolver = { _ in true },
-        providerCostIsRequiredUsage: Bool = false,
-        defaultHiddenUsageItemIDs: [String] = [],
-        usesProviderCostHistoryAsPrimaryDashboard: Bool = false,
-        primaryCostHistoryResolver: @escaping PrimaryCostHistoryResolver = { _, tokenSnapshot in tokenSnapshot },
         supportsInlineTokenCostDashboard: Bool = false,
         showsQuotaWeekCost: Bool = false,
-        quotaWindowNote: String? = nil,
-        ignoresObservedQuotaResetBoundaries: Bool = false,
-        primaryDescriptionPlacement: ProviderPrimaryDescriptionPlacement = .standard,
         showsPrimaryBalanceDescription: Bool = false,
-        showsSecondaryBalanceDescription: Bool = false,
         hidesPrimaryResetWithoutDate: Bool = false,
-        clearsPrimaryReset: Bool = false,
-        movePrimaryDetailToStatus: @escaping SnapshotPredicate = { _ in false },
-        extraRateWindowUsesResetDescriptionAsDetail: @escaping ExtraRateWindowPredicate = { _ in false },
-        primaryDetailKind: ProviderPrimaryDetailKind = .none,
-        usesAbacusPace: Bool = false,
-        usesSyntheticRollingRegen: Bool = false,
-        usesRawPrimaryResetDescription: Bool = false,
-        resetWindowUsesWeeklyPace: Bool = false,
-        blockingQuota: (windowID: String, message: String)? = nil)
+        movePrimaryDetailToStatus: @escaping SnapshotPredicate = { _ in false })
     {
         self.usageNotesResolver = usageNotesResolver
-        self.creditsVisibility = creditsVisibility
-        self.showsCreditsSection = showsCreditsSection
         self.costVisibilityResolver = costVisibilityResolver
-        self.providerCostIsRequiredUsage = providerCostIsRequiredUsage
-        self.defaultHiddenUsageItemIDs = defaultHiddenUsageItemIDs
-        self.usesProviderCostHistoryAsPrimaryDashboard = usesProviderCostHistoryAsPrimaryDashboard
-        self.primaryCostHistoryResolver = primaryCostHistoryResolver
         self.supportsInlineTokenCostDashboard = supportsInlineTokenCostDashboard
         self.showsQuotaWeekCost = showsQuotaWeekCost
-        self.quotaWindowNote = quotaWindowNote
-        self.ignoresObservedQuotaResetBoundaries = ignoresObservedQuotaResetBoundaries
-        self.primaryDescriptionPlacement = primaryDescriptionPlacement
         self.showsPrimaryBalanceDescription = showsPrimaryBalanceDescription
-        self.showsSecondaryBalanceDescription = showsSecondaryBalanceDescription
         self.hidesPrimaryResetWithoutDate = hidesPrimaryResetWithoutDate
-        self.clearsPrimaryReset = clearsPrimaryReset
         self.movePrimaryDetailToStatus = movePrimaryDetailToStatus
-        self.extraRateWindowUsesResetDescriptionAsDetail = extraRateWindowUsesResetDescriptionAsDetail
-        self.primaryDetailKind = primaryDetailKind
-        self.usesAbacusPace = usesAbacusPace
-        self.usesSyntheticRollingRegen = usesSyntheticRollingRegen
-        self.usesRawPrimaryResetDescription = usesRawPrimaryResetDescription
-        self.resetWindowUsesWeeklyPace = resetWindowUsesWeeklyPace
-        self.blockingQuota = blockingQuota
     }
 
     public func usageNotes(context: ProviderUsageNotesContext) -> ProviderUsageNotesResolution {
@@ -379,18 +278,6 @@ public struct ProviderMenuCardPresentation: Sendable {
 
     public func movesPrimaryDetailToStatus(snapshot: UsageSnapshot?) -> Bool {
         self.movePrimaryDetailToStatus(snapshot)
-    }
-
-    /// Whether an extra rate window renders its `resetDescription` as the menu-card detail line.
-    public func extraRateWindowShowsResetDescriptionAsDetail(_ namedWindow: NamedRateWindow) -> Bool {
-        self.extraRateWindowUsesResetDescriptionAsDetail(namedWindow)
-    }
-
-    public func primaryCostHistory(
-        snapshot: UsageSnapshot?,
-        tokenSnapshot: CostUsageTokenSnapshot?) -> CostUsageTokenSnapshot?
-    {
-        self.primaryCostHistoryResolver(snapshot, tokenSnapshot)
     }
 }
 

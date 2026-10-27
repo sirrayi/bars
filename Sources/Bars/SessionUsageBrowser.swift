@@ -10,7 +10,6 @@ struct SessionUsageBrowserContext: Sendable {
     let currencyCode: String
     let costMultiplier: Double
     let timeZone: TimeZone
-    var activityRange: Range<Date>?
 }
 
 /// Menu navigation carries the exact account snapshot into the existing Usage & Spend pane.
@@ -201,9 +200,6 @@ struct SessionUsageBrowser: View {
                 Text(L(UsageFormatter.costEstimateHint))
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                if let performance = CostUsageTurnPerformanceSummary(samples: session.turnPerformanceSamples) {
-                    SpendSessionPerformanceView(summary: performance)
-                }
 
                 Divider()
                 Text(L("spend_performance_turns")).font(.headline)
@@ -218,13 +214,6 @@ struct SessionUsageBrowser: View {
                 }
                 ForEach(Array(session.turns.enumerated()), id: \.element.id) { index, turn in
                     self.turnRow(turn, index: index, session: session)
-                }
-
-                if let activity = self.toolActivityView(for: session) {
-                    Divider()
-                    activity
-                    Text(L("Tool activity has no separate recorded token or monetary cost."))
-                        .font(.caption2).foregroundStyle(.secondary)
                 }
 
                 if !session.modelBreakdowns.isEmpty {
@@ -253,21 +242,6 @@ struct SessionUsageBrowser: View {
         }
     }
 
-    func toolActivityView(
-        for session: CostUsageSessionBreakdown,
-        turnID: String? = nil) -> SpendSessionToolActivityView?
-    {
-        guard let source = session.toolActivitySource, let range = self.context.activityRange else { return nil }
-        // Keep an all-operations route: tools can belong to turns with no retained billed request.
-        return SpendSessionToolActivityView(
-            source: source,
-            lastActivity: session.lastActivity,
-            range: range,
-            timeZone: self.context.timeZone,
-            hidePersonalInfo: self.hidePersonalInfo,
-            turnID: turnID)
-    }
-
     private func turnRow(_ turn: CostUsageSessionTurn, index: Int, session: CostUsageSessionBreakdown) -> some View {
         DisclosureGroup {
             Grid(alignment: .leading, horizontalSpacing: 24, verticalSpacing: 12) {
@@ -294,13 +268,6 @@ struct SessionUsageBrowser: View {
                     }
                     .padding(.vertical, 8)
                 }
-            }
-            if let turnID = turn.turnID,
-               let activity = self.toolActivityView(for: session, turnID: turnID)
-            {
-                activity
-                Text(L("Tool activity has no separate recorded token or monetary cost."))
-                    .font(.caption2).foregroundStyle(.secondary)
             }
         } label: {
             HStack(alignment: .top, spacing: 12) {
