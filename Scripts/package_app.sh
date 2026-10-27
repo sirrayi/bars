@@ -1,63 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-resolve_package_signing_mode() {
-  local requested="${BARS_SIGNING:-adhoc}"
-  case "$requested" in
-    adhoc|identity) ;;
-    *)
-      echo "ERROR: Unsupported BARS_SIGNING: $requested (expected adhoc or identity)" >&2
-      return 1
-      ;;
-  esac
-  SIGNING_MODE="$requested"
-}
-
-resolve_package_signing_identity() {
-  if [[ "$SIGNING_MODE" == "adhoc" ]]; then
-    APP_TEAM_ID="${APP_TEAM_ID:-Y5PE65HELJ}"
-    return
-  fi
-
-  local requested="${APP_IDENTITY:-Developer ID Application: Peter Steinberger (Y5PE65HELJ)}"
-  local identities line name hash selected_name="" selected_hash="" matches=0
-  if ! identities=$(security find-identity -p codesigning -v); then
-    echo "ERROR: Unable to list valid code-signing identities." >&2
-    return 1
-  fi
-  local identity_pattern='^[[:space:]]*[[:digit:]]+\)[[:space:]]+([[:xdigit:]]{40})[[:space:]]+"([^"]+)"[[:space:]]*$'
-  local requested_hash
-  requested_hash=$(printf '%s' "$requested" | tr '[:lower:]' '[:upper:]')
-  while IFS= read -r line; do
-    [[ "$line" =~ $identity_pattern ]] || continue
-    hash="${BASH_REMATCH[1]}"
-    name="${BASH_REMATCH[2]}"
-    if [[ "$hash" == "$requested_hash" || "$name" == *"$requested"* ]]; then
-      selected_name="$name"
-      selected_hash="$hash"
-      matches=$((matches + 1))
-    fi
-  done <<<"$identities"
-  if [[ "$matches" != "1" ]]; then
-    echo "ERROR: APP_IDENTITY must match exactly one valid identity (found $matches); use its full name or SHA-1 hash." >&2
-    return 1
-  fi
-  # Developer ID names end in the Team ID; development names may end in a personal ID instead.
-  local team_pattern='^Developer ID Application: .+ \(([A-Z0-9]{10})\)$'
-  if [[ ! "$selected_name" =~ $team_pattern ]]; then
-    echo "ERROR: Cannot derive a Team ID from APP_IDENTITY; use a Developer ID Application identity." >&2
-    return 1
-  fi
-  local team="${BASH_REMATCH[1]}"
-  if [[ -n "${APP_TEAM_ID:-}" && "$APP_TEAM_ID" != "$team" ]]; then
-    echo "ERROR: APP_TEAM_ID does not match the selected signing identity." >&2
-    return 1
-  fi
-  APP_TEAM_ID="$team"
-  # Sign with the same certificate whose team authorized the entitlement selection.
-  CODESIGN_ID="$selected_hash"
-}
-
 verify_no_quarantine_attribute() {
   local bundle="$1"
   local quarantined
@@ -77,8 +20,6 @@ verify_packaged_app_integrity() {
 
 CONF=${1:-release}
 ALLOW_LLDB=${BARS_ALLOW_LLDB:-0}
-SIGNING_MODE=
-resolve_package_signing_mode
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT"
 LOWER_CONF=$(printf "%s" "$CONF" | tr '[:upper:]' '[:lower:]')
@@ -277,7 +218,8 @@ if [[ "$LOWER_CONF" == "debug" ]]; then
   BUNDLE_ID="com.sirrayi.bars.debug"
 fi
 WIDGET_BUNDLE_ID="${BUNDLE_ID}.widget"
-resolve_package_signing_identity
+# Ad-hoc builds still need a stable 10-character prefix for the app group shared with the widget.
+APP_TEAM_ID="${APP_TEAM_ID:-BARSADHOC1}"
 APP_GROUP_ID="${APP_TEAM_ID}.${BUNDLE_ID}"
 ENTITLEMENTS_DIR="$ROOT/.build/entitlements"
 APP_ENTITLEMENTS="${ENTITLEMENTS_DIR}/bars.entitlements"
@@ -286,36 +228,6 @@ mkdir -p "$ENTITLEMENTS_DIR"
 if [[ "$ALLOW_LLDB" == "1" && "$LOWER_CONF" != "debug" ]]; then
   echo "ERROR: BARS_ALLOW_LLDB requires debug configuration" >&2
   exit 1
-fi
-# iCloud sync (CloudKit) requires restricted entitlements authorized by an embedded
-# Developer ID provisioning profile. Only upstream-team identity-signed release builds of the primary
-# bundle ID carry them; other teams and adhoc/debug builds run with sync unavailable.
-PROVISIONING_PROFILE_SOURCE="$ROOT/Scripts/profiles/bars-DeveloperID.provisionprofile"
-EMBED_PROVISIONING_PROFILE=0
-ICLOUD_ENTITLEMENT_KEYS=""
-if [[ "$SIGNING_MODE" == "identity" && "$LOWER_CONF" == "release" && "$BUNDLE_ID" == "com.sirrayi.bars" && "$APP_TEAM_ID" == "Y5PE65HELJ" ]]; then
-  if [[ ! -f "$PROVISIONING_PROFILE_SOURCE" ]]; then
-    echo "ERROR: Missing $PROVISIONING_PROFILE_SOURCE (required for iCloud entitlements in release builds)" >&2
-    exit 1
-  fi
-  EMBED_PROVISIONING_PROFILE=1
-  ICLOUD_ENTITLEMENT_KEYS=$(cat <<ICLOUD
-    <key>com.apple.application-identifier</key>
-    <string>${APP_TEAM_ID}.${BUNDLE_ID}</string>
-    <key>com.apple.developer.team-identifier</key>
-    <string>${APP_TEAM_ID}</string>
-    <key>com.apple.developer.icloud-services</key>
-    <array>
-        <string>CloudKit</string>
-    </array>
-    <key>com.apple.developer.icloud-container-identifiers</key>
-    <array>
-        <string>iCloud.${BUNDLE_ID}</string>
-    </array>
-    <key>com.apple.developer.icloud-container-environment</key>
-    <string>Production</string>
-ICLOUD
-)
 fi
 cat > "$APP_ENTITLEMENTS" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -326,7 +238,6 @@ cat > "$APP_ENTITLEMENTS" <<PLIST
     <array>
         <string>${APP_GROUP_ID}</string>
     </array>
-${ICLOUD_ENTITLEMENT_KEYS}
     $(if [[ "$ALLOW_LLDB" == "1" ]]; then echo "    <key>com.apple.security.get-task-allow</key><true/>"; fi)
 </dict>
 </plist>
@@ -556,15 +467,7 @@ strip_release_binary "$APP/Contents/PlugIns/BarsWidget.appex/Contents/MacOS/Bars
 
 swiftpm_bin_path "${ARCH_LIST[0]}" PREFERRED_BUILD_DIR
 
-if [[ "$SIGNING_MODE" == "adhoc" ]]; then
-  CODESIGN_ID="-"
-  CODESIGN_ARGS=(--force --sign "$CODESIGN_ID")
-elif [[ "$ALLOW_LLDB" == "1" ]]; then
-  CODESIGN_ID="-"
-  CODESIGN_ARGS=(--force --sign "$CODESIGN_ID")
-else
-  CODESIGN_ARGS=(--force --timestamp --options runtime --sign "$CODESIGN_ID")
-fi
+CODESIGN_ARGS=(--force --sign -)
 function resign() { codesign "${CODESIGN_ARGS[@]}" "$1"; }
 
 if [[ -f "$ICON_TARGET" ]]; then
@@ -634,12 +537,6 @@ if [[ -d "${APP}/Contents/PlugIns/BarsWidget.appex" ]]; then
   codesign "${CODESIGN_ARGS[@]}" \
     --entitlements "$WIDGET_ENTITLEMENTS" \
     "$APP/Contents/PlugIns/BarsWidget.appex"
-fi
-
-# Embed the Developer ID provisioning profile (authorizes the iCloud entitlements;
-# Gatekeeper re-validates it at every launch, so it must be sealed into the signature).
-if [[ "$EMBED_PROVISIONING_PROFILE" == "1" ]]; then
-  cp "$PROVISIONING_PROFILE_SOURCE" "$APP/Contents/embedded.provisionprofile"
 fi
 
 # Finally sign the app bundle itself

@@ -1,35 +1,13 @@
 /* Indonesian localization for bars */
 
-/* iCloud Sync */
 "+ %d more" = "+ %d lainnya";
 "Conversations (%@)" = "Percakapan (%@)";
 "Fast" = "Cepat";
-"iCloud Sync" = "Sinkronisasi iCloud";
 "Projects" = "Proyek";
 "Session %@" = "Sesi %@";
 "Std" = "Std";
 "Show all (%d)" = "Tampilkan semua (%d)";
 "Show less" = "Tampilkan lebih sedikit";
-"Sync settings and providers across your Macs via iCloud" = "Sinkronkan pengaturan dan penyedia di seluruh Mac Anda melalui iCloud";
-"Include API keys, cookies, and tokens" = "Sertakan kunci API, cookies, dan token";
-"Sync usage snapshots" = "Sinkronkan snapshot penggunaan";
-"Show accounts from other Macs" = "Tampilkan akun dari Mac lain";
-"Requires a signed release build of bars." = "Memerlukan build rilis bars yang ditandatangani.";
-"Sign in to iCloud in System Settings to enable sync." = "Masuk ke iCloud di Pengaturan Sistem untuk mengaktifkan sinkronisasi.";
-"iCloud access is restricted on this Mac." = "Akses iCloud dibatasi di Mac ini.";
-"Sync is paused: another Mac uses a newer version of bars. Update to resume." = "Sinkronisasi dijeda: Mac lain menggunakan versi bars yang lebih baru. Perbarui untuk melanjutkan.";
-"Last successful fetch" = "Pengambilan terakhir yang berhasil";
-"Last successful push" = "Dorongan terakhir yang berhasil";
-"Never" = "Tidak pernah";
-"Macs" = "Mac";
-"No synced Macs yet." = "Belum ada Mac yang disinkronkan.";
-"Secrets use iCloud end-to-end encryption via encryptedValues. Hooks and machine-local paths never sync." = "Rahasianya menggunakan enkripsi ujung ke ujung iCloud melalui encryptedValues. Hooks dan jalur mesin-lokal tidak pernah disinkronkan.";
-"Last seen %@" = "Terakhir terlihat %@";
-"This Mac" = "Mac ini";
-"another Mac" = "Mac lain";
-"%dm ago" = "%dm lalu";
-"%dh ago" = "%dj yang lalu";
-"%dd ago" = "%d hari yang lalu";
 
 "ollama_safari_cookie_access_hint" = "Cookie Safari memerlukan Akses Disk Penuh untuk bars (Pengaturan Sistem > Privasi & Keamanan).";
 "ollama_browser_cookie_decryption_denied" = "Dekripsi cookie %@ ditolak di Rantai Kunci. Buka kartu penyedia dan klik Segarkan (⌘R) untuk meminta akses Rantai Kunci lagi.";
@@ -732,9 +710,6 @@
 /* About Pane */
 "about_tagline" = "Semoga token Anda tidak pernah habis—pantau batas agen Anda.";
 "link_github" = "GitHub";
-"link_website" = "Situs Web";
-"link_twitter" = "Twitter";
-"link_email" = "Surel";
 "link_acknowledgements" = "Ucapan Terima Kasih";
 "acknowledgements_footer" = "bars dibangun dengan proyek sumber terbuka ini.";
 "acknowledgements_others" = "%d lainnya";

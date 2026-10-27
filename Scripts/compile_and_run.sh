@@ -15,7 +15,6 @@ WAIT_FOR_LOCK=0
 RUN_TESTS=0
 DEBUG_LLDB=0
 RELEASE_ARCHES=""
-SIGNING_MODE="${BARS_SIGNING:-}"
 CLEAR_ADHOC_KEYCHAIN=0
 
 log()  { printf '%s\n' "$*"; }
@@ -54,59 +53,6 @@ ensure_swift_version() {
     return 0
   fi
   fail "Swift >= 5.5 required (found ${swift_ver:-none}). Install Xcode or update swiftly."
-}
-
-has_signing_identity() {
-  local identity="${1:-}"
-  if [[ -z "${identity}" ]]; then
-    return 1
-  fi
-  security find-identity -p codesigning -v 2>/dev/null | grep -F "${identity}" >/dev/null 2>&1
-}
-
-detect_codesigning_identity() {
-  local identities
-  identities="$(security find-identity -p codesigning -v 2>/dev/null || true)"
-  awk '
-    index($0, "\"Developer ID Application:") {
-      sub(/^[^\"]*\"/, "")
-      sub(/\".*$/, "")
-      if ($0 ~ /\([A-Z0-9]{10}\)$/) {
-        print
-        exit
-      }
-    }
-  ' <<<"${identities}"
-}
-
-resolve_signing_mode() {
-  if [[ -n "${SIGNING_MODE}" ]]; then
-    return
-  fi
-
-  if [[ -n "${APP_IDENTITY:-}" ]]; then
-    # Packaging validates explicit selections; never silently change their signing mode.
-    SIGNING_MODE="identity"
-    return
-  fi
-
-  local candidate="Developer ID Application: Peter Steinberger (Y5PE65HELJ)"
-  if has_signing_identity "${candidate}"; then
-    APP_IDENTITY="${candidate}"
-    export APP_IDENTITY
-    SIGNING_MODE="identity"
-    return
-  fi
-
-  candidate="$(detect_codesigning_identity)"
-  if [[ -n "${candidate}" ]]; then
-    APP_IDENTITY="${candidate}"
-    export APP_IDENTITY
-    SIGNING_MODE="identity"
-    return
-  fi
-
-  SIGNING_MODE="adhoc"
 }
 
 run_step() {
@@ -215,15 +161,7 @@ for arg in "$@"; do
 done
 
 ensure_swift_version
-resolve_signing_mode
-if [[ "${CLEAR_ADHOC_KEYCHAIN}" == "1" && "${SIGNING_MODE}" != "adhoc" ]]; then
-  fail "--clear-adhoc-keychain is only supported when using adhoc signing."
-fi
-if [[ "${SIGNING_MODE}" == "adhoc" ]]; then
-  log "==> Signing: adhoc (set APP_IDENTITY or install a dev cert to avoid keychain prompts)"
-else
-  log "==> Signing: ${APP_IDENTITY:-Developer ID Application}"
-fi
+log "==> Signing: adhoc"
 
 acquire_lock
 
@@ -234,13 +172,13 @@ kill_claude_probes
 
 # 2.5) Optionally delete keychain entries to avoid permission prompts with adhoc signing
 # (adhoc signature changes on every build, making old keychain entries inaccessible)
-if [[ "${SIGNING_MODE:-adhoc}" == "adhoc" && "${CLEAR_ADHOC_KEYCHAIN}" == "1" ]]; then
+if [[ "${CLEAR_ADHOC_KEYCHAIN}" == "1" ]]; then
   log "==> Clearing bars keychain entries (adhoc signing)"
   # Clear both the legacy keychain store and the current cache service when developers explicitly want a clean reset
   # of bars-owned keychain state for ad-hoc builds.
   delete_keychain_service_items "com.sirrayi.bars"
   delete_keychain_service_items "com.sirrayi.bars.cache"
-elif [[ "${SIGNING_MODE:-adhoc}" == "adhoc" ]]; then
+else
   log "==> Preserving bars keychain entries (pass --clear-adhoc-keychain to reset adhoc keychain state)"
 fi
 
@@ -262,11 +200,7 @@ PACKAGE_ENV=(
 if [[ "${DEBUG_LLDB}" == "1" ]]; then
   run_step "package app" env BARS_ALLOW_LLDB=1 "${PACKAGE_ENV[@]}" "${ROOT_DIR}/Scripts/package_app.sh" debug
 else
-  if [[ -n "${SIGNING_MODE}" ]]; then
-    run_step "package app" env BARS_SIGNING="${SIGNING_MODE}" "${PACKAGE_ENV[@]}" "${ROOT_DIR}/Scripts/package_app.sh"
-  else
-    run_step "package app" env "${PACKAGE_ENV[@]}" "${ROOT_DIR}/Scripts/package_app.sh"
-  fi
+  run_step "package app" env "${PACKAGE_ENV[@]}" "${ROOT_DIR}/Scripts/package_app.sh"
 fi
 
 # 4) Launch the packaged app.

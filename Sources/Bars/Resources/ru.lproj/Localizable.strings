@@ -1,35 +1,13 @@
 /* Russian localization for bars */
 
-/* iCloud Sync */
 "+ %d more" = "Ещё %d";
 "Conversations (%@)" = "Диалоги (%@)";
 "Fast" = "Быстро";
-"iCloud Sync" = "Синхронизация с iCloud";
 "Projects" = "Проекты";
 "Session %@" = "Сессия %@";
 "Std" = "Стандарт";
 "Show all (%d)" = "Показать все (%d)";
 "Show less" = "Показать меньше";
-"Sync settings and providers across your Macs via iCloud" = "Синхронизируйте настройки и поставщиков на ваших компьютерах Mac через iCloud.";
-"Include API keys, cookies, and tokens" = "Включите ключи API, cookies и токены.";
-"Sync usage snapshots" = "Синхронизировать снимки использования";
-"Show accounts from other Macs" = "Показать учетные записи с других компьютеров Mac";
-"Requires a signed release build of bars." = "Требуется подписанная сборка выпуска bars.";
-"Sign in to iCloud in System Settings to enable sync." = "Войдите в iCloud в настройках системы, чтобы включить синхронизацию.";
-"iCloud access is restricted on this Mac." = "Доступ к iCloud на этом Mac ограничен.";
-"Sync is paused: another Mac uses a newer version of bars. Update to resume." = "Синхронизация приостановлена: на другом Mac используется более новая версия bars. Обновите, чтобы возобновить работу.";
-"Last successful fetch" = "Последнее успешное получение";
-"Last successful push" = "Последний успешный толчок";
-"Never" = "Никогда";
-"Macs" = "Маки";
-"No synced Macs yet." = "Синхронизированных компьютеров Mac пока нет.";
-"Secrets use iCloud end-to-end encryption via encryptedValues. Hooks and machine-local paths never sync." = "Секреты используют сквозное шифрование iCloud через encryptedValues. Hooks и локальные пути компьютера никогда не синхронизируются.";
-"Last seen %@" = "Последний раз был в сети %@";
-"This Mac" = "Этот Мак";
-"another Mac" = "еще один Мак";
-"%dm ago" = "%dм назад";
-"%dh ago" = "%dч назад";
-"%dd ago" = "%dд назад";
 
 "tab_hooks" = "Хуки";
 "hooks_enable_title" = "Включить хуки";
@@ -725,9 +703,6 @@
 /* About Pane */
 "about_tagline" = "Пусть ваши токены никогда не закончатся — помните об ограничениях агентов.";
 "link_github" = "GitHub";
-"link_website" = "Сайт";
-"link_twitter" = "Twitter";
-"link_email" = "электронная почта";
 "link_acknowledgements" = "Благодарности";
 "acknowledgements_footer" = "bars создан с использованием этих проектов с открытым исходным кодом.";
 "acknowledgements_others" = "ещё %d";

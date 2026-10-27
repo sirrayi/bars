@@ -1,35 +1,13 @@
 /* Spanish localization for bars */
 
-/* iCloud Sync */
 "+ %d more" = "+ %d más";
 "Conversations (%@)" = "Conversaciones (%@)";
 "Fast" = "Rápido";
-"iCloud Sync" = "Sincronización de iCloud";
 "Projects" = "Proyectos";
 "Session %@" = "Sesión %@";
 "Std" = "Est.";
 "Show all (%d)" = "Mostrar todo (%d)";
 "Show less" = "Mostrar menos";
-"Sync settings and providers across your Macs via iCloud" = "Sincronice configuraciones y proveedores en sus Mac a través de iCloud";
-"Include API keys, cookies, and tokens" = "Incluye claves API, cookies y tokens.";
-"Sync usage snapshots" = "Sincronizar instantáneas de uso";
-"Show accounts from other Macs" = "Mostrar cuentas de otras Mac";
-"Requires a signed release build of bars." = "Requiere una versión firmada de bars.";
-"Sign in to iCloud in System Settings to enable sync." = "Inicie sesión en iCloud en Configuración del sistema para habilitar la sincronización.";
-"iCloud access is restricted on this Mac." = "El acceso a iCloud está restringido en esta Mac.";
-"Sync is paused: another Mac uses a newer version of bars. Update to resume." = "La sincronización está en pausa: otra Mac usa una versión más reciente de bars. Actualizar para reanudar.";
-"Last successful fetch" = "Última recuperación exitosa";
-"Last successful push" = "Último empujón exitoso";
-"Never" = "nunca";
-"Macs" = "Mac";
-"No synced Macs yet." = "Aún no hay Mac sincronizadas.";
-"Secrets use iCloud end-to-end encryption via encryptedValues. Hooks and machine-local paths never sync." = "Los secretos utilizan el cifrado de extremo a extremo de iCloud a través de encryptedValues. Hooks y las rutas locales de la máquina nunca se sincronizan.";
-"Last seen %@" = "Visto por última vez %@";
-"This Mac" = "Esta Mac";
-"another Mac" = "otra Mac";
-"%dm ago" = "Hace %dmin";
-"%dh ago" = "Hace %dh";
-"%dd ago" = "Hace %dd";
 
 "tab_hooks" = "Hooks";
 "hooks_enable_title" = "Activar hooks";
@@ -712,9 +690,6 @@
 /* About Pane */
 "about_tagline" = "Que tus tokens nunca se agoten: mantén los límites de tus agentes a la vista.";
 "link_github" = "GitHub";
-"link_website" = "Sitio web";
-"link_twitter" = "Twitter";
-"link_email" = "Correo electrónico";
 "link_acknowledgements" = "Agradecimientos";
 "acknowledgements_footer" = "bars está construido con estos proyectos de código abierto.";
 "acknowledgements_others" = "%d más";

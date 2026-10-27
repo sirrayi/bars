@@ -1,35 +1,13 @@
 /* Galician localization for bars */
 
-/* iCloud Sync */
 "+ %d more" = "+ %d máis";
 "Conversations (%@)" = "Conversas (%@)";
 "Fast" = "Rápido";
-"iCloud Sync" = "Sincronización iCloud";
 "Projects" = "Proxectos";
 "Session %@" = "Sesión %@";
 "Std" = "Est.";
 "Show all (%d)" = "Mostrar todo (%d)";
 "Show less" = "Mostrar menos";
-"Sync settings and providers across your Macs via iCloud" = "Sincroniza a configuración e os provedores nos teus Macs a través de iCloud";
-"Include API keys, cookies, and tokens" = "Inclúe as claves API, cookies e tokens";
-"Sync usage snapshots" = "Sincronizar instantáneas de uso";
-"Show accounts from other Macs" = "Mostrar contas doutros Macs";
-"Requires a signed release build of bars." = "Require unha versión de versión asinada de bars.";
-"Sign in to iCloud in System Settings to enable sync." = "Inicia sesión en iCloud en Configuración do sistema para activar a sincronización.";
-"iCloud access is restricted on this Mac." = "O acceso a iCloud está restrinxido neste Mac.";
-"Sync is paused: another Mac uses a newer version of bars. Update to resume." = "A sincronización está en pausa: outro Mac usa unha versión máis recente de bars. Actualizar para retomar.";
-"Last successful fetch" = "Última recuperación exitosa";
-"Last successful push" = "Último impulso exitoso";
-"Never" = "Nunca";
-"Macs" = "Macs";
-"No synced Macs yet." = "Aínda non hai ningún Mac sincronizado.";
-"Secrets use iCloud end-to-end encryption via encryptedValues. Hooks and machine-local paths never sync." = "Os segredos usan o cifrado de extremo a extremo de iCloud a través de encryptedValues. Hooks e as rutas locais da máquina nunca se sincronizan.";
-"Last seen %@" = "Visto por última vez %@";
-"This Mac" = "Este Mac";
-"another Mac" = "outro Mac";
-"%dm ago" = "Hai %dmin";
-"%dh ago" = "Hai %dh";
-"%dd ago" = "Hai %dd";
 
 "ollama_safari_cookie_access_hint" = "As cookies de Safari precisan acceso total ao disco para bars (Axustes do Sistema > Privacidade e seguridade).";
 "ollama_browser_cookie_decryption_denied" = "Rexeitouse no Chaveiro o descifrado das cookies de %@. Abre a tarxeta do provedor e preme Actualizar (⌘R) para solicitar de novo acceso ao Chaveiro.";
@@ -698,9 +676,6 @@
 /* About Pane */
 "about_tagline" = "Que os teus tokens nunca se esgoten: mantén á vista os límites dos teus axentes.";
 "link_github" = "GitHub";
-"link_website" = "Sitio web";
-"link_twitter" = "Twitter";
-"link_email" = "Correo electrónico";
 "link_acknowledgements" = "Agradecementos";
 "acknowledgements_footer" = "bars está construído con estes proxectos de código aberto.";
 "acknowledgements_others" = "%d máis";

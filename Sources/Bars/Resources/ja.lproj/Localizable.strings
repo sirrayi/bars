@@ -1,35 +1,13 @@
 /* Japanese localization for bars */
 
-/* iCloud Sync */
 "+ %d more" = "他 %d 件";
 "Conversations (%@)" = "会話（%@）";
 "Fast" = "高速";
-"iCloud Sync" = "iCloud同期";
 "Projects" = "プロジェクト";
 "Session %@" = "セッション %@";
 "Std" = "標準";
 "Show all (%d)" = "すべて表示（%d）";
 "Show less" = "表示を減らす";
-"Sync settings and providers across your Macs via iCloud" = "iCloud 経由で Mac 間で設定とプロバイダーを同期します";
-"Include API keys, cookies, and tokens" = "API キー、cookies、および トークン を含む";
-"Sync usage snapshots" = "使用状況のスナップショットを同期する";
-"Show accounts from other Macs" = "他の Mac のアカウントを表示する";
-"Requires a signed release build of bars." = "bars の署名付きリリース ビルドが必要です。";
-"Sign in to iCloud in System Settings to enable sync." = "システム設定で iCloud にサインインして同期を有効にします。";
-"iCloud access is restricted on this Mac." = "この Mac では iCloud アクセスが制限されています。";
-"Sync is paused: another Mac uses a newer version of bars. Update to resume." = "同期が一時停止されています: 別の Mac が新しいバージョンの bars を使用しています。更新して再開します。";
-"Last successful fetch" = "最後に成功したフェッチ";
-"Last successful push" = "最後に成功したプッシュ";
-"Never" = "なし";
-"Macs" = "Mac";
-"No synced Macs yet." = "同期された Mac はまだありません。";
-"Secrets use iCloud end-to-end encryption via encryptedValues. Hooks and machine-local paths never sync." = "シークレットは、encryptedValues 経由で iCloud エンドツーエンド暗号化を使用します。 Hooks とマシンのローカル パスは同期しません。";
-"Last seen %@" = "最後に見たのは %@";
-"This Mac" = "この Mac";
-"another Mac" = "別のMac";
-"%dm ago" = "%d分前";
-"%dh ago" = "%d時間前";
-"%dd ago" = "%d日前";
 
 "tab_hooks" = "フック";
 "hooks_enable_title" = "フックを有効にする";
@@ -721,9 +699,6 @@
 /* About Pane */
 "about_tagline" = "トークンが尽きませんように—エージェントの上限を常に見守りましょう。";
 "link_github" = "GitHub";
-"link_website" = "ウェブサイト";
-"link_twitter" = "Twitter";
-"link_email" = "メール";
 "link_acknowledgements" = "謝辞";
 "acknowledgements_footer" = "bars は以下のオープンソースプロジェクトを利用しています。";
 "acknowledgements_others" = "他 %d 名";

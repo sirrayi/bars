@@ -1,35 +1,13 @@
 /* English localization for bars (base/fallback) */
 
-/* iCloud Sync */
 "+ %d more" = "+ %d de plus";
 "Conversations (%@)" = "Conversations (%@)";
 "Fast" = "Rapide";
-"iCloud Sync" = "Synchronisation iCloud";
 "Projects" = "Projets";
 "Session %@" = "Séance %@";
 "Std" = "Norme";
 "Show all (%d)" = "Tout afficher (%d)";
 "Show less" = "Afficher moins";
-"Sync settings and providers across your Macs via iCloud" = "Synchronisez les paramètres et les fournisseurs sur vos Mac via iCloud";
-"Include API keys, cookies, and tokens" = "Inclut les clés API, cookies et jetons";
-"Sync usage snapshots" = "Synchroniser les instantanés d'utilisation";
-"Show accounts from other Macs" = "Afficher les comptes d'autres Mac";
-"Requires a signed release build of bars." = "Nécessite une version signée de bars.";
-"Sign in to iCloud in System Settings to enable sync." = "Connectez-vous à iCloud dans les paramètres système pour activer la synchronisation.";
-"iCloud access is restricted on this Mac." = "L'accès à iCloud est restreint sur ce Mac.";
-"Sync is paused: another Mac uses a newer version of bars. Update to resume." = "La synchronisation est suspendue : un autre Mac utilise une version plus récente de bars. Mise à jour pour reprendre.";
-"Last successful fetch" = "Dernière récupération réussie";
-"Last successful push" = "Dernière poussée réussie";
-"Never" = "Jamais";
-"Macs" = "Mac";
-"No synced Macs yet." = "Aucun Mac synchronisé pour l'instant.";
-"Secrets use iCloud end-to-end encryption via encryptedValues. Hooks and machine-local paths never sync." = "Les secrets utilisent le cryptage de bout en bout iCloud via encryptedValues. Hooks et les chemins locaux de la machine ne se synchronisent jamais.";
-"Last seen %@" = "Vu pour la dernière fois %@";
-"This Mac" = "Ce Mac";
-"another Mac" = "un autre Mac";
-"%dm ago" = "Il y a %dmin";
-"%dh ago" = "Il y a %dh";
-"%dd ago" = "Il y a %dj";
 
 "tab_hooks" = "Hooks";
 "hooks_enable_title" = "Activer les hooks";
@@ -724,9 +702,6 @@
 /* About Pane */
 "about_tagline" = "Que vos jetons ne soient jamais épuisés : gardez un œil sur les limites des agents.";
 "link_github" = "GitHub";
-"link_website" = "Site web";
-"link_twitter" = "X/Twitter";
-"link_email" = "E-mail";
 "link_acknowledgements" = "Remerciements";
 "acknowledgements_footer" = "bars s'appuie sur ces projets open source.";
 "acknowledgements_others" = "%d autres";

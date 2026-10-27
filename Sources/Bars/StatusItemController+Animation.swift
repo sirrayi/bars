@@ -245,18 +245,12 @@ extension StatusItemController {
         phase: Double?,
         bypassMergedMenuTrackingDeferral: Bool = false) -> Bool
     {
-        guard let button = self.statusItem.button else { return false }
+        guard self.statusItem.button != nil else { return false }
         if !bypassMergedMenuTrackingDeferral,
            self.deferMergedIconRenderDuringMenuTrackingIfNeeded()
         {
             return true
         }
-        defer {
-            let providers = self.stackedMergeIconProvidersIfActive().map { [$0.top, $0.bottom] }
-                ?? self.primaryProviderForUnifiedIcon().firstPartyProvider.map { [$0] } ?? []
-            self.updateMenuBarSourceDescription(for: button, providers: providers)
-        }
-
         if let rows = self.stackedMergeIconProvidersIfActive(),
            let result = self.applyStoredStackedMenuBarLayoutIfNeeded(top: rows.top, bottom: rows.bottom)
         {
@@ -320,15 +314,12 @@ extension StatusItemController {
         merged: Bool) -> Bool
     {
         guard let button = statusItem.button else { return false }
-        if !merged {
-            self.updateMenuBarSourceDescription(for: button, providers: [provider])
-        }
         let shouldSkipRender: (String) -> Bool = { signature in
             merged ? self.shouldSkipMergedIconRender(signature)
                 : self.shouldSkipProviderIconRender(provider: provider, signature: signature)
         }
         let providerTint = self.providerTintColor(for: provider, button: button)
-        let snapshot = self.menuBarUsageSource(for: provider).snapshot
+        let snapshot = self.store.menuBarSnapshot(for: provider.instanceID)
         // IconRenderer treats these values as a left-to-right "progress fill" percentage; depending on the
         // user setting we pass either "percent left" or "percent used".
         let showUsed = self.settings.usageBarsShowUsed
@@ -384,7 +375,7 @@ extension StatusItemController {
         var primary = resolved?.primary
         var weekly = resolved?.secondary
         var credits: Double?
-        var stale = self.menuBarIsStale(for: provider)
+        var stale = self.store.isStale(provider: provider)
         var morphProgress: Double?
 
         let needsAnimation = merged ? self.needsMenuBarIconAnimation() : self.shouldAnimate(provider: provider)
@@ -539,7 +530,6 @@ extension StatusItemController {
     }
 
     func quotaWarningFlashActive(provider: UsageProvider, now: Date = Date()) -> Bool {
-        guard !self.menuBarUsageSource(for: provider).isFleet else { return false }
         guard let until = self.quotaWarningFlashUntil[provider.instanceID] else { return false }
         if until > now {
             return true
@@ -716,7 +706,6 @@ extension StatusItemController {
         }
 
         let percentWindow = self.menuBarMetricWindow(for: provider, snapshot: snapshot, now: now)
-        let isFleet = self.menuBarUsageSource(for: provider).isFleet
 
         // The combined "Session + Weekly" metric (Claude) shows both lanes in percent mode
         // ("5h 12% · W 45%") and, in pace/both modes, pairs the session usage with the weekly pace.
@@ -728,7 +717,7 @@ extension StatusItemController {
             pace = nil
         case .pace, .both:
             let paceWindow = combinedLanes.map(\.weekly) ?? percentWindow
-            pace = isFleet ? nil : paceWindow.flatMap { window in
+            pace = paceWindow.flatMap { window in
                 self.store.weeklyPace(
                     provider: provider,
                     window: window,
@@ -931,7 +920,7 @@ extension StatusItemController {
     /// while pace/both render the one lane chosen by `combinedDisplayPercentWindow` — mirror that presentation
     /// here rather than scheduling whichever lane happened to drive the icon.
     func menuBarDisplayedResetDates(for provider: UsageProvider, now: Date) -> [Date] {
-        let snapshot = self.menuBarUsageSource(for: provider).snapshot
+        let snapshot = self.store.menuBarSnapshot(for: provider.instanceID)
         let layoutResolution = self.renderedMenuBarLayoutResolution(for: provider)
         if !layoutResolution.usesLegacyRendering,
            self.settings.menuBarIconStyle == .iconAndPercent
@@ -1040,10 +1029,7 @@ extension StatusItemController {
         }
         if self.settings.unifiedIconSource == .highestUsage, self.shouldMergeIcons {
             let candidates = overview.compactMap(\.firstPartyProvider)
-            if let highest = self.store.providerWithHighestUsage(
-                candidateProviders: candidates,
-                usageSource: self.menuBarUsageSource)
-            {
+            if let highest = self.store.providerWithHighestUsage(candidateProviders: candidates) {
                 return highest.provider.instanceID
             }
             // Keep the Overview subset authoritative while its quotas are unavailable or exhausted.
@@ -1064,7 +1050,6 @@ extension StatusItemController {
         // Provider-specific by design: Claude remains the placeholder when no provider is available.
         return enabled.first(where: {
             self.store.menuBarSnapshot(for: $0) != nil
-                || $0.firstPartyProvider.map { self.menuBarUsageSource(for: $0).isFleet } == true
         }) ?? enabled.first ?? .claude
     }
 
@@ -1103,7 +1088,6 @@ extension StatusItemController {
     }
 
     func shouldAnimate(provider: UsageProvider, mergeIcons: Bool? = nil) -> Bool {
-        guard !self.menuBarUsageSource(for: provider).isFleet else { return false }
         if self.store.debugForceAnimation {
             return true
         }
@@ -1120,7 +1104,7 @@ extension StatusItemController {
             return false
         }
 
-        let isStale = self.menuBarIsStale(for: provider)
+        let isStale = self.store.isStale(provider: provider)
         let hasSatisfiedUsageFetch = self.store.hasSatisfiedUsageFetch(for: provider)
         return !hasSatisfiedUsageFetch && !isStale
     }

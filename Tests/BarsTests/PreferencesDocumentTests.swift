@@ -104,8 +104,6 @@ struct PreferencesDocumentTests {
             "terminalApp",
             "jetbrainsIDEBasePath",
             "adaptiveActivityScanConsent",
-            "iCloudSyncDeviceID",
-            "iCloudSyncEnabled",
             "debugMenuEnabled",
         ] {
             defaults.set("PRIVATE-SENTINEL", forKey: key)

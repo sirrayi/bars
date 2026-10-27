@@ -224,32 +224,17 @@ struct ProviderUsageItemVisibilityTests {
     }
 
     @Test
-    func `reset migration marker preserves synced choices and does not change fetch ownership`() throws {
+    func `reset migration marker preserves saved choices and does not change fetch ownership`() throws {
         var sender = ProviderConfig(id: .claude, hiddenUsageItemIDs: ["metric:secondary"])
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
         let originalIdentity = try encoder.encode(sender.fetchIdentityConfig)
         sender.claudeResetCreditsVisibilityMigrated = true
         #expect(try encoder.encode(sender.fetchIdentityConfig) == originalIdentity)
-        let payload = try JSONDecoder().decode(ProviderIntentPayload.self, from: encoder.encode(
-            ProviderIntentPayload(config: sender)))
-        let received = try payload.applying(
-            to: ProviderConfig(id: .claude),
-            secretFields: [:],
-            canEnable: { _, _ in true })
-        #expect(received.claudeResetCreditsVisibilityMigrated == true)
-        #expect(received.hiddenUsageItemIDs == ["metric:secondary"])
-
-        let oldPayload = try JSONDecoder().decode(ProviderIntentPayload.self, from: Data(
-            #"{"schemaVersion":1,"provider":"claude","hiddenUsageItemIDs":[]}"#.utf8))
-        #expect(oldPayload.claudeResetCreditsVisibilityMigrated == nil)
-        let olderSync = try oldPayload.applying(to: received, secretFields: [:], canEnable: { _, _ in true })
-        #expect(olderSync.claudeResetCreditsVisibilityMigrated == true)
-        #expect(olderSync.hiddenUsageItemIDs == [])
 
         let defaults = InMemoryUserDefaults(values: ["showOptionalCreditsAndExtraUsage": false])
         let configStore = testConfigStore(suiteName: "visibility-migration-sync-\(UUID().uuidString)")
-        try configStore.save(BarsConfig(providers: [received]))
+        try configStore.save(BarsConfig(providers: [sender]))
         let settings = Self.settings(defaults: defaults, configStore: configStore)
         defer { settings.configFileWatcher?.stop() }
         #expect(settings.isUsageItemVisible(.claudeResetCredits, for: .claude))

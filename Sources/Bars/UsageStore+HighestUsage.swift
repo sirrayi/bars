@@ -7,7 +7,6 @@ extension UsageStore {
     /// Excludes providers that are fully rate-limited.
     func providerWithHighestUsage(
         candidateProviders: [UsageProvider]? = nil,
-        usageSource: (@MainActor (UsageProvider) -> MenuBarUsageSource)? = nil,
         now: Date = Date())
         -> (provider: UsageProvider, usedPercent: Double)?
     {
@@ -15,9 +14,8 @@ extension UsageStore {
         var highest: (provider: UsageProvider, selection: AutomaticQuotaSelection.Selection)?
         for provider in self.enabledFirstPartyProvidersForDisplay() {
             guard candidateSet?.contains(provider) ?? true else { continue }
-            let source = usageSource?(provider) ?? .local(self.menuBarSnapshot(for: provider.instanceID))
-            guard self.isEnabled(provider) || source.isFleet,
-                  let snapshot = source.snapshot else { continue }
+            guard self.isEnabled(provider),
+                  let snapshot = self.menuBarSnapshot(for: provider.instanceID) else { continue }
             let automatic = self.settings.menuBarMetricPreference(for: provider, snapshot: snapshot) == .automatic
             let selection: AutomaticQuotaSelection.Selection? = if let window = self.menuBarMetricWindowForHighestUsage(
                 provider: provider,

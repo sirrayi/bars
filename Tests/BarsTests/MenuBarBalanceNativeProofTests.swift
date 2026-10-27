@@ -11,7 +11,7 @@ final class MenuBarBalanceNativeProofTests: XCTestCase {
         let defaults = InMemoryUserDefaults(values: [
             "debugDisableKeychainAccess": true, "bars.legacySecretsMigrationCompleted": true,
             "providerDetectionCompleted": true, "openAIWebAccessEnabled": false, "launchAtLogin": false,
-            "tokenCostUsageEnabled": false, "agentSessionsEnabled": false, "iCloudSyncEnabled": false,
+            "tokenCostUsageEnabled": false, "agentSessionsEnabled": false,
         ])
         let config = BarsConfigStore(fileURL: root.appendingPathComponent("config.json"))
         try config.save(BarsConfig(providers: UsageProvider.allCases.map {

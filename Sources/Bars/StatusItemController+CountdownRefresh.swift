@@ -124,7 +124,7 @@ extension StatusItemController {
             .filter { $0.metric.kind == .hours && $0.metric != .runsOutIn }
         guard !predicates.isEmpty else { return [] }
 
-        let snapshot = self.menuBarUsageSource(for: provider).snapshot
+        let snapshot = self.store.menuBarSnapshot(for: provider.instanceID)
         let windows = self.menuBarLayoutWindows(provider: provider, snapshot: snapshot, now: now)
         let scopedWeekly = MenuBarLayoutSemanticWindowResolver
             .scopedWeeklyNamedWindow(snapshot: snapshot)?.window
@@ -172,7 +172,6 @@ extension StatusItemController {
         -> [TimeInterval]
     {
         providers.flatMap { provider -> [TimeInterval] in
-            guard !self.menuBarUsageSource(for: provider).isFleet else { return [] }
             let resolution = self.renderedMenuBarLayoutResolution(for: provider)
             guard !resolution.usesLegacyRendering,
                   self.settings.menuBarIconStyle == .iconAndPercent
@@ -184,7 +183,7 @@ extension StatusItemController {
             let paced: [(PercentWindow, MenuBarConditionalMetric)] = [(.weekly, .weeklyPace), (.spend, .spendPace)]
                 .filter { tokens.contains(.pace(window: $0)) || metrics.contains($1) }
             guard !paced.isEmpty else { return [] }
-            let snapshot = self.menuBarUsageSource(for: provider).snapshot
+            let snapshot = self.store.menuBarSnapshot(for: provider.instanceID)
             let windows = self.menuBarLayoutWindows(provider: provider, snapshot: snapshot, now: now)
             return paced.compactMap { percentWindow, _ in
                 guard let window = percentWindow == .spend ? windows.spend : windows.weekly else { return nil }
@@ -207,7 +206,6 @@ extension StatusItemController {
         now: Date)
         -> [TimeInterval]
     {
-        guard !self.menuBarUsageSource(for: provider).isFleet else { return [] }
         let metrics = self.referencedConditionalMetrics(resolution: resolution)
         let tokens = resolution.layout.flattenedTokens(conditionals: self.settings.menuBarLayoutConditionals)
         guard metrics.contains(where: \.isClockDerivedRate)

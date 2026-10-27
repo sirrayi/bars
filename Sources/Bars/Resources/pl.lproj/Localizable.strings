@@ -1,35 +1,13 @@
 /* English localization for bars (base/fallback) */
 
-/* iCloud Sync */
 "+ %d more" = "+ %d więcej";
 "Conversations (%@)" = "Rozmowy (%@)";
 "Fast" = "Szybko";
-"iCloud Sync" = "Synchronizacja iCloud";
 "Projects" = "Projekty";
 "Session %@" = "Sesja %@";
 "Std" = "standardowe";
 "Show all (%d)" = "Pokaż wszystko (%d)";
 "Show less" = "Pokaż mniej";
-"Sync settings and providers across your Macs via iCloud" = "Synchronizuj ustawienia i dostawców na swoich komputerach Mac za pośrednictwem iCloud";
-"Include API keys, cookies, and tokens" = "Dołącz klucze API, cookies i tokeny";
-"Sync usage snapshots" = "Synchronizuj migawki użycia";
-"Show accounts from other Macs" = "Pokaż konta z innych komputerów Mac";
-"Requires a signed release build of bars." = "Wymaga podpisanej kompilacji wydania bars.";
-"Sign in to iCloud in System Settings to enable sync." = "Zaloguj się do iCloud w Ustawieniach systemu, aby włączyć synchronizację.";
-"iCloud access is restricted on this Mac." = "Dostęp do iCloud na tym Macu jest ograniczony.";
-"Sync is paused: another Mac uses a newer version of bars. Update to resume." = "Synchronizacja została wstrzymana: inny Mac używa nowszej wersji bars. Zaktualizuj, aby wznowić.";
-"Last successful fetch" = "Ostatnie udane pobranie";
-"Last successful push" = "Ostatnie udane pchnięcie";
-"Never" = "Nigdy";
-"Macs" = "komputery Mac";
-"No synced Macs yet." = "Brak jeszcze zsynchronizowanych komputerów Mac.";
-"Secrets use iCloud end-to-end encryption via encryptedValues. Hooks and machine-local paths never sync." = "Sekrety korzystają z kompleksowego szyfrowania iCloud za pośrednictwem encryptedValues. Hooks i ścieżki lokalne komputera nigdy się nie synchronizują.";
-"Last seen %@" = "Ostatnio widziany %@";
-"This Mac" = "Tego Maca";
-"another Mac" = "kolejny Mac";
-"%dm ago" = "%dmin temu";
-"%dh ago" = "%dgodz temu";
-"%dd ago" = "%dd temu";
 
 "ollama_safari_cookie_access_hint" = "Pliki cookie Safari wymagają pełnego dostępu do dysku dla bars (Ustawienia systemowe > Prywatność i ochrona).";
 "ollama_browser_cookie_decryption_denied" = "Odszyfrowanie plików cookie %@ zostało odrzucone w Pęku kluczy. Otwórz kartę dostawcy i kliknij Odśwież (⌘R), aby ponownie poprosić o dostęp do Pęku kluczy.";
@@ -732,9 +710,6 @@
 /* About Pane */
 "about_tagline" = "Niech twoje tokeny nigdy się nie skończą — miej limity agentów zawsze na oku.";
 "link_github" = "GitHub";
-"link_website" = "Strona internetowa";
-"link_twitter" = "Twitter";
-"link_email" = "E-mail";
 "link_acknowledgements" = "Podziękowania";
 "acknowledgements_footer" = "bars korzysta z tych projektów open source.";
 "acknowledgements_others" = "%d innych";

@@ -188,7 +188,6 @@ class NativeTestRunnerTests(unittest.TestCase):
         commands = [
             ["bash", "Scripts/test.sh"], ["bash", "Scripts/test_fast.sh"],
             ["bash", "Scripts/test.sh", "--direct-workers", "4"],
-            ["bash", "Scripts/test-plugin-engines.sh"],
             *[["make", "-s", target] for target in
               ["test", "test-fast", "test-skip-build", "test-tty", "test-live"]],
         ]

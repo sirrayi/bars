@@ -223,7 +223,7 @@ struct CostUsageScannerClaudeRegressionTests {
         #expect(abs((Double(parsed.rows[0].costNanos) / 1_000_000_000) - expected) < 0.000000001)
     }
 
-    /// Regression for https://github.com/steipete/CodexBar/issues/1210: an Opus 4.8 row
+    /// Regression for upstream CodexBar issue #1210: an Opus 4.8 row
     /// priced to an empty cost because the built-in Claude pricing table had no
     /// claude-opus-4-8 entry (used when the models.dev cache is missing/stale).
     @Test

@@ -1,35 +1,13 @@
 /* Brazilian Portuguese localization for bars */
 
-/* iCloud Sync */
 "+ %d more" = "+ %d mais";
 "Conversations (%@)" = "Conversas (%@)";
 "Fast" = "Rápido";
-"iCloud Sync" = "Sincronização do iCloud";
 "Projects" = "Projetos";
 "Session %@" = "Sessão %@";
 "Std" = "Padrão";
 "Show all (%d)" = "Mostrar tudo (%d)";
 "Show less" = "Mostrar menos";
-"Sync settings and providers across your Macs via iCloud" = "Sincronize configurações e provedores em seus Macs via iCloud";
-"Include API keys, cookies, and tokens" = "Inclui chaves API, cookies e tokens";
-"Sync usage snapshots" = "Sincronizar instantâneos de uso";
-"Show accounts from other Macs" = "Mostrar contas de outros Macs";
-"Requires a signed release build of bars." = "Requer uma versão assinada do bars.";
-"Sign in to iCloud in System Settings to enable sync." = "Faça login no iCloud nas configurações do sistema para ativar a sincronização.";
-"iCloud access is restricted on this Mac." = "O acesso ao iCloud é restrito neste Mac.";
-"Sync is paused: another Mac uses a newer version of bars. Update to resume." = "A sincronização está pausada: outro Mac usa uma versão mais recente do bars. Atualize para retomar.";
-"Last successful fetch" = "Última busca bem-sucedida";
-"Last successful push" = "Último push bem-sucedido";
-"Never" = "Nunca";
-"Macs" = "Macs";
-"No synced Macs yet." = "Nenhum Mac sincronizado ainda.";
-"Secrets use iCloud end-to-end encryption via encryptedValues. Hooks and machine-local paths never sync." = "Os segredos usam criptografia ponta a ponta do iCloud via encryptedValues. Hooks e os caminhos locais da máquina nunca são sincronizados.";
-"Last seen %@" = "Visto pela última vez %@";
-"This Mac" = "Este Mac";
-"another Mac" = "outro Mac";
-"%dm ago" = "%dmin atrás";
-"%dh ago" = "%dh atrás";
-"%dd ago" = "%dd atrás";
 
 "tab_hooks" = "Hooks";
 "hooks_enable_title" = "Ativar hooks";
@@ -721,9 +699,6 @@
 /* About Pane */
 "about_tagline" = "Que seus tokens nunca acabem — mantenha os limites dos agentes à vista.";
 "link_github" = "GitHub";
-"link_website" = "Site";
-"link_twitter" = "Twitter";
-"link_email" = "E-mail";
 "link_acknowledgements" = "Agradecimentos";
 "acknowledgements_footer" = "O bars é feito com estes projetos de código aberto.";
 "acknowledgements_others" = "%d outros";

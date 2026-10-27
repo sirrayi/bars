@@ -59,18 +59,6 @@ check_cli_installer() {
   /bin/bash "${ROOT_DIR}/Scripts/test_install_bars_cli.sh"
 }
 
-check_release_dsym_paths() {
-  "${ROOT_DIR}/Scripts/test_release_dsym_paths.sh"
-}
-
-check_release_checksum() {
-  "${ROOT_DIR}/Scripts/test_release_checksum.sh"
-}
-
-check_release_assets() {
-  python3 "${ROOT_DIR}/Scripts/test_check_release_assets.py"
-}
-
 check_swift_test_sharding() {
   python3 "${ROOT_DIR}/Scripts/test_direct_swift_test_groups.py"
   "${ROOT_DIR}/Scripts/test_swift_test_sharding.sh"
@@ -85,10 +73,6 @@ check_ci_build_cache() {
   python3 "${ROOT_DIR}/Scripts/test_ci_prune_swiftpm_cache.py"
 }
 
-check_homebrew_tap_wait() {
-  "${ROOT_DIR}/Scripts/test_wait_for_homebrew_tap_update.sh"
-}
-
 check_repository_size() {
   "${ROOT_DIR}/Scripts/check_repository_size.sh"
   "${ROOT_DIR}/Scripts/test_repository_size.sh"
@@ -97,7 +81,7 @@ check_repository_size() {
 check_shell_scripts() {
   local count=0
   local script
-  for script in "${ROOT_DIR}"/Scripts/*.sh "${ROOT_DIR}"/Scripts/mac-release; do
+  for script in "${ROOT_DIR}"/Scripts/*.sh; do
     [[ -f "$script" ]] || continue
     bash -n "$script"
     count=$((count + 1))
@@ -112,18 +96,8 @@ check_app_locales() {
   node "${ROOT_DIR}/Scripts/sync-widget-locales.mjs" --check
 }
 
-check_site_locales() {
-  node --test "${ROOT_DIR}/Scripts/test_social_card.mjs"
-  node "${ROOT_DIR}/Scripts/check-site-locales.mjs"
-  node --check "${ROOT_DIR}/docs/site.js"
-}
-
 check_documentation_links() {
   node "${ROOT_DIR}/Scripts/check-documentation-links.mjs"
-}
-
-check_llms_index() {
-  node "${ROOT_DIR}/Scripts/generate-llms.mjs" --check
 }
 
 run_portable_checks() {
@@ -137,18 +111,12 @@ run_portable_checks() {
   check_package_signing
   check_package_info_plist
   check_packaged_app_launch
-  check_release_dsym_paths
-  check_release_checksum
-  check_release_assets
   check_swift_test_sharding
   check_ci_path_gate
   check_ci_build_cache
-  check_homebrew_tap_wait
   check_repository_size
   check_shell_scripts
   check_documentation_links
-  check_llms_index
-  check_site_locales
 }
 
 run_swiftformat_lint() {
@@ -162,7 +130,7 @@ run_swiftlint() {
 }
 
 collect_javascript_files() {
-  JAVASCRIPT_FILES=("${ROOT_DIR}/docs/site.js")
+  JAVASCRIPT_FILES=()
   local file
   for file in "${ROOT_DIR}"/Scripts/*.mjs
   do

@@ -1,35 +1,13 @@
 /* Swedish localization for bars */
 
-/* iCloud Sync */
 "+ %d more" = "+ %d till";
 "Conversations (%@)" = "Konversationer (%@)";
 "Fast" = "Snabbt";
-"iCloud Sync" = "iCloud Sync";
 "Projects" = "Projekt";
 "Session %@" = "Session %@";
 "Std" = "Std";
 "Show all (%d)" = "Visa alla (%d)";
 "Show less" = "Visa färre";
-"Sync settings and providers across your Macs via iCloud" = "Synkronisera inställningar och leverantörer mellan dina Mac-datorer via iCloud";
-"Include API keys, cookies, and tokens" = "Inkludera API-nycklar, cookies och token";
-"Sync usage snapshots" = "Synkronisera ögonblicksbilder av användning";
-"Show accounts from other Macs" = "Visa konton från andra Mac-datorer";
-"Requires a signed release build of bars." = "Kräver en signerad version av bars.";
-"Sign in to iCloud in System Settings to enable sync." = "Logga in på iCloud i Systeminställningar för att aktivera synkronisering.";
-"iCloud access is restricted on this Mac." = "iCloud-åtkomst är begränsad på denna Mac.";
-"Sync is paused: another Mac uses a newer version of bars. Update to resume." = "Synkronisering är pausad: en annan Mac använder en nyare version av bars. Uppdatera för att återuppta.";
-"Last successful fetch" = "Senaste lyckade hämtning";
-"Last successful push" = "Sista lyckade push";
-"Never" = "Aldrig";
-"Macs" = "Mac-datorer";
-"No synced Macs yet." = "Inga synkroniserade Mac-datorer ännu.";
-"Secrets use iCloud end-to-end encryption via encryptedValues. Hooks and machine-local paths never sync." = "Secrets använder iCloud end-to-end-kryptering via encryptedValues. Hooks och maskinlokala vägar synkroniseras aldrig.";
-"Last seen %@" = "Senast sett %@";
-"This Mac" = "Denna Mac";
-"another Mac" = "en annan Mac";
-"%dm ago" = "%dmin sedan";
-"%dh ago" = "%dt sedan";
-"%dd ago" = "%dd sedan";
 
 "tab_hooks" = "Hooks";
 "hooks_enable_title" = "Aktivera hooks";
@@ -723,9 +701,6 @@
 /* About Pane */
 "about_tagline" = "Må dina token aldrig ta slut – håll agentgränserna synliga.";
 "link_github" = "GitHub";
-"link_website" = "Webbplats";
-"link_twitter" = "Twitter";
-"link_email" = "E-post";
 "link_acknowledgements" = "Tack";
 "acknowledgements_footer" = "bars är byggt med dessa projekt med öppen källkod.";
 "acknowledgements_others" = "%d andra";

@@ -714,9 +714,6 @@
 /* About Pane */
 "about_tagline" = "May your tokens never run out—keep agent limits in view.";
 "link_github" = "GitHub";
-"link_website" = "Website";
-"link_twitter" = "Twitter";
-"link_email" = "Email";
 "link_acknowledgements" = "Acknowledgements";
 "acknowledgements_footer" = "bars is built with these open-source projects.";
 "acknowledgements_others" = "%d others";
@@ -1528,28 +1525,6 @@
 "Finish now" = "Finish now";
 "Continue in background" = "Continue in background";
 
-/* iCloud Sync */
-"iCloud Sync" = "iCloud Sync";
-"Sync settings and providers across your Macs via iCloud" = "Sync settings and providers across your Macs via iCloud";
-"Include API keys, cookies, and tokens" = "Include API keys, cookies, and tokens";
-"Sync usage snapshots" = "Sync usage snapshots";
-"Show accounts from other Macs" = "Show accounts from other Macs";
-"Requires a signed release build of bars." = "Requires a signed release build of bars.";
-"Sign in to iCloud in System Settings to enable sync." = "Sign in to iCloud in System Settings to enable sync.";
-"iCloud access is restricted on this Mac." = "iCloud access is restricted on this Mac.";
-"Sync is paused: another Mac uses a newer version of bars. Update to resume." = "Sync is paused: another Mac uses a newer version of bars. Update to resume.";
-"Last successful fetch" = "Last successful fetch";
-"Last successful push" = "Last successful push";
-"Never" = "Never";
-"Macs" = "Macs";
-"No synced Macs yet." = "No synced Macs yet.";
-"Secrets use iCloud end-to-end encryption via encryptedValues. Hooks and machine-local paths never sync." = "Secrets use iCloud end-to-end encryption via encryptedValues. Hooks and machine-local paths never sync.";
-"Last seen %@" = "Last seen %@";
-"This Mac" = "This Mac";
-"another Mac" = "another Mac";
-"%dm ago" = "%dm ago";
-"%dh ago" = "%dh ago";
-"%dd ago" = "%dd ago";
 
 "Cumulative" = "Cumulative";
 "Token activity" = "Token activity";

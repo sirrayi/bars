@@ -159,7 +159,7 @@ struct WidgetTokenOwnerTests {
     }
 
     @Test
-    func `verified widget ownership leaves cloud records hooks and serialized identity unchanged`() throws {
+    func `verified widget ownership leaves hooks and serialized identity unchanged`() throws {
         let (settings, store) = self.makeStore()
         let account = settings.tokenAccounts(for: .claude)[0]
         let original = ClaudeUsageSnapshot(
@@ -174,7 +174,6 @@ struct WidgetTokenOwnerTests {
         let snapshots = [original, original.withAccountIdentity("verified-owner"), original].map {
             ClaudeOAuthFetchStrategy._snapshotForTesting(from: $0).withAccountLabel(account.label, for: .claude)
         }
-        var cloudNames: [[String]] = []
         var hookIDs: [String?] = []
         var encoded: [Data] = []
         for snapshot in snapshots {
@@ -183,13 +182,11 @@ struct WidgetTokenOwnerTests {
                 account: account,
                 snapshot: snapshot,
                 sourceLabel: "fixture")
-            cloudNames.append(store.cloudSyncAccountSnapshots().map(\.recordName).sorted())
             hookIDs.append(UsageStore.hookAccountDiscriminator(provider: .claude, snapshot: snapshot))
             let encoder = JSONEncoder()
             encoder.outputFormatting = .sortedKeys
             try encoded.append(encoder.encode(snapshot.identity))
         }
-        #expect(cloudNames[0] == cloudNames[1] && cloudNames[1] == cloudNames[2])
         #expect(hookIDs[0] == hookIDs[1] && hookIDs[1] == hookIDs[2])
         #expect(encoded[0] == encoded[1] && encoded[1] == encoded[2])
         #expect(snapshots[1].identity?.widgetAccountOwnerID == "verified-owner")

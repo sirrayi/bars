@@ -1,35 +1,13 @@
 /* Italian localization for bars */
 
-/* iCloud Sync */
 "+ %d more" = "+ altri %d";
 "Conversations (%@)" = "Conversazioni (%@)";
 "Fast" = "Veloce";
-"iCloud Sync" = "Sincronizzazione iCloud";
 "Projects" = "Progetti";
 "Session %@" = "Sessione %@";
 "Std" = "Std.";
 "Show all (%d)" = "Mostra tutto (%d)";
 "Show less" = "Mostra meno";
-"Sync settings and providers across your Macs via iCloud" = "Sincronizza impostazioni e provider sui tuoi Mac tramite iCloud";
-"Include API keys, cookies, and tokens" = "Includi chiavi API, cookie e token";
-"Sync usage snapshots" = "Sincronizza istantanee di utilizzo";
-"Show accounts from other Macs" = "Mostra account da altri Mac";
-"Requires a signed release build of bars." = "Richiede una build di rilascio firmata di bars.";
-"Sign in to iCloud in System Settings to enable sync." = "Accedi a iCloud in Impostazioni di Sistema per abilitare la sincronizzazione.";
-"iCloud access is restricted on this Mac." = "L’accesso a iCloud è limitato su questo Mac.";
-"Sync is paused: another Mac uses a newer version of bars. Update to resume." = "La sincronizzazione è in pausa: un altro Mac usa una versione più recente di bars. Aggiorna per riprendere.";
-"Last successful fetch" = "Ultimo recupero riuscito";
-"Last successful push" = "Ultimo invio riuscito";
-"Never" = "Mai";
-"Macs" = "Computer Mac";
-"No synced Macs yet." = "Nessun Mac sincronizzato.";
-"Secrets use iCloud end-to-end encryption via encryptedValues. Hooks and machine-local paths never sync." = "I segreti usano la crittografia end-to-end di iCloud tramite encryptedValues. Gli hook e i percorsi locali non vengono mai sincronizzati.";
-"Last seen %@" = "Ultima attività: %@";
-"This Mac" = "Questo Mac";
-"another Mac" = "un altro Mac";
-"%dm ago" = "%dmin fa";
-"%dh ago" = "%dh fa";
-"%dd ago" = "%dg fa";
 
 "ollama_safari_cookie_access_hint" = "I cookie di Safari richiedono l’accesso completo al disco per bars (Impostazioni di Sistema > Privacy e sicurezza).";
 "ollama_browser_cookie_decryption_denied" = "La decrittografia dei cookie di %@ è stata rifiutata nel Portachiavi. Apri la scheda del provider e fai clic su Aggiorna (⌘R) per richiedere di nuovo l’accesso al Portachiavi.";
@@ -732,9 +710,6 @@
 /* About Pane */
 "about_tagline" = "Che i tuoi token non finiscano mai: tieni sempre sotto controllo i limiti degli agenti.";
 "link_github" = "GitHub";
-"link_website" = "Sito web";
-"link_twitter" = "X";
-"link_email" = "E-mail";
 "link_acknowledgements" = "Riconoscimenti";
 "acknowledgements_footer" = "bars è realizzato con questi progetti open source.";
 "acknowledgements_others" = "altri %d";

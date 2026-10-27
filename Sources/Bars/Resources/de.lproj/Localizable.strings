@@ -1,35 +1,13 @@
 /* English localization for bars (base/fallback) */
 
-/* iCloud Sync */
 "+ %d more" = "+ %d weitere";
 "Conversations (%@)" = "Unterhaltungen (%@)";
 "Fast" = "Schnell";
-"iCloud Sync" = "iCloud-Synchronisierung";
 "Projects" = "Projekte";
 "Session %@" = "Sitzung %@";
 "Std" = "Std.";
 "Show all (%d)" = "Alle anzeigen (%d)";
 "Show less" = "Weniger anzeigen";
-"Sync settings and providers across your Macs via iCloud" = "Synchronisieren Sie Einstellungen und Anbieter auf Ihren Macs über iCloud";
-"Include API keys, cookies, and tokens" = "Beinhaltet die Schlüssel API, cookies und Token";
-"Sync usage snapshots" = "Nutzungs-Snapshots synchronisieren";
-"Show accounts from other Macs" = "Konten von anderen Macs anzeigen";
-"Requires a signed release build of bars." = "Erfordert einen signierten Release-Build von bars.";
-"Sign in to iCloud in System Settings to enable sync." = "Melden Sie sich in den Systemeinstellungen bei iCloud an, um die Synchronisierung zu aktivieren.";
-"iCloud access is restricted on this Mac." = "Der iCloud-Zugriff ist auf diesem Mac eingeschränkt.";
-"Sync is paused: another Mac uses a newer version of bars. Update to resume." = "Die Synchronisierung ist angehalten: Ein anderer Mac verwendet eine neuere Version von bars. Aktualisieren, um fortzufahren.";
-"Last successful fetch" = "Letzter erfolgreicher Abruf";
-"Last successful push" = "Letzter erfolgreicher Push";
-"Never" = "Niemals";
-"Macs" = "Macs";
-"No synced Macs yet." = "Noch keine synchronisierten Macs.";
-"Secrets use iCloud end-to-end encryption via encryptedValues. Hooks and machine-local paths never sync." = "Secrets nutzen die iCloud-End-to-End-Verschlüsselung über encryptedValues. Hooks und maschinenlokale Pfade werden nie synchronisiert.";
-"Last seen %@" = "Zuletzt gesehen %@";
-"This Mac" = "Dieser Mac";
-"another Mac" = "ein anderer Mac";
-"%dm ago" = "Vor %dMin";
-"%dh ago" = "Vor %dStd";
-"%dd ago" = "Vor %dT";
 
 "tab_hooks" = "Hooks";
 "hooks_enable_title" = "Hooks aktivieren";
@@ -724,9 +702,6 @@
 /* About Pane */
 "about_tagline" = "Mögen Ihre Token nie ausgehen – behalten Sie die Agentenlimits im Blick.";
 "link_github" = "GitHub";
-"link_website" = "Webseite";
-"link_twitter" = "Twitter";
-"link_email" = "E-Mail";
 "link_acknowledgements" = "Danksagungen";
 "acknowledgements_footer" = "bars basiert auf diesen Open-Source-Projekten.";
 "acknowledgements_others" = "%d weitere";

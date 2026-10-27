@@ -597,11 +597,6 @@ extension StatusItemController {
     }
 
     private func addMenuCards(to menu: NSMenu, context: MenuCardContext, captureMenu: NSMenu? = nil) -> Bool {
-        let fleetProjection = self.fleetAccountProjection(for: context.currentProvider)
-        if self.addFleetFallback(fleetProjection, to: menu, context: context) {
-            return false
-        }
-
         // Eligible claude-swap rows take precedence over Claude token-account cards; otherwise
         // the stacked token-account branch below would return before rendering the adapter rows.
         if ClaudeSwapMenuPrecedence.prefersClaudeSwap(
@@ -610,7 +605,6 @@ extension StatusItemController {
             showSingleAccount: self.settings.claudeSwapShowSingleAccount)
         {
             self.addClaudeSwapMenuCards(to: menu, captureMenu: captureMenu ?? menu, context: context)
-            self.addFleetAccountMenuCards(fleetProjection.additionalAccounts, to: menu, context: context)
             return false
         }
 
@@ -621,7 +615,6 @@ extension StatusItemController {
                 captureMenu: captureMenu ?? menu,
                 context: context)
             {
-                self.addFleetAccountMenuCards(fleetProjection.additionalAccounts, to: menu, context: context)
                 return false
             }
             let accountSnapshots = tokenAccountDisplay.snapshots
@@ -633,7 +626,6 @@ extension StatusItemController {
                         accountSnapshot: accountSnapshot)
                 }
             self.addStackedMenuCards(cards, to: menu, context: context)
-            self.addFleetAccountMenuCards(fleetProjection.additionalAccounts, to: menu, context: context)
             return false
         }
 
@@ -648,7 +640,6 @@ extension StatusItemController {
                 layoutModel: renderedModel,
                 width: context.menuWidth,
                 hasCostHistory: context.submenuContext.hasCostHistory)
-            self.addFleetAccountMenuCards(fleetProjection.additionalAccounts, to: menu, context: context)
             return true
         }
 
@@ -659,7 +650,6 @@ extension StatusItemController {
             heightCacheScope: context.currentProvider.rawValue,
             heightCacheFingerprint: renderedModel.heightFingerprint(section: "card"),
             containsInteractiveControls: true))
-        self.addFleetAccountMenuCards(fleetProjection.additionalAccounts, to: menu, context: context)
         if self.addStorageMenuCardSection(to: menu, provider: context.currentProvider, width: context.menuWidth) {
             menu.addItem(.separator())
         }

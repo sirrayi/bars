@@ -1,10 +1,8 @@
 /* Catalan localization for bars */
 
-/* iCloud Sync */
 "+ %d more" = "+ %d més";
 "Conversations (%@)" = "Converses (%@)";
 "Fast" = "Ràpid";
-"iCloud Sync" = "Sincronització amb iCloud";
 
 "Independent chat" = "Xat independent";
 "Independent chats" = "Xats independents";
@@ -14,26 +12,6 @@
 "Std" = "Est.";
 "Show all (%d)" = "Mostra-ho tot (%d)";
 "Show less" = "Mostra menys";
-"Sync settings and providers across your Macs via iCloud" = "Sincronitza la configuració i els proveïdors entre els vostres Mac mitjançant iCloud";
-"Include API keys, cookies, and tokens" = "Inclou claus d'API, galetes i tokens";
-"Sync usage snapshots" = "Sincronitza les instantànies d'ús";
-"Show accounts from other Macs" = "Mostra els comptes d'altres Macs";
-"Requires a signed release build of bars." = "Cal una versió de llançament signada de bars.";
-"Sign in to iCloud in System Settings to enable sync." = "Inicieu la sessió d'iCloud a Configuració del Sistema per activar la sincronització.";
-"iCloud access is restricted on this Mac." = "L'accés a iCloud està restringit en aquest Mac.";
-"Sync is paused: another Mac uses a newer version of bars. Update to resume." = "La sincronització està aturada: un altre Mac utilitza una versió més recent de bars. Actualitzeu per reprendre-la.";
-"Last successful fetch" = "Última baixada correcta";
-"Last successful push" = "Última pujada correcta";
-"Never" = "Mai";
-"Macs" = "Macs";
-"No synced Macs yet." = "Encara no hi ha cap Mac sincronitzat.";
-"Secrets use iCloud end-to-end encryption via encryptedValues. Hooks and machine-local paths never sync." = "Els secrets utilitzen el xifratge d'extrem a extrem d'iCloud (encryptedValues). Els hooks i les rutes locals del Mac mai no se sincronitzen.";
-"Last seen %@" = "Última connexió: %@";
-"This Mac" = "Aquest Mac";
-"another Mac" = "un altre Mac";
-"%dm ago" = "fa %dmin";
-"%dh ago" = "fa %dh";
-"%dd ago" = "fa %dd";
 
 "ollama_safari_cookie_access_hint" = "Les galetes de Safari necessiten accés complet al disc per a bars (Configuració del Sistema > Privadesa i seguretat).";
 "ollama_browser_cookie_decryption_denied" = "S'ha denegat el desxifratge de les galetes de %@ al Clauer. Obriu la targeta del proveïdor i feu clic a Actualitza (⌘R) per tornar a sol·licitar accés al Clauer.";
@@ -707,9 +685,6 @@
 /* About Pane */
 "about_tagline" = "Que els vostres tokens no s'esgotin mai: mantingueu els límits dels vostres agents a la vista.";
 "link_github" = "GitHub";
-"link_website" = "Lloc web";
-"link_twitter" = "Twitter";
-"link_email" = "Correu electrònic";
 "link_acknowledgements" = "Agraïments";
 "acknowledgements_footer" = "bars està construït amb aquests projectes de codi obert.";
 "acknowledgements_others" = "%d més";

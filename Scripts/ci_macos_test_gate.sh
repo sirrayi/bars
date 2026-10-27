@@ -49,12 +49,10 @@ classify_path() {
       ;;
     *.md)
       ;;
-    docs/.nojekyll|docs/CNAME|docs/index.html|docs/llms.txt|docs/site-locales.mjs|docs/site.css|docs/site.js|docs/social.html|docs/social.png)
-      ;;
     docs/*.png|docs/*.jpg|docs/*.jpeg|docs/*.webp|docs/*.ico|docs/*.svg)
       ;;
     *)
-      require_macos_tests "$path" "not covered by portable docs/site checks"
+      require_macos_tests "$path" "not covered by portable docs checks"
       ;;
   esac
 }
@@ -106,7 +104,7 @@ if [[ "$macos_tests" == true && "$draft_pull_request" == true ]]; then
 elif [[ "$macos_tests" == true ]]; then
   summary_reason="$macos_tests_reason"
 else
-  summary_reason="docs/site-only changes covered by portable checks"
+  summary_reason="docs-only changes covered by portable checks"
 fi
 
 if [[ -n "${GITHUB_OUTPUT:-}" ]]; then

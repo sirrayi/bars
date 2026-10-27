@@ -113,38 +113,6 @@ struct ClaudeSwapAccountAliasProjectionTests {
     }
 
     @Test
-    func `cloud sync payload omits display only organization names`() throws {
-        let snapshots = ClaudeSwapAccountProjection.accountSnapshots(
-            from: self.list(
-                self.row(number: 1, email: "shared@example.com", organizationName: "Sendbird"),
-                self.row(
-                    number: 2,
-                    email: "shared@example.com",
-                    organizationName: "Acme",
-                    alias: "Work",
-                    active: true)),
-            now: self.now)
-        let account = try #require(snapshots.first)
-        let usage = try #require(account.snapshot)
-        let payload = AccountSnapshotSyncPayload(
-            provider: account.provider.instanceID,
-            deviceID: "test-device",
-            accountIdentity: account.accountEmail,
-            displayLabel: account.accountEmail ?? "Account \(account.id.opaqueID)",
-            usage: usage)
-        let data = try JSONEncoder().encode(payload)
-        let json = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
-        let encodedUsage = try #require(json["usage"] as? [String: Any])
-
-        #expect(account.displayLabel == "Work")
-        #expect(payload.displayLabel == "shared@example.com")
-        #expect(payload.usage.identity?.accountOrganization == nil)
-        #expect(encodedUsage["accountOrganization"] == nil || encodedUsage["accountOrganization"] is NSNull)
-        #expect(encodedUsage["accountEmail"] as? String == "shared@example.com")
-        #expect(usage.identity?.accountID == "claude-swap:2")
-    }
-
-    @Test
     func `retained fingerprints skip email shaped aliases when the mailbox is empty`() {
         let snapshots = ClaudeSwapAccountProjection.accountSnapshots(
             from: self.list(
@@ -155,55 +123,6 @@ struct ClaudeSwapAccountAliasProjectionTests {
         #expect(account.accountEmail == nil)
         #expect(ClaudeSwapRetainedUsageStore.fingerprint(from: account) == nil)
         #expect(ClaudeSwapRetainedUsageStore.snapshotsForRetention(snapshots).isEmpty)
-    }
-
-    @Test
-    func `cloud sync keys duplicate swap slots by source identity`() {
-        let snapshots = ClaudeSwapAccountProjection.accountSnapshots(
-            from: self.list(
-                self.row(number: 1, email: "shared@example.com", organizationName: "Sendbird"),
-                self.row(
-                    number: 2,
-                    email: "shared@example.com",
-                    organizationName: "Acme",
-                    active: true)),
-            now: self.now)
-        let names = snapshots.compactMap { account -> String? in
-            guard let usage = account.snapshot else { return nil }
-            let identity = usage.identity?.accountID
-                ?? usage.identity?.accountEmail
-                ?? "\(account.id.source):\(account.id.opaqueID)"
-            return AccountSnapshotSyncPayload(
-                provider: account.provider.instanceID,
-                deviceID: "test-device",
-                accountIdentity: identity,
-                displayLabel: account.accountEmail ?? "Account \(account.id.opaqueID)",
-                usage: usage).recordName
-        }
-
-        #expect(snapshots.map { $0.snapshot?.identity?.accountID } == [
-            "claude-swap:2",
-            "claude-swap:1",
-        ])
-        #expect(Set(names).count == 2)
-    }
-
-    @Test
-    func `cloud sync payload omits aliases when swap email is missing`() throws {
-        let snapshots = ClaudeSwapAccountProjection.accountSnapshots(
-            from: self.list(self.row(number: 3, email: "", alias: "Empty slot")),
-            now: self.now)
-        let account = try #require(snapshots.first)
-        let usage = try #require(account.snapshot)
-        let payload = AccountSnapshotSyncPayload(
-            provider: account.provider.instanceID,
-            deviceID: "test-device",
-            accountIdentity: "\(account.id.source):\(account.id.opaqueID)",
-            displayLabel: account.accountEmail ?? "Account \(account.id.opaqueID)",
-            usage: usage)
-        #expect(account.displayLabel == "Empty slot")
-        #expect(account.accountEmail == nil)
-        #expect(payload.displayLabel == "Account 3")
     }
 
     private func list(_ rows: ClaudeSwapAccountRow...) -> ClaudeSwapAccountList {

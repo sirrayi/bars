@@ -41,9 +41,6 @@ extension UsageStore {
         let snapshot = self.makeWidgetSnapshot(previousSnapshot: previousSnapshot)
         self.lastQueuedWidgetSnapshot = snapshot
         self.invalidatedQueuedWidgetProviders = self.widgetUsagePreservationBlockedProviders
-        NotificationCenter.default.post(
-            name: .barsUsageSnapshotsDidChange,
-            object: UsageSnapshotsDidChangeEvent(snapshots: self.cloudSyncAccountSnapshots()))
         let previousTask = self.widgetSnapshotPersistTask
         self.widgetSnapshotPersistTask = Task { @MainActor in
             _ = await previousTask?.result
@@ -83,96 +80,6 @@ extension UsageStore {
         #if canImport(WidgetKit)
         WidgetCenter.shared.reloadAllTimelines()
         #endif
-    }
-
-    /// Builds outbound snapshots only from this Mac's UsageStore; remote fleet snapshots live in CloudSyncState.
-    func cloudSyncAccountSnapshots() -> [AccountSnapshotSyncPayload] {
-        let deviceID = self.settings.iCloudSyncDeviceID
-        var payloads: [String: AccountSnapshotSyncPayload] = [:]
-
-        for (instanceID, usage) in self.snapshots {
-            guard instanceID.firstPartyProvider.map(Self.requiresBrowserSession) != true else { continue }
-            let identity = usage.identity?.accountID ?? usage.identity?.accountEmail
-            let label = usage.identity?.accountEmail
-                ?? usage.identity?.accountOrganization
-                ?? instanceID.firstPartyProvider
-                .map { ProviderDescriptorRegistry.descriptor(for: $0).metadata.displayName }
-                ?? instanceID.rawValue
-            let payload = AccountSnapshotSyncPayload(
-                provider: instanceID,
-                deviceID: deviceID,
-                accountIdentity: identity,
-                displayLabel: label,
-                usage: usage)
-            payloads[payload.recordName] = payload
-        }
-
-        for (provider, accountSnapshots) in self.accountSnapshots {
-            guard provider.firstPartyProvider.map(Self.requiresBrowserSession) != true else { continue }
-            for accountSnapshot in accountSnapshots {
-                guard let usage = accountSnapshot.snapshot else { continue }
-                let identity = usage.identity?.accountID
-                    ?? usage.identity?.accountEmail
-                    ?? accountSnapshot.account.externalIdentifier
-                    ?? accountSnapshot.account.id.uuidString
-                let payload = AccountSnapshotSyncPayload(
-                    provider: provider,
-                    deviceID: deviceID,
-                    accountIdentity: identity,
-                    displayLabel: accountSnapshot.account.displayName,
-                    usage: usage)
-                payloads[payload.recordName] = payload
-            }
-        }
-
-        for accountSnapshot in self.claudeSwapAccountSnapshots {
-            guard let usage = accountSnapshot.snapshot else { continue }
-            let identity = usage.identity?.accountID
-                ?? usage.identity?.accountEmail
-                ?? "\(accountSnapshot.id.source):\(accountSnapshot.id.opaqueID)"
-            let payload = AccountSnapshotSyncPayload(
-                provider: accountSnapshot.provider.instanceID,
-                deviceID: deviceID,
-                accountIdentity: identity,
-                displayLabel: accountSnapshot.accountEmail ?? "Account \(accountSnapshot.id.opaqueID)",
-                usage: usage)
-            payloads[payload.recordName] = payload
-        }
-
-        return payloads.values.sorted { $0.recordName < $1.recordName }
-    }
-
-    func cloudSyncLocalAccountKeys(for provider: UsageProvider) -> Set<String> {
-        let snapshotKeys = self.cloudSyncAccountSnapshots().filter { $0.provider == provider.instanceID }
-            .map(\.accountKey)
-        var identities = Set(snapshotKeys)
-        func insert(_ identity: String?) {
-            guard let identity else { return }
-            identities.insert(AccountSnapshotSyncPayload.accountKey(for: identity))
-        }
-        for accountSnapshot in self.accountSnapshots[provider.instanceID] ?? [] {
-            insert(accountSnapshot.snapshot?.identity?.accountID)
-            insert(accountSnapshot.snapshot?.identity?.accountEmail)
-            insert(accountSnapshot.account.externalIdentifier)
-            insert(accountSnapshot.account.id.uuidString)
-        }
-        for account in self.settings.tokenAccounts(for: provider) {
-            insert(account.externalIdentifier)
-            insert(account.id.uuidString)
-        }
-        // Provider-specific by design: Claude swap subprocesses own extra IDs.
-        if provider == .claude {
-            for accountSnapshot in self.claudeSwapAccountSnapshots {
-                insert(accountSnapshot.snapshot?.identity?.accountID)
-                insert(accountSnapshot.snapshot?.identity?.accountEmail)
-                insert("\(accountSnapshot.id.source):\(accountSnapshot.id.opaqueID)")
-            }
-        }
-        if identities.isEmpty {
-            let fallback = self.accountInfo(for: provider)
-            insert(fallback.email)
-        }
-        return identities
     }
 
     func invalidateGenericWidgetUsage(for provider: UsageProvider) {

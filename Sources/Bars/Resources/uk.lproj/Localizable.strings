@@ -1,35 +1,13 @@
 /* Ukrainian localization for bars */
 
-/* iCloud Sync */
 "+ %d more" = "Ще %d";
 "Conversations (%@)" = "Розмови (%@)";
 "Fast" = "Швидко";
-"iCloud Sync" = "Синхронізація з iCloud";
 "Projects" = "Проєкти";
 "Session %@" = "Сесія %@";
 "Std" = "Стандарт";
 "Show all (%d)" = "Показати всі (%d)";
 "Show less" = "Показати менше";
-"Sync settings and providers across your Macs via iCloud" = "Синхронізуйте налаштування та постачальників на своїх комп’ютерах Mac через iCloud";
-"Include API keys, cookies, and tokens" = "Містить ключі API, cookies і жетони";
-"Sync usage snapshots" = "Синхронізувати знімки використання";
-"Show accounts from other Macs" = "Показати облікові записи з інших Mac";
-"Requires a signed release build of bars." = "Для цього потрібна підписана релізна збірка bars.";
-"Sign in to iCloud in System Settings to enable sync." = "Увійдіть в iCloud у Системних параметрах, щоб увімкнути синхронізацію.";
-"iCloud access is restricted on this Mac." = "Доступ до iCloud обмежено на цьому Mac.";
-"Sync is paused: another Mac uses a newer version of bars. Update to resume." = "Синхронізацію призупинено: інший Mac використовує новішу версію bars. Оновіть, щоб відновити.";
-"Last successful fetch" = "Останнє успішне отримання";
-"Last successful push" = "Останнє успішне надсилання";
-"Never" = "Ніколи";
-"Macs" = "Комп’ютери Mac";
-"No synced Macs yet." = "Синхронізованих Mac ще немає.";
-"Secrets use iCloud end-to-end encryption via encryptedValues. Hooks and machine-local paths never sync." = "Конфіденційні дані шифруються наскрізно в iCloud за допомогою encryptedValues. Хуки та локальні шляхи на комп’ютері не синхронізуються.";
-"Last seen %@" = "Востаннє в мережі %@";
-"This Mac" = "Цей Mac";
-"another Mac" = "інший Mac";
-"%dm ago" = "%d хв тому";
-"%dh ago" = "%d год тому";
-"%dd ago" = "%d дн. тому";
 
 "tab_hooks" = "Хуки";
 "hooks_enable_title" = "Увімкнути хуки";
@@ -724,9 +702,6 @@
 /* About Pane */
 "about_tagline" = "Нехай ваші токени ніколи не закінчаться — пам’ятайте про ліміти агентів.";
 "link_github" = "GitHub";
-"link_website" = "Веб-сайт";
-"link_twitter" = "Twitter";
-"link_email" = "Електронна пошта";
 "link_acknowledgements" = "Подяки";
 "acknowledgements_footer" = "bars створено з використанням цих проєктів з відкритим кодом.";
 "acknowledgements_others" = "ще %d";

@@ -49,10 +49,7 @@ for (const entry of entries) {
   const descriptor = descriptors.find((source) => source.includes(`id: .${entry.id},`));
   entry.color = descriptor?.match(/color: (?:ProviderColor|\.init)\(hex: 0x([A-Fa-f0-9]{6})\)/u)?.[1];
   assert(entry.color, `Missing hex branding for ${entry.id}`);
-  entry.auth = descriptor.includes("webSource:") ? "cookies" : "apiKey";
-  update(`docs/logos/${entry.id}.svg`, () => read(`Sources/Bars/Resources/ProviderIcon-${entry.id}.svg`));
 }
-const html = (value) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;");
 const section = (text, lines) => {
   const start = "<!-- Generated provider additions: Scripts/regenerate-provider-docs.mjs -->";
   const end = "<!-- End generated provider additions -->";
@@ -75,22 +72,4 @@ update("docs/providers.md", (text) =>
     "",
   ]),
 );
-update("docs/social.html", (text) =>
-  text.replace(/<strong>\d+ providers<\/strong>/u, `<strong>${count} providers</strong>`),
-);
-update("docs/index.html", (text) =>
-  section(
-    text.replace(/\d+(?= (?:AI coding )?providers)/gu, String(count)),
-    entries.map(
-      (entry) =>
-        `          <li class="provider-card" data-provider="${entry.id}"><a class="provider-card-link" href="https://github.com/steipete/CodexBar/blob/main/docs/${entry.file}"><span class="provider-logo" style="--brand:#${entry.color};--icon:url('./logos/${entry.id}.svg')"><img src="./logos/${entry.id}.svg" alt="" loading="lazy" onerror="this.remove()" /></span><p><strong>${html(entry.name)}</strong><span data-i18n="auth.${entry.auth}">${entry.auth === "cookies" ? "Cookies" : "API key"}</span></p></a></li>`,
-    ),
-  ),
-);
-update("docs/site-locales.mjs", (text) =>
-  text.replace(/("(?:meta\.description|meta\.ogDescription|providers\.title)": ")[^\n]+/gu, (line) =>
-    line.replace(/\b\d{2,}\b/u, String(count)),
-  ),
-);
-
 console.log(`Provider documentation ${check ? "current" : "generated"}: ${count} registered providers`);

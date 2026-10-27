@@ -1,35 +1,13 @@
 /* Arabic localization for bars */
 
-/* iCloud Sync */
 "+ %d more" = "+ %d أخرى";
 "Conversations (%@)" = "المحادثات (%@)";
 "Fast" = "سريع";
-"iCloud Sync" = "آي كلاود مزامنة";
 "Projects" = "المشاريع";
 "Session %@" = "الجلسة %@";
 "Std" = "قياسي";
 "Show all (%d)" = "إظهار الكل (%d)";
 "Show less" = "إظهار أقل";
-"Sync settings and providers across your Macs via iCloud" = "مزامنة الإعدادات والموفرين عبر أجهزة Mac الخاصة بك عبر iCloud";
-"Include API keys, cookies, and tokens" = "تضمين مفاتيح API وcookies والرموز";
-"Sync usage snapshots" = "مزامنة لقطات الاستخدام";
-"Show accounts from other Macs" = "إظهار الحسابات من أجهزة Mac الأخرى";
-"Requires a signed release build of bars." = "يتطلب إصدارًا موقعًا من bars.";
-"Sign in to iCloud in System Settings to enable sync." = "قم بتسجيل الدخول إلى iCloud في إعدادات النظام لتمكين المزامنة.";
-"iCloud access is restricted on this Mac." = "الوصول إلى iCloud مقيد على جهاز Mac هذا.";
-"Sync is paused: another Mac uses a newer version of bars. Update to resume." = "تم إيقاف المزامنة مؤقتًا: يستخدم جهاز Mac آخر إصدارًا أحدث من bars. تحديث للاستئناف.";
-"Last successful fetch" = "آخر عملية جلب ناجحة";
-"Last successful push" = "آخر دفعة ناجحة";
-"Never" = "أبدا";
-"Macs" = "أجهزة ماكينتوش";
-"No synced Macs yet." = "لا توجد أجهزة Mac متزامنة حتى الآن.";
-"Secrets use iCloud end-to-end encryption via encryptedValues. Hooks and machine-local paths never sync." = "تستخدم الأسرار التشفير الشامل على iCloud عبر encryptedValues. لا تتم مزامنة Hooks والمسارات المحلية بالجهاز مطلقًا.";
-"Last seen %@" = "آخر ظهور %@";
-"This Mac" = "هذا ماك";
-"another Mac" = "ماك آخر";
-"%dm ago" = "منذ %dد";
-"%dh ago" = "منذ %dس";
-"%dd ago" = "منذ %dي";
 
 "ollama_safari_cookie_access_hint" = "تحتاج ملفات تعريف ارتباط Safari إلى وصول كامل إلى القرص لتطبيق bars (إعدادات النظام > الخصوصية والأمان).";
 "ollama_browser_cookie_decryption_denied" = "تم رفض فك تشفير ملفات تعريف ارتباط %@ في سلسلة المفاتيح. افتح بطاقة موفر الخدمة وانقر على تحديث (⌘R) لطلب الوصول إلى سلسلة المفاتيح مرة أخرى.";
@@ -730,9 +708,6 @@
 /* About Pane */
 "about_tagline" = "عسى أن لا تنفد رموزك أبدا—حافظ على حدود الوكلاء في مرآه.";
 "link_github" = "GitHub";
-"link_website" = "الموقع الإلكتروني";
-"link_twitter" = "تويتر";
-"link_email" = "البريد الإلكتروني";
 "link_acknowledgements" = "شكر وتقدير";
 "acknowledgements_footer" = "تم بناء bars باستخدام هذه المشاريع مفتوحة المصدر.";
 "acknowledgements_others" = "%d آخرين";

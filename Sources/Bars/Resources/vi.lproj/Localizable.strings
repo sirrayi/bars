@@ -1,35 +1,13 @@
 /* English localization for bars (base/fallback) */
 
-/* iCloud Sync */
 "+ %d more" = "+ %d nữa";
 "Conversations (%@)" = "Cuộc trò chuyện (%@)";
 "Fast" = "Nhanh";
-"iCloud Sync" = "Đồng bộ hóa iCloud";
 "Projects" = "Dự án";
 "Session %@" = "Phiên %@";
 "Std" = "tiêu chuẩn";
 "Show all (%d)" = "Hiện tất cả (%d)";
 "Show less" = "Thu gọn";
-"Sync settings and providers across your Macs via iCloud" = "Đồng bộ hóa cài đặt và nhà cung cấp trên máy Mac của bạn thông qua iCloud";
-"Include API keys, cookies, and tokens" = "Bao gồm các khóa API, cookies và mã thông báo";
-"Sync usage snapshots" = "Đồng bộ hóa ảnh chụp nhanh sử dụng";
-"Show accounts from other Macs" = "Hiển thị tài khoản từ các máy Mac khác";
-"Requires a signed release build of bars." = "Yêu cầu bản phát hành có chữ ký của bars.";
-"Sign in to iCloud in System Settings to enable sync." = "Đăng nhập vào iCloud trong Cài đặt hệ thống để bật đồng bộ hóa.";
-"iCloud access is restricted on this Mac." = "Quyền truy cập iCloud bị hạn chế trên máy Mac này.";
-"Sync is paused: another Mac uses a newer version of bars. Update to resume." = "Đồng bộ hóa bị tạm dừng: một máy Mac khác sử dụng phiên bản bars mới hơn. Cập nhật để tiếp tục.";
-"Last successful fetch" = "Tìm nạp thành công lần cuối";
-"Last successful push" = "Lần đẩy thành công cuối cùng";
-"Never" = "không bao giờ";
-"Macs" = "máy Mac";
-"No synced Macs yet." = "Chưa có máy Mac nào được đồng bộ hóa.";
-"Secrets use iCloud end-to-end encryption via encryptedValues. Hooks and machine-local paths never sync." = "Bí mật sử dụng mã hóa đầu cuối iCloud thông qua encryptedValues. Hooks và đường dẫn máy cục bộ không bao giờ đồng bộ hóa.";
-"Last seen %@" = "Nhìn thấy lần cuối %@";
-"This Mac" = "Máy Mac này";
-"another Mac" = "máy Mac khác";
-"%dm ago" = "%dphút trước đây";
-"%dh ago" = "%dgiờ trước";
-"%dd ago" = "%dngày trước";
 
 "tab_hooks" = "Hook";
 "hooks_enable_title" = "Bật hook";
@@ -720,9 +698,6 @@
 /* About Pane */
 "about_tagline" = "Cầu mong mã thông báo của bạn không bao giờ hết—giữ giới hạn đại lý trong tầm mắt.";
 "link_github" = "GitHub";
-"link_website" = "Trang web";
-"link_twitter" = "Twitter";
-"link_email" = "Email";
 "link_acknowledgements" = "Lời cảm ơn";
 "acknowledgements_footer" = "bars được xây dựng bằng các dự án mã nguồn mở này.";
 "acknowledgements_others" = "%d người khác";

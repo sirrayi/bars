@@ -134,7 +134,7 @@ extension StatusItemController {
     private func renderStackedProviderRow(provider: UsageProvider, now: Date) -> MenuBarLayoutRenderedTitle? {
         let resolution = self.renderedMenuBarLayoutResolution(for: provider)
         let warningFlash = self.quotaWarningFlashActive(provider: provider)
-        let snapshot = self.menuBarUsageSource(for: provider).snapshot
+        let snapshot = self.store.menuBarSnapshot(for: provider.instanceID)
         let icon = ProviderBrandIcon.image(for: provider)
             .map { warningFlash ? Self.quotaWarningFlashImage(base: $0) : $0 }
         let data = self.menuBarLayoutRenderData(
@@ -186,7 +186,7 @@ extension StatusItemController {
             conditionals: self.settings.menuBarLayoutConditionals,
             appearanceName: appearanceName,
             isDebugApp: Self.isDebugApp(bundleIdentifier: Bundle.main.bundleIdentifier),
-            isStale: self.menuBarIsStale(for: provider),
+            isStale: self.store.isStale(provider: provider),
             isHighlighted: self.isStatusItemHighlighted(for: provider, button: button),
             now: now,
             verticalAdjustment: self.settings.menuBarLayoutVerticalAdjustment,
@@ -209,7 +209,6 @@ extension StatusItemController {
             iconKey: "\(provider.rawValue):\(warningFlash ? "warning" : "normal")",
             accountLabel: self.menuBarLayoutAccountLabel(provider: provider, snapshot: snapshot),
             costs: self.menuBarLayoutCosts(provider: provider, now: now),
-            includeLocalDerivedData: !self.menuBarUsageSource(for: provider).isFleet,
             now: now)
     }
 
@@ -226,9 +225,6 @@ extension StatusItemController {
         now: Date = .init())
         -> MenuBarLayoutCostValues
     {
-        guard !self.menuBarUsageSource(for: provider).isFleet else {
-            return MenuBarLayoutCostValues(today: nil, last30Days: nil, todayUSD: nil, last30DaysUSD: nil)
-        }
         let snapshot = self.store.tokenSnapshotForCurrentProviderConfig(for: provider)?.snapshot
         let sourceCurrencyCode = snapshot?.currencyCode ?? "USD"
         let preferredCurrencyCode = self.settings.preferredCurrencyCode
@@ -258,6 +254,14 @@ extension StatusItemController {
             last30DaysUSD: last30DaysAmount.flatMap(toUSD))
     }
 
+    func menuBarLayoutWindows(
+        provider: UsageProvider,
+        snapshot: UsageSnapshot?,
+        now: Date) -> MenuBarLayoutWindows
+    {
+        self.store.menuBarLayoutWindows(provider: provider, snapshot: snapshot, now: now)
+    }
+
     /// Select dates from the same semantic windows as reset display tokens. Keep styles separate:
     /// an absolute weekly clock must not cause minute-by-minute countdown wakeups.
     func menuBarLayoutResetDates(
@@ -265,7 +269,7 @@ extension StatusItemController {
         now: Date,
         absolute: Bool? = nil) -> [Date]
     {
-        let snapshot = self.menuBarUsageSource(for: provider).snapshot
+        let snapshot = self.store.menuBarSnapshot(for: provider.instanceID)
         let windows = self.menuBarLayoutWindows(provider: provider, snapshot: snapshot, now: now)
         let tokens = self.renderedMenuBarLayoutResolution(for: provider).layout
             .flattenedTokens(conditionals: self.settings.menuBarLayoutConditionals)

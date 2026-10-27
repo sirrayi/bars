@@ -1,35 +1,13 @@
 /* Dutch localization for bars */
 
-/* iCloud Sync */
 "+ %d more" = "+ %d meer";
 "Conversations (%@)" = "Gesprekken (%@)";
 "Fast" = "Snel";
-"iCloud Sync" = "iCloud-synchronisatie";
 "Projects" = "Projecten";
 "Session %@" = "Sessie %@";
 "Std" = "Std";
 "Show all (%d)" = "Alles tonen (%d)";
 "Show less" = "Minder tonen";
-"Sync settings and providers across your Macs via iCloud" = "Synchroniseer instellingen en providers op al uw Macs via iCloud";
-"Include API keys, cookies, and tokens" = "Inclusief API-sleutels, cookies en tokens";
-"Sync usage snapshots" = "Synchroniseer gebruiksmomentopnamen";
-"Show accounts from other Macs" = "Toon accounts van andere Macs";
-"Requires a signed release build of bars." = "Vereist een ondertekende releasebuild van bars.";
-"Sign in to iCloud in System Settings to enable sync." = "Log in bij iCloud in Systeeminstellingen om synchronisatie in te schakelen.";
-"iCloud access is restricted on this Mac." = "iCloud-toegang is beperkt op deze Mac.";
-"Sync is paused: another Mac uses a newer version of bars. Update to resume." = "Synchronisatie is gepauzeerd: een andere Mac gebruikt een nieuwere versie van bars. Update om te hervatten.";
-"Last successful fetch" = "Laatste succesvolle ophaalactie";
-"Last successful push" = "Laatste succesvolle push";
-"Never" = "Nooit";
-"Macs" = "Mac's";
-"No synced Macs yet." = "Nog geen gesynchroniseerde Macs.";
-"Secrets use iCloud end-to-end encryption via encryptedValues. Hooks and machine-local paths never sync." = "Geheimen gebruiken end-to-end-codering van iCloud via encryptedValues. Hooks en machine-lokale paden worden nooit gesynchroniseerd.";
-"Last seen %@" = "Laatst gezien %@";
-"This Mac" = "Deze Mac";
-"another Mac" = "een andere Mac";
-"%dm ago" = "%dmin geleden";
-"%dh ago" = "%du geleden";
-"%dd ago" = "%dd geleden";
 
 "tab_hooks" = "Hooks";
 "hooks_enable_title" = "Hooks inschakelen";
@@ -724,9 +702,6 @@
 /* About Pane */
 "about_tagline" = "Moge uw tokens nooit opraken: houd de limieten van agenten in het oog.";
 "link_github" = "GitHub";
-"link_website" = "Website";
-"link_twitter" = "Twitteren";
-"link_email" = "E-mail";
 "link_acknowledgements" = "Dankbetuigingen";
 "acknowledgements_footer" = "bars is gebouwd met deze opensourceprojecten.";
 "acknowledgements_others" = "%d anderen";

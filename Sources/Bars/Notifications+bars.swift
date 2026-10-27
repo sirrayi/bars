@@ -11,16 +11,7 @@ extension Notification.Name {
     static let barsWeeklyLimitReset = Notification.Name("barsWeeklyLimitReset")
     static let barsProviderConfigDidChange = Notification.Name("barsProviderConfigDidChange")
     static let barsLocalConfigFileDidChange = Notification.Name("barsLocalConfigFileDidChange")
-    static let barsUsageSnapshotsDidChange = Notification.Name("barsUsageSnapshotsDidChange")
     static let barsQuotaWarningDidPost = Notification.Name("barsQuotaWarningDidPost")
-}
-
-final class UsageSnapshotsDidChangeEvent: NSObject, @unchecked Sendable {
-    let snapshots: [AccountSnapshotSyncPayload]
-
-    init(snapshots: [AccountSnapshotSyncPayload]) {
-        self.snapshots = snapshots
-    }
 }
 
 @MainActor

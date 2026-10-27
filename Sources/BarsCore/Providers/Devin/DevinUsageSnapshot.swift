@@ -12,7 +12,7 @@ public enum DevinUsageError: LocalizedError, Sendable {
     private static let manualAuthHelp =
         "Manual auth: Settings → Providers → Devin → Auth source → Manual (app), " +
         "or cookieSource=manual in your CLI config (default ~/.config/bars/config.json). " +
-        "Setup: https://github.com/steipete/CodexBar/blob/main/docs/devin.md#manual-auth"
+        "Setup: https://github.com/sirrayi/bars/blob/main/docs/devin.md#manual-auth"
 
     public var errorDescription: String? {
         switch self {

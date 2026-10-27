@@ -12,8 +12,7 @@ extension StatusItemController {
         }
         // The switcher mini-bars mirror the menu-bar indicator, so route through the
         // same presentation snapshot (claude-swap active-account override, issue #2731).
-        let source = self.menuBarUsageSource(for: provider)
-        let snapshot = source.snapshot
+        let snapshot = self.store.menuBarSnapshot(for: provider.instanceID)
         return Self.switcherWeeklyMetricPercent(
             for: provider,
             snapshot: snapshot,

@@ -54,17 +54,14 @@ struct UnifiedIconSourceSettingsTests {
         settings.mergedMenuLastSelectedWasOverview = true
         var preferences = settings.syncedPreferences
         preferences.menuBarShowsHighestUsage = true
-        let payload = PreferencesSyncPayload(preferences: preferences)
-        let encoded = try CanonicalSyncJSON.encode(payload)
+        let encoded = try JSONEncoder().encode(preferences)
         var object = try #require(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
-        var preferenceValues = try #require(object["preferences"] as? [String: Any])
-        preferenceValues.removeValue(forKey: "unifiedIconSource")
-        object["preferences"] = preferenceValues
+        object.removeValue(forKey: "unifiedIconSource")
         let legacyData = try JSONSerialization.data(withJSONObject: object)
 
-        let legacy = try CanonicalSyncJSON.decode(PreferencesSyncPayload.self, from: legacyData)
-        #expect(legacy.preferences.unifiedIconSource == nil)
-        settings.applySyncedPreferences(legacy.preferences)
+        let legacy = try JSONDecoder().decode(SyncedPreferences.self, from: legacyData)
+        #expect(legacy.unifiedIconSource == nil)
+        settings.applySyncedPreferences(legacy)
         #expect(settings.unifiedIconSource == .highestUsage)
         #expect(settings.selectedMenuProvider == .claude)
         #expect(settings.mergedMenuLastSelectedWasOverview)

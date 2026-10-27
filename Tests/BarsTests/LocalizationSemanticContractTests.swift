@@ -24,7 +24,6 @@ struct LocalizationSemanticContractTests {
         ("id", "tab_menu", "Menu"),
         ("id", "refresh_manual", "Manual"),
         ("id", "Manual", "Manual"),
-        ("id", "%dd ago", "hari"),
         ("it", "%d-DAY SPEND", "SU %d GIORNI"),
         ("ko", "Most usable account", "사용 가능량"),
         ("ja", "Today spend", "支出"),

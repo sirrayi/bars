@@ -252,7 +252,7 @@ struct UsageMenuCardLayoutTests {
         UsageMenuCardView.Model(
             provider: .claude,
             providerName: "Codex",
-            email: "steipete@gmail.com",
+            email: "user@example.com",
             subtitleText: "Not fetched yet",
             subtitleStyle: .info,
             planText: "Pro 20x",

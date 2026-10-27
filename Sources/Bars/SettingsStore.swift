@@ -449,10 +449,6 @@ extension SettingsStore {
         let confettiOnReset = Self.loadConfettiOnResetDefaults(userDefaults: userDefaults)
         let claudeOAuthKeychainReadStrategyRaw = Self.loadClaudeOAuthKeychainReadStrategyRaw(userDefaults: userDefaults)
         let backgroundWorkLowPowerModePreference = Self.loadLowPowerModePreference(userDefaults: userDefaults)
-        let iCloudSyncDeviceID = userDefaults.string(forKey: "iCloudSyncDeviceID") ?? UUID().uuidString.lowercased()
-        if userDefaults.string(forKey: "iCloudSyncDeviceID") == nil {
-            userDefaults.set(iCloudSyncDeviceID, forKey: "iCloudSyncDeviceID")
-        }
         if userDefaults.object(forKey: "agentSessionsRemoteEnabled") == nil {
             // Preserve existing remote monitoring, but keep first-time Agent Sessions local-only.
             userDefaults.set(userDefaults.bool(forKey: "agentSessionsEnabled"), forKey: "agentSessionsRemoteEnabled")
@@ -590,12 +586,7 @@ extension SettingsStore {
             agentSessionsManualHosts: userDefaults.string(forKey: "agentSessionsManualHosts") ?? "",
             agentSessionsHideUnreachableHosts: userDefaults.object(
                 forKey: "agentSessionsHideUnreachableHosts") as? Bool ?? false,
-            preferredCurrencyCode: userDefaults.string(forKey: "preferredCurrencyCode") ?? "USD",
-            iCloudSyncEnabled: userDefaults.object(forKey: "iCloudSyncEnabled") as? Bool ?? false,
-            iCloudSyncIncludeSecrets: userDefaults.object(forKey: "iCloudSyncIncludeSecrets") as? Bool ?? true,
-            iCloudSyncSnapshotsEnabled: userDefaults.object(forKey: "iCloudSyncSnapshotsEnabled") as? Bool ?? true,
-            iCloudSyncShowFleetAccounts: userDefaults.object(forKey: "iCloudSyncShowFleetAccounts") as? Bool ?? true,
-            iCloudSyncDeviceID: iCloudSyncDeviceID)
+            preferredCurrencyCode: userDefaults.string(forKey: "preferredCurrencyCode") ?? "USD")
     }
 
     private static func hadPreviousAppLaunch(userDefaults: UserDefaults) -> Bool {
@@ -892,7 +883,7 @@ extension SettingsStore {
         }
         self.providerEnablement = enablement
         // Every config path crosses this method, so the accent palette refreshes from a settings edit,
-        // an external edit to the config file, and an inbound iCloud sync alike.
+        // and an external edit to the config file alike.
         if ProviderAccentPalette.apply(config: config) {
             #if canImport(WidgetKit)
             WidgetCenter.shared.reloadAllTimelines()

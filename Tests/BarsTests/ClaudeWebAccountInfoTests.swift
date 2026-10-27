@@ -7,7 +7,7 @@ struct ClaudeWebAccountInfoTests {
     func `selected organization determines the team seat label`() {
         let json = """
         {
-          "email_address": "steipete@gmail.com",
+          "email_address": "user@example.com",
           "memberships": [
             {
               "seat_tier": "team_standard",

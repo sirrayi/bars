@@ -98,9 +98,4 @@ struct SettingsDefaultsState {
     var agentSessionsManualHosts: String
     var agentSessionsHideUnreachableHosts: Bool
     var preferredCurrencyCode: String
-    var iCloudSyncEnabled: Bool
-    var iCloudSyncIncludeSecrets: Bool
-    var iCloudSyncSnapshotsEnabled: Bool
-    var iCloudSyncShowFleetAccounts: Bool
-    var iCloudSyncDeviceID: String
 }

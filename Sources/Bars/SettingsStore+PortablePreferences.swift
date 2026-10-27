@@ -2,31 +2,6 @@ import BarsCore
 import Foundation
 
 extension SettingsStore {
-    var iCloudSyncEnabled: Bool {
-        get { self.defaultsState.iCloudSyncEnabled }
-        set { self.setDefault(\.iCloudSyncEnabled, newValue, key: "iCloudSyncEnabled") }
-    }
-
-    var iCloudSyncIncludeSecrets: Bool {
-        get { self.defaultsState.iCloudSyncIncludeSecrets }
-        set { self.setDefault(\.iCloudSyncIncludeSecrets, newValue, key: "iCloudSyncIncludeSecrets") }
-    }
-
-    var iCloudSyncSnapshotsEnabled: Bool {
-        get { self.defaultsState.iCloudSyncSnapshotsEnabled }
-        set { self.setDefault(\.iCloudSyncSnapshotsEnabled, newValue, key: "iCloudSyncSnapshotsEnabled") }
-    }
-
-    var iCloudSyncShowFleetAccounts: Bool {
-        get { self.defaultsState.iCloudSyncShowFleetAccounts }
-        set { self.setDefault(\.iCloudSyncShowFleetAccounts, newValue, key: "iCloudSyncShowFleetAccounts") }
-    }
-
-    var iCloudSyncDeviceID: String {
-        get { self.defaultsState.iCloudSyncDeviceID }
-        set { self.setDefault(\.iCloudSyncDeviceID, newValue, key: "iCloudSyncDeviceID") }
-    }
-
     var syncedPreferences: SyncedPreferences {
         SyncedPreferences(
             statusChecksEnabled: self.statusChecksEnabled,
@@ -104,20 +79,5 @@ extension SettingsStore {
             self.refreshFrequency = refreshFrequency
         }
         self.refreshAllProvidersOnMenuOpen = preferences.refreshAllProvidersOnMenuOpen
-    }
-
-    func canEnableProviderFromSync(_ provider: UsageProvider, localConfig: ProviderConfig) -> Bool {
-        let descriptor = ProviderDescriptorRegistry.descriptor(for: provider)
-        let source = localConfig.source ?? .auto
-        let nonCLIModes: Set<ProviderSourceMode> = [.web, .oauth, .api]
-        let requiresCLI = source == .cli
-            || (source == .auto
-                && descriptor.fetchPlan.sourceModes.contains(.cli)
-                && descriptor.fetchPlan.sourceModes.isDisjoint(with: nonCLIModes))
-        guard requiresCLI else { return true }
-        if let binaryLocator = descriptor.cli.binaryLocator {
-            return binaryLocator(ProcessInfo.processInfo.environment) != nil
-        }
-        return ([descriptor.cli.name] + descriptor.cli.aliases).contains { TTYCommandRunner.which($0) != nil }
     }
 }

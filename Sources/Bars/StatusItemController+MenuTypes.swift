@@ -9,7 +9,6 @@ extension StatusItemController {
     }
 
     var fallbackProvider: UsageProvider? {
-        // A configured fleet-backed provider counts as real content, not an empty local installation.
         self.store.enabledProviders().isEmpty && self.menuBarEligibleProviders().isEmpty ? .claude : nil
     }
 }

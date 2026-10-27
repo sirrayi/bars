@@ -115,14 +115,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
 
     let store: UsageStore
     let settings: SettingsStore
-    var cloudSyncState: CloudSyncState {
-        didSet {
-            guard oldValue !== self.cloudSyncState else { return }
-            self.observeCloudSyncChanges()
-            self.refreshForCloudSyncChange()
-        }
-    }
-
     let agentSessions: AgentSessionsStore
     lazy var menuCardRefreshMonitor = self.makeMenuCardRefreshMonitor()
 
@@ -350,15 +342,13 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
         statusBar: NSStatusBar = .system,
         menuCardRenderingEnabled: Bool = StatusItemController.menuCardRenderingEnabled,
         menuRefreshEnabled: Bool = StatusItemController.menuRefreshEnabled,
-        observeProviderConfigNotifications: Bool = !SettingsStore.isRunningTests,
-        cloudSyncState: CloudSyncState = CloudSyncState())
+        observeProviderConfigNotifications: Bool = !SettingsStore.isRunningTests)
     {
         if SettingsStore.isRunningTests {
             _ = NSApplication.shared
         }
         self.store = store
         self.settings = settings
-        self.cloudSyncState = cloudSyncState
         self.agentSessions = agentSessions ?? AgentSessionsStore(settings: settings)
         self.account = account
         self.updater = updater
@@ -445,7 +435,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
         self.observeDebugForceAnimation()
         self.observeSettingsChanges()
         self.observeUpdaterChanges()
-        self.observeCloudSyncChanges()
     }
 
     private func observeStoreChanges() {
@@ -931,15 +920,6 @@ extension StatusItemController {
 #endif
 
 extension StatusItemController {
-    /// Fleet eligibility can create or remove provider items even when local refresh availability never changes.
-    func refreshForCloudSyncChange() {
-        self.lastAppliedMergedIconRenderSignature = nil
-        self.lastAppliedProviderIconRenderSignatures.removeAll()
-        self.updateVisibility()
-        self.updateIcons()
-        self.invalidateMenus(refreshOpenMenus: true, deferOpenParentMenuRebuild: true)
-    }
-
     func legacyDefaultItemIndex(forNewProvider provider: UsageProvider) -> Int? {
         let visibleProviders = self.settings.orderedFirstPartyProviders().filter { self.isVisible($0) }
         guard let providerOffset = visibleProviders.firstIndex(of: provider) else { return nil }

@@ -1,35 +1,13 @@
 /* Korean (한국어) localization for bars */
 
-/* iCloud Sync */
 "+ %d more" = "+ %d개 더";
 "Conversations (%@)" = "대화 (%@)";
 "Fast" = "빠름";
-"iCloud Sync" = "아이클라우드 동기화";
 "Projects" = "프로젝트";
 "Session %@" = "세션 %@";
 "Std" = "표준";
 "Show all (%d)" = "모두 보기(%d)";
 "Show less" = "간략히 보기";
-"Sync settings and providers across your Macs via iCloud" = "iCloud를 통해 Mac 전체에서 설정 및 공급자 동기화";
-"Include API keys, cookies, and tokens" = "API 키, cookies 및 토큰 포함";
-"Sync usage snapshots" = "사용량 스냅샷 동기화";
-"Show accounts from other Macs" = "다른 Mac의 계정 보기";
-"Requires a signed release build of bars." = "bars의 서명된 릴리스 빌드가 필요합니다.";
-"Sign in to iCloud in System Settings to enable sync." = "동기화를 활성화하려면 시스템 설정에서 iCloud에 로그인하세요.";
-"iCloud access is restricted on this Mac." = "이 Mac에서는 iCloud 액세스가 제한되어 있습니다.";
-"Sync is paused: another Mac uses a newer version of bars. Update to resume." = "동기화가 일시 중지되었습니다. 다른 Mac에서 최신 버전의 bars를 사용하고 있습니다. 재개하려면 업데이트하세요.";
-"Last successful fetch" = "마지막으로 성공한 가져오기";
-"Last successful push" = "마지막으로 성공한 푸시";
-"Never" = "절대로";
-"Macs" = "맥";
-"No synced Macs yet." = "아직 동기화된 Mac이 없습니다.";
-"Secrets use iCloud end-to-end encryption via encryptedValues. Hooks and machine-local paths never sync." = "비밀은 encryptedValues를 통해 iCloud 종단 간 암호화를 사용합니다. Hooks 및 머신-로컬 경로는 동기화되지 않습니다.";
-"Last seen %@" = "마지막으로 확인된 %@";
-"This Mac" = "이 맥";
-"another Mac" = "또 다른 맥";
-"%dm ago" = "%d분 전";
-"%dh ago" = "%d시간 전";
-"%dd ago" = "%d일 전";
 
 "tab_hooks" = "훅";
 "hooks_enable_title" = "훅 활성화";
@@ -710,9 +688,6 @@
 "Kiro login failed" = "Kiro 로그인 실패";
 "about_tagline" = "토큰이 결코 바닥나지 않기를—에이전트 한도를 늘 확인하세요.";
 "link_github" = "GitHub";
-"link_website" = "웹사이트";
-"link_twitter" = "Twitter";
-"link_email" = "이메일";
 "link_acknowledgements" = "감사의 말";
 "acknowledgements_footer" = "bars는 다음 오픈 소스 프로젝트로 만들어졌습니다.";
 "acknowledgements_others" = "외 %d명";

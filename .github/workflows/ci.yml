@@ -164,9 +164,6 @@ jobs:
             BARS_TEST_RETRY_NON_TIMEOUT_FAILURES=0 \
             ./Scripts/test.sh --direct-workers 2
 
-      - name: Provider plugin engine A/B goldens
-        run: ./Scripts/test-plugin-engines.sh
-
       - name: Verify checkout before publishing compiled cache
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: git diff --exit-code HEAD --

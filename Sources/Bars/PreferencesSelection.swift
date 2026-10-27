@@ -7,7 +7,6 @@ extension SettingsPane {
     var persistenceToken: String {
         switch self {
         case .general: "general"
-        case .iCloudSync: "iCloudSync"
         case .usageSpend: "usageSpend"
         case .notifications: "notifications"
         case .menuBar: "menuBar"
@@ -23,7 +22,6 @@ extension SettingsPane {
     init?(persistenceToken: String) {
         switch persistenceToken {
         case "general": self = .general
-        case "iCloudSync": self = .iCloudSync
         case "usageSpend": self = .usageSpend
         case "notifications": self = .notifications
         case "menuBar": self = .menuBar

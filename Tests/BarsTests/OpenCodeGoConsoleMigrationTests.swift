@@ -359,7 +359,7 @@ struct OpenCodeGoConsoleMigrationTests {
         }
     }
 
-    /// Reported by the migrated pay-as-you-go workspace in steipete/CodexBar#3783: a $27.87 balance
+    /// Reported by the migrated pay-as-you-go workspace in upstream CodexBar issue #3783: a $27.87 balance
     /// arrives as micro-cents, the same scale the legacy billing response used.
     @Test
     func `parses the console prepaid balance`() throws {

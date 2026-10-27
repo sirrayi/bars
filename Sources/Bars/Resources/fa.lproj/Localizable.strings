@@ -1,35 +1,13 @@
 /* Persian localization for bars */
 
-/* iCloud Sync */
 "+ %d more" = "+ %d مورد دیگر";
 "Conversations (%@)" = "گفتگوها (%@)";
 "Fast" = "سریع";
-"iCloud Sync" = "iCloud Sync";
 "Projects" = "پروژه ها";
 "Session %@" = "نشست %@";
 "Std" = "استاندارد";
 "Show all (%d)" = "نمایش همه (%d)";
 "Show less" = "نمایش کمتر";
-"Sync settings and providers across your Macs via iCloud" = "تنظیمات و ارائه دهندگان را در Mac خود از طریق iCloud همگام کنید";
-"Include API keys, cookies, and tokens" = "شامل کلیدهای API، cookies و توکن ها";
-"Sync usage snapshots" = "همگام‌سازی عکس‌های فوری استفاده";
-"Show accounts from other Macs" = "نمایش حساب‌ها از دیگر مک‌ها";
-"Requires a signed release build of bars." = "به نسخه انتشار امضا شده bars نیاز دارد.";
-"Sign in to iCloud in System Settings to enable sync." = "برای فعال کردن همگام سازی، در تنظیمات سیستم وارد iCloud شوید.";
-"iCloud access is restricted on this Mac." = "دسترسی iCloud در این مک محدود شده است.";
-"Sync is paused: another Mac uses a newer version of bars. Update to resume." = "همگام‌سازی متوقف شد: مک دیگری از نسخه جدیدتر bars استفاده می‌کند. به روز رسانی برای از سرگیری.";
-"Last successful fetch" = "آخرین واکشی موفق";
-"Last successful push" = "آخرین فشار موفق";
-"Never" = "هرگز";
-"Macs" = "مک ها";
-"No synced Macs yet." = "هنوز Mac همگام‌سازی نشده است.";
-"Secrets use iCloud end-to-end encryption via encryptedValues. Hooks and machine-local paths never sync." = "Secrets از رمزگذاری سرتاسری iCloud از طریق encryptedValues استفاده می کند. Hooks و مسیرهای محلی ماشین هرگز همگام نمی شوند.";
-"Last seen %@" = "آخرین بازدید %@";
-"This Mac" = "این مک";
-"another Mac" = "مک دیگری";
-"%dm ago" = "%dد پیش";
-"%dh ago" = "%dس پیش";
-"%dd ago" = "%dروز پیش";
 
 "ollama_safari_cookie_access_hint" = "کوکی‌های Safari برای bars به دسترسی کامل دیسک نیاز دارند (تنظیمات سیستم > حریم خصوصی و امنیت).";
 "ollama_browser_cookie_decryption_denied" = "رمزگشایی کوکی‌های %@ در Keychain رد شد. کارت ارائه‌دهنده را باز کنید و روی تازه‌سازی (⌘R) کلیک کنید تا دوباره دسترسی به Keychain درخواست شود.";
@@ -730,9 +708,6 @@
 /* About Pane */
 "about_tagline" = "امیدوارم توکن های شما هرگز تمام نشوند—محدودیت های عامل را در نظر داشته باشید.";
 "link_github" = "GitHub";
-"link_website" = "وب سایت";
-"link_twitter" = "توییتر";
-"link_email" = "ایمیل";
 "link_acknowledgements" = "قدردانی";
 "acknowledgements_footer" = "bars با این پروژه‌های متن‌باز ساخته شده است.";
 "acknowledgements_others" = "%d نفر دیگر";

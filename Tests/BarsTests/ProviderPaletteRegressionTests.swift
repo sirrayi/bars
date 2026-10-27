@@ -43,29 +43,15 @@ struct ProviderPaletteRegressionTests {
     }
 
     @Test(arguments: Self.palettes)
-    func `website and audit table match the app accent`(_ palette: Palette) throws {
+    func `audit table matches the app accent`(_ palette: Palette) throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent()
         let hex = ProviderDescriptorRegistry.descriptor(for: palette.provider).branding.color.hexString
-        let index = try String(contentsOf: root.appendingPathComponent("docs/index.html"), encoding: .utf8)
-        let card = try #require(index.split(separator: "\n").first {
-            $0.contains("data-provider=\"\(palette.provider.rawValue)\"")
-        })
-        #expect(card.contains("--brand:\(hex)"))
-
         let audit = try String(contentsOf: root.appendingPathComponent("docs/provider-palette.md"), encoding: .utf8)
         let row = try #require(audit.split(separator: "\n").first {
             $0.hasPrefix("| \(palette.provider.rawValue) |")
         })
         #expect(row.split(separator: "|")[3].trimmingCharacters(in: .whitespaces) == "`\(hex)`")
-
-        let social = try String(contentsOf: root.appendingPathComponent("docs/social.html"), encoding: .utf8)
-        let name = palette.provider == .deepseek ? "DeepSeek" : ProviderDefaults.metadata[palette.provider]?.displayName
-        if let name, let tile = social.split(separator: "\n").first(where: {
-            $0.contains("<div class=\"name\">\(name)</div>")
-        }) {
-            #expect(tile.contains("--brand:\(hex)"))
-        }
     }
 
     private static func contrast(_ color: ProviderColor, _ background: ProviderColor) -> Double {

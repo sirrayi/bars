@@ -1,35 +1,13 @@
 /* Thai localization for bars */
 
-/* iCloud Sync */
 "+ %d more" = "+ อีก %d รายการ";
 "Conversations (%@)" = "บทสนทนา (%@)";
 "Fast" = "เร็ว";
-"iCloud Sync" = "การซิงค์ iCloud";
 "Projects" = "โครงการ";
 "Session %@" = "เซสชัน %@";
 "Std" = "มาตรฐาน";
 "Show all (%d)" = "แสดงทั้งหมด (%d)";
 "Show less" = "แสดงน้อยลง";
-"Sync settings and providers across your Macs via iCloud" = "ซิงค์การตั้งค่าและผู้ให้บริการบน Mac ของคุณผ่าน iCloud";
-"Include API keys, cookies, and tokens" = "รวมคีย์ API, cookies และ โทเค็น";
-"Sync usage snapshots" = "ซิงค์ภาพรวมการใช้งาน";
-"Show accounts from other Macs" = "แสดงบัญชีจาก Mac เครื่องอื่น";
-"Requires a signed release build of bars." = "จำเป็นต้องมีรุ่น bars ที่ลงนามแล้ว";
-"Sign in to iCloud in System Settings to enable sync." = "ลงชื่อเข้าใช้ iCloud ในการตั้งค่าระบบเพื่อเปิดใช้งานการซิงค์";
-"iCloud access is restricted on this Mac." = "การเข้าถึง iCloud ถูกจำกัดบน Mac เครื่องนี้";
-"Sync is paused: another Mac uses a newer version of bars. Update to resume." = "การซิงค์ถูกหยุดชั่วคราว: Mac เครื่องอื่นใช้ bars เวอร์ชันใหม่กว่า อัปเดตเพื่อดำเนินการต่อ";
-"Last successful fetch" = "การดึงข้อมูลสำเร็จครั้งล่าสุด";
-"Last successful push" = "การผลักดันสำเร็จครั้งล่าสุด";
-"Never" = "ไม่เคย";
-"Macs" = "แม็ค";
-"No synced Macs yet." = "ยังไม่มี Mac ที่ซิงค์เลย";
-"Secrets use iCloud end-to-end encryption via encryptedValues. Hooks and machine-local paths never sync." = "ข้อมูลลับใช้การเข้ารหัสตั้งแต่ต้นทางถึงปลายทางของ iCloud ผ่าน encryptedValues Hooks และพาธภายในเครื่องจะไม่ซิงค์กัน";
-"Last seen %@" = "เห็นครั้งสุดท้าย %@";
-"This Mac" = "แม็กนี้";
-"another Mac" = "Mac อีกเครื่อง";
-"%dm ago" = "%dนาที มาแล้ว";
-"%dh ago" = "%dชม. มาแล้ว";
-"%dd ago" = "%dวัน มาแล้ว";
 
 "ollama_safari_cookie_access_hint" = "คุกกี้ Safari ต้องใช้สิทธิ์เข้าถึงดิสก์แบบเต็มสำหรับ bars (การตั้งค่าระบบ > ความเป็นส่วนตัวและความปลอดภัย)";
 "ollama_browser_cookie_decryption_denied" = "การถอดรหัสคุกกี้ %@ ถูกปฏิเสธในพวงกุญแจ เปิดการ์ดผู้ให้บริการแล้วคลิก รีเฟรช (⌘R) เพื่อขอสิทธิ์เข้าถึงพวงกุญแจอีกครั้ง";
@@ -730,9 +708,6 @@
 /* About Pane */
 "about_tagline" = "ขอให้โทเค็นของคุณไม่มีวันหมด ให้คํานึงถึงขีดจํากัดของเจ้าหน้าที่";
 "link_github" = "GitHub";
-"link_website" = "เว็บไซต์";
-"link_twitter" = "ทวิตเตอร์";
-"link_email" = "อีเมล";
 "link_acknowledgements" = "กิตติกรรมประกาศ";
 "acknowledgements_footer" = "bars สร้างขึ้นด้วยโปรเจกต์โอเพนซอร์สเหล่านี้";
 "acknowledgements_others" = "อีก %d ราย";

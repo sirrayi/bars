@@ -44,8 +44,8 @@ assert_gate() {
     exit 1
   fi
 
-  if [[ "$expected" == false && "$reason" != "docs/site-only changes covered by portable checks" ]]; then
-    printf '%s: expected docs/site skip reason, got %s\n' "$name" "$reason" >&2
+  if [[ "$expected" == false && "$reason" != "docs-only changes covered by portable checks" ]]; then
+    printf '%s: expected docs-only skip reason, got %s\n' "$name" "$reason" >&2
     exit 1
   fi
 }
@@ -61,16 +61,14 @@ assert_gate true claude-contract $'M\tCLAUDE.md'
 assert_gate true rename-to-claude-contract $'R100\tdocs/old.md\tCLAUDE.md'
 assert_gate true rename-from-claude-contract $'R100\tCLAUDE.md\tdocs/new.md'
 assert_gate true source $'M\tSources/Bars/App.swift'
-assert_gate false docs-site $'M\tdocs/index.html' $'M\tdocs/site.css' $'M\tdocs/site.js' \
-  $'M\tdocs/site-locales.mjs' $'M\tdocs/social.html' $'M\tdocs/social.png' \
-  $'M\tdocs/CNAME' $'M\tdocs/.nojekyll' $'M\tdocs/llms.txt'
+assert_gate false docs-and-assets $'M\tdocs/claude.md' $'M\tREADME.md' $'M\tdocs/screenshot.png'
 assert_gate false docs-site-assets $'M\tdocs/icon.png' $'M\tdocs/logos/provider-logo.svg'
 assert_gate true docs-unknown-code $'M\tdocs/custom-tool.js'
-assert_gate true docs-site-with-config $'M\tdocs/site.css' $'M\tdocs/configuration.md'
+assert_gate true docs-asset-with-config $'M\tdocs/icon.png' $'M\tdocs/configuration.md'
 assert_gate true empty
 assert_gate true source-to-docs $'R100\tSources/Bars/App.swift\tdocs/App.md'
 assert_gate true docs-to-source $'R100\tdocs/App.md\tSources/Bars/App.swift'
-assert_gate false docs-to-site $'R100\tdocs/old.md\tdocs/site.css'
+assert_gate false docs-rename $'R100\tdocs/old.md\tdocs/new.md'
 assert_gate true source-markdown $'M\tSources/BarsCore/Resources/prompt.md'
 assert_gate true test-markdown $'M\tTests/Fixtures/README.md'
 assert_gate true widget-markdown $'M\tWidgetExtension/README.md'

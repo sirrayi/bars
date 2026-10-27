@@ -1,35 +1,13 @@
 /* Chinese (Simplified) localization for bars */
 
-/* iCloud Sync */
 "+ %d more" = "还有 %d 个";
 "Conversations (%@)" = "会话（%@）";
 "Fast" = "高速";
-"iCloud Sync" = "iCloud 同步";
 "Projects" = "项目";
 "Session %@" = "会话 %@";
 "Std" = "标准";
 "Show all (%d)" = "显示全部（%d）";
 "Show less" = "收起";
-"Sync settings and providers across your Macs via iCloud" = "通过 iCloud 在各台 Mac 之间同步设置和服务商";
-"Include API keys, cookies, and tokens" = "包含 API 密钥、Cookie 和令牌";
-"Sync usage snapshots" = "同步使用情况快照";
-"Show accounts from other Macs" = "显示其他 Mac 上的账户";
-"Requires a signed release build of bars." = "需要经过签名的 bars 正式版本。";
-"Sign in to iCloud in System Settings to enable sync." = "在“系统设置”中登录 iCloud 以启用同步。";
-"iCloud access is restricted on this Mac." = "此 Mac 上的 iCloud 访问受到限制。";
-"Sync is paused: another Mac uses a newer version of bars. Update to resume." = "同步已暂停：另一台 Mac 使用较新版本的 bars。更新以恢复。";
-"Last successful fetch" = "上次成功获取";
-"Last successful push" = "上次成功推送";
-"Never" = "从未";
-"Macs" = "Mac 设备";
-"No synced Macs yet." = "尚无已同步的 Mac。";
-"Secrets use iCloud end-to-end encryption via encryptedValues. Hooks and machine-local paths never sync." = "密钥等敏感信息通过 encryptedValues 使用 iCloud 端到端加密。自动化钩子和本机路径不会同步。";
-"Last seen %@" = "上次在线：%@";
-"This Mac" = "这台 Mac";
-"another Mac" = "另一台 Mac";
-"%dm ago" = "%d分钟 前";
-"%dh ago" = "%d小时 前";
-"%dd ago" = "%d天 前";
 
 "tab_hooks" = "钩子";
 "hooks_enable_title" = "启用钩子";
@@ -690,9 +668,6 @@
 "Kiro login failed" = "Kiro 登录失败";
 "about_tagline" = "愿你的 token 永不耗尽——随时关注智能体额度。";
 "link_github" = "GitHub";
-"link_website" = "网站";
-"link_twitter" = "Twitter";
-"link_email" = "电子邮件";
 "link_acknowledgements" = "致谢";
 "acknowledgements_footer" = "bars 使用了以下开源项目构建。";
 "acknowledgements_others" = "其他 %d 人";

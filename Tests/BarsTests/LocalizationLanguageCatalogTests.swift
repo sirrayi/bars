@@ -400,7 +400,6 @@ struct LocalizationLanguageCatalogTests {
             ],
             "ca": [
                 "Projects": "Projectes",
-                "iCloud Sync": "Sincronització amb iCloud",
                 "Input": "Entrada",
                 "Cache write": "Escriptura a la memòria cau",
                 "Copy Image": "Copia la imatge",
@@ -862,11 +861,9 @@ extension LocalizationLanguageCatalogTests {
     }
 
     @Test
-    func `settings sharing and sync prose do not fall back to English in supported languages`() {
+    func `settings sharing prose does not fall back to English in supported languages`() {
         let keys = [
             "%@ is unavailable. Edit the widget to choose a provider.",
-            "No synced Macs yet.",
-            "Sync settings and providers across your Macs via iCloud",
             "Hide native Codex when OpenCodex is present",
             "No model-level history in this local snapshot",
         ]

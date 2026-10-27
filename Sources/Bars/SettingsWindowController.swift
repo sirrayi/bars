@@ -60,7 +60,6 @@ final class SettingsWindowController: NSWindowController {
     convenience init(
         settings: SettingsStore,
         store: UsageStore,
-        cloudSyncState: CloudSyncState,
         updater: UpdaterProviding,
         selection: PreferencesSelection,
         runProviderLoginFlow: @escaping @MainActor (UsageProvider) async -> Void)
@@ -69,7 +68,6 @@ final class SettingsWindowController: NSWindowController {
             let rootView = PreferencesView(
                 settings: settings,
                 store: store,
-                cloudSyncState: cloudSyncState,
                 updater: updater,
                 selection: selection,
                 runProviderLoginFlow: runProviderLoginFlow)

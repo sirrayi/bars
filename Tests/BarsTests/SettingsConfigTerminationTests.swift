@@ -196,7 +196,7 @@ struct SettingsConfigTerminationTests {
 
     private func makeDelegate(_ settings: SettingsStore) -> AppDelegate {
         let delegate = AppDelegate()
-        // Avoid configure's unrelated CloudSyncPersistence reads and lazy UI dependencies.
+        // Avoid configure's lazy UI dependencies.
         delegate._test_configureSettings(settings)
         return delegate
     }

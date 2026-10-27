@@ -110,7 +110,7 @@ struct BarsApp: App {
             }
             CommandGroup(replacing: .help) {
                 Button(L("bars Help")) {
-                    guard let url = URL(string: "https://github.com/steipete/CodexBar/blob/main/README.md")
+                    guard let url = URL(string: "https://github.com/sirrayi/bars/blob/main/README.md")
                     else { return }
                     NSWorkspace.shared.open(url)
                 }
@@ -168,7 +168,7 @@ final class UpdateStatus {
     var isInstalling = false
 }
 
-/// This fork ships no auto-updater: upstream's Sparkle feed and Homebrew cask would replace it with official builds.
+/// bars ships no auto-updater; update by pulling and rebuilding from source.
 @MainActor
 private func makeUpdaterController() -> UpdaterProviding {
     DisabledUpdaterController(unavailableReason: "Updates are managed manually in this build.")
@@ -187,7 +187,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     let updaterController: UpdaterProviding = makeUpdaterController()
-    let cloudSyncState = CloudSyncState()
     private let confettiOverlayController = ScreenConfettiOverlayController()
     private let confettiLogger = BarsLog.logger(LogCategories.confetti)
     private let dockIconController = DockIconController.shared
@@ -200,7 +199,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settings: SettingsStore?
     private var account: AccountInfo?
     private var preferencesSelection: PreferencesSelection?
-    private var cloudSyncCoordinator: CloudSyncCoordinator?
     private var settingsWindowController: SettingsWindowController?
     private var pendingUpdateSettingsOpen = false
     private lazy var placeholderSettingsWindowGuard = PlaceholderSettingsWindowGuard(
@@ -231,11 +229,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.settings = dependencies.settings
         self.account = dependencies.account
         self.preferencesSelection = dependencies.selection
-        self.cloudSyncCoordinator = CloudSyncCoordinator(settings: dependencies.settings, state: self.cloudSyncState)
         self.settingsWindowController = SettingsWindowController(
             settings: dependencies.settings,
             store: dependencies.store,
-            cloudSyncState: self.cloudSyncState,
             updater: self.updaterController,
             selection: dependencies.selection,
             runProviderLoginFlow: { [weak self] provider in
@@ -281,7 +277,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.scheduleSettingsApplicationMenuValidation(
             missingItemRetriesRemaining: Self.settingsMenuReadinessRetryCount,
             fallbackVerificationRetriesRemaining: Self.settingsMenuFallbackVerificationRetryCount)
-        self.cloudSyncCoordinator?.start()
         Task { await self.settings?.httpServer.startSaved() }
         Task { @MainActor [weak self] in
             await Task.yield()
@@ -340,7 +335,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        self.cloudSyncCoordinator?.stop()
         self.memoryPressureMonitor.stop()
         #if DEBUG
         self.removeDebugMemoryPressureObserver()
@@ -349,10 +343,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.confettiOverlayController.dismiss()
         self.dismissAppKitWindowsForShutdown()
         self.terminateActiveProcessesForAppShutdown()
-    }
-
-    func applicationDidBecomeActive(_ notification: Notification) {
-        self.cloudSyncCoordinator?.applicationDidBecomeActive()
     }
 
     func runProviderLoginFlow(_ provider: UsageProvider) async {
@@ -547,7 +537,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             self.statusController = statusController
             if let concreteStatusController = statusController as? StatusItemController {
-                concreteStatusController.cloudSyncState = self.cloudSyncState
                 MenuSwitchFlickerProbe.startIfRequested(controller: concreteStatusController)
             }
             return

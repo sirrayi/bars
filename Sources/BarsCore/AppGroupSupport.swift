@@ -4,7 +4,7 @@ import Security
 #endif
 
 public enum AppGroupSupport {
-    public static let defaultTeamID = "Y5PE65HELJ"
+    public static let defaultTeamID = "BARSADHOC1"
     public static let teamIDInfoKey = "BarsTeamID"
     public static let legacyReleaseGroupID = "group.com.sirrayi.bars"
     public static let legacyDebugGroupID = "group.com.sirrayi.bars.debug"
