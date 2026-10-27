@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploys the CodexBar CloudKit schema (Scripts/cloudkit/schema.ckdb).
+# Deploys the bars CloudKit schema (Scripts/cloudkit/schema.ckdb).
 #
 # Requires a CloudKit management token (create one at
 # https://icloud.developer.apple.com/dashboard → account menu → Tokens,
@@ -16,7 +16,7 @@ case "$ENVIRONMENT" in
 esac
 
 TEAM_ID="Y5PE65HELJ"
-CONTAINER_ID="iCloud.com.steipete.codexbar"
+CONTAINER_ID="iCloud.com.sirrayi.bars"
 SCHEMA_FILE="$(cd "$(dirname "$0")" && pwd)/schema.ckdb"
 
 TOKEN_ARGS=()

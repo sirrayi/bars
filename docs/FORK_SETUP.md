@@ -6,15 +6,15 @@ read_when:
 
 # Fork Setup & Initial Configuration
 
-> Historical `topoffunnel/CodexBar` instructions. Use the [README](../README.md) and
+> Historical `topoffunnel/bars` instructions. Use the [README](../README.md) and
 > [Development guide](DEVELOPMENT.md) for this repository. The Augment-removal warning below describes an old fork
 > comparison: Augment is registered and supported on current main. See the upstream Augment guide.
 > The upstream/Quotio scripts and monitoring workflow still exist; their presence does not make this old fork
 > remote layout or selective-sync policy a requirement for main-repository development.
 
-**One-time setup for managing your CodexBar fork with multiple upstreams**
+**One-time setup for managing your bars fork with multiple upstreams**
 
-For local Developer ID packaging, set `CODEXBAR_SIGNING=identity` and `APP_IDENTITY` to your installed identity's
+For local Developer ID packaging, set `BARS_SIGNING=identity` and `APP_IDENTITY` to your installed identity's
 full name or certificate SHA-1 hash. The packaging script derives the Team ID and rejects conflicting
 `APP_TEAM_ID` overrides; it does not embed upstream CloudKit resources for another team. The release signing
 script uses the same `APP_IDENTITY`. See [identity signing requirements](DEVELOPMENT.md#local-development-build)
@@ -29,7 +29,7 @@ and [release setup](RELEASING.md) before distributing a fork.
 ```bash
 # Verify your fork is origin
 git remote -v
-# Should show: origin  git@github.com:topoffunnel/CodexBar.git
+# Should show: origin  git@github.com:topoffunnel/bars.git
 
 # Add upstream (steipete's original)
 git remote add upstream https://github.com/steipete/CodexBar.git
@@ -43,7 +43,7 @@ git fetch --all
 # Verify setup
 git remote -v
 # Should show:
-# origin    git@github.com:topoffunnel/CodexBar.git (fetch/push)
+# origin    git@github.com:topoffunnel/bars.git (fetch/push)
 # upstream  https://github.com/steipete/CodexBar.git (fetch/push)
 # quotio    https://github.com/nguyenphutrong/quotio.git (fetch/push)
 ```
@@ -94,7 +94,7 @@ chmod +x Scripts/*.sh
 ```
 Files changed:
  .../Providers/Augment/AugmentStatusProbe.swift     | 627 deletions
- Tests/CodexBarTests/AugmentStatusProbeTests.swift  |  88 deletions
+ Tests/BarsTests/AugmentStatusProbeTests.swift  |  88 deletions
 ```
 
 **This validates our fork strategy:**
@@ -231,7 +231,7 @@ git commit -m "feat: multi-account management
 Inspired by quotio's account switching pattern:
 https://github.com/nguyenphutrong/quotio/...
 
-Implemented independently using CodexBar architecture."
+Implemented independently using bars architecture."
 ```
 
 ---

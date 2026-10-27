@@ -3,8 +3,8 @@ set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 PACKAGE_SCRIPT="$ROOT/Scripts/package_app.sh"
-PLIST_SCRIPT=$(mktemp "${TMPDIR:-/tmp}/codexbar-package-info-plist-script.XXXXXX")
-TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/codexbar-package-info-plist.XXXXXX")
+PLIST_SCRIPT=$(mktemp "${TMPDIR:-/tmp}/bars-package-info-plist-script.XXXXXX")
+TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/bars-package-info-plist.XXXXXX")
 trap 'rm -f "$PLIST_SCRIPT"; rm -rf "$TEMP_DIR"' EXIT
 
 python3 - "$PACKAGE_SCRIPT" "$PLIST_SCRIPT" <<'PY'
@@ -17,9 +17,9 @@ end = script.index('\nPLIST\n', start) + len('\nPLIST\n')
 Path(sys.argv[2]).write_text(script[start:end])
 PY
 
-APP="$TEMP_DIR/CodexBar.app"
+APP="$TEMP_DIR/bars.app"
 mkdir -p "$APP/Contents"
-BUNDLE_ID=com.steipete.codexbar.test
+BUNDLE_ID=com.sirrayi.bars.test
 MARKETING_VERSION=0.0.0
 BUILD_NUMBER=0
 FEED_URL=https://example.invalid/appcast.xml
@@ -40,8 +40,8 @@ from pathlib import Path
 plist = plistlib.loads(Path(sys.argv[1]).read_bytes())
 declarations = plist.get("UTExportedTypeDeclarations")
 assert declarations == [{
-    "UTTypeIdentifier": "com.steipete.codexbar.menu-layout-item",
-    "UTTypeDescription": "CodexBar menu bar layout token",
+    "UTTypeIdentifier": "com.sirrayi.bars.menu-layout-item",
+    "UTTypeDescription": "bars menu bar layout token",
     "UTTypeConformsTo": ["public.data"],
     "UTTypeTagSpecification": {},
 }]

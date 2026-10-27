@@ -22,8 +22,8 @@ For independent CLI processes on macOS, use a debug CLI built with those same na
 
 ```sh
 python3 docs/research/fixtures/claude-artifact-cli-proof.py \
-  --binary .build/debug/CodexBarCLI \
-  --output /tmp/codexbar-cli-write-proof-new
+  --binary .build/debug/BarsCLI \
+  --output /tmp/bars-cli-write-proof-new
 ```
 
 The output directory must be new. The script compiles the adjacent C DYLD observer with system Clang and retains synthetic fixtures and result JSON there. It supplies a fresh environment with isolated home, configuration, transcript, and cache paths, suppressing Keychain access. It never starts the GUI or reads a real account.

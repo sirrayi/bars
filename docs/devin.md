@@ -20,7 +20,7 @@ The Devin provider tracks included daily and weekly usage quotas from
 Automatic mode reads only the Devin session and organization metadata from supported Chromium browsers' localStorage,
 using the shared browser catalog and skipping browsers without profile data. It does not import other sites' sessions.
 The origin-filtered reader streams the browser store and decodes only Devin values, avoiding retention of other sites'
-Local Storage data. Current values and deletions determine the session. CodexBar sends the session token only to
+Local Storage data. Current values and deletions determine the session. bars sends the session token only to
 `https://app.devin.ai`.
 
 For accounts with multiple organizations, set **Organization** to select one explicitly. An internal `org-...` or
@@ -31,15 +31,15 @@ borrows an ID from another organization, and an explicit selection prefers its c
 
 ## Manual Auth
 
-In the CodexBar menu bar app:
+In the bars menu bar app:
 
 1. Open [app.devin.ai](https://app.devin.ai) in the browser where you are signed in and select your organization.
 2. Open Developer Tools (in Chrome: **View → Developer → Developer Tools**, or **Option–Command–I**).
 3. Select the **Network** tab, then open or reload the organization's **Usage & Limits** page.
 4. Filter requests by `billing/quota/usage` and select a successful request (status **200**).
 5. Under **Headers → Request Headers**, copy the **Authorization** value, including `Bearer `.
-6. Open **CodexBar Settings → Providers → Devin**, set **Auth source** to **Manual**, and paste it into **Bearer token**.
-7. From the same request, copy **x-cog-org-id** into **Organization**, then refresh Devin in CodexBar.
+6. Open **bars Settings → Providers → Devin**, set **Auth source** to **Manual**, and paste it into **Bearer token**.
+7. From the same request, copy **x-cog-org-id** into **Organization**, then refresh Devin in bars.
 
 The Bearer token field also accepts the bare token or a full `Authorization: Bearer ...` header line. These are Devin
 browser session credentials, not Codex CLI credentials. Signing in to Codex CLI does not sign in to Devin. Keep the token
@@ -50,11 +50,11 @@ the successful request is the most direct manual setup. Manual mode does not imp
 expires, sign in to Devin again and repeat these steps with a new successful request.
 
 Some Auth1 sessions need the internal organization ID even when the same token works in the browser. If Devin returns
-`No organizations found for auth1 user`, CodexBar reports organization guidance rather than treating the token as expired:
+`No organizations found for auth1 user`, bars reports organization guidance rather than treating the token as expired:
 
 1. Open the organization's **Usage & Limits** page in the browser where you are signed in.
 2. In Developer Tools → Network, inspect a successful `/billing/quota/usage` request.
-3. Copy its `x-cog-org-id` request-header value into CodexBar's **Organization** field, then refresh.
+3. Copy its `x-cog-org-id` request-header value into bars's **Organization** field, then refresh.
 
 The internal-ID path is already supported; manual mode does not discover IDs from public slugs. Other 401/403 responses
 still report invalid or expired credentials. For automatic auth with missing organization metadata, open the
@@ -68,7 +68,7 @@ Environment overrides:
 ## CLI (macOS and Linux)
 
 Automatic Chromium session import is macOS-only. For manual auth on either platform, configure
-`~/.config/codexbar/config.json` (or your existing legacy config):
+`~/.config/bars/config.json` (or your existing legacy config):
 
 ```json
 {
@@ -82,7 +82,7 @@ Automatic Chromium session import is macOS-only. For manual auth on either platf
 }
 ```
 
-Run `codexbar usage --provider devin`. You can omit `cookieHeader` when supplying
+Run `bars usage --provider devin`. You can omit `cookieHeader` when supplying
 `DEVIN_BEARER_TOKEN` or `DEVIN_AUTHORIZATION`, but keep `cookieSource` set to `manual`.
 The organization environment overrides also apply. Environment tokens take precedence
 without enabling automatic auth; an empty override does not fall back to the configured token.
@@ -92,23 +92,23 @@ without enabling automatic auth; an empty override does not fall back to the con
 - Automatic import supports the shared Chromium browser catalog, including Chrome, Brave, Edge, Arc, Vivaldi, Dia,
   ChatGPT Atlas, Chromium, Helium, Yandex, and Comet, plus supported preview channels. Safari and Firefox localStorage
   are not supported. Open `app.devin.ai` and the organization's Usage & Limits page in your Chromium browser.
-- Devin uses **localStorage**, not the Cookies database. CodexBar reads `auth1_session` (an `auth1_` token) or
+- Devin uses **localStorage**, not the Cookies database. bars reads `auth1_session` (an `auth1_` token) or
   Auth0 cached `access_token` / `accessToken` values for `app.devin.ai`. Cookies for `.devin.ai` or `api.devin.ai`, Chrome
   Safe Storage Keychain permissions, and Safari cookie permissions are not part of this import path.
 - A **no session** error means no supported session was found in the discovered Chromium storage. A **could not read
   Chromium local storage** error means a discovered store could not be opened; it does not mean Devin rejected your token.
-  Reopen your browser and its Devin Usage & Limits page, refresh CodexBar, or use Manual auth above.
+  Reopen your browser and its Devin Usage & Limits page, refresh bars, or use Manual auth above.
 - A **token rejected** error means Devin returned an authentication rejection. Sign in again or replace the manual
   token. A **missing organization** error instead needs the organization setup described above.
 
-When reporting a failure, include the CodexBar, macOS, and browser versions, your selected Auth source, the browser used
+When reporting a failure, include the bars, macOS, and browser versions, your selected Auth source, the browser used
 for Devin, and the exact error text. Do not share session values.
 
 ## Cost estimates
 
 Devin CLI stores local session history in `~/.local/share/devin/cli/sessions.db` (SQLite). Assistant
 message nodes carry a `request_id`, `generation_model`, and per-request token metrics. The CLI
-re-inserts the same response as several nodes sharing one `request_id`, so CodexBar deduplicates on
+re-inserts the same response as several nodes sharing one `request_id`, so bars deduplicates on
 that ID and buckets each request by its earliest `created_at` in local days.
 
 Pricing is a list-price estimate, not ACU billing:
@@ -123,12 +123,12 @@ Only local Devin CLI sessions are covered; cloud Devin sessions are not part of 
 
 ## Data Source
 
-CodexBar requests:
+bars requests:
 
 ```text
 GET https://app.devin.ai/api/<internal-org-id>/billing/quota/usage
 ```
 
-The response supplies daily and weekly usage percentages plus reset timestamps. CodexBar omits the daily quota when Devin sets `hide_daily_quota` to `true`, while retaining weekly usage and extra balance.
+The response supplies daily and weekly usage percentages plus reset timestamps. bars omits the daily quota when Devin sets `hide_daily_quota` to `true`, while retaining weekly usage and extra balance.
 If Devin changes or expires the browser
-session, sign in again and refresh CodexBar.
+session, sign in again and refresh bars.

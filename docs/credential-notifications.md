@@ -7,7 +7,7 @@ read_when:
 
 # Credential notifications
 
-Settings → Notifications → **Credential expiry** alerts you when a provider account needs sign-in again. It is off by default, local to this Mac, and subject to macOS notification permissions. Alerts contain only the provider name and an instruction to open CodexBar, never emails, account IDs, tokens, or raw errors. Provider-card errors remain available.
+Settings → Notifications → **Credential expiry** alerts you when a provider account needs sign-in again. It is off by default, local to this Mac, and subject to macOS notification permissions. Alerts contain only the provider name and an instruction to open bars, never emails, account IDs, tokens, or raw errors. Provider-card errors remain available.
 
 Each provider/account gets one alert per failure episode. Only a successful fresh fetch for that account resets it; repeated refreshes, network/quota failures, and cached or degraded fallback data do not. Episodes reset on app restart. Turning the toggle off suppresses delivery but retains unresolved episodes.
 

@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-codexbar_swiftpm_bin_path() {
+bars_swiftpm_bin_path() {
   local conf="$1"
   shift
   local command=(swift build --show-bin-path -c "$conf")
-  if [[ -n "${CODEXBAR_MACOS_SDK_PATH:-}" ]]; then
-    command+=(--sdk "$CODEXBAR_MACOS_SDK_PATH")
+  if [[ -n "${BARS_MACOS_SDK_PATH:-}" ]]; then
+    command+=(--sdk "$BARS_MACOS_SDK_PATH")
   fi
   local arch
   for arch in "$@"; do
@@ -24,7 +24,7 @@ codexbar_swiftpm_bin_path() {
   printf '%s\n' "$path"
 }
 
-codexbar_require_product_file() {
+bars_require_product_file() {
   local bin_dir="$1"
   local name="$2"
   local arch_label="$3"
@@ -36,7 +36,7 @@ codexbar_require_product_file() {
   printf '%s\n' "$product"
 }
 
-codexbar_require_product_directory() {
+bars_require_product_directory() {
   local bin_dir="$1"
   local name="$2"
   local context="$3"
@@ -48,7 +48,7 @@ codexbar_require_product_directory() {
   printf '%s\n' "$product"
 }
 
-codexbar_resolve_staged_or_reported_file() {
+bars_resolve_staged_or_reported_file() {
   local stage_root="$1"
   local bin_dir="$2"
   local name="$3"
@@ -58,10 +58,10 @@ codexbar_resolve_staged_or_reported_file() {
     printf '%s\n' "$staged"
     return
   fi
-  codexbar_require_product_file "$bin_dir" "$name" "$arch"
+  bars_require_product_file "$bin_dir" "$name" "$arch"
 }
 
-codexbar_resolve_dsym_path() {
+bars_resolve_dsym_path() {
   local stage_root="$1"
   local bin_dir="$2"
   local app_name="$3"
@@ -71,5 +71,5 @@ codexbar_resolve_dsym_path() {
     printf '%s\n' "$staged"
     return
   fi
-  codexbar_require_product_directory "$bin_dir" "${app_name}.dSYM" "$arch"
+  bars_require_product_directory "$bin_dir" "${app_name}.dSYM" "$arch"
 }

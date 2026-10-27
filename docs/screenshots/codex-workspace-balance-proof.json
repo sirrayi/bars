@@ -130,7 +130,7 @@
     "build_timestamp_utc": "2026-09-11T23:29:10Z",
     "checkout_bundle_running_verified": true,
     "claim": "Fresh bundle launched with existing local state; the cropped menu bar showed rounded credits with thousands separators.",
-    "command": "CODEXBAR_SIGNING=adhoc ./Scripts/compile_and_run.sh",
+    "command": "BARS_SIGNING=adhoc ./Scripts/compile_and_run.sh",
     "existing_settings_and_cache_preserved": true,
     "version": "0.59.1"
   },
@@ -169,7 +169,7 @@
     "exit_code": 0,
     "observed_at_utc": "2026-09-11T23:32:21.466202+00:00",
     "private_values_in_receipt": false,
-    "probe": "production CodexBarCLI usage",
+    "probe": "production BarsCLI usage",
     "requested_source": "oauth",
     "resolved_source": "oauth",
     "usage_present": true

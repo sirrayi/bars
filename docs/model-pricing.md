@@ -9,13 +9,13 @@ read_when:
 
 # Model pricing metadata
 
-CodexBar uses models.dev as an additive pricing source alongside bundled fallback rates.
+bars uses models.dev as an additive pricing source alongside bundled fallback rates.
 
 ## Source and cache
 
 - Source API: `https://models.dev/api.json`
 - No API key is required.
-- Local cache: `~/Library/Caches/CodexBar/model-pricing/models-dev-v1.json`
+- Local cache: `~/Library/Caches/bars/model-pricing/models-dev-v1.json`
 - TTL: 24 hours
 
 The pipeline lets future scanner code read the last valid cache synchronously with `ModelsDevPricingPipeline.lookup` and refresh stale metadata separately with `ModelsDevPricingPipeline.refreshIfNeeded`. If a refresh fails, the last valid cache remains usable.
@@ -50,7 +50,7 @@ Local cost scanners preserve that scope when selecting a catalog:
 - OpenAI's [Daybreak aliases](https://developers.openai.com/api/docs/pricing) resolve like the unsuffixed `gpt-5.6` alias: `gpt-daybreak-blue-latest` prices as `gpt-5.6-sol` and `gpt-daybreak-red-latest` as `gpt-5.6-cyber`. Native usage rows retain raw model evidence; Codex aggregate model IDs follow the canonicalizer.
 - Antigravity's Gemini 3.1 Pro aliases (`gemini-pro-default`, `gemini-pro-agent`, and the `gemini-3.1-pro` effort tiers) price as `gemini-3.1-pro-preview`, the only catalogued Gemini 3.1 Pro row. The alias is provider-local; recorded model names stay unchanged.
 - Antigravity's safety-routed alias `gemini-3.7-flash-safety-le` prices as `gemini-3.7-flash`: the usage record's model enum ID matches ordinary `gemini-3.7-flash` turns. The alias is provider-local; the recorded model name stays unchanged.
-- Antigravity's exact recorded `gpt-oss-120b-medium` name falls back to `google-vertex` / `openai/gpt-oss-120b-maas` after existing model lookups. [Google's Vertex list price](https://cloud.google.com/vertex-ai/generative-ai/pricing) is $0.09 input and $0.36 output per million tokens (verified October 5, 2026); CodexBar reads the rates from [models.dev's catalog entry](https://github.com/anomalyco/models.dev/blob/8ce27fe1f811a0f63100826e9a7965af0afd96d9/providers/google-vertex/models/openai/gpt-oss-120b-maas.toml). Missing cache rates use the input rate, as in the existing Claude resolver. Unknown-price refresh includes this exact entry; other effort suffixes and reseller prices are not inferred. The displayed name stays unchanged, and dollars remain public API estimates rather than Antigravity charges.
+- Antigravity's exact recorded `gpt-oss-120b-medium` name falls back to `google-vertex` / `openai/gpt-oss-120b-maas` after existing model lookups. [Google's Vertex list price](https://cloud.google.com/vertex-ai/generative-ai/pricing) is $0.09 input and $0.36 output per million tokens (verified October 5, 2026); bars reads the rates from [models.dev's catalog entry](https://github.com/anomalyco/models.dev/blob/8ce27fe1f811a0f63100826e9a7965af0afd96d9/providers/google-vertex/models/openai/gpt-oss-120b-maas.toml). Missing cache rates use the input rate, as in the existing Claude resolver. Unknown-price refresh includes this exact entry; other effort suffixes and reseller prices are not inferred. The displayed name stays unchanged, and dollars remain public API estimates rather than Antigravity charges.
 - Vertex AI Claude logs: models.dev provider id `google-vertex-anthropic`
 
 Dated Codex usage retains the prior bundled GPT-5.6 Sol rates before **2026-08-21 UTC**, the repricing date in the
@@ -84,13 +84,13 @@ missing cache prices remain unknown.
 
 ## Units
 
-models.dev publishes costs as USD per 1M tokens. CodexBar converts those to USD per token in the metadata layer:
+models.dev publishes costs as USD per 1M tokens. bars converts those to USD per token in the metadata layer:
 
 ```text
 perToken = modelsDevCost / 1_000_000
 ```
 
-When models.dev includes `cost.context_over_200k`, CodexBar converts those rates with the same per-1M-token rule.
+When models.dev includes `cost.context_over_200k`, bars converts those rates with the same per-1M-token rule.
 The legacy field name does not establish the threshold: a matching `cost.tiers` entry with `tier.type = "context"`
 supplies its explicit `tier.size`. Only the tier matching the legacy lane's rates is used; this does not add
 arbitrary multi-tier pricing. Older catalogs without that metadata use the bundled OpenAI model threshold,
@@ -111,8 +111,8 @@ and explicit custom-pricing overrides retain their existing precedence.
 Exact-match list-price overrides live in the platform Application Support directory:
 
 ```text
-macOS: ~/Library/Application Support/CodexBar/custom-pricing.json
-Linux: ${XDG_DATA_HOME:-~/.local/share}/CodexBar/custom-pricing.json
+macOS: ~/Library/Application Support/bars/custom-pricing.json
+Linux: ${XDG_DATA_HOME:-~/.local/share}/bars/custom-pricing.json
 ```
 
 The Linux CLI uses `FileManager`’s Application Support directory (XDG data home), not `~/.config`. Putting the file only under XDG config will be ignored.
@@ -148,7 +148,7 @@ Keys are case-insensitive and may be a bare model id (`gpt-5.4`) or `provider/mo
 Field rules:
 
 - `0` is a free rate for that token class.
-- A missing field stays unknown. CodexBar does not fill it from models.dev or bundled tables, so a partial overlay row is unpriced rather than a mix of overlay and catalog rates.
+- A missing field stays unknown. bars does not fill it from models.dev or bundled tables, so a partial overlay row is unpriced rather than a mix of overlay and catalog rates.
 - Negative and non-finite numbers are ignored.
 - Alternate spellings `cache_read`, `cache_write`, `cacheCreation`, and `cache_creation` are accepted for cache fields.
 

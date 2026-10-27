@@ -581,7 +581,7 @@ def repair_sparkle_test_runtime(swift_command: list[str], environment: dict[str,
 def swift_test_list(swift_command: list[str], inventory: list[str] | None = None) -> list[TestSelection]:
     command = [*swift_command, "test", "list"]
     # Listing loads test products, so it gets a private home like test execution.
-    with tempfile.TemporaryDirectory(prefix="codexbar-test-discovery-") as home:
+    with tempfile.TemporaryDirectory(prefix="bars-test-discovery-") as home:
         environment = os.environ | {"HOME": home, "CFFIXED_USER_HOME": home}
         result = subprocess.run(command, capture_output=True, text=True, env=environment)
         if result.returncode != 0 and is_missing_sparkle_runtime_failure(result):
@@ -656,13 +656,13 @@ def print_timing_summary(stats: RunStats) -> None:
 
 
 ISOLATED_SUITES = {
-    "CodexBarTests.CostUsageBoundedProgressTests",
-    "CodexBarTests.CostUsageCacheWideMigrationTests",
-    "CodexBarTests.CostUsageFairSchedulingTests",
-    "CodexBarTests.CostUsagePerformanceGateTests",
-    "CodexBarTests.KiroStatusProbeTests",
-    "CodexBarTests.StatusMenuTests",
-    "CodexBarTests.TTYIntegrationTests",
+    "BarsTests.CostUsageBoundedProgressTests",
+    "BarsTests.CostUsageCacheWideMigrationTests",
+    "BarsTests.CostUsageFairSchedulingTests",
+    "BarsTests.CostUsagePerformanceGateTests",
+    "BarsTests.KiroStatusProbeTests",
+    "BarsTests.StatusMenuTests",
+    "BarsTests.TTYIntegrationTests",
 }
 
 
@@ -697,7 +697,7 @@ def shard_groups(groups: list[list[TestSelection]], shard_index: int | None, sha
 
 
 def prioritized_suites(suites: list[TestSelection]) -> list[TestSelection]:
-    priority = ["CodexBarTests.CLIEntryTests"]
+    priority = ["BarsTests.CLIEntryTests"]
     ordered = [suite for name in priority for suite in suites if suite.suite_name == name]
     ordered.extend(suite for suite in suites if suite.suite_name not in priority)
     return ordered
@@ -709,7 +709,7 @@ def filter_for(suites: list[TestSelection]) -> str:
 
 def run_group(suites: list[TestSelection], timeout: int, swift_command: list[str]) -> int:
     # Like direct workers, each group gets a temporary HOME and CFFIXED_USER_HOME instead of the caller's.
-    with tempfile.TemporaryDirectory(prefix="codexbar-test-group-") as home:
+    with tempfile.TemporaryDirectory(prefix="bars-test-group-") as home:
         return run_command(
             [*swift_command, "test", "--skip-build", "--no-parallel", "--filter", filter_for(suites)],
             timeout=timeout,
@@ -803,7 +803,7 @@ def main() -> int:
 
         if args.direct_workers is not None:
             from direct_swift_test_groups import InventoryMismatch, pool_timeout, prepare_runtime
-            with tempfile.TemporaryDirectory(prefix="codexbar-direct-run-") as directory:
+            with tempfile.TemporaryDirectory(prefix="bars-direct-run-") as directory:
                 root = Path(directory)
                 groups = [[asdict(selection) for selection in group] for group in suite_groups]
                 try:

@@ -3,8 +3,8 @@ set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 PACKAGE_SCRIPT="$ROOT/Scripts/package_app.sh"
-FUNCTIONS_FILE=$(mktemp "${TMPDIR:-/tmp}/codexbar-package-strip-functions.XXXXXX")
-TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/codexbar-package-strip.XXXXXX")
+FUNCTIONS_FILE=$(mktemp "${TMPDIR:-/tmp}/bars-package-strip-functions.XXXXXX")
+TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/bars-package-strip.XXXXXX")
 trap 'rm -rf "$FUNCTIONS_FILE" "$TEMP_DIR"' EXIT
 
 python3 - "$PACKAGE_SCRIPT" "$FUNCTIONS_FILE" <<'PY'
@@ -24,7 +24,7 @@ xcrun() {
 
 source "$FUNCTIONS_FILE"
 
-binary="$TEMP_DIR/CodexBar"
+binary="$TEMP_DIR/bars"
 touch "$binary"
 
 STRIP_LOG="$TEMP_DIR/release.log"

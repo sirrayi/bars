@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 class NativeTestRunnerTests(unittest.TestCase):
     def setUp(self):
-        self.temporary = tempfile.TemporaryDirectory(prefix="codexbar-native-test-")
+        self.temporary = tempfile.TemporaryDirectory(prefix="bars-native-test-")
         self.addCleanup(self.temporary.cleanup)
         self.directory = Path(self.temporary.name)
         self.capture = self.directory / "arguments.json"
@@ -24,12 +24,12 @@ class NativeTestRunnerTests(unittest.TestCase):
             "#!/usr/bin/env python3\n"
             "import json, os, sys\n"
             "from pathlib import Path\n"
-            "keys = ['CODEXBAR_TEST_CODEX_FILE_ISOLATION', 'CODEXBAR_TEST_SESSION_FILE_ISOLATION', "
-            "'CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS', 'CODEXBAR_TEST_CODEX_FILE_FIXTURES', "
+            "keys = ['BARS_TEST_CODEX_FILE_ISOLATION', 'BARS_TEST_SESSION_FILE_ISOLATION', "
+            "'BARS_SUPPRESS_TEST_KEYCHAIN_ACCESS', 'BARS_TEST_CODEX_FILE_FIXTURES', "
             "'DYLD_FRAMEWORK_PATH', 'MAKEFLAGS', 'MFLAGS', 'MAKEOVERRIDES']\n"
             "Path(os.environ['NATIVE_TEST_CAPTURE']).write_text(json.dumps("
             "{'arguments': sys.argv[1:], 'environment': {key: os.environ.get(key) for key in keys}}))\n"
-            "if sys.argv[1:] == ['test', 'list']: print('CodexBarTests.FixtureTests/example()')\n"
+            "if sys.argv[1:] == ['test', 'list']: print('BarsTests.FixtureTests/example()')\n"
             "raise SystemExit(int(os.environ.get('NATIVE_TEST_EXIT', '0')))\n",
             encoding="utf-8",
         )
@@ -38,11 +38,11 @@ class NativeTestRunnerTests(unittest.TestCase):
         self.environment.update({
             "PATH": f"{self.directory}:{os.environ['PATH']}",
             "NATIVE_TEST_CAPTURE": str(self.capture),
-            "CODEXBAR_ALLOW_TEST_KEYCHAIN_ACCESS": "0",
-            "CODEXBAR_TEST_CODEX_FILE_FIXTURES": "must-not-be-inherited",
-            "CODEXBAR_TEST_NATIVE_TIMEOUT": "10",
+            "BARS_ALLOW_TEST_KEYCHAIN_ACCESS": "0",
+            "BARS_TEST_CODEX_FILE_FIXTURES": "must-not-be-inherited",
+            "BARS_TEST_NATIVE_TIMEOUT": "10",
         })
-        self.environment.pop("CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS", None)
+        self.environment.pop("BARS_SUPPRESS_TEST_KEYCHAIN_ACCESS", None)
         self.environment.pop("DYLD_FRAMEWORK_PATH", None)
 
     def run_command(self, arguments):
@@ -60,10 +60,10 @@ class NativeTestRunnerTests(unittest.TestCase):
         captured = json.loads(self.capture.read_text())
         self.assertEqual(captured["arguments"], ["test", "--no-parallel", *arguments])
         self.assertEqual(captured["environment"], {
-            "CODEXBAR_TEST_CODEX_FILE_ISOLATION": "1",
-            "CODEXBAR_TEST_SESSION_FILE_ISOLATION": "1",
-            "CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS": "1",
-            "CODEXBAR_TEST_CODEX_FILE_FIXTURES": None,
+            "BARS_TEST_CODEX_FILE_ISOLATION": "1",
+            "BARS_TEST_SESSION_FILE_ISOLATION": "1",
+            "BARS_SUPPRESS_TEST_KEYCHAIN_ACCESS": "1",
+            "BARS_TEST_CODEX_FILE_FIXTURES": None,
             "DYLD_FRAMEWORK_PATH": None,
             "MAKEFLAGS": None,
             "MFLAGS": None,
@@ -134,37 +134,37 @@ class NativeTestRunnerTests(unittest.TestCase):
     def test_invalid_deadline_fails_before_launch(self):
         for value in ["0", "-1", "invalid"]:
             with self.subTest(value=value):
-                self.environment["CODEXBAR_TEST_NATIVE_TIMEOUT"] = value
+                self.environment["BARS_TEST_NATIVE_TIMEOUT"] = value
                 result = self.run_command(["bash", str(ROOT / "Scripts/test_fast.sh"), "--filter", "Example"])
                 self.assertEqual(result.returncode, 2)
                 self.assertIn("positive integer", result.stderr)
                 self.assertFalse(self.capture.exists())
 
     def test_explicit_keychain_opt_in_retains_existing_policy(self):
-        self.environment["CODEXBAR_ALLOW_TEST_KEYCHAIN_ACCESS"] = "1"
+        self.environment["BARS_ALLOW_TEST_KEYCHAIN_ACCESS"] = "1"
         for runner in ["test.sh", "test_fast.sh"]:
             with self.subTest(runner=runner):
                 result = self.run_command(["bash", str(ROOT / "Scripts" / runner)])
                 self.assertEqual(result.returncode, 0, result.stderr)
-                self.assertIsNone(json.loads(self.capture.read_text())["environment"]["CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS"])
+                self.assertIsNone(json.loads(self.capture.read_text())["environment"]["BARS_SUPPRESS_TEST_KEYCHAIN_ACCESS"])
 
     def test_both_runners_override_inherited_unsafe_test_environment(self):
-        self.environment["CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS"] = "0"
+        self.environment["BARS_SUPPRESS_TEST_KEYCHAIN_ACCESS"] = "0"
         for runner in ["test.sh", "test_fast.sh"]:
             with self.subTest(runner=runner):
                 result = self.run_command(["bash", str(ROOT / "Scripts" / runner)])
                 self.assertEqual(result.returncode, 0, result.stderr)
                 environment = json.loads(self.capture.read_text())["environment"]
-                self.assertEqual(environment["CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS"], "1")
-                self.assertEqual(environment["CODEXBAR_TEST_CODEX_FILE_ISOLATION"], "1")
-                self.assertEqual(environment["CODEXBAR_TEST_SESSION_FILE_ISOLATION"], "1")
-                self.assertIsNone(environment["CODEXBAR_TEST_CODEX_FILE_FIXTURES"])
+                self.assertEqual(environment["BARS_SUPPRESS_TEST_KEYCHAIN_ACCESS"], "1")
+                self.assertEqual(environment["BARS_TEST_CODEX_FILE_ISOLATION"], "1")
+                self.assertEqual(environment["BARS_TEST_SESSION_FILE_ISOLATION"], "1")
+                self.assertIsNone(environment["BARS_TEST_CODEX_FILE_FIXTURES"])
 
     def test_all_test_entry_points_scrub_secret_names(self):
         sensitive_names = [
-            "CODEXBAR_TEST_SENTINEL_SECRET", "service_token", "Api_Key", "clientSECRET",
+            "BARS_TEST_SENTINEL_SECRET", "service_token", "Api_Key", "clientSECRET",
             "PASSWORD", "test_Passwd", "a_webhook_url", "CREDENTIAL_path", "CookieJar",
-            "PRIVATE_FILE", "service_PAT", "CODEXBAR_API_KEY", "CODEXBAR_TEST_COOKIE",
+            "PRIVATE_FILE", "service_PAT", "BARS_API_KEY", "BARS_TEST_COOKIE",
         ]
         # The fake Swift process records only booleans, never inherited values.
         binary = self.directory / "swift"
@@ -176,15 +176,15 @@ class NativeTestRunnerTests(unittest.TestCase):
             "Path(os.environ['NATIVE_TEST_CAPTURE']).write_text(json.dumps({\n"
             "'secrets_absent': all(name not in os.environ for name in names),\n"
             "'ci_preserved': os.environ.get('CI') == 'true',\n"
-            "'flag_preserved': os.environ.get('CODEXBAR_DISABLE_KEYCHAIN_ACCESS') == '1',\n"
-            "'local_dependency_preserved': os.environ.get('CODEXBAR_USE_LOCAL_SWEETCOOKIEKIT') == '1',\n"
+            "'flag_preserved': os.environ.get('BARS_DISABLE_KEYCHAIN_ACCESS') == '1',\n"
+            "'local_dependency_preserved': os.environ.get('BARS_USE_LOCAL_SWEETCOOKIEKIT') == '1',\n"
             "}))\n"
-            "if sys.argv[1:] == ['test', 'list']: print('CodexBarTests.FixtureTests/example()')\n",
+            "if sys.argv[1:] == ['test', 'list']: print('BarsTests.FixtureTests/example()')\n",
             encoding="utf-8",
         )
         self.environment.update(dict.fromkeys(sensitive_names, "sentinel-harness-secret"))
-        self.environment.update(CI="true", CODEXBAR_DISABLE_KEYCHAIN_ACCESS="1",
-                                CODEXBAR_USE_LOCAL_SWEETCOOKIEKIT="1")
+        self.environment.update(CI="true", BARS_DISABLE_KEYCHAIN_ACCESS="1",
+                                BARS_USE_LOCAL_SWEETCOOKIEKIT="1")
         commands = [
             ["bash", "Scripts/test.sh"], ["bash", "Scripts/test_fast.sh"],
             ["bash", "Scripts/test.sh", "--direct-workers", "4"],
@@ -208,7 +208,7 @@ class NativeTestRunnerTests(unittest.TestCase):
 
 class TestGroupTests(unittest.TestCase):
     def test_expensive_suites_keep_their_own_deadline_without_losing_selections(self):
-        names = ["CodexBarTests.Before", *sorted(ISOLATED_SUITES), "CodexBarTests.After"]
+        names = ["BarsTests.Before", *sorted(ISOLATED_SUITES), "BarsTests.After"]
         selections = [TestSelection(name, f"^{name}/", name) for name in names]
         for size in [1, 4, 8, 12]:
             with self.subTest(size=size):

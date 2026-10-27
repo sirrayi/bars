@@ -16,18 +16,18 @@ Candidate PRs:
 
 ## Purpose
 
-This document explains the motivation, evidence, design split, current PR state, and open review questions for the CodexBar Overview menu scroll-stutter work. It is written as a handoff document for a second reviewer, especially Claude, to review both the reasoning and the patch directions without needing to reconstruct the whole GitHub thread.
+This document explains the motivation, evidence, design split, current PR state, and open review questions for the bars Overview menu scroll-stutter work. It is written as a handoff document for a second reviewer, especially Claude, to review both the reasoning and the patch directions without needing to reconstruct the whole GitHub thread.
 
 The core question is not only "does either patch compile?" The real question is whether we chose the right boundary for reducing scroll-time work inside an `NSMenu` that hosts rich SwiftUI rows.
 
 ## Original Problem
 
-The user-reported symptom is severe scroll jank in the CodexBar home / Overview menu. The problem appears on recent CodexBar builds and on multiple remote latest versions, not just one local install.
+The user-reported symptom is severe scroll jank in the bars home / Overview menu. The problem appears on recent bars builds and on multiple remote latest versions, not just one local install.
 
 Observed environment from the local sample:
 
 ```text
-CodexBar 0.37.0 (90)
+bars 0.37.0 (90)
 macOS 27.0 (26A5353q)
 Main-thread sample duration: 8 seconds, 1 ms interval
 Main-thread sample count: 3440
@@ -66,19 +66,19 @@ The sample stack maps cleanly onto current `origin/main` around commit `8c4bdd63
 
 Key source paths:
 
-- `Sources/CodexBar/StatusItemController+Menu.swift`
+- `Sources/Bars/StatusItemController+Menu.swift`
   - `addOverviewRows` builds each Overview provider row as a custom menu card.
   - It installs provider-detail submenus and click handling.
-- `Sources/CodexBar/StatusItemController+MenuTypes.swift`
+- `Sources/Bars/StatusItemController+MenuTypes.swift`
   - `OverviewMenuCardRowView` is the SwiftUI view rendered inside each Overview row.
   - It subscribes to menu highlight environment.
-- `Sources/CodexBar/MenuCardView.swift`
+- `Sources/Bars/MenuCardView.swift`
   - `UsageMenuCardUsageSectionView` renders usage content.
   - It resolves live menu-card models through `MenuCardRefreshMonitor`.
-- `Sources/CodexBar/InlineUsageDashboardContent.swift`
+- `Sources/Bars/InlineUsageDashboardContent.swift`
   - Uses `LazyVGrid` and mini chart/bar content.
   - This matches the `LazyVGridLayout lengthAndSpacing` sample fragment.
-- `Sources/CodexBar/StatusItemController+OverviewScroll.swift`
+- `Sources/Bars/StatusItemController+OverviewScroll.swift`
   - Handles scroll-wheel navigation on Overview rows.
   - Moves highlight by calling menu highlight paths and posting synthetic mouse movement over row views.
 
@@ -167,8 +167,8 @@ It intentionally moves rich charts/details out of the Overview row and leaves th
 
 Changed files:
 
-- `Sources/CodexBar/StatusItemController+MenuTypes.swift`
-- `Tests/CodexBarTests/OverviewMenuCardRowViewTests.swift`
+- `Sources/Bars/StatusItemController+MenuTypes.swift`
+- `Tests/BarsTests/OverviewMenuCardRowViewTests.swift`
 
 Key implementation points:
 
@@ -249,11 +249,11 @@ This follows the `build-macos-apps:appkit-interop` guidance: cross only the narr
 
 Changed files:
 
-- `Sources/CodexBar/StatusItemController+Menu.swift`
-- `Sources/CodexBar/StatusItemController+MenuCardItems.swift`
-- `Sources/CodexBar/StatusItemController+MenuPresentation.swift`
-- `Sources/CodexBar/StatusItemController+MenuTypes.swift`
-- `Tests/CodexBarTests/MenuCardViewRecyclingTests.swift`
+- `Sources/Bars/StatusItemController+Menu.swift`
+- `Sources/Bars/StatusItemController+MenuCardItems.swift`
+- `Sources/Bars/StatusItemController+MenuPresentation.swift`
+- `Sources/Bars/StatusItemController+MenuTypes.swift`
+- `Tests/BarsTests/MenuCardViewRecyclingTests.swift`
 
 Key implementation points:
 
@@ -290,8 +290,8 @@ swift test --filter "highlight"
 swift build
 make check
 git diff --check
-CODEXBAR_SIGNING=adhoc ./Scripts/package_app.sh debug
-codesign --verify --deep --strict --verbose=2 CodexBar.app
+BARS_SIGNING=adhoc ./Scripts/package_app.sh debug
+codesign --verify --deep --strict --verbose=2 bars.app
 ```
 
 The follow-up validation was run on:
@@ -431,16 +431,16 @@ On `main`, only the unchanged baseline symbols (`addOverviewRows`, `OverviewMenu
 
 For Lite row review:
 
-- Start with `OverviewMenuCardRowView` in `Sources/CodexBar/StatusItemController+MenuTypes.swift`.
+- Start with `OverviewMenuCardRowView` in `Sources/Bars/StatusItemController+MenuTypes.swift`.
 - Check `resolvedLiveModel(refreshMonitor:)`.
 - Check `LiteSummary.make(for:)`.
 - Check `OverviewMenuCardRowViewTests`.
 
 For Rich row review:
 
-- Start with `OverviewMenuRowHostingView` in `Sources/CodexBar/StatusItemController+MenuPresentation.swift`.
-- Check `makeOverviewMenuRowItem` in `Sources/CodexBar/StatusItemController+MenuCardItems.swift`.
-- Check `addOverviewRows` in `Sources/CodexBar/StatusItemController+Menu.swift`.
+- Start with `OverviewMenuRowHostingView` in `Sources/Bars/StatusItemController+MenuPresentation.swift`.
+- Check `makeOverviewMenuRowItem` in `Sources/Bars/StatusItemController+MenuCardItems.swift`.
+- Check `addOverviewRows` in `Sources/Bars/StatusItemController+Menu.swift`.
 - Check `MenuCardViewRecyclingTests`.
 
 For shared behavior:
@@ -491,7 +491,7 @@ Findings:
 
 ### Implemented direction: AppKit/GPU selection (`GPUSelectionHostingView`)
 
-`Sources/CodexBar/MenuCardGPUSelectionView.swift` renders the selected look without any SwiftUI work:
+`Sources/Bars/MenuCardGPUSelectionView.swift` renders the selected look without any SwiftUI work:
 
 1. an `NSVisualEffectView(.selection)` background (the existing in-repo pattern from
    `PersistentRefreshMenuView`), crossfaded via Core Animation so the highlight glides between rows
@@ -556,4 +556,4 @@ A signed isolated host on macOS 26.6.2 (25G83) measured setHighlighted, layout, 
 
 An additional run recorded every sample to locate outliers: the original wrappers had samples above 1 ms at indices 0, 1, and 3 (maximum 50.589 ms); the candidate had one at index 2 (6.962 ms). All later updates were below 1 ms in both. These shared-host measurements include startup work and do not establish a hard 120 Hz frame-time guarantee. They support retaining the cheap steady-state GPU path instead of returning every selection step to SwiftUI recoloring.
 
-The opt-in StatusMenuProviderNativeProofTests harness accepts CODEXBAR_STATUS_PROVIDER_PROOF_BENCHMARK=1 alongside its existing proof-directory, Overview, and credential-isolation settings. It writes first-use, per-sample, mean, p95, maximum, and vibrancy/highlight-state receipts; ordinary CI runs skip this native mode.
+The opt-in StatusMenuProviderNativeProofTests harness accepts BARS_STATUS_PROVIDER_PROOF_BENCHMARK=1 alongside its existing proof-directory, Overview, and credential-isolation settings. It writes first-use, per-sample, mean, p95, maximum, and vibrancy/highlight-state receipts; ordinary CI runs skip this native mode.

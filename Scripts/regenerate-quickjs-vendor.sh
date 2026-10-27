@@ -11,7 +11,7 @@ ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 TARGET_DIR="${ROOT_DIR}/Sources/CQuickJS"
 MODE=${1:-check}
 
-WORK_DIR=$(mktemp -d "${TMPDIR:-/tmp}/codexbar-quickjs-regen.XXXXXX")
+WORK_DIR=$(mktemp -d "${TMPDIR:-/tmp}/bars-quickjs-regen.XXXXXX")
 trap 'rm -rf "$WORK_DIR"' EXIT HUP INT TERM
 ARCHIVE_FILE="${WORK_DIR}/quickjs.tar.gz"
 SOURCE_DIR="${WORK_DIR}/quickjs-${QUICKJS_VERSION}"

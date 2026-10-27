@@ -1,27 +1,27 @@
 ---
-summary: "CodexBar CLI for fetching usage from the command line."
+summary: "bars CLI for fetching usage from the command line."
 read_when:
-  - "You want to call CodexBar data from scripts or a terminal."
+  - "You want to call bars data from scripts or a terminal."
   - "Adding or modifying Commander-based CLI commands."
   - "Aligning menubar and CLI output/behavior."
 ---
 
-# CodexBar CLI
+# bars CLI
 
 A lightweight Commander-based CLI that mirrors the menu bar app’s provider fetchers and config file.
 Use it when you need usage numbers in scripts, CI, or dashboards without UI.
 
 ## Install
-- In the app: **Preferences → Advanced → Install CLI**. This symlinks `CodexBarCLI` to `/usr/local/bin/codexbar` and `/opt/homebrew/bin/codexbar`.
-- From the repo, after installing `CodexBar.app` in `/Applications`: `./bin/install-codexbar-cli.sh` (same symlink targets; requires macOS administrator approval).
-- Manual: `ln -sf "/Applications/CodexBar.app/Contents/Helpers/CodexBarCLI" /usr/local/bin/codexbar`.
+- In the app: **Preferences → Advanced → Install CLI**. This symlinks `BarsCLI` to `/usr/local/bin/bars` and `/opt/homebrew/bin/bars`.
+- From the repo, after installing `bars.app` in `/Applications`: `./bin/install-bars-cli.sh` (same symlink targets; requires macOS administrator approval).
+- Manual: `ln -sf "/Applications/bars.app/Contents/Helpers/BarsCLI" /usr/local/bin/bars`.
 
 The bundled macOS CLI identifies its running executable and containing app through the operating system, even
 when launched through these symlinks. Mutable external aliases are not added to new credential-cache trust lists.
 Existing signature validation, disabled-access settings, and no-prompt rules still apply; standalone development
 binaries do not gain access to the app's persistent cache.
 
-The repo installer requires an executable `/Applications/CodexBar.app/Contents/Helpers/CodexBarCLI`; a missing
+The repo installer requires an executable `/Applications/bars.app/Contents/Helpers/BarsCLI`; a missing
 helper is an error. It starts the system POSIX shell with `-p` to ignore inherited functions and startup hooks
 before helper validation or failure handling. This shell mode does not elevate privileges; macOS administrator
 approval is still required. The installer uses absolute system tools, clears the inherited environment before
@@ -30,32 +30,32 @@ requesting approval, and stops on installation failure. The in-app installer is 
 ### Release tarball install (macOS/Linux)
 - Homebrew formula (Linux today): `brew install steipete/tap/codexbar`.
 - Download release tarballs from GitHub Releases:
-  - macOS: `CodexBarCLI-v<tag>-macos-arm64.tar.gz`, `CodexBarCLI-v<tag>-macos-x86_64.tar.gz`
-  - Linux (glibc): `CodexBarCLI-v<tag>-linux-aarch64.tar.gz`, `CodexBarCLI-v<tag>-linux-x86_64.tar.gz`
-  - Linux (static musl): `CodexBarCLI-v<tag>-linux-musl-aarch64.tar.gz`, `CodexBarCLI-v<tag>-linux-musl-x86_64.tar.gz`
-- Extract and run `./codexbar` (symlink) or `./CodexBarCLI`.
+  - macOS: `BarsCLI-v<tag>-macos-arm64.tar.gz`, `BarsCLI-v<tag>-macos-x86_64.tar.gz`
+  - Linux (glibc): `BarsCLI-v<tag>-linux-aarch64.tar.gz`, `BarsCLI-v<tag>-linux-x86_64.tar.gz`
+  - Linux (static musl): `BarsCLI-v<tag>-linux-musl-aarch64.tar.gz`, `BarsCLI-v<tag>-linux-musl-x86_64.tar.gz`
+- Extract and run `./bars` (symlink) or `./BarsCLI`.
 
 ```
-tar -xzf CodexBarCLI-v0.17.0-macos-x86_64.tar.gz
-./codexbar --version
-./codexbar usage --format json --pretty
+tar -xzf BarsCLI-v0.17.0-macos-x86_64.tar.gz
+./bars --version
+./bars usage --format json --pretty
 ```
 
 ## Build
-- `./Scripts/package_app.sh` (or `./Scripts/compile_and_run.sh`) bundles `CodexBarCLI` into `CodexBar.app/Contents/Helpers/CodexBarCLI`.
-- Standalone: `swift build -c release --product CodexBarCLI` (binary at `./.build/release/CodexBarCLI`).
+- `./Scripts/package_app.sh` (or `./Scripts/compile_and_run.sh`) bundles `BarsCLI` into `bars.app/Contents/Helpers/BarsCLI`.
+- Standalone: `swift build -c release --product BarsCLI` (binary at `./.build/release/BarsCLI`).
 - Dependencies: Swift 6.2+, Commander package (`https://github.com/steipete/Commander`).
 
 ## Configuration
-CodexBar reads the resolved config file for provider settings, secrets, and ordering. New installs use
-`~/.config/codexbar/config.json`; absolute `XDG_CONFIG_HOME` paths and `CODEXBAR_CONFIG` are supported, and existing
-`~/.codexbar/config.json` installs keep using the legacy file when no XDG config exists.
+bars reads the resolved config file for provider settings, secrets, and ordering. New installs use
+`~/.config/bars/config.json`; absolute `XDG_CONFIG_HOME` paths and `BARS_CONFIG` are supported, and existing
+`~/.bars/config.json` installs keep using the legacy file when no XDG config exists.
 See [Configuration](configuration.md) for the schema and [Providers](providers.md) for every registered provider's
 sources and setup guide. The [provider ID list](provider-ids.md) is generated from the registry;
-`codexbar config providers` lists providers and their configured enablement without fetching usage.
+`bars config providers` lists providers and their configured enablement without fetching usage.
 
 ## Command
-- `codexbar` defaults to the `usage` command.
+- `bars` defaults to the `usage` command.
   - Multi-provider usage fetches run up to three providers concurrently. Text, JSON, and diagnostics retain selection order; a failed provider does not prevent the others from finishing. Refreshed credentials share a command-scoped writer, while externally changed credentials remain protected.
   - `--format text|json|toon` (default: text).
   - Text output and full terminal cards include history already supplied by the selected provider, such as OpenRouter Activity spend or Grok local token totals. They preserve the source period, currency, known zero values, and reported/estimated cost labels. This live history remains separate from the ordinary usage JSON schema and the `cost` command.
@@ -63,7 +63,7 @@ sources and setup guide. The [provider ID list](provider-ids.md) is generated fr
   - Usage JSON includes optional `rateWindowLabels` for present windows from built-in providers. Consumers can use these display labels when a window omits its cadence; missing windows and unknown provider IDs do not gain invented labels.
   - JSON uses the generic `usage.details` array for provider-specific information. Each section contains an optional
     `title`, `rows` (`label`, `value`, and optional `secondaryValue`), and an optional `bars` or `line` chart. The same
-    shape is returned by `GET /usage` from `codexbar serve`.
+    shape is returned by `GET /usage` from `bars serve`.
   - Legacy provider-specific keys such as `openRouterUsage`, `clawRouterUsage`, and `sub2APIUsage` are not compatibility
     aliases; clients must read `usage.details`. Unknown legacy keys in cached or iCloud-synced snapshots are ignored
     when decoding.
@@ -85,7 +85,7 @@ sources and setup guide. The [provider ID list](provider-ids.md) is generated fr
     still applies. The actual winning source gains ` (claude-swap fallback)` (or ` (tcr fallback)`) in text and JSON,
     and the identity remains that of the fallback account. Another swap slot is never substituted. Pooled tcr
     adapters normally report no active slot and therefore use the labeled fallback.
-- `codexbar cost` prints token cost usage for Claude, Codex, Cursor, Antigravity, Muse Code, and Pi.
+- `bars cost` prints token cost usage for Claude, Codex, Cursor, Antigravity, Muse Code, and Pi.
   - Claude and Codex are scanned from local session logs without web/CLI access.
   - [Pi](pi.md) reads supported Pi/OMP local assistant history. Selecting Pi alongside Claude/Codex keeps those providers native-only so combined totals count each source once.
     Text output labels priced results as local estimates and token-only results as token history, and distinguishes unavailable or lower-bound history from a complete period with no recorded usage.
@@ -102,7 +102,7 @@ sources and setup guide. The [provider ID list](provider-ids.md) is generated fr
   - `--provider codex --format json --summary-only` emits a one-element, versioned summary array with no account identity, project paths, model rows, or session content. Schema version 1 retains `updatedAt`, `bucketTimeZone`, `historyDays`, `currencyCode`, `historyCoverageIsEstablished`, and separate `today`/`history` totals with optional `totalTokens`/`costUSD`, incomplete-request counts, coverage categories, and provenance. Missing totals remain unavailable.
   - Host reports always scan native Codex history only. `--days` and `--refresh` apply on both hosts; each host retains its own calendar and pricing. Both modes reject `--group-by` and `--breakdown`; `--remote` and `--summary-only` cannot be combined. Ordinary `cost` output remains compatible.
   - Remote capture is bounded to 16 KiB per stream during execution, with a 60-second client process timeout. Unsupported versions, invalid totals, overflow, and unexpected output fail closed. Remote failure retains a successful local row and exits nonzero; JSON remains one document. Ctrl-C and termination signals cancel collection and await local SSH subprocess cleanup. The remote scanner follows its SSH server's disconnect behavior and may finish after the client exits.
-- `codexbar cost --provider codex --identified-only --format json --days 30` exports an experimental,
+- `bars cost --provider codex --identified-only --format json --days 30` exports an experimental,
   versioned native request ledger. Add `--remote build-host` to return source reports and an
   **identified-request subtotal** from this machine and one SSH host. Both hosts need a CLI supporting
   this option. `--identified-end <Unix milliseconds>` pins the inclusive end; the start is UTC midnight
@@ -120,8 +120,8 @@ sources and setup guide. The [provider ID list](provider-ids.md) is generated fr
     Files are read and validated even for a short window; reducing `--days` does not skip older files.
   - Requires explicit `--provider codex` and JSON. Do not combine with `--summary-only`,
     `--period`, `--group-by` or `--breakdown`; the existing separate-host summary command is unchanged.
-- `codexbar cards` prints a one-shot usage snapshot as a responsive terminal card grid.
-  - Reuses the same provider, source, account, credits, and status flags as `codexbar usage`.
+- `bars cards` prints a one-shot usage snapshot as a responsive terminal card grid.
+  - Reuses the same provider, source, account, credits, and status flags as `bars usage`.
   - Account lines and plan badges are included in the card grid by default.
   - `--brief` renders a compact table (Provider / Usage / Reset) instead of the card grid.
   - Antigravity quota-summary text and full cards show each visible quota bucket, including weekly limits. Unknown usage is shown as unavailable without a percentage or bar; brief cards retain an unavailable first quota and its reset context. Idle-family filtering is display-only, and raw usage JSON retains every window. Legacy model-quota responses keep their family labels.
@@ -137,32 +137,32 @@ sources and setup guide. The [provider ID list](provider-ids.md) is generated fr
   - claude-swap sentinel accounts remain successful cards with their problem text and no fabricated usage metrics.
     A list adapter, parser, or timeout failure retains useful ambient Claude output, adds a distinct
     `Claude (claude-swap)` failure footer entry, and makes the command exit non-zero.
-  - Cards expands swap accounts; `codexbar usage` returns only the active slot as described above.
-    `codexbar serve` keeps its existing `/usage` behavior.
+  - Cards expands swap accounts; `bars usage` returns only the active slot as described above.
+    `bars serve` keeps its existing `/usage` behavior.
   - Honors `$COLUMNS` for layout; falls back to 80 columns. Use `--no-color` for plain output.
   - Kitty, Ghostty, WezTerm, and other truecolor terminals auto-enable enhanced gradients/outlines.
-  - Force enhanced mode elsewhere with `CODEXBAR_CARDS_ENHANCED=1`.
+  - Force enhanced mode elsewhere with `BARS_CARDS_ENHANCED=1`.
   - Exit code is non-zero when any provider fetch fails.
-- `codexbar dashboard` prints one dashboard-v1 JSON snapshot and exits.
+- `bars dashboard` prints one dashboard-v1 JSON snapshot and exits.
   - Honors enabled providers in stable order, carries configured display sort keys, and defaults to full account identity; `--identity redacted` hides email local parts.
   - Provider failures remain row-level errors alongside healthy rows; a valid partial snapshot exits `0`.
   - Stdout contains only the snapshot document. Diagnostics and optional `--json-output` logs go to stderr.
   - `--pretty` formats the document. `--timeout <seconds>` accepts `0...86400`, defaults to `30`, and uses `0` to disable the command deadline.
   - `--output <path>` atomically writes the snapshot to a file (`0644`) instead of stdout — staged in the destination directory, fsync'd, then renamed over the target so readers never observe a partial document. The parent directory must already exist (it is not created), and stdout stays silent on success.
   - Starts no HTTP server and requires no dashboard bearer token. See `docs/dashboard-api.md` for the shared payload contract.
-- `codexbar serve` starts a foreground HTTP server for usage and cost JSON, a token-gated dashboard snapshot, and a built-in web UI at `/`.
+- `bars serve` starts a foreground HTTP server for usage and cost JSON, a token-gated dashboard snapshot, and a built-in web UI at `/`.
   - On Linux, exited Codex and Grok RPC children release their output pipes after each refresh, preventing descriptor accumulation during long-running server sessions. Child-tree cleanup also reads empty procfs child lists without retaining Foundation read buffers.
   - `--all-accounts` expands visible Codex profiles and configured token accounts in dashboard snapshots, with neutral numbered labels, no identity and generic errors by default. Explicit `--identity full` includes identifying details; `--identity redacted` exposes only masked emails/plan labels, not account aliases or raw errors. It is a startup opt-in, not a query parameter; `/usage` keeps its existing Codex enumeration and `/cost` is unchanged.
   - `GET /accounts` and `GET /accounts/<id>` discover saved provider token accounts and managed Codex accounts without fetching usage or exporting credentials. IDs are stable opaque lookup keys; `active` means the configured selection. Discovery includes saved accounts for disabled providers, excludes system/profile-home discovery, follows the same identity setting, and requires bearer authentication on non-loopback binds. See [account discovery](dashboard-api.md#account-discovery).
   - Web usage bars follow the app's **Usage bars fill** setting, read per request on macOS. Dashboard snapshots from
-    both `serve` and `codexbar dashboard` expose it as `host.usageBarsShowUsed`. An absent setting defaults to remaining
+    both `serve` and `bars dashboard` expose it as `host.usageBarsShowUsed`. An absent setting defaults to remaining
     percentages, including on Linux; earlier web dashboards always showed used percentages. Quota values are unchanged.
   - Without `--all-accounts`, dashboard snapshot identity follows the app's "Hide personal information" setting when `--identity` is absent: the toggle on redacts email local parts, off keeps full emails. The setting is read per request, so a change applies without a serve restart. Pass `--identity redacted` or `--identity full` to pin the mode and ignore the app setting, especially when responses cross a network.
   - `--host <host>` accepts `localhost` or an IPv4 address and defaults to `127.0.0.1`; `localhost` is normalized to `127.0.0.1`. Binding a non-loopback host requires a dashboard token **and** `--allow-plain-http` (see `docs/dashboard-api.md` for the threat model).
   - `--port <port>` defaults to `8080`.
   - `--refresh-interval <seconds>` defaults to `60` and controls the in-memory response cache TTL.
   - `--request-timeout <seconds>` defaults to `30` and bounds each request before returning `504 Gateway Timeout`; use `0` to keep waiting indefinitely. Slow builds continue past the deadline, commit their finished result to the cache, and feed any same-config request already waiting so a 504 self-heals on retry.
-  - `--dashboard-token <token>` sets the static bearer token for `GET /dashboard/v1/snapshot`. Prefer the `CODEXBAR_DASHBOARD_TOKEN` environment variable (it wins over the flag; a flag value leaks via `ps`). Empty or whitespace-only tokens are startup errors. Without a token the snapshot route fails closed with `401`.
+  - `--dashboard-token <token>` sets the static bearer token for `GET /dashboard/v1/snapshot`. Prefer the `BARS_DASHBOARD_TOKEN` environment variable (it wins over the flag; a flag value leaks via `ps`). Empty or whitespace-only tokens are startup errors. Without a token the snapshot route fails closed with `401`.
   - On a **non-loopback** host the token gates **all data routes** — `/usage`, `/cost`, and `/dashboard/v1/snapshot` all require `Authorization: Bearer YOUR_TOKEN`, so account data is never exposed to the network unauthenticated. The static web UI at `/` and `/health` are always open. On the default loopback bind, `/usage` and `/cost` stay unauthenticated.
   - `--allow-plain-http` is the explicit acknowledgment that the bearer token crosses the network **in cleartext on every request** when serving on a non-loopback host. `serve` refuses to start on a non-loopback host without it.
   - Provider config is reloaded for each usage/cost request; cache entries are keyed by the loaded config so provider toggles and source changes do not require restarting `serve`.
@@ -172,29 +172,29 @@ sources and setup guide. The [provider ID list](provider-ids.md) is generated fr
   - The default loopback bind rejects non-loopback `Host` headers; a configured non-loopback `--host` additionally accepts its own name. No CORS, TLS, or daemon mode.
   - Endpoints: `GET /` (web UI), `GET /health`, `GET /usage`, `GET /usage?provider=<id|both|all>`, `GET /cost`, `GET /cost?provider=<id|both|all>`, `GET /dashboard/v1/snapshot` (plus `provider=<id>` and `detail=<full|shell>`).
   - `GET /dashboard/v1/snapshot` requires `Authorization: Bearer YOUR_TOKEN`; responses (and all `401`s) carry `Cache-Control: no-store`. The token is never accepted via query string. See `docs/dashboard-api.md` for the payload contract.
-  - `GET /health` returns `{"status":"ok"}` plus a `version` field with the running build (e.g. `"0.37.2"`) when resolvable; clients can compare it against `codexbar --version` to detect a `serve` process still running an older binary after an update.
+  - `GET /health` returns `{"status":"ok"}` plus a `version` field with the running build (e.g. `"0.37.2"`) when resolvable; clients can compare it against `bars --version` to detect a `serve` process still running an older binary after an update.
   - Codex usage responses include every visible Codex account, matching the menu bar switcher.
-- `codexbar cache clear` clears local CodexBar caches.
-  - `--cookies` removes cached browser-cookie headers from the CodexBar Keychain cache.
+- `bars cache clear` clears local bars caches.
+  - `--cookies` removes cached browser-cookie headers from the bars Keychain cache.
   - `--cookies --provider <id>` removes browser-cookie cache entries for that provider, including managed Codex account scopes.
   - `--cost` removes local cost-usage scan caches.
   - `--all` clears both cookies and cost caches. `--provider` is cookie-only and cannot be combined with `--cost` or `--all`.
-- `codexbar cookie refresh` ignores the provider's current cookie caches while importing a replacement through its web strategy. A failed or interrupted import leaves existing cookies intact.
+- `bars cookie refresh` ignores the provider's current cookie caches while importing a replacement through its web strategy. A failed or interrupted import leaves existing cookies intact.
   - Choose exactly one of `--provider <id>` or `--all`; provider support comes from shared browser-cookie metadata rather than a fixed CLI list.
   - Prompt-capable Chromium imports require `--allow-keychain-prompt`. Without it, the command fails before cache mutation with an interactive-retry hint.
   - Selected-profile providers use only their configured browser for that check. Safari needs no Chromium Keychain acknowledgment; a validated nonpersistent refresh succeeds without storing cookies.
   - A six-hour Keychain-denial cooldown also applies to menu and settings Refresh actions; only that explicit acknowledgment flag bypasses it. The command shares one interactive browser read across its selected providers. Output never includes cookie values.
   - Classified provider failures distinguish rejected sessions, permissions, rate limits, outages, network errors, and unreadable responses. Missing credentials retain the browser sign-in hint; disabled or denied Keychain access takes precedence. Hints never echo raw provider error messages.
   - Providers configured for Manual or Off cookie sources are skipped.
-- `codexbar guard --provider <id>` gates automation on one provider's remaining quota.
+- `bars guard --provider <id>` gates automation on one provider's remaining quota.
   - `--min-remaining <percent>` sets the inclusive threshold (default: `10`; valid range: `0...100`).
   - `--window session|weekly` selects the primary/session window or secondary/weekly window (default: `session`).
   - `--timeout <seconds>` bounds the complete fetch (range: `0...86400`; default: `60`; `0` disables this guard-level deadline while provider-specific timeouts still apply).
   - `--json` emits the provider, window, remaining quota, threshold, decision, unavailable reason, and exit code; add `--pretty` for formatted JSON.
   - Stable guard exit codes: `0` means safe, `1` means below threshold, `64` (`EX_USAGE`) means invalid arguments, and `69` (`EX_UNAVAILABLE`) means the quota could not be checked or the selected window is unavailable. `--fail-open` changes only unavailable results from `69` to `0`; JSON still reports `decision: "unknown"` and the reason.
-  - Guard fetches are read-only and use background interaction policy, matching `codexbar usage`; they never request interactive Keychain access.
+  - Guard fetches are read-only and use background interaction policy, matching `bars usage`; they never request interactive Keychain access.
 - `--provider <id|both|all>` (default: enabled providers in config; falls back to defaults when missing).
-  - Accepts raw IDs from `codexbar config providers --format json` as well as CLI names and aliases. For example, `alibabatokenplan` and `alibaba-token-plan` select the same provider; existing CLI names and aliases take precedence if names overlap.
+  - Accepts raw IDs from `bars config providers --format json` as well as CLI names and aliases. For example, `alibabatokenplan` and `alibaba-token-plan` select the same provider; existing CLI names and aliases take precedence if names overlap.
   - Use a registered [provider ID](provider-ids.md) or CLI alias. Enabled providers and ordering live in the config file.
   - With three or more providers enabled, the default stays scoped to enabled providers; use `--provider all` to query
     every registered provider.
@@ -209,7 +209,7 @@ sources and setup guide. The [provider ID list](provider-ids.md) is generated fr
     - `cli`: CLI/local-helper source where the provider exposes one (for example Codex RPC/PTy, Claude PTY, Kilo CLI fallback, Kiro CLI, local probes).
     - `oauth`: OAuth-backed source where supported (Codex, Claude, Vertex AI).
     - `api`: API-backed flow where supported; credentials may be API keys or existing tokens. See the complete [provider source table](providers.md#fetch-strategies-current) and each provider's guide for supported modes.
-    - Output `source` reflects the strategy actually used (`openai-web`, `web`, `oauth`, `api`, `local`, `cli`, `claude-swap`, `tcr`, or provider CLI label; `codexbar-app` with `ageSeconds` when SSH falls back to the app's cache, see [SSH sessions](#ssh-sessions-macos)).
+    - Output `source` reflects the strategy actually used (`openai-web`, `web`, `oauth`, `api`, `local`, `cli`, `claude-swap`, `tcr`, or provider CLI label; `bars-app` with `ageSeconds` when SSH falls back to the app's cache, see [SSH sessions](#ssh-sessions-macos)).
     - Codex web: OpenAI web dashboard (usage limits, credits remaining, code review remaining, usage breakdown).
         - `--web-timeout <seconds>` (default: 60)
         - `--web-debug-dump-html` (writes HTML snapshots to `/tmp` when data is missing)
@@ -227,20 +227,20 @@ sources and setup guide. The [provider ID list](provider-ids.md) is generated fr
 - Global flags: `-h/--help`, `-V/--version`, `-v/--verbose`, `--no-color`, `--log-level <trace|verbose|debug|info|warning|error|critical>`, `--json-output`, `--json-only`.
   - `--json-output`: JSONL logs on stderr (machine-readable).
   - `--json-only`: suppress non-JSON output; errors become JSON payloads.
-- `codexbar config validate` checks the resolved config file for invalid fields.
+- `bars config validate` checks the resolved config file for invalid fields.
   - `--format text|json`, `--pretty`, and `--json-only` are supported.
   - Warnings keep exit code 0; errors exit non-zero.
-- `codexbar config dump` prints normalized config JSON with secrets redacted by default. `--show-secrets` explicitly includes raw credentials; `--pretty` formats the output.
-- `codexbar hooks list` shows the local hook configuration; `--format json` and `--pretty` are supported.
-- `codexbar hooks enable|disable` changes the explicit top-level opt-in switch in the local config file.
-- `codexbar hooks test <event> --provider <id>` invokes matching enabled rules with a representative event. Hook
-  commands run directly without a shell and receive `CODEXBAR_*` variables plus JSON on stdin. `--format json` and
+- `bars config dump` prints normalized config JSON with secrets redacted by default. `--show-secrets` explicitly includes raw credentials; `--pretty` formats the output.
+- `bars hooks list` shows the local hook configuration; `--format json` and `--pretty` are supported.
+- `bars hooks enable|disable` changes the explicit top-level opt-in switch in the local config file.
+- `bars hooks test <event> --provider <id>` invokes matching enabled rules with a representative event. Hook
+  commands run directly without a shell and receive `BARS_*` variables plus JSON on stdin. `--format json` and
   `--json-only` return structured per-rule results. See
   `docs/configuration.md#external-event-hooks` for the event, payload, timeout, and security contract.
 - The macOS app and `hooks watch` emit `usage_updated` after a successful current refresh, throttled to at most
   one attempt per 600 seconds for each provider/account. Its primary and secondary positional quota windows include their cadence in
   minutes. Synthetic placeholder windows are omitted.
-- `codexbar hooks watch` polls enabled providers and fires matching hooks on real quota and status transitions.
+- `bars hooks watch` polls enabled providers and fires matching hooks on real quota and status transitions.
   Without it, hook rules only ever fire from the macOS app, so a headless install can configure hooks that never run.
   - `--interval <seconds>`: poll period. Default `300`, minimum `60`; a smaller value is rejected rather than
     clamped, because each tick fetches every selected provider.
@@ -253,7 +253,7 @@ sources and setup guide. The [provider ID list](provider-ids.md) is generated fr
     queue or trailing delivery is scheduled. Private account throttle keys are never included in event payloads.
   - Run `watch` as one continuous process. Repeated one-shot invocations cannot preserve transition baselines or event
     rate limits between polls.
-  - Runs read-only, like `codexbar guard`: it never prompts for credentials. A failed refresh reports
+  - Runs read-only, like `bars guard`: it never prompts for credentials. A failed refresh reports
     `refresh_failed` with a coarse category (`timeout`, `offline`, `auth_required`, `network_error`) and never
     forwards the raw provider error.
   - Stops cleanly on `SIGINT`/`SIGTERM`/`SIGHUP`.
@@ -268,13 +268,13 @@ For Claude, token accounts accept either `sessionKey` cookies or OAuth access to
 OAuth usage requires the `user:profile` scope; inference-only tokens will return an error.
 
 ### Codex accounts
-For Codex, `--all-accounts` and `codexbar serve` enumerate the same visible accounts as the app switcher:
+For Codex, `--all-accounts` and `bars serve` enumerate the same visible accounts as the app switcher:
 managed Codex accounts from `managed-codex-accounts.json` plus the live system account when present.
 Each fetch is scoped to that account's Codex home before the normal Codex web/OAuth/CLI strategy runs, and JSON
 payloads include the visible account label in `account`.
 
 ### Cost JSON payload
-`codexbar cost --format json` emits an array of payloads (one per provider).
+`bars cost --format json` emits an array of payloads (one per provider).
 
 The saved app reporting period applies by default. `--period month-to-date|all` selects a calendar month or available source history; `--days N` always overrides it with rolling days. `/cost` follows the saved selection without restarting the server. See [cost reporting periods](cost-reporting-periods.md).
 
@@ -311,11 +311,11 @@ VPN/Tailscale address on the remote device.
 Open the copied dashboard URL in the phone's browser and enter the token. API clients
 send `Authorization: Bearer <token>` to `/usage`, `/cost`, or
 `/dashboard/v1/snapshot`; no provider login is needed on the remote device. The Mac
-must remain awake with CodexBar running. Quitting CodexBar stops its managed server;
+must remain awake with bars running. Quitting bars stops its managed server;
 reopening starts it again if enabled. **Show**, **Generate**, and **Copy** manage the
 token locally. After generating a replacement, click Apply and update your clients.
 The token and server settings live in the owner-only `http-server.json` beside the
-app's resolved provider config, outside CodexBar's sync and settings export payloads.
+app's resolved provider config, outside bars's sync and settings export payloads.
 
 The built-in server speaks HTTP, not HTTPS. An iOS app may need an explicit App
 Transport Security policy for a trusted VPN HTTP endpoint. For HTTPS, use a separately
@@ -324,50 +324,50 @@ or a self-signed certificate explicitly installed and trusted). Keep bearer
 authentication enabled through that proxy. A proxy forwarding to loopback must expose
 only token-gated dashboard routes, or enforce its own authentication for `/usage` and
 `/cost`, which remain unauthenticated on loopback. This setting does not install certificates,
-configure a proxy, or change the behavior of a separate `codexbar serve` command.
+configure a proxy, or change the behavior of a separate `bars serve` command.
 
 ## Example usage
 ```
-codexbar                          # text, respects app toggles
-codexbar --provider claude        # force Claude
-codexbar --provider all           # query all registered providers
-codexbar --format json --pretty   # machine output
-codexbar --format json --provider both
-codexbar cost                     # saved app period, otherwise 30 days + today
-codexbar cost --period month-to-date --json
-codexbar cost --period all --json
-codexbar cost --days 90           # choose a 1...365 day cost window
-codexbar cost --provider codex --group-by project
-codexbar cost --provider codex --group-by session
-codexbar cost --provider claude --format json --pretty
-codexbar guard --provider codex --min-remaining 20 --window weekly --json
-codexbar cost --provider cursor   # Cursor dashboard cost (API-rate + Cursor-metered)
-codexbar dashboard | jq '.providers[] | {id, windows, error}'
-codexbar serve --port 8080        # localhost HTTP JSON server
-codexbar serve --request-timeout 0 # disable serve request deadlines
-CODEXBAR_DASHBOARD_TOKEN=YOUR_TOKEN codexbar serve # token-gated dashboard snapshot
-CODEXBAR_DASHBOARD_TOKEN=... codexbar serve --host 0.0.0.0 --allow-plain-http # LAN, cleartext accepted
-COPILOT_API_TOKEN=... codexbar --provider copilot --format json --pretty
-codexbar --status                 # include status page indicator/description
-codexbar --provider codex --source oauth --format json --pretty
-codexbar --provider codex --source web --format json --pretty
-codexbar --provider codex --all-accounts --format json --pretty
-codexbar --provider claude --account steipete@gmail.com
-codexbar --provider claude --all-accounts --format json --pretty
-codexbar --json-only --format json --pretty
-codexbar --provider gemini --source api --format json --pretty
-KILO_API_KEY=... codexbar --provider kilo --source api --format json --pretty
-MOONSHOT_API_KEY=... codexbar --provider moonshot --source api --format json --pretty
-codexbar config validate --format json --pretty
-codexbar config dump --pretty
-printf '%s' "$OPENAI_ADMIN_KEY" | codexbar config set-api-key --provider openai --stdin
-codexbar config enable --provider grok
-codexbar config set-source --provider claude --source cli
-codexbar config set-source --provider claude --source auto
-codexbar cache clear --cookies
-codexbar cache clear --cookies --provider claude
-codexbar cache clear --all --format json --pretty
-codexbar cookie refresh --provider opencodego --allow-keychain-prompt
+bars                          # text, respects app toggles
+bars --provider claude        # force Claude
+bars --provider all           # query all registered providers
+bars --format json --pretty   # machine output
+bars --format json --provider both
+bars cost                     # saved app period, otherwise 30 days + today
+bars cost --period month-to-date --json
+bars cost --period all --json
+bars cost --days 90           # choose a 1...365 day cost window
+bars cost --provider codex --group-by project
+bars cost --provider codex --group-by session
+bars cost --provider claude --format json --pretty
+bars guard --provider codex --min-remaining 20 --window weekly --json
+bars cost --provider cursor   # Cursor dashboard cost (API-rate + Cursor-metered)
+bars dashboard | jq '.providers[] | {id, windows, error}'
+bars serve --port 8080        # localhost HTTP JSON server
+bars serve --request-timeout 0 # disable serve request deadlines
+BARS_DASHBOARD_TOKEN=YOUR_TOKEN bars serve # token-gated dashboard snapshot
+BARS_DASHBOARD_TOKEN=... bars serve --host 0.0.0.0 --allow-plain-http # LAN, cleartext accepted
+COPILOT_API_TOKEN=... bars --provider copilot --format json --pretty
+bars --status                 # include status page indicator/description
+bars --provider codex --source oauth --format json --pretty
+bars --provider codex --source web --format json --pretty
+bars --provider codex --all-accounts --format json --pretty
+bars --provider claude --account steipete@gmail.com
+bars --provider claude --all-accounts --format json --pretty
+bars --json-only --format json --pretty
+bars --provider gemini --source api --format json --pretty
+KILO_API_KEY=... bars --provider kilo --source api --format json --pretty
+MOONSHOT_API_KEY=... bars --provider moonshot --source api --format json --pretty
+bars config validate --format json --pretty
+bars config dump --pretty
+printf '%s' "$OPENAI_ADMIN_KEY" | bars config set-api-key --provider openai --stdin
+bars config enable --provider grok
+bars config set-source --provider claude --source cli
+bars config set-source --provider claude --source auto
+bars cache clear --cookies
+bars cache clear --cookies --provider claude
+bars cache clear --all --format json --pretty
+bars cookie refresh --provider opencodego --allow-keychain-prompt
 ```
 
 `config set-source` writes the provider's `source` in the resolved config file, using the same
@@ -466,7 +466,7 @@ separate from quota percentages; zero is retained and unavailable or invalid bal
 - 4: CLI timeout
 - 1: unexpected failure
 
-For `codexbar dashboard`, `0` includes a valid partial snapshot whose provider rows contain errors. The command exits
+For `bars dashboard`, `0` includes a valid partial snapshot whose provider rows contain errors. The command exits
 non-zero only when it cannot produce a valid snapshot document.
 
 ## Notes
@@ -485,30 +485,30 @@ non-zero only when it cannot produce a valid snapshot document.
 - Kilo text output splits identity into `Plan:` and `Activity:` lines; in `--source auto`, resolved CLI fetches add
   `Note: Using CLI fallback`.
 - Kilo auto-mode failures include a fallback-attempt summary line in text mode (API attempt then CLI attempt).
-- OpenAI web requires a signed-in `chatgpt.com` session in a supported browser or a manual cookie header. No passwords are stored; CodexBar reuses cookies.
-- Safari cookie import may require granting CodexBar Full Disk Access (System Settings → Privacy & Security → Full Disk Access).
+- OpenAI web requires a signed-in `chatgpt.com` session in a supported browser or a manual cookie header. No passwords are stored; bars reuses cookies.
+- Safari cookie import may require granting bars Full Disk Access (System Settings → Privacy & Security → Full Disk Access).
 - The `openaiDashboard` JSON field is normally sourced from the app’s cached dashboard snapshot; `--source auto|web` refreshes it live via WebKit using a per-account cookie store.
 
 ## SSH sessions (macOS)
 
 When the login keychain is locked, keychain-backed providers can fail over SSH while the app has fresh
 numbers. Set `"shareUsageWithCLI": true` in `config.json` (off by default) and the app writes a private cache
-(`~/Library/Application Support/CodexBar/CLIUsageCache/usage.json`, `0600` in a `0700` directory) holding rate
+(`~/Library/Application Support/bars/CLIUsageCache/usage.json`, `0600` in a `0700` directory) holding rate
 windows (including extra quota rows) and fetch times, without credentials, costs, or account identity. Provider-supplied text such as reset descriptions and
 window titles is stored as received. In a non-GUI session, when a default-account
 fetch without `--source` hits a locked keychain and ends with a missing-credential or cookie-access error (for example
 `No Claude session key found in browser cookies.`), `usage` and `cards` report the app's
-numbers instead (at most one hour old) as `"source": "codexbar-app"` with `"ageSeconds"` (whole seconds since the app fetched them). Other failures (timeouts, parse errors, HTTP rejections), token
+numbers instead (at most one hour old) as `"source": "bars-app"` with `"ageSeconds"` (whole seconds since the app fetched them). Other failures (timeouts, parse errors, HTTP rejections), token
 accounts, managed Codex accounts/profile homes, explicit account selections, and GUI sessions keep their normal behavior.
 Future-dated, corrupt, incorrectly owned, non-private, and symlinked cache files are ignored. Disabling sharing removes
 the file; providers that no longer have an eligible default-account snapshot are withdrawn on the next publication.
 
 ## Managed Codex accounts (macOS)
 
-`codexbar codex-accounts list --json` lists managed account UUIDs, emails, and whether each readable
+`bars codex-accounts list --json` lists managed account UUIDs, emails, and whether each readable
 saved identity matches the current system authentication. It never emits tokens or private home paths.
 
-`codexbar codex-accounts promote <uuid-or-email>` explicitly promotes one managed account to system
+`bars codex-accounts promote <uuid-or-email>` explicitly promotes one managed account to system
 authentication. Use the exact UUID when several accounts share an email. Promotion preserves the
 current live credentials in their managed account (or imports that account) before publishing the
 target's authentication through the private atomic writer. Missing, unreadable, conflicting, or
@@ -520,11 +520,11 @@ the operation. External writers do not share this lock, so avoid running `codex 
 
 This command does not add accounts, sign in, rotate accounts automatically, change the app's display
 selection, or restart existing Codex processes. Already-running processes may retain their old identity.
-External Codex clients do not participate in CodexBar's process lock.
+External Codex clients do not participate in bars's process lock.
 
 Both commands use local account metadata and auth files only: they do not access Keychain, import
 browser cookies, or make provider requests. `CODEX_HOME` selects the system destination; the managed
-account list still comes from CodexBar's account store for the current macOS user.
+account list still comes from bars's account store for the current macOS user.
 The destination must be separate from every managed home, including symlink aliases, so preservation
 cannot be overwritten by the promotion itself. If it is a managed home, unset `CODEX_HOME` or choose
 a separate live home before promoting.

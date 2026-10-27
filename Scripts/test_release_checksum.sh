@@ -2,10 +2,10 @@
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/codexbar-release-checksum.XXXXXX")
+TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/bars-release-checksum.XXXXXX")
 trap 'rm -rf "$TEMP_DIR"' EXIT
 
-ASSET_NAME="CodexBarCLI-v0.0.0-linux-x86_64.tar.gz"
+ASSET_NAME="BarsCLI-v0.0.0-linux-x86_64.tar.gz"
 ASSET_PATH="$TEMP_DIR/source/$ASSET_NAME"
 VERIFY_DIR="$TEMP_DIR/verify"
 mkdir -p "$(dirname "$ASSET_PATH")" "$VERIFY_DIR"

@@ -1,0 +1,1012 @@
+import BarsCore
+import Foundation
+import Observation
+import Testing
+@testable import Bars
+
+@Suite(.serialized)
+@MainActor
+// swiftlint:disable:next type_body_length
+struct SettingsStoreTests {
+    private final class ObservationFlag: @unchecked Sendable {
+        private let lock = NSLock()
+        private var value = false
+
+        func set() {
+            self.lock.lock()
+            self.value = true
+            self.lock.unlock()
+        }
+
+        func get() -> Bool {
+            self.lock.lock()
+            defer { self.lock.unlock() }
+            return self.value
+        }
+    }
+
+    private final class BoolRecorder: @unchecked Sendable {
+        private let lock = NSLock()
+        private var values: [Bool] = []
+
+        func append(_ value: Bool) {
+            self.lock.lock()
+            self.values.append(value)
+            self.lock.unlock()
+        }
+
+        func get() -> [Bool] {
+            self.lock.lock()
+            defer { self.lock.unlock() }
+            return self.values
+        }
+    }
+
+    @Test
+    func `persists refresh frequency across instances`() throws {
+        let suite = "SettingsStoreTests-persist-\(UUID().uuidString)"
+        let defaultsA = try #require(UserDefaults(suiteName: suite))
+        defer { defaultsA.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let storeA = SettingsStore(
+            userDefaults: defaultsA,
+            configStore: configStore)
+
+        storeA.refreshFrequency = .fifteenMinutes
+
+        let defaultsB = try #require(UserDefaults(suiteName: suite))
+        let storeB = SettingsStore(
+            userDefaults: defaultsB,
+            configStore: configStore)
+
+        #expect(storeB.refreshFrequency == .fifteenMinutes)
+        #expect(storeB.refreshFrequency.seconds == 900)
+    }
+
+    @Test
+    func `preserves an explicit five minute selection under the adaptive default`() throws {
+        let suite = "SettingsStoreTests-explicit-five-minute-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        defaults.set(RefreshFrequency.fiveMinutes.rawValue, forKey: "refreshFrequency")
+        let configStore = testConfigStore(suiteName: suite)
+
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+
+        #expect(store.refreshFrequency == .fiveMinutes)
+        #expect(store.refreshFrequency.seconds == 300)
+    }
+
+    @Test
+    func `refresh on open defaults off and persists`() throws {
+        let suite = "SettingsStoreTests-refresh-on-open-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+
+        #expect(store.refreshAllProvidersOnMenuOpen == false)
+        store.refreshAllProvidersOnMenuOpen = true
+
+        let reloaded = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+        #expect(reloaded.refreshAllProvidersOnMenuOpen == true)
+    }
+
+    @Test
+    func `exhausted reset time display defaults off and persists`() throws {
+        let suite = "SettingsStoreTests-exhausted-reset-time-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+
+        #expect(store.menuBarShowsResetTimeWhenExhausted == false)
+        store.menuBarShowsResetTimeWhenExhausted = true
+
+        let reloaded = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+        #expect(reloaded.menuBarShowsResetTimeWhenExhausted == true)
+    }
+
+    @Test
+    func `weekly confetti setting defaults off and persists`() throws {
+        let suite = "SettingsStoreTests-weekly-confetti-\(UUID().uuidString)"
+        let defaultsA = try #require(UserDefaults(suiteName: suite))
+        defer { defaultsA.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let storeA = SettingsStore(
+            userDefaults: defaultsA,
+            configStore: configStore)
+
+        #expect(storeA.confettiOnWeeklyLimitResetsEnabled == false)
+        storeA.confettiOnWeeklyLimitResetsEnabled = true
+
+        let defaultsB = try #require(UserDefaults(suiteName: suite))
+        let storeB = SettingsStore(
+            userDefaults: defaultsB,
+            configStore: configStore)
+
+        #expect(storeB.confettiOnWeeklyLimitResetsEnabled == true)
+    }
+
+    @Test
+    func `session confetti setting defaults off and persists`() throws {
+        let suite = "SettingsStoreTests-session-confetti-\(UUID().uuidString)"
+        let defaultsA = try #require(UserDefaults(suiteName: suite))
+        defer { defaultsA.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let storeA = SettingsStore(
+            userDefaults: defaultsA,
+            configStore: configStore)
+
+        #expect(storeA.confettiOnSessionLimitResetsEnabled == false)
+        storeA.confettiOnSessionLimitResetsEnabled = true
+
+        let defaultsB = try #require(UserDefaults(suiteName: suite))
+        let storeB = SettingsStore(
+            userDefaults: defaultsB,
+            configStore: configStore)
+
+        #expect(storeB.confettiOnSessionLimitResetsEnabled == true)
+    }
+
+    @Test
+    func `provider storage setting defaults off and persists`() throws {
+        let suite = "SettingsStoreTests-provider-storage-\(UUID().uuidString)"
+        let defaultsA = try #require(UserDefaults(suiteName: suite))
+        defer { defaultsA.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let storeA = SettingsStore(
+            userDefaults: defaultsA,
+            configStore: configStore)
+
+        #expect(storeA.providerStorageFootprintsEnabled == false)
+        #expect(defaultsA.bool(forKey: "providerStorageFootprintsEnabled") == false)
+        storeA.providerStorageFootprintsEnabled = true
+
+        let defaultsB = try #require(UserDefaults(suiteName: suite))
+        let storeB = SettingsStore(
+            userDefaults: defaultsB,
+            configStore: configStore)
+
+        #expect(storeB.providerStorageFootprintsEnabled == true)
+    }
+
+    @Test
+    func `providers sorted alphabetically defaults off and persists`() throws {
+        let suite = "SettingsStoreTests-providers-sorted-alpha-\(UUID().uuidString)"
+        let defaultsA = try #require(UserDefaults(suiteName: suite))
+        defer { defaultsA.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let storeA = SettingsStore(
+            userDefaults: defaultsA,
+            configStore: configStore)
+
+        #expect(storeA.providersSortedAlphabetically == false)
+        storeA.providersSortedAlphabetically = true
+
+        let defaultsB = try #require(UserDefaults(suiteName: suite))
+        let storeB = SettingsStore(
+            userDefaults: defaultsB,
+            configStore: configStore)
+
+        #expect(storeB.providersSortedAlphabetically == true)
+    }
+
+    @Test
+    func `provider changelog links setting defaults off and persists`() throws {
+        let suite = "SettingsStoreTests-provider-changelog-links-\(UUID().uuidString)"
+        let defaultsA = try #require(UserDefaults(suiteName: suite))
+        defer { defaultsA.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let storeA = SettingsStore(
+            userDefaults: defaultsA,
+            configStore: configStore)
+
+        #expect(storeA.providerChangelogLinksEnabled == false)
+        #expect(defaultsA.bool(forKey: "providerChangelogLinksEnabled") == false)
+        storeA.providerChangelogLinksEnabled = true
+
+        let defaultsB = try #require(UserDefaults(suiteName: suite))
+        let storeB = SettingsStore(
+            userDefaults: defaultsB,
+            configStore: configStore)
+
+        #expect(storeB.providerChangelogLinksEnabled == true)
+    }
+
+    @Test
+    func `hide critters setting defaults off and persists`() throws {
+        let suite = "SettingsStoreTests-hide-critters-\(UUID().uuidString)"
+        let defaultsA = try #require(UserDefaults(suiteName: suite))
+        defer { defaultsA.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let storeA = SettingsStore(
+            userDefaults: defaultsA,
+            configStore: configStore)
+
+        #expect(storeA.menuBarHidesCritters == false)
+        #expect(defaultsA.bool(forKey: "menuBarHidesCritters") == false)
+        storeA.menuBarHidesCritters = true
+
+        let defaultsB = try #require(UserDefaults(suiteName: suite))
+        let storeB = SettingsStore(
+            userDefaults: defaultsB,
+            configStore: configStore)
+
+        #expect(storeB.menuBarHidesCritters == true)
+    }
+
+    @Test
+    func `inactive display contrast setting defaults off and persists`() throws {
+        let suite = "SettingsStoreTests-inactive-display-contrast-\(UUID().uuidString)"
+        let defaultsA = try #require(UserDefaults(suiteName: suite))
+        defer { defaultsA.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let storeA = SettingsStore(
+            userDefaults: defaultsA,
+            configStore: configStore)
+
+        #expect(storeA.menuBarHighContrastOnInactiveDisplays == false)
+        #expect(defaultsA.bool(forKey: "menuBarHighContrastOnInactiveDisplays") == false)
+        storeA.menuBarHighContrastOnInactiveDisplays = true
+
+        let defaultsB = try #require(UserDefaults(suiteName: suite))
+        let storeB = SettingsStore(
+            userDefaults: defaultsB,
+            configStore: configStore)
+
+        #expect(storeB.menuBarHighContrastOnInactiveDisplays == true)
+    }
+
+    @Test
+    func `persists selected menu provider across instances`() throws {
+        let suite = "SettingsStoreTests-selectedMenuProvider-\(UUID().uuidString)"
+        let defaultsA = try #require(UserDefaults(suiteName: suite))
+        defer { defaultsA.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let storeA = SettingsStore(
+            userDefaults: defaultsA,
+            configStore: configStore)
+
+        storeA.selectedMenuProvider = .claude
+
+        let defaultsB = try #require(UserDefaults(suiteName: suite))
+        let storeB = SettingsStore(
+            userDefaults: defaultsB,
+            configStore: configStore)
+
+        #expect(storeB.selectedMenuProvider == .claude)
+    }
+
+    @Test
+    func `persists merged menu last selected was overview across instances`() throws {
+        let suite = "SettingsStoreTests-merged-last-overview-\(UUID().uuidString)"
+        let defaultsA = try #require(UserDefaults(suiteName: suite))
+        defer { defaultsA.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let storeA = SettingsStore(
+            userDefaults: defaultsA,
+            configStore: configStore)
+
+        storeA.mergedMenuLastSelectedWasOverview = true
+
+        let defaultsB = try #require(UserDefaults(suiteName: suite))
+        let storeB = SettingsStore(
+            userDefaults: defaultsB,
+            configStore: configStore)
+
+        #expect(storeB.mergedMenuLastSelectedWasOverview == true)
+    }
+
+    @Test
+    func `merged overview selected providers ignores invalid raw values`() throws {
+        let suite = "SettingsStoreTests-merged-overview-invalid-raw-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        defaults.set(["opencode", "INVALID PROVIDER", "claude", "opencode"], forKey: "mergedOverviewSelectedProviders")
+        let configStore = testConfigStore(suiteName: suite)
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+
+        #expect(store.mergedOverviewSelectedProviders == [.opencode, .claude])
+    }
+
+    @Test
+    func `persists open code workspace ID across instances`() throws {
+        let suite = "SettingsStoreTests-opencode-workspace-\(UUID().uuidString)"
+        let defaultsA = try #require(UserDefaults(suiteName: suite))
+        defer { defaultsA.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let storeA = SettingsStore(
+            userDefaults: defaultsA,
+            configStore: configStore)
+
+        storeA.opencodeWorkspaceID = "wrk_01KEJ50SHK9YR41HSRSJ6QTFCM"
+
+        let defaultsB = try #require(UserDefaults(suiteName: suite))
+        let storeB = SettingsStore(
+            userDefaults: defaultsB,
+            configStore: configStore)
+
+        #expect(storeB.opencodeWorkspaceID == "wrk_01KEJ50SHK9YR41HSRSJ6QTFCM")
+    }
+
+    @Test
+    func `defaults session quota notifications to enabled`() throws {
+        let key = "sessionQuotaNotificationsEnabled"
+        let suite = "SettingsStoreTests-sessionQuotaNotifications-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+        #expect(store.sessionQuotaNotificationsEnabled == true)
+        #expect(defaults.bool(forKey: key) == true)
+    }
+
+    @Test
+    func `defaults quota warnings to disabled with global thresholds and sound`() throws {
+        let suite = "SettingsStoreTests-quota-warning-defaults-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+
+        #expect(store.quotaWarningNotificationsEnabled == false)
+        #expect(store.quotaWarningThresholds == [50, 20])
+        #expect(store.quotaWarningWindowEnabled(.session) == true)
+        #expect(store.quotaWarningWindowEnabled(.weekly) == true)
+        #expect(store.quotaWarningSoundEnabled == true)
+        #expect(store.quotaWarningOnScreenAlertEnabled == false)
+        #expect(store.quotaWarningMarkersVisible == true)
+        #expect(defaults.array(forKey: "quotaWarningThresholds") as? [Int] == [50, 20])
+        #expect(defaults.object(forKey: "quotaWarningSessionEnabled") as? Bool == true)
+        #expect(defaults.object(forKey: "quotaWarningWeeklyEnabled") as? Bool == true)
+        #expect(defaults.bool(forKey: "quotaWarningSoundEnabled") == true)
+        #expect(defaults.object(forKey: "quotaWarningOnScreenAlertEnabled") as? Bool == false)
+        #expect(defaults.object(forKey: "quotaWarningMarkersVisible") as? Bool == true)
+    }
+
+    @Test
+    func `on-screen quota warning preference persists`() throws {
+        let suite = "SettingsStoreTests-quota-warning-on-screen-alert-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+
+        store.quotaWarningOnScreenAlertEnabled = true
+
+        let reloaded = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+        #expect(reloaded.quotaWarningOnScreenAlertEnabled == true)
+    }
+
+    @Test
+    func `global quota warning windows persist independently`() throws {
+        let suite = "SettingsStoreTests-quota-warning-window-enabled-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+
+        store.setQuotaWarningWindowEnabled(.weekly, enabled: false)
+
+        #expect(store.quotaWarningWindowEnabled(.session) == true)
+        #expect(store.quotaWarningWindowEnabled(.weekly) == false)
+        #expect(defaults.object(forKey: "quotaWarningWeeklyEnabled") as? Bool == false)
+    }
+
+    @Test
+    func `sanitizes invalid quota warning thresholds from defaults`() throws {
+        let suite = "SettingsStoreTests-quota-warning-sanitize-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        defaults.set([120, 20, 20, -5, 50], forKey: "quotaWarningThresholds")
+        let configStore = testConfigStore(suiteName: suite)
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+
+        #expect(store.quotaWarningThresholds == [99, 50, 20, 0])
+        #expect(defaults.array(forKey: "quotaWarningThresholds") as? [Int] == [99, 50, 20, 0])
+    }
+
+    @Test
+    func `quota warning threshold pair resolves blanks and clamps bounds`() {
+        #expect(QuotaWarningThresholds.resolved(upper: nil, lower: nil) == [50, 20])
+        #expect(QuotaWarningThresholds.resolved(upper: nil, lower: 10) == [50, 10])
+        #expect(QuotaWarningThresholds.resolved(upper: 10, lower: nil) == [10, 0])
+        #expect(QuotaWarningThresholds.resolved(upper: 120, lower: -5) == [99, 0])
+    }
+
+    @Test
+    func `provider quota warning override resolves before global thresholds`() throws {
+        let suite = "SettingsStoreTests-quota-warning-provider-override-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+        store.quotaWarningThresholds = [50, 20]
+
+        #expect(store.resolvedQuotaWarningThresholds(provider: .opencode, window: .session) == [50, 20])
+        #expect(store.explicitQuotaWarningThresholds(provider: .opencode, window: .session) == nil)
+        store.setQuotaWarningThresholds(provider: .opencode, window: .session, thresholds: [10])
+        #expect(store.explicitQuotaWarningThresholds(provider: .opencode, window: .session) == [10])
+        #expect(store.resolvedQuotaWarningThresholds(provider: .opencode, window: .session) == [10])
+        #expect(store.resolvedQuotaWarningThresholds(provider: .opencode, window: .weekly) == [50, 20])
+
+        store.setQuotaWarningThresholds(provider: .opencode, window: .session, thresholds: nil)
+        #expect(store.explicitQuotaWarningThresholds(provider: .opencode, window: .session) == nil)
+        #expect(store.resolvedQuotaWarningThresholds(provider: .opencode, window: .session) == [50, 20])
+    }
+
+    @Test
+    func `provider quota warning stale editor save does not restore cleared override`() throws {
+        let suite = "SettingsStoreTests-quota-warning-provider-cleared-override-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+        store.quotaWarningThresholds = [50, 20]
+        store.setQuotaWarningOverride(provider: .opencode, window: .session, thresholds: [70, 30], enabled: true)
+        let staleEditorThresholds = store.resolvedQuotaWarningThresholds(provider: .opencode, window: .session)
+
+        store.setQuotaWarningOverride(provider: .opencode, window: .session, thresholds: nil, enabled: nil)
+        store.setQuotaWarningThresholdsIfOverridden(
+            provider: .opencode,
+            window: .session,
+            thresholds: staleEditorThresholds)
+
+        #expect(store.hasQuotaWarningOverride(provider: .opencode, window: .session) == false)
+        #expect(store.resolvedQuotaWarningThresholds(provider: .opencode, window: .session) == [50, 20])
+    }
+
+    @Test
+    func `provider quota warning inherited thresholds stay inherited after no-op editor save`() throws {
+        let suite = "SettingsStoreTests-quota-warning-provider-inherited-thresholds-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+        store.quotaWarningThresholds = [50, 20]
+        store.setQuotaWarningOverride(provider: .opencode, window: .session, thresholds: nil, enabled: true)
+
+        let resolvedEditorThresholds = store.resolvedQuotaWarningThresholds(provider: .opencode, window: .session)
+        store.setQuotaWarningThresholdsIfOverridden(
+            provider: .opencode,
+            window: .session,
+            thresholds: resolvedEditorThresholds)
+
+        let sessionConfig = store.providerConfig(for: .opencode)?.quotaWarnings?.session
+        #expect(sessionConfig?.enabled == true)
+        #expect(sessionConfig?.thresholds == nil)
+
+        store.quotaWarningThresholds = [80, 40]
+        #expect(store.resolvedQuotaWarningThresholds(provider: .opencode, window: .session) == [80, 40])
+    }
+
+    @Test
+    func `global quota warning thresholds resolve independently by window`() throws {
+        let suite = "SettingsStoreTests-quota-warning-window-thresholds-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+
+        store.setQuotaWarningThresholds(.session, thresholds: [25])
+        store.setQuotaWarningThresholds(.weekly, thresholds: [75, 10])
+
+        #expect(store.quotaWarningThresholds(.session) == [25])
+        #expect(store.quotaWarningThresholds(.weekly) == [75, 10])
+        #expect(store.resolvedQuotaWarningThresholds(provider: .opencode, window: .session) == [25])
+        #expect(store.resolvedQuotaWarningThresholds(provider: .opencode, window: .weekly) == [75, 10])
+    }
+
+    @Test
+    func `provider quota warning windows override global enablement independently`() throws {
+        let suite = "SettingsStoreTests-quota-warning-provider-window-override-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+
+        store.setQuotaWarningWindowEnabled(.weekly, enabled: false)
+        #expect(store.quotaWarningEnabled(provider: .opencode, window: .weekly) == false)
+
+        store.setQuotaWarningWindowEnabled(provider: .opencode, window: .weekly, enabled: true)
+        store.setQuotaWarningWindowEnabled(provider: .opencode, window: .session, enabled: false)
+        #expect(store.quotaWarningEnabled(provider: .opencode, window: .weekly) == true)
+        #expect(store.quotaWarningEnabled(provider: .opencode, window: .session) == false)
+        #expect(store.hasQuotaWarningOverride(provider: .opencode, window: .weekly) == true)
+        #expect(store.hasQuotaWarningOverride(provider: .opencode, window: .session) == true)
+
+        store.setQuotaWarningWindowEnabled(provider: .opencode, window: .weekly, enabled: nil)
+        #expect(store.quotaWarningEnabled(provider: .opencode, window: .weekly) == false)
+    }
+
+    @Test
+    func `defaults claude usage source to auto`() throws {
+        let suite = "SettingsStoreTests-claude-source-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+
+        #expect(store.claudeUsageDataSource == .auto)
+    }
+
+    @Test
+    func `defaults codex usage source to auto`() throws {
+        let suite = "SettingsStoreTests-codex-source-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+    }
+
+    @Test
+    @MainActor
+    func `apply external config does not broadcast`() throws {
+        let suite = "SettingsStoreTests-external-config-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+
+        final class NotificationCounter: @unchecked Sendable {
+            private let lock = NSLock()
+            private var value = 0
+
+            func increment() {
+                self.lock.lock()
+                self.value += 1
+                self.lock.unlock()
+            }
+
+            func get() -> Int {
+                self.lock.lock()
+                defer { self.lock.unlock() }
+                return self.value
+            }
+        }
+
+        let notifications = NotificationCounter()
+        let token = NotificationCenter.default.addObserver(
+            forName: .barsProviderConfigDidChange,
+            object: store,
+            queue: .main)
+        { _ in
+            notifications.increment()
+        }
+        defer { NotificationCenter.default.removeObserver(token) }
+
+        store.applyExternalConfig(store.configSnapshot, reason: "test-external")
+
+        #expect(notifications.get() == 0)
+    }
+
+    @Test
+    func `config notifications classify order and provider changes`() throws {
+        let suite = "SettingsStoreTests-config-change-impact-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: testConfigStore(suiteName: suite))
+        let impacts = BoolRecorder()
+        let token = NotificationCenter.default.addObserver(
+            forName: .barsProviderConfigDidChange,
+            object: store,
+            queue: .main)
+        { notification in
+            impacts.append(notification.userInfo?["affectsBackgroundWork"] as? Bool ?? true)
+        }
+        defer { NotificationCenter.default.removeObserver(token) }
+
+        store.setProviderOrder(Array(store.orderedProviders().reversed()))
+        store.claudeUsageDataSource = .cli
+
+        #expect(impacts.get() == [false, true])
+    }
+
+    @Test
+    func `external config ignores order-only changes for background work`() throws {
+        let suite = "SettingsStoreTests-external-config-impact-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: testConfigStore(suiteName: suite))
+
+        let initialConfigRevision = store.configRevision
+        let initialBackgroundRevision = store.backgroundWorkSettingsRevision
+        var reordered = store.configSnapshot
+        reordered.providers.reverse()
+        store.applyExternalConfig(reordered, reason: "order-only")
+
+        #expect(store.configRevision == initialConfigRevision + 1)
+        #expect(store.backgroundWorkSettingsRevision == initialBackgroundRevision)
+        #expect(store.orderedProviders() == reordered.providers.map(\.id))
+
+        var changed = store.configSnapshot
+        let codexIndex = try #require(changed.providers.firstIndex(where: { $0.id == .opencode }))
+        changed.providers[codexIndex].source = .cli
+        store.applyExternalConfig(changed, reason: "provider-source", affectsBackgroundWork: false)
+
+        #expect(store.backgroundWorkSettingsRevision == initialBackgroundRevision + 1)
+    }
+
+    @Test
+    func `defaults open AI web access to disabled`() throws {
+        let suite = "SettingsStoreTests-openai-web-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        defaults.set(false, forKey: "debugDisableKeychainAccess")
+        let configStore = testConfigStore(suiteName: suite)
+
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+
+        #expect(defaults.bool(forKey: "openAIWebAccessEnabled") == false)
+        #expect(defaults.bool(forKey: "openAIWebBatterySaverEnabled") == false)
+    }
+
+    @Test
+    func `imports legacy open AI web access defaults key`() throws {
+        let suite = "SettingsStoreTests-openai-web-legacy-key-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        defaults.removeObject(forKey: "openAIWebAccessEnabled")
+        defaults.set(false, forKey: "debugDisableKeychainAccess")
+        let configStore = testConfigStore(suiteName: suite)
+        try configStore.save(BarsConfig(providers: [
+            ProviderConfig(id: .opencode, cookieSource: .auto),
+        ]))
+
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+
+        #expect(defaults.bool(forKey: "openAIWebAccessEnabled") == false)
+    }
+
+    @Test
+    func `open AI web battery saver persists separately from extras availability`() throws {
+        let suite = "SettingsStoreTests-openai-web-battery-saver-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        defaults.set(false, forKey: "debugDisableKeychainAccess")
+        let configStore = testConfigStore(suiteName: suite)
+
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+
+        #expect(defaults.bool(forKey: "openAIWebBatterySaverEnabled") == false)
+    }
+
+    @Test
+    func `menu observation token updates on defaults change`() async throws {
+        let suite = "SettingsStoreTests-observation-defaults-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+
+        let didChange = ObservationFlag()
+
+        withObservationTracking {
+            _ = store.menuObservationToken
+        } onChange: {
+            didChange.set()
+        }
+
+        store.statusChecksEnabled.toggle()
+        try? await Task.sleep(nanoseconds: 50_000_000)
+
+        #expect(didChange.get() == true)
+    }
+
+    @Test
+    func `menu observation token updates on cost summary display style changes`() async throws {
+        let suite = "SettingsStoreTests-observation-cost-summary-display-style-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+
+        let didChange = ObservationFlag()
+
+        withObservationTracking {
+            _ = store.menuObservationToken
+        } onChange: {
+            didChange.set()
+        }
+
+        store.costSummaryDisplayStyle = .costSubmenu
+        try? await Task.sleep(nanoseconds: 50_000_000)
+
+        #expect(didChange.get() == true)
+    }
+
+    @Test
+    func `menu observation token ignores merged switcher selection churn`() async throws {
+        let suite = "SettingsStoreTests-observation-switcher-selection-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+
+        let didChange = ObservationFlag()
+
+        withObservationTracking {
+            _ = store.menuObservationToken
+        } onChange: {
+            didChange.set()
+        }
+
+        store.selectedMenuProvider = .claude
+        store.mergedMenuLastSelectedWasOverview.toggle()
+        try? await Task.sleep(nanoseconds: 50_000_000)
+
+        #expect(didChange.get() == false)
+    }
+
+    @Test
+    func `menu observation token updates on per-window quota threshold changes`() async throws {
+        let suite = "SettingsStoreTests-observation-quota-threshold-windows-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+
+        func expectObservation(
+            for window: QuotaWarningWindow,
+            thresholds: [Int]) async
+        {
+            let didChange = ObservationFlag()
+            withObservationTracking {
+                _ = store.menuObservationToken
+            } onChange: {
+                didChange.set()
+            }
+
+            store.setQuotaWarningThresholds(window, thresholds: thresholds)
+            try? await Task.sleep(nanoseconds: 50_000_000)
+
+            #expect(didChange.get() == true)
+        }
+
+        await expectObservation(for: .session, thresholds: [70, 30])
+        await expectObservation(for: .weekly, thresholds: [80, 40])
+    }
+
+    @Test
+    func `quota warning threshold setters ignore unchanged values`() async throws {
+        let suite = "SettingsStoreTests-observation-quota-threshold-noop-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+        store.setQuotaWarningThresholds(.session, thresholds: [70, 30])
+
+        let didChange = ObservationFlag()
+        withObservationTracking {
+            _ = store.menuObservationToken
+        } onChange: {
+            didChange.set()
+        }
+
+        store.setQuotaWarningThresholds(.session, thresholds: [70, 30])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        #expect(didChange.get() == false)
+    }
+
+    @Test
+    func `menu observation token updates on workday display changes`() async throws {
+        let suite = "SettingsStoreTests-observation-weekly-progress-work-days-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+
+        func expectObservation(_ update: () -> Void) async {
+            let didChange = ObservationFlag()
+            withObservationTracking {
+                _ = store.menuObservationToken
+            } onChange: {
+                didChange.set()
+            }
+            update()
+            try? await Task.sleep(nanoseconds: 50_000_000)
+            #expect(didChange.get() == true)
+        }
+
+        await expectObservation { store.weeklyProgressWorkDays = 5 }
+        await expectObservation { store.workdayTickAppearance = .highContrast }
+    }
+
+    @Test
+    func `config backed settings trigger observation`() async throws {
+        let suite = "SettingsStoreTests-observation-config-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+
+        let didChange = ObservationFlag()
+
+        withObservationTracking {
+            _ = store.claudeCookieSource
+        } onChange: {
+            didChange.set()
+        }
+
+        store.claudeCookieSource = .manual
+        try? await Task.sleep(nanoseconds: 50_000_000)
+
+        #expect(didChange.get() == true)
+    }
+
+    @Test
+    func `provider order defaults to all cases`() throws {
+        let suite = "SettingsStoreTests-providerOrder-default-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+
+        #expect(store.orderedProviders() == UsageProvider.allCases.map(\.instanceID))
+    }
+
+    @Test
+    func `cost comparison periods default off and persist`() throws {
+        let suite = "SettingsStoreTests-cost-comparison-periods-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let storeA = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+
+        #expect(!storeA.costComparisonPeriodsEnabled)
+        storeA.costComparisonPeriodsEnabled = true
+
+        let storeB = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+        #expect(storeB.costComparisonPeriodsEnabled)
+    }
+
+    @Test
+    func `cost summary display style defaults to both and persists`() throws {
+        let suite = "SettingsStoreTests-cost-summary-display-style-\(UUID().uuidString)"
+        let defaultsA = try #require(UserDefaults(suiteName: suite))
+        defer { defaultsA.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let storeA = SettingsStore(
+            userDefaults: defaultsA,
+            configStore: configStore)
+
+        #expect(storeA.costSummaryDisplayStyle == .both)
+
+        storeA.costSummaryDisplayStyle = .costSubmenu
+
+        let defaultsB = try #require(UserDefaults(suiteName: suite))
+        let storeB = SettingsStore(
+            userDefaults: defaultsB,
+            configStore: configStore)
+
+        #expect(storeB.costSummaryDisplayStyle == .costSubmenu)
+
+        storeB.costSummaryDisplayStyleRaw = "legacy-style"
+        #expect(storeB.costSummaryDisplayStyle == .both)
+    }
+
+    @Test
+    func `missing cost summary display style preserves existing enabled cost summary`() throws {
+        let suite = "SettingsStoreTests-cost-summary-display-style-upgrade-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        defaults.set(true, forKey: "tokenCostUsageEnabled")
+        defaults.removeObject(forKey: "costSummaryDisplayStyle")
+        let configStore = testConfigStore(suiteName: suite)
+
+        let store = SettingsStore(
+            userDefaults: defaults,
+            configStore: configStore)
+
+        #expect(store.costSummaryDisplayStyle == .both)
+        #expect(defaults.string(forKey: "costSummaryDisplayStyle") == CostSummaryDisplayStyle.both.rawValue)
+    }
+
+    @Test
+    func `enabling cost summary preserves both display style across relaunch`() throws {
+        let suite = "SettingsStoreTests-cost-summary-display-style-enable-\(UUID().uuidString)"
+        let defaultsA = try #require(UserDefaults(suiteName: suite))
+        defer { defaultsA.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let storeA = SettingsStore(
+            userDefaults: defaultsA,
+            configStore: configStore)
+
+        #expect(storeA.costSummaryDisplayStyle == .both)
+        #expect(defaultsA.string(forKey: "costSummaryDisplayStyle") == nil)
+
+        storeA.costUsageEnabled = true
+
+        #expect(storeA.costSummaryDisplayStyle == .both)
+        #expect(defaultsA.string(forKey: "costSummaryDisplayStyle") == nil)
+
+        let defaultsB = try #require(UserDefaults(suiteName: suite))
+        let storeB = SettingsStore(
+            userDefaults: defaultsB,
+            configStore: configStore)
+
+        #expect(storeB.costSummaryDisplayStyle == .both)
+    }
+}

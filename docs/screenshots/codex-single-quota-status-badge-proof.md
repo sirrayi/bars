@@ -25,7 +25,7 @@ change; all 108 other renders remain byte-identical, including reserved lanes an
 Generate the after proof with:
 
 ```sh
-CODEXBAR_STATUS_ICON_PROOF_DIR=/tmp/codexbar-status-proof \
+BARS_STATUS_ICON_PROOF_DIR=/tmp/bars-status-proof \
   swift test --filter IconRendererScreenshotRenderTests.test_renderSyntheticSingleQuotaStatusBadge
 ```
 

@@ -8,7 +8,7 @@ read_when:
 
 - **Issue:** [steipete/CodexBar#2037](https://github.com/steipete/CodexBar/issues/2037) — "Ultra-mode Terra and Sol sessions can overcount forked context"
 - **Status:** Implemented (rev 4 — Phase 1 post-latch containment + min-cap)
-- **Affected code:** `Sources/CodexBarCore/Vendored/CostUsage/` (Codex session scanner)
+- **Affected code:** `Sources/BarsCore/Vendored/CostUsage/` (Codex session scanner)
 - **Related prior fixes:** #968 (divergent totals), #1062 (repeated total snapshots), commit `45b68c34` (fork replay)
 
 ## 0. Framing (read first)
@@ -20,7 +20,7 @@ This spec deliberately ships in two phases:
 
 ## 1. Problem
 
-CodexBar massively overstates usage for `gpt-5.6-terra` and especially `gpt-5.6-sol` when they run in Ultra mode. In one reported Sol session, the raw log reached roughly **268M** cumulative input tokens while CodexBar attributed **3.29B** input tokens and about $4,000 of standard cost. A single forked turn contributed more than 3B tokens across hundreds of rows. Pricing tables are correct; the inflation comes from usage accounting.
+bars massively overstates usage for `gpt-5.6-terra` and especially `gpt-5.6-sol` when they run in Ultra mode. In one reported Sol session, the raw log reached roughly **268M** cumulative input tokens while bars attributed **3.29B** input tokens and about $4,000 of standard cost. A single forked turn contributed more than 3B tokens across hundreds of rows. Pricing tables are correct; the inflation comes from usage accounting.
 
 Ultra sessions fork multiple sub-agents that:
 

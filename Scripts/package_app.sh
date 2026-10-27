@@ -2,11 +2,11 @@
 set -euo pipefail
 
 resolve_package_signing_mode() {
-  local requested="${CODEXBAR_SIGNING:-adhoc}"
+  local requested="${BARS_SIGNING:-adhoc}"
   case "$requested" in
     adhoc|identity) ;;
     *)
-      echo "ERROR: Unsupported CODEXBAR_SIGNING: $requested (expected adhoc or identity)" >&2
+      echo "ERROR: Unsupported BARS_SIGNING: $requested (expected adhoc or identity)" >&2
       return 1
       ;;
   esac
@@ -76,7 +76,7 @@ verify_packaged_app_integrity() {
 }
 
 CONF=${1:-release}
-ALLOW_LLDB=${CODEXBAR_ALLOW_LLDB:-0}
+ALLOW_LLDB=${BARS_ALLOW_LLDB:-0}
 SIGNING_MODE=
 resolve_package_signing_mode
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
@@ -95,13 +95,13 @@ source "$ROOT/version.env"
 source "$ROOT/Scripts/package_product_paths.sh"
 
 # SwiftBuild can record the deployment target as the SDK, enabling legacy native UI.
-CODEXBAR_MACOS_SDK_PATH=$(xcrun --sdk macosx --show-sdk-path)
+BARS_MACOS_SDK_PATH=$(xcrun --sdk macosx --show-sdk-path)
 SDK_VERSION=$(xcrun --sdk macosx --show-sdk-version)
-BUILD_ARGS=(--sdk "$CODEXBAR_MACOS_SDK_PATH"
+BUILD_ARGS=(--sdk "$BARS_MACOS_SDK_PATH"
   -Xlinker -platform_version -Xlinker macos -Xlinker 14.0 -Xlinker "$SDK_VERSION")
 
 # Clean build only when explicitly requested (slower).
-if [[ "${CODEXBAR_FORCE_CLEAN:-0}" == "1" ]]; then
+if [[ "${BARS_FORCE_CLEAN:-0}" == "1" ]]; then
   if [[ -d "$ROOT/.build" ]]; then
     if command -v trash >/dev/null 2>&1; then
       if ! trash "$ROOT/.build"; then
@@ -204,7 +204,7 @@ swiftpm_bin_path() {
   local cache_var="SWIFTPM_BIN_PATH_${arch//[^A-Za-z0-9]/_}"
   if [[ -z "${!cache_var+set}" ]]; then
     local resolved
-    if ! resolved=$(codexbar_swiftpm_bin_path "$CONF" "$arch"); then
+    if ! resolved=$(bars_swiftpm_bin_path "$CONF" "$arch"); then
       return 1
     fi
     printf -v "$cache_var" '%s' "$resolved"
@@ -230,8 +230,8 @@ stage_build_products() {
 
   stage_dir="$PRODUCT_STAGE_ROOT/$arch"
   mkdir -p "$stage_dir"
-  for name in CodexBar CodexBarCLI CodexBarClaudeWatchdog; do
-    if ! product=$(codexbar_require_product_file "$bin_dir" "$name" "$arch"); then
+  for name in bars BarsCLI BarsClaudeWatchdog; do
+    if ! product=$(bars_require_product_file "$bin_dir" "$name" "$arch"); then
       return 1
     fi
     if ! binary_has_arch "$product" "$arch"; then
@@ -248,8 +248,8 @@ stage_build_products() {
     fi
     cp "$product" "$stage_dir/$name"
   done
-  if [[ -d "$bin_dir/CodexBar.dSYM" ]]; then
-    cp -R "$bin_dir/CodexBar.dSYM" "$stage_dir/"
+  if [[ -d "$bin_dir/bars.dSYM" ]]; then
+    cp -R "$bin_dir/bars.dSYM" "$stage_dir/"
   fi
 }
 
@@ -258,8 +258,8 @@ for ARCH in "${ARCH_LIST[@]}"; do
   stage_build_products "$ARCH"
 done
 
-APP_FINAL="$ROOT/CodexBar.app"
-APP_STAGE="$ROOT/.build/package/CodexBar.app"
+APP_FINAL="$ROOT/bars.app"
+APP_STAGE="$ROOT/.build/package/bars.app"
 rm -rf "$APP_STAGE"
 APP="$APP_STAGE"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Frameworks"
@@ -272,28 +272,28 @@ if [[ -f "$ICON_SOURCE" ]]; then
   iconutil --convert icns --output "$ICON_TARGET" "$ICON_SOURCE"
 fi
 
-BUNDLE_ID="com.steipete.codexbar"
+BUNDLE_ID="com.sirrayi.bars"
 if [[ "$LOWER_CONF" == "debug" ]]; then
-  BUNDLE_ID="com.steipete.codexbar.debug"
+  BUNDLE_ID="com.sirrayi.bars.debug"
 fi
 WIDGET_BUNDLE_ID="${BUNDLE_ID}.widget"
 resolve_package_signing_identity
 APP_GROUP_ID="${APP_TEAM_ID}.${BUNDLE_ID}"
 ENTITLEMENTS_DIR="$ROOT/.build/entitlements"
-APP_ENTITLEMENTS="${ENTITLEMENTS_DIR}/CodexBar.entitlements"
-WIDGET_ENTITLEMENTS="${ENTITLEMENTS_DIR}/CodexBarWidget.entitlements"
+APP_ENTITLEMENTS="${ENTITLEMENTS_DIR}/bars.entitlements"
+WIDGET_ENTITLEMENTS="${ENTITLEMENTS_DIR}/BarsWidget.entitlements"
 mkdir -p "$ENTITLEMENTS_DIR"
 if [[ "$ALLOW_LLDB" == "1" && "$LOWER_CONF" != "debug" ]]; then
-  echo "ERROR: CODEXBAR_ALLOW_LLDB requires debug configuration" >&2
+  echo "ERROR: BARS_ALLOW_LLDB requires debug configuration" >&2
   exit 1
 fi
 # iCloud sync (CloudKit) requires restricted entitlements authorized by an embedded
 # Developer ID provisioning profile. Only upstream-team identity-signed release builds of the primary
 # bundle ID carry them; other teams and adhoc/debug builds run with sync unavailable.
-PROVISIONING_PROFILE_SOURCE="$ROOT/Scripts/profiles/CodexBar-DeveloperID.provisionprofile"
+PROVISIONING_PROFILE_SOURCE="$ROOT/Scripts/profiles/bars-DeveloperID.provisionprofile"
 EMBED_PROVISIONING_PROFILE=0
 ICLOUD_ENTITLEMENT_KEYS=""
-if [[ "$SIGNING_MODE" == "identity" && "$LOWER_CONF" == "release" && "$BUNDLE_ID" == "com.steipete.codexbar" && "$APP_TEAM_ID" == "Y5PE65HELJ" ]]; then
+if [[ "$SIGNING_MODE" == "identity" && "$LOWER_CONF" == "release" && "$BUNDLE_ID" == "com.sirrayi.bars" && "$APP_TEAM_ID" == "Y5PE65HELJ" ]]; then
   if [[ ! -f "$PROVISIONING_PROFILE_SOURCE" ]]; then
     echo "ERROR: Missing $PROVISIONING_PROFILE_SOURCE (required for iCloud entitlements in release builds)" >&2
     exit 1
@@ -353,10 +353,10 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleName</key><string>CodexBar</string>
-    <key>CFBundleDisplayName</key><string>CodexBar</string>
+    <key>CFBundleName</key><string>bars</string>
+    <key>CFBundleDisplayName</key><string>bars</string>
     <key>CFBundleIdentifier</key><string>${BUNDLE_ID}</string>
-    <key>CFBundleExecutable</key><string>CodexBar</string>
+    <key>CFBundleExecutable</key><string>bars</string>
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleShortVersionString</key><string>${MARKETING_VERSION}</string>
     <key>CFBundleVersion</key><string>${BUILD_NUMBER}</string>
@@ -366,12 +366,12 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>NSHumanReadableCopyright</key><string>© 2026 Peter Steinberger. MIT License.</string>
     <key>CodexBuildTimestamp</key><string>${BUILD_TIMESTAMP}</string>
     <key>CodexGitCommit</key><string>${GIT_COMMIT}</string>
-    <key>CodexBarTeamID</key><string>${APP_TEAM_ID}</string>
+    <key>BarsTeamID</key><string>${APP_TEAM_ID}</string>
     <key>UTExportedTypeDeclarations</key>
     <array>
         <dict>
-            <key>UTTypeIdentifier</key><string>com.steipete.codexbar.menu-layout-item</string>
-            <key>UTTypeDescription</key><string>CodexBar menu bar layout token</string>
+            <key>UTTypeIdentifier</key><string>com.sirrayi.bars.menu-layout-item</string>
+            <key>UTTypeDescription</key><string>bars menu bar layout token</string>
             <key>UTTypeConformsTo</key>
             <array>
                 <string>public.data</string>
@@ -390,7 +390,7 @@ resolve_binary_path() {
   local arch="$2"
   local bin_dir candidate
   swiftpm_bin_path "$arch" bin_dir
-  if ! candidate=$(codexbar_resolve_staged_or_reported_file \
+  if ! candidate=$(bars_resolve_staged_or_reported_file \
     "$PRODUCT_STAGE_ROOT" "$bin_dir" "$name" "$arch"); then
     return 1
   fi
@@ -454,7 +454,7 @@ strip_release_binary() {
 
 ensure_widget_extension_project() {
   local spec="$ROOT/WidgetExtension/project.yml"
-  local project_dir="$ROOT/WidgetExtension/CodexBarWidgetExtension.xcodeproj"
+  local project_dir="$ROOT/WidgetExtension/BarsWidgetExtension.xcodeproj"
   if [[ -f "$project_dir/project.pbxproj" ]]; then
     return
   fi
@@ -477,16 +477,16 @@ build_widget_extension() {
   ensure_widget_extension_project
 
   local derived_dir="$ROOT/.build/xcode-widget-extension-${LOWER_CONF}"
-  local project_dir="$ROOT/WidgetExtension/CodexBarWidgetExtension.xcodeproj"
+  local project_dir="$ROOT/WidgetExtension/BarsWidgetExtension.xcodeproj"
   local build_log="$derived_dir/xcodebuild.log"
-  local timeout_seconds="${CODEXBAR_WIDGET_EXTENSION_TIMEOUT_SECONDS:-900}"
+  local timeout_seconds="${BARS_WIDGET_EXTENSION_TIMEOUT_SECONDS:-900}"
   local archs="${ARCH_LIST[*]}"
 
   mkdir -p "$derived_dir"
-  echo "Building CodexBarWidget Xcode extension (${xcode_conf}, ${archs})." >&2
+  echo "Building BarsWidget Xcode extension (${xcode_conf}, ${archs})." >&2
   xcodebuild \
     -project "$project_dir" \
-    -scheme CodexBarWidgetExtension \
+    -scheme BarsWidgetExtension \
     -configuration "$xcode_conf" \
     -destination "generic/platform=macOS" \
     -derivedDataPath "$derived_dir" \
@@ -494,8 +494,8 @@ build_widget_extension() {
     -disableAutomaticPackageResolution \
     -skipMacroValidation \
     -skipPackagePluginValidation \
-    CODEXBAR_WIDGET_BUNDLE_ID="$WIDGET_BUNDLE_ID" \
-    CODEXBAR_TEAM_ID="$APP_TEAM_ID" \
+    BARS_WIDGET_BUNDLE_ID="$WIDGET_BUNDLE_ID" \
+    BARS_TEAM_ID="$APP_TEAM_ID" \
     MARKETING_VERSION="$MARKETING_VERSION" \
     CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
     CODE_SIGNING_ALLOWED=NO \
@@ -510,24 +510,24 @@ build_widget_extension() {
       kill "$xcodebuild_pid" 2>/dev/null || true
       wait "$xcodebuild_pid" 2>/dev/null || true
       tail -80 "$build_log" >&2 || true
-      echo "ERROR: Timed out building CodexBarWidget extension after ${timeout_seconds}s" >&2
+      echo "ERROR: Timed out building BarsWidget extension after ${timeout_seconds}s" >&2
       exit 1
     fi
     sleep 5
     elapsed=$((elapsed + 5))
     if (( elapsed > 0 && elapsed % 60 == 0 )); then
-      echo "Still building CodexBarWidget extension (${elapsed}s)..." >&2
+      echo "Still building BarsWidget extension (${elapsed}s)..." >&2
     fi
   done
   if ! wait "$xcodebuild_pid"; then
     tail -120 "$build_log" >&2 || true
-    echo "ERROR: Failed to build CodexBarWidget extension" >&2
+    echo "ERROR: Failed to build BarsWidget extension" >&2
     exit 1
   fi
 
-  local appex="$derived_dir/Build/Products/${xcode_conf}/CodexBarWidget.appex"
-  if [[ ! -f "$appex/Contents/MacOS/CodexBarWidget" ]]; then
-    echo "ERROR: Missing Xcode-built CodexBarWidget.appex at ${appex}" >&2
+  local appex="$derived_dir/Build/Products/${xcode_conf}/BarsWidget.appex"
+  if [[ ! -f "$appex/Contents/MacOS/BarsWidget" ]]; then
+    echo "ERROR: Missing Xcode-built BarsWidget.appex at ${appex}" >&2
     exit 1
   fi
   echo "$appex"
@@ -536,23 +536,23 @@ build_widget_extension() {
 install_widget_extension() {
   local src_appex
   src_appex="$(build_widget_extension)"
-  local widget_app="$APP/Contents/PlugIns/CodexBarWidget.appex"
+  local widget_app="$APP/Contents/PlugIns/BarsWidget.appex"
   rm -rf "$widget_app"
   mkdir -p "$APP/Contents/PlugIns"
   cp -R "$src_appex" "$widget_app"
-  verify_binary_arches "$widget_app/Contents/MacOS/CodexBarWidget" "${ARCH_LIST[@]}"
+  verify_binary_arches "$widget_app/Contents/MacOS/BarsWidget" "${ARCH_LIST[@]}"
 }
 
-install_binary "CodexBar" "$APP/Contents/MacOS/CodexBar"
-strip_release_binary "$APP/Contents/MacOS/CodexBar"
-# Ship CodexBarCLI alongside the app for easy symlinking.
-install_binary "CodexBarCLI" "$APP/Contents/Helpers/CodexBarCLI"
-strip_release_binary "$APP/Contents/Helpers/CodexBarCLI"
-# Watchdog helper: ensures `claude` probes die when CodexBar crashes/gets killed.
-install_binary "CodexBarClaudeWatchdog" "$APP/Contents/Helpers/CodexBarClaudeWatchdog"
-strip_release_binary "$APP/Contents/Helpers/CodexBarClaudeWatchdog"
+install_binary "bars" "$APP/Contents/MacOS/bars"
+strip_release_binary "$APP/Contents/MacOS/bars"
+# Ship BarsCLI alongside the app for easy symlinking.
+install_binary "BarsCLI" "$APP/Contents/Helpers/BarsCLI"
+strip_release_binary "$APP/Contents/Helpers/BarsCLI"
+# Watchdog helper: ensures `claude` probes die when bars crashes/gets killed.
+install_binary "BarsClaudeWatchdog" "$APP/Contents/Helpers/BarsClaudeWatchdog"
+strip_release_binary "$APP/Contents/Helpers/BarsClaudeWatchdog"
 install_widget_extension
-strip_release_binary "$APP/Contents/PlugIns/CodexBarWidget.appex/Contents/MacOS/CodexBarWidget"
+strip_release_binary "$APP/Contents/PlugIns/BarsWidget.appex/Contents/MacOS/BarsWidget"
 
 swiftpm_bin_path "${ARCH_LIST[0]}" PREFERRED_BUILD_DIR
 
@@ -572,7 +572,7 @@ if [[ -f "$ICON_TARGET" ]]; then
 fi
 
 # Bundle app resources (provider icons, etc.).
-APP_RESOURCES_DIR="$ROOT/Sources/CodexBar/Resources"
+APP_RESOURCES_DIR="$ROOT/Sources/Bars/Resources"
 if [[ -d "$APP_RESOURCES_DIR" ]]; then
   cp -R "$APP_RESOURCES_DIR/." "$APP/Contents/Resources/"
 fi
@@ -597,15 +597,15 @@ if [[ ! -d "$APP/Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle" 
   exit 1
 fi
 
-# The helper CLI resolves CodexBarCore resources beside its executable. Keep a
+# The helper CLI resolves BarsCore resources beside its executable. Keep a
 # dedicated copy in Helpers; the app copy above remains in Contents/Resources.
-CORE_RESOURCE_BUNDLE="${PREFERRED_BUILD_DIR}/CodexBar_CodexBarCore.bundle"
+CORE_RESOURCE_BUNDLE="${PREFERRED_BUILD_DIR}/bars_BarsCore.bundle"
 if [[ ! -d "$CORE_RESOURCE_BUNDLE" ]]; then
-  echo "ERROR: Missing CodexBarCore SwiftPM resource bundle for CodexBarCLI." >&2
+  echo "ERROR: Missing BarsCore SwiftPM resource bundle for BarsCLI." >&2
   echo "Expected: ${CORE_RESOURCE_BUNDLE}" >&2
   exit 1
 fi
-rm -rf "$APP/Contents/Helpers/CodexBar_CodexBarCore.bundle"
+rm -rf "$APP/Contents/Helpers/bars_BarsCore.bundle"
 cp -R "$CORE_RESOURCE_BUNDLE" "$APP/Contents/Helpers/"
 
 # Ensure contents are writable before stripping attributes and signing.
@@ -616,24 +616,24 @@ xattr -cr "$APP"
 find "$APP" -name '._*' -delete
 
 # Sign helper binaries if present
-if [[ -f "${APP}/Contents/Helpers/CodexBarCLI" ]]; then
-  codesign "${CODESIGN_ARGS[@]}" "${APP}/Contents/Helpers/CodexBarCLI"
+if [[ -f "${APP}/Contents/Helpers/BarsCLI" ]]; then
+  codesign "${CODESIGN_ARGS[@]}" "${APP}/Contents/Helpers/BarsCLI"
 fi
-if [[ -d "${APP}/Contents/Helpers/CodexBar_CodexBarCore.bundle" ]]; then
-  codesign "${CODESIGN_ARGS[@]}" "${APP}/Contents/Helpers/CodexBar_CodexBarCore.bundle"
+if [[ -d "${APP}/Contents/Helpers/bars_BarsCore.bundle" ]]; then
+  codesign "${CODESIGN_ARGS[@]}" "${APP}/Contents/Helpers/bars_BarsCore.bundle"
 fi
-if [[ -f "${APP}/Contents/Helpers/CodexBarClaudeWatchdog" ]]; then
-  codesign "${CODESIGN_ARGS[@]}" "${APP}/Contents/Helpers/CodexBarClaudeWatchdog"
+if [[ -f "${APP}/Contents/Helpers/BarsClaudeWatchdog" ]]; then
+  codesign "${CODESIGN_ARGS[@]}" "${APP}/Contents/Helpers/BarsClaudeWatchdog"
 fi
 
 # Sign widget extension if present
-if [[ -d "${APP}/Contents/PlugIns/CodexBarWidget.appex" ]]; then
+if [[ -d "${APP}/Contents/PlugIns/BarsWidget.appex" ]]; then
   codesign "${CODESIGN_ARGS[@]}" \
     --entitlements "$WIDGET_ENTITLEMENTS" \
-    "$APP/Contents/PlugIns/CodexBarWidget.appex/Contents/MacOS/CodexBarWidget"
+    "$APP/Contents/PlugIns/BarsWidget.appex/Contents/MacOS/BarsWidget"
   codesign "${CODESIGN_ARGS[@]}" \
     --entitlements "$WIDGET_ENTITLEMENTS" \
-    "$APP/Contents/PlugIns/CodexBarWidget.appex"
+    "$APP/Contents/PlugIns/BarsWidget.appex"
 fi
 
 # Embed the Developer ID provisioning profile (authorizes the iCloud entitlements;

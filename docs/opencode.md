@@ -68,7 +68,7 @@ usage is a separate OpenAI API platform surface, not Codex subscription quota.
 ## Notes
 - OpenCode Go token accounts accept raw API keys as well as existing Cookie headers. Add each key with its own
   label under **OpenCode Go accounts**; the selected account controls the single-account view, and the stacked
-  submenu or `codexbar usage --provider opencodego --all-accounts` reads each account separately. In Auto mode,
+  submenu or `bars usage --provider opencodego --all-accounts` reads each account separately. In Auto mode,
   raw keys use the public usage API without browser cookies or device-wide local history. A failed key stays an
   account-local error. Explicit `--source api` or `--source web` still selects that source.
 - Cookie headers containing `name=value` retain their manual web path. Keys are plain tokens without whitespace,
@@ -82,7 +82,7 @@ usage is a separate OpenAI API platform surface, not Codex subscription quota.
 - Missing workspace ID or rolling usage fields should raise parse errors; omitted weekly usage stays absent.
 - OpenCode web Auto imports cookies in the shared supported-browser order; Keychain preflight stays scoped
   to each candidate browser and the shared access gate bounds prompts.
-- Set `CODEXBAR_OPENCODE_WORKSPACE_ID` to skip workspace lookup and force a specific workspace.
+- Set `BARS_OPENCODE_WORKSPACE_ID` to skip workspace lookup and force a specific workspace.
 - Workspace override accepts a raw `wrk_…` or `org_…` ID, a full `https://opencode.ai/workspace/...` URL,
   or a `https://opencode.ai/console/...` URL. Both web providers pin all usage, billing and fallback requests
   to the selected workspace. Console reads send `x-org-id` except during discovery; legacy fallback
@@ -96,7 +96,7 @@ usage is a separate OpenAI API platform surface, not Codex subscription quota.
 - A successful Console Go response of `null` or `access: null` has no subscription windows. Prepaid PAYG accounts
   still report their Zen balance, including zero or negative balances. Other billing modes remain unsupported by
   this Console balance mapping. A failed optional balance read does not discard valid Go usage.
-- Cached cookies: Keychain cache `com.steipete.codexbar.cache` (account `cookie.opencode`, source + timestamp). Browser
+- Cached cookies: Keychain cache `com.sirrayi.bars.cache` (account `cookie.opencode`, source + timestamp). Browser
   import only runs when the cached cookie fails.
 - OpenCode Go unscoped Auto mode tries daily cost history derived from local `opencode-go` request costs first,
   overlays authoritative API windows when an API key is configured, then falls back through the API and legacy web
@@ -135,4 +135,4 @@ usage is a separate OpenAI API platform surface, not Codex subscription quota.
   Missing, malformed, negative, or overflowing counts remain unknown rather than becoming zero. A day containing
   a row without usable tokens has no complete token total. These device-local counts add history detail only:
   they do not change account quota, and costs still come from the recorded `cost` field, never token pricing.
-- `codexbar cost --provider opencodego --format json` exports this same device-local daily and per-model history, honoring the selected cost time zone and All history period. Use `--format text --breakdown` for daily and per-model text tables. The cost command reads the local database independently of the app's usage source. It does not fetch remote account quotas or import cookies; the reader checks the existing local auth file only to classify missing history.
+- `bars cost --provider opencodego --format json` exports this same device-local daily and per-model history, honoring the selected cost time zone and All history period. Use `--format text --breakdown` for daily and per-model text tables. The cost command reads the local database independently of the app's usage source. It does not fetch remote account quotas or import cookies; the reader checks the existing local auth file only to classify missing history.

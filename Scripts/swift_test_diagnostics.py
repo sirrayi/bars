@@ -10,14 +10,14 @@ import re
 import sys
 
 
-TEST_PROCESSES = ("swiftpm-xctest-helper", "swiftpm-testing-helper", "xctest", "CodexBarPackageTests")
+TEST_PROCESSES = ("swiftpm-xctest-helper", "swiftpm-testing-helper", "xctest", "BarsPackageTests")
 
 
 def redact(text: str, environment: dict[str, str]) -> str:
     values = set()
     for name, value in environment.items():
-        if name in {"CODEXBAR_ALLOW_TEST_KEYCHAIN_ACCESS", "CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS",
-                    "CODEXBAR_DISABLE_KEYCHAIN_ACCESS", "CODEXBAR_USE_LOCAL_SWEETCOOKIEKIT",
+        if name in {"BARS_ALLOW_TEST_KEYCHAIN_ACCESS", "BARS_SUPPRESS_TEST_KEYCHAIN_ACCESS",
+                    "BARS_DISABLE_KEYCHAIN_ACCESS", "BARS_USE_LOCAL_SWEETCOOKIEKIT",
                     "LD_LIBRARY_PATH", "DYLD_LIBRARY_PATH", "DYLD_FRAMEWORK_PATH", "LIBRARY_PATH", "PKG_CONFIG_PATH"}:
             continue
         if value and re.search(r"token|key|secret|password|passwd|webhook|credential|cookie|private|_pat", name, re.I):

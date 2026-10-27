@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
-# Reset CodexBar: kill running instances, build, package, relaunch, verify.
+# Reset bars: kill running instances, build, package, relaunch, verify.
 
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-APP_BUNDLE="${ROOT_DIR}/CodexBar.app"
-APP_PROCESS_PATTERN="CodexBar.app/Contents/MacOS/CodexBar"
-DEBUG_PROCESS_PATTERN="${ROOT_DIR}/.build/debug/CodexBar"
-RELEASE_PROCESS_PATTERN="${ROOT_DIR}/.build/release/CodexBar"
+APP_BUNDLE="${ROOT_DIR}/bars.app"
+APP_PROCESS_PATTERN="bars.app/Contents/MacOS/bars"
+DEBUG_PROCESS_PATTERN="${ROOT_DIR}/.build/debug/bars"
+RELEASE_PROCESS_PATTERN="${ROOT_DIR}/.build/release/bars"
 LOCK_KEY="$(printf '%s' "${ROOT_DIR}" | shasum -a 256 | cut -c1-8)"
-LOCK_DIR="${TMPDIR:-/tmp}/codexbar-compile-and-run-${LOCK_KEY}"
+LOCK_DIR="${TMPDIR:-/tmp}/bars-compile-and-run-${LOCK_KEY}"
 LOCK_PID_FILE="${LOCK_DIR}/pid"
 WAIT_FOR_LOCK=0
 RUN_TESTS=0
 DEBUG_LLDB=0
 RELEASE_ARCHES=""
-SIGNING_MODE="${CODEXBAR_SIGNING:-}"
+SIGNING_MODE="${BARS_SIGNING:-}"
 CLEAR_ADHOC_KEYCHAIN=0
 
 log()  { printf '%s\n' "$*"; }
@@ -154,18 +154,18 @@ acquire_lock() {
 trap cleanup EXIT INT TERM
 
 kill_claude_probes() {
-  # CodexBar spawns `claude /usage` + `/status` in a PTY; if we kill the app mid-probe we can orphan them.
+  # bars spawns `claude /usage` + `/status` in a PTY; if we kill the app mid-probe we can orphan them.
   pkill -f "claude (/status|/usage) --allowed-tools" 2>/dev/null || true
   sleep 0.2
   pkill -9 -f "claude (/status|/usage) --allowed-tools" 2>/dev/null || true
 }
 
-kill_all_codexbar() {
+kill_all_bars() {
   is_running() {
     pgrep -f "${APP_PROCESS_PATTERN}" >/dev/null 2>&1 \
       || pgrep -f "${DEBUG_PROCESS_PATTERN}" >/dev/null 2>&1 \
       || pgrep -f "${RELEASE_PROCESS_PATTERN}" >/dev/null 2>&1 \
-      || pgrep -x "CodexBar" >/dev/null 2>&1
+      || pgrep -x "bars" >/dev/null 2>&1
   }
 
   # Phase 1: request termination (give the app time to exit cleanly).
@@ -173,7 +173,7 @@ kill_all_codexbar() {
     pkill -f "${APP_PROCESS_PATTERN}" 2>/dev/null || true
     pkill -f "${DEBUG_PROCESS_PATTERN}" 2>/dev/null || true
     pkill -f "${RELEASE_PROCESS_PATTERN}" 2>/dev/null || true
-    pkill -x "CodexBar" 2>/dev/null || true
+    pkill -x "bars" 2>/dev/null || true
     if ! is_running; then
       return 0
     fi
@@ -184,7 +184,7 @@ kill_all_codexbar() {
   pkill -9 -f "${APP_PROCESS_PATTERN}" 2>/dev/null || true
   pkill -9 -f "${DEBUG_PROCESS_PATTERN}" 2>/dev/null || true
   pkill -9 -f "${RELEASE_PROCESS_PATTERN}" 2>/dev/null || true
-  pkill -9 -x "CodexBar" 2>/dev/null || true
+  pkill -9 -x "bars" 2>/dev/null || true
 
   for _ in {1..25}; do
     if ! is_running; then
@@ -193,7 +193,7 @@ kill_all_codexbar() {
     sleep 0.2
   done
 
-  fail "Failed to kill all CodexBar instances."
+  fail "Failed to kill all bars instances."
 }
 
 # 1) Ensure a single runner instance.
@@ -227,21 +227,21 @@ fi
 
 acquire_lock
 
-# 2) Kill all running CodexBar instances (debug, release, bundled).
-log "==> Killing existing CodexBar instances"
-kill_all_codexbar
+# 2) Kill all running bars instances (debug, release, bundled).
+log "==> Killing existing bars instances"
+kill_all_bars
 kill_claude_probes
 
 # 2.5) Optionally delete keychain entries to avoid permission prompts with adhoc signing
 # (adhoc signature changes on every build, making old keychain entries inaccessible)
 if [[ "${SIGNING_MODE:-adhoc}" == "adhoc" && "${CLEAR_ADHOC_KEYCHAIN}" == "1" ]]; then
-  log "==> Clearing CodexBar keychain entries (adhoc signing)"
+  log "==> Clearing bars keychain entries (adhoc signing)"
   # Clear both the legacy keychain store and the current cache service when developers explicitly want a clean reset
-  # of CodexBar-owned keychain state for ad-hoc builds.
-  delete_keychain_service_items "com.steipete.CodexBar"
-  delete_keychain_service_items "com.steipete.codexbar.cache"
+  # of bars-owned keychain state for ad-hoc builds.
+  delete_keychain_service_items "com.sirrayi.bars"
+  delete_keychain_service_items "com.sirrayi.bars.cache"
 elif [[ "${SIGNING_MODE:-adhoc}" == "adhoc" ]]; then
-  log "==> Preserving CodexBar keychain entries (pass --clear-adhoc-keychain to reset adhoc keychain state)"
+  log "==> Preserving bars keychain entries (pass --clear-adhoc-keychain to reset adhoc keychain state)"
 fi
 
 # 3) Package (release build happens inside package_app.sh).
@@ -260,10 +260,10 @@ PACKAGE_ENV=(
   ARCHES="${ARCHES_VALUE}"
 )
 if [[ "${DEBUG_LLDB}" == "1" ]]; then
-  run_step "package app" env CODEXBAR_ALLOW_LLDB=1 "${PACKAGE_ENV[@]}" "${ROOT_DIR}/Scripts/package_app.sh" debug
+  run_step "package app" env BARS_ALLOW_LLDB=1 "${PACKAGE_ENV[@]}" "${ROOT_DIR}/Scripts/package_app.sh" debug
 else
   if [[ -n "${SIGNING_MODE}" ]]; then
-    run_step "package app" env CODEXBAR_SIGNING="${SIGNING_MODE}" "${PACKAGE_ENV[@]}" "${ROOT_DIR}/Scripts/package_app.sh"
+    run_step "package app" env BARS_SIGNING="${SIGNING_MODE}" "${PACKAGE_ENV[@]}" "${ROOT_DIR}/Scripts/package_app.sh"
   else
     run_step "package app" env "${PACKAGE_ENV[@]}" "${ROOT_DIR}/Scripts/package_app.sh"
   fi
@@ -273,14 +273,14 @@ fi
 log "==> launch app"
 if ! open "${APP_BUNDLE}"; then
   log "WARN: launch app returned non-zero; falling back to direct binary launch."
-  "${APP_BUNDLE}/Contents/MacOS/CodexBar" >/dev/null 2>&1 &
+  "${APP_BUNDLE}/Contents/MacOS/bars" >/dev/null 2>&1 &
   disown
 fi
 
 # 5) Verify the app stays up for at least a moment (launch can be >1s on some systems).
 for _ in {1..10}; do
   if pgrep -f "${APP_PROCESS_PATTERN}" >/dev/null 2>&1; then
-    log "OK: CodexBar is running."
+    log "OK: bars is running."
     exit 0
   fi
   sleep 0.4

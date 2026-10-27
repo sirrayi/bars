@@ -7,7 +7,7 @@ read_when:
 
 # Agent Sessions design
 
-CodexBar discovers Codex, Claude Code, and Pi-family agent sessions locally and over SSH. Local discovery correlates processes with bounded metadata and can show recent Codex file-only fallback rows. Those fallback rows do not prove process lifetime and never activate Stay Awake.
+bars discovers Codex, Claude Code, and Pi-family agent sessions locally and over SSH. Local discovery correlates processes with bounded metadata and can show recent Codex file-only fallback rows. Those fallback rows do not prove process lifetime and never activate Stay Awake.
 
 ## Data model
 
@@ -24,7 +24,7 @@ Pi-family detection also uses the executable and script arguments, so a prompt m
 
 Pi-family processes are handed to one `PiFamilySessionScanner`:
 
-- Plain pi uses process title `pi`; upstream also marks the process with `PI_CODING_AGENT=true`, which CodexBar does not need to read. Its default root is `~/.pi/agent/sessions`, whose project buckets encode cwd as `--<escaped-cwd>--`. A version-3 `session` header supplies id, timestamp, and cwd. The latest bounded `session_info.name` supplies the optional label.
+- Plain pi uses process title `pi`; upstream also marks the process with `PI_CODING_AGENT=true`, which bars does not need to read. Its default root is `~/.pi/agent/sessions`, whose project buckets encode cwd as `--<escaped-cwd>--`. A version-3 `session` header supplies id, timestamp, and cwd. The latest bounded `session_info.name` supplies the optional label.
 - OMP uses process title/executable `omp`, including its Bun launcher form. It supports default, named-profile, and XDG roots; hashed `home|tmp|abs-<basename>-<sha256>` buckets; legacy bucket names; title-slot headers; and the legacy header-title form.
 - `--session-dir` resolves to a direct session directory for either dialect. The scanner also honors custom-directory/profile values already present in its own environment, and plain pi resolves project-over-global `settings.json` `sessionDir` values. Relative paths use the live process cwd and leading `~` uses the scanner home.
 - Profile flags are read from argv. Standard OMP profile directories can also be enumerated from their bounded roots. Custom roots and profiles that exist only in the target process remain unresolved because reading that process's environment would capture unrelated secrets. Those processes still produce PID-only rows.
@@ -43,7 +43,7 @@ Local focus walks from the session PID to the owning terminal/editor application
 
 ## Privacy and safety
 
-CodexBar never invokes `ps eww`, reads `/proc/<pid>/environ`, or otherwise captures full target-process environments for session discovery. It reads only bounded session metadata under resolved roots, never loads prompt/tool transcript bodies for this feature, never changes upstream session state, and never persists extracted titles separately.
+bars never invokes `ps eww`, reads `/proc/<pid>/environ`, or otherwise captures full target-process environments for session discovery. It reads only bounded session metadata under resolved roots, never loads prompt/tool transcript bodies for this feature, never changes upstream session state, and never persists extracted titles separately.
 
 ## Stay Awake
 

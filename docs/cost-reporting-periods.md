@@ -51,12 +51,12 @@ Month to date starts at midnight on the first day of the current month and inclu
 
 Menu cost and token charts retain one slot for every calendar day in the selected window, for every provider. A missing day is zero only after the history scan covers that window; incomplete scans and recorded unpriced costs remain unknown. OpenAI and Mistral keep their fixed UTC billing-day calendars; local history follows the selected bucket time zone.
 
-The menu selection also supplies the default for `codexbar cost`, the HTTP `/cost` endpoint, and widget cost summaries. The widget metric is named **Cost**; its displayed period comes from the app's snapshot. Explicit CLI options override the saved selection:
+The menu selection also supplies the default for `bars cost`, the HTTP `/cost` endpoint, and widget cost summaries. The widget metric is named **Cost**; its displayed period comes from the app's snapshot. Explicit CLI options override the saved selection:
 
 ```sh
-codexbar cost --period month-to-date --json
-codexbar cost --period all --json
-codexbar cost --days 7 --json
+bars cost --period month-to-date --json
+bars cost --period all --json
+bars cost --days 7 --json
 ```
 
 `--days N` always selects a rolling window, even alongside `--period`. Rolling windows accept 1–365 days and default to 30 on installations without a saved selection. JSON includes `reportingPeriod`, `historyLabel`, and period totals under `totals`; the existing `last30DaysTokens` and `last30DaysCostUSD` compatibility fields retain their documented meaning.

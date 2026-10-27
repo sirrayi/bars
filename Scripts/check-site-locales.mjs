@@ -9,7 +9,7 @@ import { checkSocialCard } from "./social-card.mjs";
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 checkSocialCard(repoRoot);
 const indexHtml = fs.readFileSync(path.join(repoRoot, "docs/index.html"), "utf8");
-const providerSource = fs.readFileSync(path.join(repoRoot, "Sources/CodexBarCore/Providers/Providers.swift"), "utf8");
+const providerSource = fs.readFileSync(path.join(repoRoot, "Sources/BarsCore/Providers/Providers.swift"), "utf8");
 const providerEnumBody = providerSource.match(/public enum UsageProvider:[^{]+\{([\s\S]*?)\n\}/)?.[1];
 assert(providerEnumBody, "could not locate UsageProvider cases");
 const providerIDs = [...providerEnumBody.matchAll(/^\s*case\s+(\w+)\s*$/gm)].map((match) => match[1]);
@@ -18,8 +18,8 @@ assertEqual(new Set(providerIDs).size, providerIDs.length, "UsageProvider IDs");
 const providerCount = providerIDs.length;
 
 const publicCountFiles = [
-  ["README.md", `alt="CodexBar — every AI coding limit in your menu bar. ${providerCount} providers."`],
-  ["docs/providers.md", `CodexBar currently registers ${providerCount} provider IDs.`],
+  ["README.md", `alt="bars — every AI coding limit in your menu bar. ${providerCount} providers."`],
+  ["docs/providers.md", `bars currently registers ${providerCount} provider IDs.`],
   ["docs/social.html", `<strong>${providerCount} providers</strong>`],
   ["docs/llms.txt", `across ${providerCount} providers`],
 ];
@@ -70,7 +70,7 @@ const expectedCodes = [
   "sv",
 ];
 const catalogCodes = localeCatalog.map((locale) => locale.code);
-const appLanguageSource = fs.readFileSync(path.join(repoRoot, "Sources/CodexBar/PreferencesGeneralPane.swift"), "utf8");
+const appLanguageSource = fs.readFileSync(path.join(repoRoot, "Sources/Bars/PreferencesGeneralPane.swift"), "utf8");
 
 assertEqual(catalogCodes, expectedCodes, "locale catalog");
 assertEqual(
@@ -130,7 +130,7 @@ for (const [, attrs, body] of providerCards) {
     listedProviderIDs.push(providerID);
     assert(!attrs.includes("hidden"), `registered provider ${providerID} must be visible`);
     const documentationPath = body.match(
-      /href="https:\/\/github\.com\/steipete\/CodexBar\/blob\/main\/(docs\/[^"#]+\.md)"/,
+      /href="https:\/\/github\.com\/steipete\/bars\/blob\/main\/(docs\/[^"#]+\.md)"/,
     )?.[1];
     assert(documentationPath, `${providerID} must link to its provider documentation`);
     assert(

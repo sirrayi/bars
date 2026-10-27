@@ -2,7 +2,7 @@
   "fixture": "synthetic-only; generated accounts, model, token counts and amounts",
   "productCommit": "f3a75a5c974fbcc9d01e9318850154187d4d3bed",
   "bundleProductCommit": "f3a75a5c9",
-  "host": "fresh ad-hoc signed packaged CodexBar executable; complete production SpendDashboardPane and controller",
+  "host": "fresh ad-hoc signed packaged bars executable; complete production SpendDashboardPane and controller",
   "capture": "target-window CUA screenshots; ancillary metadata removed, encoded raster unchanged; originals retained privately",
   "isolated": {
     "keychainDisabled": true,
@@ -125,9 +125,9 @@
     "spoken VoiceOver session"
   ],
   "sourceHashes": {
-    "Sources/CodexBar/SpendActivityHeatmap.swift": "be2ac8dbf1936352b487e3ed8e47b70585045c58c5173a0700b122f488ca4e50",
-    "Sources/CodexBar/SpendActivityScrollableGrid.swift": "10f60fbbe82a3de8c02052e0a7293ad2b941e534cd129c8a0da0b4eaa19103f9",
-    "Sources/CodexBar/SpendActivityPalette.swift": "924ed15ac2ab758bdc75f558eb21577d8ee6d73f34f167266071cfdc54d2f760"
+    "Sources/Bars/SpendActivityHeatmap.swift": "be2ac8dbf1936352b487e3ed8e47b70585045c58c5173a0700b122f488ca4e50",
+    "Sources/Bars/SpendActivityScrollableGrid.swift": "10f60fbbe82a3de8c02052e0a7293ad2b941e534cd129c8a0da0b4eaa19103f9",
+    "Sources/Bars/SpendActivityPalette.swift": "924ed15ac2ab758bdc75f558eb21577d8ee6d73f34f167266071cfdc54d2f760"
   },
   "screenshots": {
     "dark-recent.jpg": {

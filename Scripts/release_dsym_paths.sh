@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-codexbar_dsym_dwarf_path() {
+bars_dsym_dwarf_path() {
   local dsym_path="$1"
   local app_name="$2"
   local dwarf_path="${dsym_path}/Contents/Resources/DWARF/${app_name}"
@@ -13,13 +13,13 @@ codexbar_dsym_dwarf_path() {
   printf '%s\n' "$dwarf_path"
 }
 
-codexbar_require_dsym_dwarf_for_arch() {
+bars_require_dsym_dwarf_for_arch() {
   local dsym_path="$1"
   local app_name="$2"
   local arch="$3"
   local dwarf_path
 
-  if ! dwarf_path=$(codexbar_dsym_dwarf_path "$dsym_path" "$app_name"); then
+  if ! dwarf_path=$(bars_dsym_dwarf_path "$dsym_path" "$app_name"); then
     return 1
   fi
 
@@ -31,7 +31,7 @@ codexbar_require_dsym_dwarf_for_arch() {
   printf '%s\n' "$dwarf_path"
 }
 
-codexbar_dwarf_uuid_for_arch() {
+bars_dwarf_uuid_for_arch() {
   local path="$1"
   local arch="$2"
   local uuid
@@ -45,7 +45,7 @@ codexbar_dwarf_uuid_for_arch() {
   printf '%s\n' "$uuid"
 }
 
-codexbar_verify_dsym_matches_binary() {
+bars_verify_dsym_matches_binary() {
   local app_binary="$1"
   local dsym_dwarf="$2"
   shift 2
@@ -61,10 +61,10 @@ codexbar_verify_dsym_matches_binary() {
   fi
 
   for arch in "$@"; do
-    if ! app_uuid=$(codexbar_dwarf_uuid_for_arch "$app_binary" "$arch"); then
+    if ! app_uuid=$(bars_dwarf_uuid_for_arch "$app_binary" "$arch"); then
       return 1
     fi
-    if ! dsym_uuid=$(codexbar_dwarf_uuid_for_arch "$dsym_dwarf" "$arch"); then
+    if ! dsym_uuid=$(bars_dwarf_uuid_for_arch "$dsym_dwarf" "$arch"); then
       return 1
     fi
     if [[ "$app_uuid" != "$dsym_uuid" ]]; then

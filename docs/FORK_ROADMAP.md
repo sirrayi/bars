@@ -4,13 +4,13 @@ read_when:
   - Reviewing historical topoffunnel fork milestones
 ---
 
-# CodexBar Fork Roadmap
+# bars Fork Roadmap
 
 > Historical January 2026 fork plan. Its phases and completion claims are preserved as context, not current tasks.
 > Augment, token accounts, and upstream helper scripts already exist in the main repository. Consult
 > [Vision](../VISION.md), [Providers](providers.md), and [Configuration](configuration.md) for current scope and behavior.
 
-This document outlines the development roadmap for the CodexBar fork maintained by Brandon Charleson.
+This document outlines the development roadmap for the bars fork maintained by Brandon Charleson.
 
 ## ✅ Phase 1: Fork Identity (COMPLETE)
 
@@ -32,7 +32,7 @@ This document outlines the development roadmap for the CodexBar fork maintained 
 
 **Tasks:**
 1. **Replace print() with proper logging**
-   - Use `CodexBarLog.logger("augment")` throughout
+   - Use `BarsLog.logger("augment")` throughout
    - Add structured metadata for debugging
    - Follow patterns from Claude/Cursor providers
 
@@ -58,9 +58,9 @@ This document outlines the development roadmap for the CodexBar fork maintained 
    - Show detailed error messages
 
 **Files to Modify:**
-- `Sources/CodexBarCore/Providers/Augment/AugmentStatusProbe.swift`
-- `Sources/CodexBarCore/Providers/Augment/AugmentSessionKeepalive.swift`
-- `Sources/CodexBar/UsageStore.swift` (debug pane)
+- `Sources/BarsCore/Providers/Augment/AugmentStatusProbe.swift`
+- `Sources/BarsCore/Providers/Augment/AugmentSessionKeepalive.swift`
+- `Sources/Bars/UsageStore.swift` (debug pane)
 
 ---
 
@@ -160,9 +160,9 @@ This document outlines the development roadmap for the CodexBar fork maintained 
 5. Extend to other providers (Claude, Cursor, etc.)
 
 **Files to Create:**
-- `Sources/CodexBarCore/AccountManager.swift`
-- `Sources/CodexBarCore/Providers/Augment/AugmentAccountManager.swift`
-- `Sources/CodexBar/AccountSwitcherView.swift`
+- `Sources/BarsCore/AccountManager.swift`
+- `Sources/BarsCore/Providers/Augment/AugmentAccountManager.swift`
+- `Sources/Bars/AccountSwitcherView.swift`
 
 ---
 

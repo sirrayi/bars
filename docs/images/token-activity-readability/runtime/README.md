@@ -6,7 +6,7 @@ read_when:
 
 # Complete Usage & Spend proof
 
-These are actual window captures from a newly packaged, ad-hoc signed debug CodexBar executable built against product commit `f3a75a5c974fbcc9d01e9318850154187d4d3bed`. The host is the complete production `SpendDashboardPane`, its controller, and data model. The only app entrypoint addition is the opt-in proof launcher; the production activity source matches the PR. This is an isolated full-app session using **fixed synthetic history**, not a live personal account or an installed production-account session.
+These are actual window captures from a newly packaged, ad-hoc signed debug bars executable built against product commit `f3a75a5c974fbcc9d01e9318850154187d4d3bed`. The host is the complete production `SpendDashboardPane`, its controller, and data model. The only app entrypoint addition is the opt-in proof launcher; the production activity source matches the PR. This is an isolated full-app session using **fixed synthetic history**, not a live personal account or an installed production-account session.
 
 All displayed accounts, model names, token counts, and amounts are generated fixtures. The app uses 2026-10-06 UTC and 365 generated daily entries, in-memory preferences/token stores, disabled Keychain access, and a provider transport override that fails if attempted. Normal app startup is bypassed. Raw originals, logs and timestamps remain private. Public screenshots have ancillary JPEG metadata removed; the encoded raster was preserved without compositing or re-encoding. The [sanitized receipt](runtime-receipt.json) includes source and image hashes.
 

@@ -21,6 +21,6 @@ are included.
 
 Images were regenerated against the merged upstream artwork on 2026-10-07 and are unmodified output
 from the offline render test. The test requires credential/session
-isolation and only writes screenshots when `CODEXBAR_SPEND_TREND_PROOF_DIR` is explicitly set.
+isolation and only writes screenshots when `BARS_SPEND_TREND_PROOF_DIR` is explicitly set.
 Provider icon slots are 20 points throughout Usage & Spend, with brand artwork padding compensated;
 account swatches are 8 points.

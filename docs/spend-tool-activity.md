@@ -87,7 +87,7 @@ swift test --build-system native --jobs 4 -Xswiftc -gnone \
 make check
 ```
 
-Set `CODEXBAR_TOOL_UI_PROOF_DIR` to an empty output directory when running
+Set `BARS_TOOL_UI_PROOF_DIR` to an empty output directory when running
 `SpendToolActivityTests` to render production SwiftUI with synthetic operations in English/Chinese,
 light/dark, narrow/wide layouts and all filters. This does not launch the app or read personal logs.
 Historical contributor runtime receipts and illustrations remain in the history of PR #4363.

@@ -1,0 +1,192 @@
+import AppKit
+import BarsCore
+import Testing
+@testable import Bars
+
+@MainActor
+@Suite(.serialized)
+struct StatusMenuAccountDataRefreshTests {
+    @Test
+    func `account data rebuilds coalesce during tracking and execute only once across modes`() throws {
+        try self.withMenu { _, controller, menu in
+            var rebuilds = 0
+            controller._test_openMenuRebuildObserver = { rebuilt in
+                #expect(rebuilt === menu)
+                rebuilds += 1
+            }
+            defer { controller._test_openMenuRebuildObserver = nil }
+            for _ in 0..<3 {
+                controller.scheduleOpenRootMenuDataRebuildIfStillVisible(menu, provider: .opencode)
+            }
+            #expect(controller.menuNeedsRefresh(menu))
+            Self.drainTracking()
+            #expect(rebuilds == 1)
+            #expect(!controller.menuNeedsRefresh(menu))
+            CFRunLoopRunInMode(.defaultMode, 0.1, true)
+            #expect(rebuilds == 1)
+        }
+    }
+
+    @Test
+    func `account data rebuild preserves a hosted submenu and leaves parent stale`() throws {
+        try self.withMenu { _, controller, menu in
+            let submenu = controller.makeHostedSubviewPlaceholderMenu(
+                chartID: StatusItemController.costHistoryChartID, provider: .opencode)
+            let childKey = ObjectIdentifier(submenu)
+            controller.openMenus[childKey] = submenu
+            defer { controller.openMenus.removeValue(forKey: childKey) }
+            var rebuilds = 0
+            controller._test_openMenuRebuildObserver = { _ in rebuilds += 1 }
+            defer { controller._test_openMenuRebuildObserver = nil }
+            controller.scheduleOpenRootMenuDataRebuildIfStillVisible(menu, provider: .opencode)
+            Self.drainTracking()
+            #expect(rebuilds == 0)
+            #expect(controller.openMenus[childKey] === submenu)
+            #expect(controller.menuNeedsRefresh(menu))
+            #expect(!controller.openMenuRebuildsClosingHostedSubviewMenus.contains(ObjectIdentifier(menu)))
+        }
+    }
+
+    @Test
+    func `account data resumes during parent tracking after a hosted submenu closes`() throws {
+        try self.withMenu { _, controller, menu in
+            let submenu = controller.makeHostedSubviewPlaceholderMenu(
+                chartID: StatusItemController.costHistoryChartID, provider: .opencode)
+            let childKey = ObjectIdentifier(submenu)
+            controller.openMenus[childKey] = submenu
+            controller.scheduleOpenRootMenuDataRebuildIfStillVisible(menu, provider: .opencode)
+            Self.drainTracking()
+            #expect(controller.menuNeedsRefresh(menu))
+            controller.menuDidClose(submenu)
+            Self.drainTracking()
+            #expect(!controller.menuNeedsRefresh(menu))
+            #expect(controller.openMenus[childKey] == nil)
+        }
+    }
+
+    @Test
+    func `account data resumes during tracking after a native highlight clears`() throws {
+        try self.withMenu { _, controller, menu in
+            let key = ObjectIdentifier(menu)
+            let item = NSMenuItem(title: "Synthetic action", action: nil, keyEquivalent: "")
+            item.isEnabled = true
+            menu.addItem(item)
+            controller.highlightedMenuItems[key] = item
+            controller.scheduleOpenRootMenuDataRebuildIfStillVisible(menu, provider: .opencode)
+            Self.drainTracking()
+            #expect(controller.menuNeedsRefresh(menu))
+            #expect(controller.nativeHighlightDeferredMenuRebuilds[key] != nil)
+            controller.highlightedMenuItems.removeValue(forKey: key)
+            controller.resumeMenuRebuildDeferredForNativeHighlightIfNeeded(menu)
+            Self.drainTracking()
+            #expect(!controller.menuNeedsRefresh(menu))
+            #expect(controller.nativeHighlightDeferredMenuRebuilds[key] == nil)
+        }
+    }
+
+    @Test
+    func `late account data cannot replace a newer provider selection request`() throws {
+        try self.withMenu { settings, controller, menu in
+            settings.setProviderEnabled(
+                provider: .claude,
+                metadata: ProviderDescriptorRegistry.descriptor(for: .claude).metadata,
+                enabled: true)
+            controller.selectedMenuProvider = .claude
+            settings.mergedMenuLastSelectedWasOverview = false
+            var selectionRequestRan = false
+            controller.scheduleTrackingMenuRebuildIfStillVisible(menu, provider: .claude) {
+                selectionRequestRan = true
+                return true
+            }
+            let version = controller.menuContentVersion
+            controller.scheduleOpenRootMenuDataRebuildIfStillVisible(menu, provider: .opencode)
+            #expect(controller.menuContentVersion == version)
+            Self.drainTracking()
+            #expect(selectionRequestRan)
+            #expect(controller.selectedMenuProvider == .claude)
+        }
+    }
+
+    @Test
+    func `queued account data is discarded when account ownership changes before execution`() throws {
+        try self.withMenu { _, controller, menu in
+            let selection = AccountSelection()
+            var rebuilds = 0
+            controller._test_openMenuRebuildObserver = { _ in rebuilds += 1 }
+            defer { controller._test_openMenuRebuildObserver = nil }
+            controller.scheduleOpenRootMenuDataRebuildIfStillVisible(menu, provider: .opencode) {
+                selection.id == "account-a"
+            }
+            selection.id = "account-b"
+            Self.drainTracking()
+            #expect(rebuilds == 0)
+            #expect(controller.menuNeedsRefresh(menu))
+        }
+    }
+
+    @Test
+    func `closing an account menu discards its pending data rebuild`() throws {
+        try self.withMenu { _, controller, menu in
+            var rebuilds = 0
+            controller._test_openMenuRebuildObserver = { _ in rebuilds += 1 }
+            defer { controller._test_openMenuRebuildObserver = nil }
+            controller.scheduleOpenRootMenuDataRebuildIfStillVisible(menu, provider: .opencode)
+            controller.menuDidClose(menu)
+            Self.drainTracking()
+            #expect(rebuilds == 0)
+            #expect(controller.openMenus[ObjectIdentifier(menu)] == nil)
+        }
+    }
+
+    @MainActor
+    private final class AccountSelection {
+        var id = "account-a"
+    }
+
+    private func withMenu(
+        _ body: (SettingsStore, StatusItemController, NSMenu) throws -> Void) throws
+    {
+        let previousRendering = StatusItemController.menuCardRenderingEnabled
+        let previousRefresh = StatusItemController.menuRefreshEnabled
+        StatusItemController.menuCardRenderingEnabled = false
+        StatusItemController.setMenuRefreshEnabledForTesting(true)
+        defer {
+            StatusItemController.menuCardRenderingEnabled = previousRendering
+            StatusItemController.setMenuRefreshEnabledForTesting(previousRefresh)
+        }
+        let settings = SettingsStore(
+            configStore: testConfigStore(suiteName: "StatusMenuAccountDataRefreshTests-\(UUID().uuidString)"))
+        settings.statusChecksEnabled = false
+        settings.refreshFrequency = .manual
+        settings.mergeIcons = true
+        settings.selectedMenuProvider = .opencode
+        settings.mergedMenuLastSelectedWasOverview = false
+        settings.agentSessionsEnabled = false
+        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        for provider in [UsageProvider.opencode, .claude] {
+            settings.setProviderEnabled(
+                provider: provider,
+                metadata: ProviderDescriptorRegistry.descriptor(for: provider).metadata,
+                enabled: true)
+            store._setSnapshotForTesting(UsageSnapshot(
+                primary: RateWindow(usedPercent: 11, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
+                secondary: nil,
+                updatedAt: Date()), provider: provider)
+        }
+        let controller = StatusItemController(
+            store: store,
+            settings: settings,
+            account: AccountInfo(email: nil, plan: nil),
+            updater: DisabledUpdaterController(),
+            preferencesSelection: PreferencesSelection(),
+            statusBar: .system)
+        defer { controller.releaseStatusItemsForTesting() }
+        let menu = controller.makeMenu()
+        controller.menuWillOpen(menu)
+        try body(settings, controller, menu)
+    }
+
+    private static func drainTracking() {
+        CFRunLoopRunInMode(CFRunLoopMode(RunLoop.Mode.eventTracking.rawValue as CFString), 0.1, true)
+    }
+}

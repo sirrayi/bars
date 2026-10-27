@@ -3,11 +3,11 @@
     "correctness": "error"
   },
   "ignorePatterns": [
-    "Sources/CodexBarCore/Resources/Plugins/sucrase-*.min.js"
+    "Sources/BarsCore/Resources/Plugins/sucrase-*.min.js"
   ],
   "overrides": [
     {
-      "files": ["Sources/CodexBarCore/Resources/Plugins/*.{js,ts}"],
+      "files": ["Sources/BarsCore/Resources/Plugins/*.{js,ts}"],
       "globals": {
         "defineProvider": "readonly"
       }

@@ -157,11 +157,11 @@ jobs:
         # Batch short suites; the runner isolates expensive suites without changing their deadlines.
         timeout-minutes: 75
         run: |
-          touch "$RUNNER_TEMP/codexbar-tests-started"
+          touch "$RUNNER_TEMP/bars-tests-started"
           echo "Hosted tests run the complete inventory with two verified direct workers."
-          CODEXBAR_TEST_GROUP_SIZE=8 \
-            CODEXBAR_TEST_SUITE_TIMEOUT=120 \
-            CODEXBAR_TEST_RETRY_NON_TIMEOUT_FAILURES=0 \
+          BARS_TEST_GROUP_SIZE=8 \
+            BARS_TEST_SUITE_TIMEOUT=120 \
+            BARS_TEST_RETRY_NON_TIMEOUT_FAILURES=0 \
             ./Scripts/test.sh --direct-workers 2
 
       - name: Provider plugin engine A/B goldens
@@ -182,8 +182,8 @@ jobs:
         if: ${{ failure() }}
         shell: bash
         run: |
-          if [[ -f "$RUNNER_TEMP/codexbar-tests-started" ]]; then
-            python3 Scripts/swift_test_diagnostics.py --since "$RUNNER_TEMP/codexbar-tests-started"
+          if [[ -f "$RUNNER_TEMP/bars-tests-started" ]]; then
+            python3 Scripts/swift_test_diagnostics.py --since "$RUNNER_TEMP/bars-tests-started"
           fi
 
       - name: Summarize macOS tests

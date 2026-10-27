@@ -38,7 +38,7 @@ To enable the optional native rendering, mouse-click, and date-reveal tests from
 
 ```bash
 source Scripts/test_environment.sh
-CODEXBAR_ACTIVITY_READABILITY_PROOF_DIR="$PWD/.build/activity-proof" \
+BARS_ACTIVITY_READABILITY_PROOF_DIR="$PWD/.build/activity-proof" \
   swift test --filter 'SpendActivityAppearanceTests|SpendActivityHeatmapTests|SpendActivityReadabilityRenderTests|LocalizationLanguageCatalogTests|LocalizationBundleTests|UserFacingLocalizationCoverageTests'
 ```
 

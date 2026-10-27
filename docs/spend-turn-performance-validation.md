@@ -69,8 +69,8 @@ isolation, and bounded predecessor backfill preserving ledger rows and prices.
 The existing ledger and migration suites check the billing boundary.
 
 For a headless render of production session rows, set
-`CODEXBAR_PERFORMANCE_UI_PROOF_DIR` to an empty output directory and optionally
-`CODEXBAR_PERFORMANCE_UI_PROOF_WIDTH` (for example, 420), then run
+`BARS_PERFORMANCE_UI_PROOF_DIR` to an empty output directory and optionally
+`BARS_PERFORMANCE_UI_PROOF_WIDTH` (for example, 420), then run
 `SpendSessionPerformanceTests`. The renderer uses only synthetic values and
 covers English/Chinese, light/dark, and privacy masking. It does not launch the
 app or claim installed-window responsiveness. Historical contributor receipts

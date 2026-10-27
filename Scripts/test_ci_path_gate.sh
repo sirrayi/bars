@@ -60,7 +60,7 @@ assert_gate true rename-from-agents-contract $'R100\tAGENTS.md\tdocs/new.md'
 assert_gate true claude-contract $'M\tCLAUDE.md'
 assert_gate true rename-to-claude-contract $'R100\tdocs/old.md\tCLAUDE.md'
 assert_gate true rename-from-claude-contract $'R100\tCLAUDE.md\tdocs/new.md'
-assert_gate true source $'M\tSources/CodexBar/App.swift'
+assert_gate true source $'M\tSources/Bars/App.swift'
 assert_gate false docs-site $'M\tdocs/index.html' $'M\tdocs/site.css' $'M\tdocs/site.js' \
   $'M\tdocs/site-locales.mjs' $'M\tdocs/social.html' $'M\tdocs/social.png' \
   $'M\tdocs/CNAME' $'M\tdocs/.nojekyll' $'M\tdocs/llms.txt'
@@ -68,28 +68,28 @@ assert_gate false docs-site-assets $'M\tdocs/icon.png' $'M\tdocs/logos/provider-
 assert_gate true docs-unknown-code $'M\tdocs/custom-tool.js'
 assert_gate true docs-site-with-config $'M\tdocs/site.css' $'M\tdocs/configuration.md'
 assert_gate true empty
-assert_gate true source-to-docs $'R100\tSources/CodexBar/App.swift\tdocs/App.md'
-assert_gate true docs-to-source $'R100\tdocs/App.md\tSources/CodexBar/App.swift'
+assert_gate true source-to-docs $'R100\tSources/Bars/App.swift\tdocs/App.md'
+assert_gate true docs-to-source $'R100\tdocs/App.md\tSources/Bars/App.swift'
 assert_gate false docs-to-site $'R100\tdocs/old.md\tdocs/site.css'
-assert_gate true source-markdown $'M\tSources/CodexBarCore/Resources/prompt.md'
+assert_gate true source-markdown $'M\tSources/BarsCore/Resources/prompt.md'
 assert_gate true test-markdown $'M\tTests/Fixtures/README.md'
 assert_gate true widget-markdown $'M\tWidgetExtension/README.md'
 assert_gate true workflow-markdown $'M\t.github/workflows/README.md'
-assert_gate true mixed-docs-source $'M\tREADME.md' $'M\tSources/CodexBar/App.swift'
-assert_gate true tests $'M\tTests/CodexBarTests/ProcessTests.swift'
+assert_gate true mixed-docs-source $'M\tREADME.md' $'M\tSources/Bars/App.swift'
+assert_gate true tests $'M\tTests/BarsTests/ProcessTests.swift'
 assert_gate true package-manifest $'M\tPackage.swift'
 assert_gate true package-resolved $'M\tPackage.resolved'
 assert_gate true workflow $'M\t.github/workflows/ci.yml'
 assert_gate true script $'M\tScripts/ci_verify_test_jobs.sh'
 assert_gate true unknown-file $'A\tunknown.txt'
-assert_gate true deleted-source $'D\tSources/CodexBar/App.swift'
+assert_gate true deleted-source $'D\tSources/Bars/App.swift'
 assert_gate false deleted-docs $'D\tdocs/old.md'
-assert_gate true copied-source $'C100\tSources/CodexBar/App.swift\tdocs/App.md'
+assert_gate true copied-source $'C100\tSources/Bars/App.swift\tdocs/App.md'
 assert_gate false copied-docs $'C100\tdocs/old.md\tdocs/new.md'
 
 draft_paths="${tmp_dir}/draft-source.paths"
 draft_output="${tmp_dir}/draft-source.output"
-printf '%s\n' $'M\tSources/CodexBar/App.swift' > "$draft_paths"
+printf '%s\n' $'M\tSources/Bars/App.swift' > "$draft_paths"
 CI_PULL_REQUEST_DRAFT=true GITHUB_OUTPUT="$draft_output" \
   "${ROOT_DIR}/Scripts/ci_macos_test_gate.sh" "$draft_paths" >/dev/null
 if [[ "$(sed -n 's/^macos-tests=//p' "$draft_output")" != true ]]; then

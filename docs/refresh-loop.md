@@ -34,7 +34,7 @@ read_when:
   are suppressed before the consecutive-failure gate, including localized transport errors.
 
 ## Adaptive mode
-- `AdaptiveRefreshPolicy` (`Sources/CodexBar/AdaptiveRefreshPolicy.swift`) is a pure function of an `Input`
+- `AdaptiveRefreshPolicy` (`Sources/Bars/AdaptiveRefreshPolicy.swift`) is a pure function of an `Input`
   (current time, last menu-open time, latest local coding-activity time, Low Power Mode, thermal state) that returns
   the next delay and a stable `Reason`. It reads no clock and no `ProcessInfo` state itself;
   `UsageStore.startTimer()` gathers those impure signals immediately before each tick.
@@ -64,7 +64,7 @@ read_when:
   contents and reuses the Agent Sessions directory walk. With the Agent Sessions UI off, no Codex first-line metadata
   or thread names are read for cadence. The scanner still inspects running processes and their arguments (through
   native process APIs on macOS, `ps` elsewhere), resolves working directories, and inspects process-gated Claude
-  transcript metadata. CodexBar discards session records when the UI is off and retains only the latest `Date`.
+  transcript metadata. bars discards session records when the UI is off and retains only the latest `Date`.
   Each scan considers at most 64 agent processes, parses at most 128 Codex rollout metadata records, keeps at most 64
   Claude transcript candidates per project, and shares a 512-entry, depth-1, 150 ms agent-aware directory metadata
   budget. Future

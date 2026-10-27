@@ -42,7 +42,7 @@ On macOS 26 and later, Settings uses the system split-view sidebar, toolbar, sea
 - Calendar columns keep their chronological left-to-right order in right-to-left interfaces, so paging and keyboard date reveal follow the same coordinates as the drawn activity cells; surrounding controls retain the interface's layout direction.
 - Both the application menu and status menu open About in the Settings window. An existing Settings window is reused
   and switches to the About pane.
-- Homebrew-managed installs show an Updates section in About with the automatic-check toggle, Check for Updates, and the owning cask's status: checking, up to date, or "CodexBar x is available" with a prominent "Update to x" button. The menu shows the same "Update to x" action, then "Updating with Homebrew…" while Homebrew runs; the app relaunches after verifying the installed version reached the offered update.
+- Homebrew-managed installs show an Updates section in About with the automatic-check toggle, Check for Updates, and the owning cask's status: checking, up to date, or "bars x is available" with a prominent "Update to x" button. The menu shows the same "Update to x" action, then "Updating with Homebrew…" while Homebrew runs; the app relaunches after verifying the installed version reached the offered update.
 - The explicit Update action verifies the owning cask, then uses `brew reinstall --cask` if its receipt already matches the latest cask version, or `brew upgrade --cask` otherwise. This repairs an older app bundle behind a current receipt. Automatic and manual update checks never run `brew`; non-Homebrew installs retain Sparkle updates.
 - If a Homebrew check or update fails, About shows the error and, when the active receipt identifies the cask, a selectable monospaced upgrade command for that cask with a trailing copy control. The control confirms successful copies briefly; copying does not run an update.
 
@@ -50,7 +50,7 @@ On macOS 26 and later, Settings uses the system split-view sidebar, toolbar, sea
 
 Stacked rows with leading window labels align their values and meters after the widest label. Rows that begin with names, explicit spaces, or inline icons retain their natural spacing; hiding percentage window labels is unchanged.
 - Provider cards with both live throughput and daily history use a fixed-height Live · Spend chart switch; Live is the default, and the choice is remembered locally per provider instance.
-- About CodexBar includes the running version. When the updater is available, the menu offers Check for Updates… or the existing staged-update action.
+- About bars includes the running version. When the updater is available, the menu offers Check for Updates… or the existing staged-update action.
 - Overview offers Share Usage Snapshot when its Usage & Spend summary has shareable data. The local preview uses the same spend sources, hidden-source choices, calendar, and currency as that summary; Copy Image exports PNG and TIFF without uploading anything.
 - Shared cards and copied statistics keep model families from providers with complete model history, even when another provider in the same currency has unpriced or incomplete history. A ranking that omits providers or model rows is labeled **PARTIAL** on the image and **Top models (partial)** in copied text; complete rankings retain **BY USAGE**. Selected-day model rows are omitted because the shared totals describe the full reporting window.
 - LSUIElement app: no Dock icon; status item uses custom NSImage.
@@ -58,7 +58,7 @@ Stacked rows with leading window labels align their values and meters after the 
 - Merge Icons toggle combines providers into one status item with a switcher.
 - Menu Bar → Combined icon source offers Current selection (default), Highest usage, and Frontmost provider app. The last option follows enabled Codex, Claude, Cursor, and Antigravity desktop apps only while the merged icon is collapsed. Unknown or disabled apps fall back to the saved selection or Overview. Opening the menu preserves its provider, account, and Overview selection; focus never saves a new selection. Stacked and separate icons do not monitor focus. Monitoring uses macOS application notifications, without polling, permission prompts, or terminal-tab inspection. Existing highest-usage preferences are preserved, and the choice supports sync and portable preference transfer.
 - **Highest usage** compares quota windows, not cost or token activity. Providers without quota windows, such as Pi, are not candidates; choose **Current selection** and select the provider in the menu to keep it visible in the combined icon.
-- With separate icons, explicitly reordering providers in Settings reassigns CodexBar's saved menu bar slots in that order, from right to left. Recreated items retain their stable autosave and accessibility identities. Orders changed while icons are merged also update these saved slots before returning to separate icons. Ordinary refreshes and visibility recovery continue to preserve manual Command-drag placement.
+- With separate icons, explicitly reordering providers in Settings reassigns bars's saved menu bar slots in that order, from right to left. Recreated items retain their stable autosave and accessibility identities. Orders changed while icons are merged also update these saved slots before returning to separate icons. Ordinary refreshes and visibility recovery continue to preserve manual Command-drag placement.
 - With the automatic metric selected, switcher progress honors a provider's exhausted-quota selection before
   showing normal weekly progress. OpenCode Go's automatic percentage and switcher use the least remaining
   five-hour, weekly, or monthly allowance even before exhaustion. Explicit choices and separate provider pools
@@ -240,7 +240,7 @@ not add another day. The target keeps the reported credits, requests, currency, 
 follows the existing pace visibility setting. Unknown usage, missing resets, and expired windows show no
 target. This is a budget for the remaining period, not a measurement of today's usage or an alert threshold.
 
-The **Work days** setting selects the weekly pace model. **Automatic** uses Codex historical pace when enough data is available. Historical daily credits follow local calendar-day boundaries, including midnight daylight-saving transitions. Selecting 4, 5, 6, or 7 days uses that explicit schedule for pace and ETA instead; CodexBar continues collecting history in the background, but does not use historical predictions until the setting returns to Automatic. Six days counts Monday through Saturday and excludes Sunday, including in the session forecast's remaining capacity.
+The **Work days** setting selects the weekly pace model. **Automatic** uses Codex historical pace when enough data is available. Historical daily credits follow local calendar-day boundaries, including midnight daylight-saving transitions. Selecting 4, 5, 6, or 7 days uses that explicit schedule for pace and ETA instead; bars continues collecting history in the background, but does not use historical predictions until the setting returns to Automatic. Six days counts Monday through Saturday and excludes Sunday, including in the session forecast's remaining capacity.
 
 - **On pace** – usage matches the expected rate.
 - **X% in deficit** – you're consuming faster than the even rate; at this pace you'll run out before the window resets.
@@ -259,7 +259,7 @@ Runs out tokens remain hidden until 3% of their window has elapsed.
 
 ## Preferences notes
 - Advanced: “Disable Keychain access” turns off browser cookie import; paste Cookie headers manually in Providers.
-- Advanced: “Show provider storage usage” enables background scans of known provider-owned local paths; CodexBar only
+- Advanced: “Show provider storage usage” enables background scans of known provider-owned local paths; bars only
   reports sizes and cleanup ideas, it does not delete files.
 - Display: “Overview tab providers” controls which providers appear in Merge Icons → Overview (up to 6).
 - If no providers are selected for Overview, the Overview tab is hidden.

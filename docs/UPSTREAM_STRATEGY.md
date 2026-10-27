@@ -6,13 +6,13 @@ read_when:
 
 # Multi-Upstream Fork Management Strategy
 
-> Historical policy for the `topoffunnel/CodexBar` fork. Its claim that multi-account support must stay out of
+> Historical policy for the `topoffunnel/bars` fork. Its claim that multi-account support must stay out of
 > upstream is obsolete; see [Configuration](configuration.md#tokenaccounts) for current support. Main-repository
 > scope is defined in [Vision](../VISION.md), with development and release instructions in
 > [Development](DEVELOPMENT.md) and [Releasing](RELEASING.md). The helper scripts and upstream-monitor workflow
 > below remain in the tree, so this document is retained as their historical context, not a current contribution policy.
 
-**Fork:** topoffunnel/CodexBar  
+**Fork:** topoffunnel/bars  
 **Upstream 1:** steipete/CodexBar (original)  
 **Upstream 2:** nguyenphutrong/quotio (inspiration source)
 
@@ -46,7 +46,7 @@ read_when:
 
 ```bash
 # Your fork (origin)
-git remote add origin git@github.com:topoffunnel/CodexBar.git
+git remote add origin git@github.com:topoffunnel/bars.git
 
 # Original upstream (steipete)
 git remote add upstream git@github.com:steipete/CodexBar.git
@@ -239,7 +239,7 @@ git commit -m "feat: implement feature inspired by quotio
 Inspired by quotio's approach to [feature]:
 https://github.com/nguyenphutrong/quotio/commit/abc123
 
-Implemented independently with CodexBar-specific patterns."
+Implemented independently with bars-specific patterns."
 ```
 
 ---
@@ -355,7 +355,7 @@ Adds automatic session restoration on app restart.
 Inspired by quotio's approach:
 https://github.com/nguyenphutrong/quotio/blob/main/...
 
-Implemented independently using CodexBar patterns.
+Implemented independently using bars patterns.
 ```
 
 ---
@@ -388,11 +388,11 @@ Implemented independently using CodexBar patterns.
 git checkout -b feature/my-improvement
 
 # Commit 1: Core improvement (upstream-suitable)
-git add Sources/CodexBarCore/...
+git add Sources/BarsCore/...
 git commit -m "feat: improve cookie handling"
 
 # Commit 2: Fork-specific enhancements
-git add Sources/CodexBar/About.swift
+git add Sources/Bars/About.swift
 git commit -m "feat: add fork attribution for improvement"
 
 # Merge to main (both commits)
@@ -408,8 +408,8 @@ git cherry-pick <commit-1-hash>  # Only the core improvement
 ### Maintaining Fork Identity
 
 Keep these files fork-specific (never upstream):
-- `Sources/CodexBar/About.swift` (your attribution)
-- `Sources/CodexBar/PreferencesAboutPane.swift` (fork sections)
+- `Sources/Bars/About.swift` (your attribution)
+- `Sources/Bars/PreferencesAboutPane.swift` (fork sections)
 - `README.md` (fork notice)
 - `docs/FORK_*.md` (fork documentation)
 - `FORK_STATUS.md`
@@ -492,7 +492,7 @@ git commit -m "feat: implement multi-account management
 Inspired by quotio's account switching pattern:
 https://github.com/nguyenphutrong/quotio/...
 
-Implemented independently using CodexBar's architecture."
+Implemented independently using bars's architecture."
 ```
 
 ---
@@ -529,11 +529,11 @@ Implemented independently using CodexBar's architecture."
 ```bash
 # During upstream merge
 git merge upstream/main
-# CONFLICT in Sources/CodexBar/About.swift
+# CONFLICT in Sources/Bars/About.swift
 
 # Keep your fork version for branding files
-git checkout --ours Sources/CodexBar/About.swift
-git add Sources/CodexBar/About.swift
+git checkout --ours Sources/Bars/About.swift
+git add Sources/Bars/About.swift
 
 # Merge other files manually
 # Then continue

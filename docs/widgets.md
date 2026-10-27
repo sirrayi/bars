@@ -1,9 +1,9 @@
 ---
-summary: "WidgetKit snapshot pipeline + visibility troubleshooting for CodexBar widgets."
+summary: "WidgetKit snapshot pipeline + visibility troubleshooting for bars widgets."
 read_when:
   - Modifying WidgetKit extension behavior or snapshot format
   - Debugging widget update timing
-  - Widget gallery shows no CodexBar widgets
+  - Widget gallery shows no bars widgets
 ---
 
 # Widgets
@@ -30,26 +30,26 @@ read_when:
 Persistence must finish before requesting a timeline reload. Tests opt in with an in-memory save override or test-owned snapshot URL; neither reloads WidgetKit. Use the helper's explicit test-mode decision and per-store reload callback to verify ordering without changing process-wide isolation or calling WidgetKit.
 
 ## Extension
-- `Sources/CodexBarWidget` contains timeline + views.
+- `Sources/BarsWidget` contains timeline + views.
 - Usage, Switcher, History, and Metric views must not add a second outer inset to WidgetKit's margins.
-- `WidgetExtension/CodexBarWidgetExtension.xcodeproj` builds those sources as the packaged macOS WidgetKit app extension.
+- `WidgetExtension/BarsWidgetExtension.xcodeproj` builds those sources as the packaged macOS WidgetKit app extension.
 - Keep data shape in sync with `WidgetSnapshot` in the main app.
 
 ## Widget types
-- **CodexBar Switcher** (`CodexBarSwitcherWidget`): static provider switcher widget, small/medium/large.
-- **CodexBar Usage** (`CodexBarUsageWidget`): configurable provider usage widget, small/medium/large.
-- **CodexBar Account Usage** (`CodexBarAccountUsageWidget`): pins one saved account’s quota windows, small/medium/large.
-- **CodexBar Accounts** (`CodexBarAccountsWidget`): quota-only overview for one provider, medium/large.
-- **CodexBar History** (`CodexBarHistoryWidget`): configurable usage-history chart, medium/large.
-- **CodexBar Metric** (`CodexBarCompactWidget`): credits/today-cost/Cost widget, small only. **Cost** follows the app's [reporting period](cost-reporting-periods.md), including month-to-date and all available history; the period label travels with the snapshot.
-- **CodexBar Burn Down** (`CodexBarBurnDownWidget`): configurable quota burn-down chart, medium only.
-- **CodexBar Burn Down (Combined)** (`CodexBarCombinedBurnDownWidget`): two quota burn-down charts, medium only.
+- **bars Switcher** (`BarsSwitcherWidget`): static provider switcher widget, small/medium/large.
+- **bars Usage** (`BarsUsageWidget`): configurable provider usage widget, small/medium/large.
+- **bars Account Usage** (`BarsAccountUsageWidget`): pins one saved account’s quota windows, small/medium/large.
+- **bars Accounts** (`BarsAccountsWidget`): quota-only overview for one provider, medium/large.
+- **bars History** (`BarsHistoryWidget`): configurable usage-history chart, medium/large.
+- **bars Metric** (`BarsCompactWidget`): credits/today-cost/Cost widget, small only. **Cost** follows the app's [reporting period](cost-reporting-periods.md), including month-to-date and all available history; the period label travels with the snapshot.
+- **bars Burn Down** (`BarsBurnDownWidget`): configurable quota burn-down chart, medium only.
+- **bars Burn Down (Combined)** (`BarsCombinedBurnDownWidget`): two quota burn-down charts, medium only.
 
-Switcher widgets share one remembered provider selection, so switching one updates all Switcher widgets. To keep Claude and Codex visible side by side, add two **CodexBar Usage** widgets and configure each widget's **Provider** separately. Usage widgets read their own configured provider instead of the shared Switcher selection.
+Switcher widgets share one remembered provider selection, so switching one updates all Switcher widgets. To keep Claude and Codex visible side by side, add two **bars Usage** widgets and configure each widget's **Provider** separately. Usage widgets read their own configured provider instead of the shared Switcher selection.
 
 ## Account selection
 
-Enable **Settings → Menu → Widgets → Keep accounts updated for widgets**, add **CodexBar Account Usage**, and choose **Provider** and **Account**. Each widget pins its own account with the usual Usage sizes, bars, and reset countdowns. Without an account it shows setup instructions, never the current account implicitly. Regular **CodexBar Usage** follows its configured provider.
+Enable **Settings → Menu → Widgets → Keep accounts updated for widgets**, add **bars Account Usage**, and choose **Provider** and **Account**. Each widget pins its own account with the usual Usage sizes, bars, and reset countdowns. Without an account it shows setup instructions, never the current account implicitly. Regular **bars Usage** follows its configured provider.
 
 The opt-in refreshes saved token accounts and visible Codex accounts independently of menu layout, bounded to six accounts. Claude-swap owns its polling and remains selectable with one slot. Slot labels and opaque ownership fingerprints prevent replacements from inheriting pins without persisting the adapter's personal identity fields. **Hide personal info** replaces other account labels with ordinals without changing pin identities.
 
@@ -63,7 +63,7 @@ Account snapshots contain quota windows only: provider-level cost, credits, and 
 
 ### Multi-account overview
 
-Enable **Keep accounts updated for widgets**, add **CodexBar Accounts**, and choose its **Provider**.
+Enable **Keep accounts updated for widgets**, add **bars Accounts**, and choose its **Provider**.
 Medium shows up to four account rows; large supports up to eight. Published accounts are sorted by their
 most constrained general quota's remaining percentage, lowest first, using the same quota selection as
 Account Usage. Ties keep snapshot order, and unavailable accounts follow measured accounts. The
@@ -81,7 +81,7 @@ the optional `accountOverflowCounts` field remain readable and cannot report acc
 
 ### Upgrade and rollback compatibility
 
-`CodexBarAccountUsageWidget` uses `AccountUsageSelectionIntent` with no default account. It adds no parameters to existing kinds or `ProviderSelectionIntent` and does not change provider timelines. Background account refresh is a separate opt-in, off by default.
+`BarsAccountUsageWidget` uses `AccountUsageSelectionIntent` with no default account. It adds no parameters to existing kinds or `ProviderSelectionIntent` and does not change provider timelines. Background account refresh is a separate opt-in, off by default.
 
 The JSON `accounts` field is optional for new readers and ignored by old readers. A rollback may rewrite snapshots without it; Account Usage then shows unavailable, never another account's quota. Old apps do not provide the Account Usage kind, so rollback support covers provider widgets only.
 
@@ -110,7 +110,7 @@ Providers without a `ProviderChoice` case can still be present in the app snapsh
 Burn-down provider choices are filtered from the enabled providers in the latest saved snapshot. A quota
 qualifies when it has a finite usage percentage, a positive `windowMinutes`, a reset date, and is not a
 synthetic placeholder. The compile-time AppIntent catalog covers all built-in providers; providers that
-only report balances, unknown durations, or unknown resets do not appear. Refresh CodexBar before
+only report balances, unknown durations, or unknown resets do not appear. Refresh bars before
 configuring a newly enabled provider. Custom plugin instance IDs are not part of the AppEnum catalog.
 
 For **Burn Down**, select **Provider**, then **Usage window**. The choices use the snapshot's quota names:
@@ -134,10 +134,10 @@ registration, signing, or daemon caching (not SwiftUI code).
 
 ### What happens after an app update
 
-On the first launch after the app's build number changes, CodexBar checks for surviving
+On the first launch after the app's build number changes, bars checks for surviving
 widget extension processes owned by the current user. Their code-signing designated
 requirement must match the installed extension, whose bundle identifier and signing team
-must belong to this app. CodexBar sends SIGTERM only if the process started before the
+must belong to this app. bars sends SIGTERM only if the process started before the
 installed extension executable's latest modification/change time, or its executable path
 has disappeared. It then requests `reloadAllTimelines()` once. Processes started after
 installation, other users' processes, and processes with a different or unreadable
@@ -146,7 +146,7 @@ launches of the same build.
 
 The normal startup refresh also publishes a snapshot, waits for the save attempt, and
 requests a timeline reload. Later refreshes repeat that request. The widget kinds are
-declared in `CodexBarWidgetBundle`; macOS discovers the embedded extension. Packaging
+declared in `BarsWidgetBundle`; macOS discovers the embedded extension. Packaging
 assigns the same version and build number to the app and extension. Recovery uses process
 age because the plist at a replaced pathname does not identify the running executable's
 version.
@@ -160,15 +160,15 @@ replacement executable or prove that `chronod` accepted its output.
 ### Widgets removed during Homebrew upgrades
 
 Homebrew replaces the app bundle during a cask upgrade. Even when it preserves the outer
-`CodexBar.app` directory, its removal of the old contents temporarily removes the embedded
+`bars.app` directory, its removal of the old contents temporarily removes the embedded
 widget extension. macOS can treat that as an uninstall and remove placed widgets (#3627).
-If CodexBar is still in the gallery but desktop or Notification Center widgets disappeared,
+If bars is still in the gallery but desktop or Notification Center widgets disappeared,
 re-registering the extension or reloading timelines does not restore their saved placements
 and configuration. WidgetCenter exposes configuration queries and reload requests, not an
 API for restoring removed widget placements. Add and configure those widgets again.
 
 `brew upgrade --formula` upgrades formulae only and can defer cask replacement until you are
-ready to reconfigure widgets; it does not update CodexBar. Neither `--no-quit` nor `--no-binaries`
+ready to reconfigure widgets; it does not update bars. Neither `--no-quit` nor `--no-binaries`
 prevents replacement of the app's embedded extension. For an alternative update mechanism,
 use a standalone GitHub release installation with Sparkle; Homebrew-managed installations
 disable Sparkle. Widget placement preservation with that alternative still needs native
@@ -200,7 +200,7 @@ Homebrew deleting widget placements and from a snapshot containing no provider e
 
 The [0.75.0 Homebrew report](https://github.com/steipete/CodexBar/issues/2838#issuecomment-6160909047)
 on macOS 27.0.1 also records version-mismatch rejections immediately after app registration,
-despite matching installed app/extension build numbers. Terminating only `CodexBarWidget`
+despite matching installed app/extension build numbers. Terminating only `BarsWidget`
 restored `chronod` acceptance and timeline-file updates. The old executable mapping and
 failing snapshot were not captured, so this does not establish their exact identity or
 rule out every payload-dependent failure covered by error 1050.
@@ -209,11 +209,11 @@ Automatic post-update recovery covers verified old extension processes. If widge
 stale, collect those diagnostics first; the manual fallback for this failure is:
 
 ```sh
-killall -TERM CodexBarWidget
+killall -TERM BarsWidget
 ```
 
 macOS can then launch the installed extension on the next timeline request. This terminates
-all processes with that name, including any other CodexBar installation's widget extension;
+all processes with that name, including any other bars installation's widget extension;
 it does not terminate the main app. In the Homebrew report, recovery needed no restart of
 `chronod`, Dock or NotificationCenter, cache deletion, or widget reconfiguration. Check for
 `chronod` **Reload success**, updated timeline files, and current visible values afterward;
@@ -222,16 +222,16 @@ manual fallback guarantees recovery from every error 1050 or restores deleted pl
 
 ### 1) Verify the extension bundle exists where macOS expects it
 ```
-APP="/Applications/CodexBar.app"
-WAPPEX="$APP/Contents/PlugIns/CodexBarWidget.appex"
-WIDGET_ID="com.steipete.codexbar.widget" # debug builds use com.steipete.codexbar.debug.widget
+APP="/Applications/bars.app"
+WAPPEX="$APP/Contents/PlugIns/BarsWidget.appex"
+WIDGET_ID="com.sirrayi.bars.widget" # debug builds use com.sirrayi.bars.debug.widget
 
 ls -la "$WAPPEX" "$WAPPEX/Contents" "$WAPPEX/Contents/MacOS"
 ```
 
 ### 2) PlugInKit registration (pkd)
 ```
-pluginkit -m -p com.apple.widgetkit-extension -v | grep -i codexbar || true
+pluginkit -m -p com.apple.widgetkit-extension -v | grep -i bars || true
 pluginkit -m -p com.apple.widgetkit-extension -i "$WIDGET_ID" -vv
 ```
 Notes:
@@ -250,10 +250,10 @@ If multiple paths appear, delete older installs and bump `CFBundleVersion`.
 ### 3) Code signing + Gatekeeper assessment
 Widgets are loaded by system daemons. Any signing failure can hide the widget.
 ```
-codesign --verify --deep --strict --verbose=4 /Applications/CodexBar.app
+codesign --verify --deep --strict --verbose=4 /Applications/bars.app
 codesign --verify --strict --verbose=4 "$WAPPEX"
-codesign --verify --strict --verbose=4 "$WAPPEX/Contents/MacOS/CodexBarWidget"
-spctl --assess --type execute --verbose=4 /Applications/CodexBar.app
+codesign --verify --strict --verbose=4 "$WAPPEX/Contents/MacOS/BarsWidget"
+spctl --assess --type execute --verbose=4 /Applications/bars.app
 ```
 
 ### 4) Restart the right daemons (NotificationCenter alone is not enough)
@@ -269,9 +269,9 @@ log stream --style compact --predicate '(process == "pkd" OR process == "chronod
 ```
 
 ### 6) Packaging sanity checks
-- Widget bundle id should be `com.steipete.codexbar.widget` for release and `com.steipete.codexbar.debug.widget` for debug.
+- Widget bundle id should be `com.sirrayi.bars.widget` for release and `com.sirrayi.bars.debug.widget` for debug.
 - `NSExtensionPointIdentifier` must be `com.apple.widgetkit-extension`.
-- Bundle folder name should match: `CodexBarWidget.appex`.
+- Bundle folder name should match: `BarsWidget.appex`.
 
 Optional: re-seed LaunchServices (rarely helps, but low risk):
 ```

@@ -5,7 +5,7 @@ explicit JSONL trace. `AdaptiveReplayCLI` is the command-line wrapper around the
 
 ## Scope
 
-The replay targets do not import `CodexBar` or `CodexBarCore`; they share only the package-internal,
+The replay targets do not import `bars` or `BarsCore`; they share only the package-internal,
 Foundation-only `AdaptiveRefreshCore` target with the app. They do not record app behavior, scan
 Codex or Claude transcript directories, write trace files, call providers, or change the production
 refresh policy at runtime. Trace capture and lifecycle management are deliberately outside this tool; callers

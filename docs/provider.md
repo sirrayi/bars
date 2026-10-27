@@ -24,8 +24,8 @@ This doc describes the **current provider architecture** and the exact steps to 
 - **Identity fields**: email/org/plan/loginMethod. Must stay **siloed per provider**.
 
 ## Architecture overview (now)
-- `Sources/CodexBarCore`: provider descriptors + fetch strategies + probes + parsing + shared utilities.
-- `Sources/CodexBar`: UI/state + provider implementations (settings/login/menu hooks only).
+- `Sources/BarsCore`: provider descriptors + fetch strategies + probes + parsing + shared utilities.
+- `Sources/Bars`: UI/state + provider implementations (settings/login/menu hooks only).
 - Provider IDs are compile-time: `UsageProvider` enum (used for persistence + widgets).
 - Provider wiring is descriptor-driven:
   - `ProviderDescriptor` owns labels, URLs, default enablement, and fetch pipeline.
@@ -42,11 +42,11 @@ Common building blocks already exist:
 Browser discovery policy belongs to the provider. Use `ChromiumLocalStorageDiscovery.defaultBrowsers` for
 catalog-derived Chromium storage discovery; the shared traversal handles localStorage, sessionStorage, and
 origin-filtered IndexedDB. Cookie imports use `ProviderBrowserCookieDefaults.defaultImportOrder`, the shared catalog
-order. Keep that metadata non-nil on macOS so web providers participate in `codexbar cookie refresh` and `--all`.
+order. Keep that metadata non-nil on macOS so web providers participate in `bars cookie refresh` and `--all`.
 `BrowserCookieAccessGate` keeps background and settings-triggered refreshes noninteractive. Chromium imports check
 for cookies matching the provider's hosts before requesting Safe Storage; a manual action shares at most one
 interactive Keychain read across all providers and browsers. Denials retain the six-hour browser and Chromium-family
-cooldown, including manual retries; only `codexbar cookie refresh --allow-keychain-prompt` explicitly overrides it.
+cooldown, including manual retries; only `bars cookie refresh --allow-keychain-prompt` explicitly overrides it.
 Session validation is lazy: stop at the first working browser and continue only after a missing or rejected session.
 Plugin permission errors retain recovery advice for each blocked browser. A decryption denial supersedes a profile
 denial only for that same browser; Safari points to Full Disk Access while Chromium profile denials point to
@@ -162,13 +162,13 @@ Expose a narrow set of protocols/structs that provider implementations can use:
 Rule: providers do not talk to `FileManager`, `Security`, or “browser internals” directly unless they *are* the host API implementation.
 
 ## Provider-specific code layout
-- `Sources/CodexBarCore/Providers/<ProviderID>/`
+- `Sources/BarsCore/Providers/<ProviderID>/`
   - `<ProviderID>Descriptor.swift` (descriptor + strategy pipeline)
   - `<ProviderID>Strategies.swift` (strategy implementations)
   - `<ProviderID>Probe.swift` / `<ProviderID>Fetcher.swift`
   - `<ProviderID>Models.swift`
   - `<ProviderID>Parser.swift` (if text/HTML parsing)
-- `Sources/CodexBar/Providers/<ProviderID>/`
+- `Sources/Bars/Providers/<ProviderID>/`
   - `<ProviderID>ProviderImplementation.swift` (settings/login UI hooks only)
 
 ## Minimal provider example (copy-paste)
@@ -261,15 +261,15 @@ An integration can be restored when missing operator or authorization evidence b
 
 Adding a first-party provider currently requires all of these registration points:
 
-1. Create `Sources/CodexBarCore/Providers/<Name>/` with the descriptor, fetch strategies, and core settings or
+1. Create `Sources/BarsCore/Providers/<Name>/` with the descriptor, fetch strategies, and core settings or
    credential types.
-2. Create `Sources/CodexBar/Providers/<Name>/` with the app implementation and any app settings contribution or UI.
+2. Create `Sources/Bars/Providers/<Name>/` with the app implementation and any app settings contribution or UI.
 3. Add one stable case, in the intended bootstrap order, to `UsageProvider` in
-   `Sources/CodexBarCore/Providers/Providers.swift`.
+   `Sources/BarsCore/Providers/Providers.swift`.
 4. Run `Scripts/regenerate-provider-manifests.sh`. Do not edit `ProviderManifest.swift`,
    `ProviderImplementationManifest.swift`, or `ProviderInstanceIDAliases.generated.swift` directly. The generator also
    refreshes `docs/provider-ids.md`, which is linked from `docs/configuration.md`.
-5. Add `Sources/CodexBar/Resources/ProviderIcon-<id>.svg` and reference it from the descriptor's branding.
+5. Add `Sources/Bars/Resources/ProviderIcon-<id>.svg` and reference it from the descriptor's branding.
 6. Unless the descriptor sets `widgetSelectable: false`, add the matching case and literal
    `caseDisplayRepresentations` entry to the WidgetKit `ProviderChoice` `AppEnum`. AppIntents extracts this table
    statically, so widget display representations cannot be derived at runtime. `WidgetProviderChoiceTests` keeps the

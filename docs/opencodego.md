@@ -37,5 +37,5 @@ The shared [OpenCode guide](opencode.md) documents authentication, scoped source
 boundary between device-local estimates and account quota. Keep those details there so the two guides do not drift.
 
 ```bash
-codexbar usage --provider opencodego --format json --pretty
+bars usage --provider opencodego --format json --pretty
 ```

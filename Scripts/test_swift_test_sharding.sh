@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TEMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/codexbar-test-sharding.XXXXXX")"
+TEMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/bars-test-sharding.XXXXXX")"
 trap 'rm -rf "${TEMP_DIR}"' EXIT
 
 IFS= read -r -d '' FAKE_SWIFT_SCRIPT <<'EOF' || true
@@ -36,17 +36,17 @@ if [[ "$*" == "test list" ]]; then
     exit 1
   fi
   printf '%s\n' \
-    "CodexBarTests.Alpha/test_one()" \
-    "CodexBarTests.Alpha/test_two(argument:)" \
-    "CodexBarTests.Beta/test_two" \
-    "CodexBarTests.Gamma/test_three" \
-    "CodexBarTests.Delta/test_four" \
-    "CodexBarTests.Epsilon/test_five" \
-    "CodexBarTests.Zeta/test_six" \
-    "CodexBarTests.Eta/test_seven" \
-    "CodexBarTests.Theta/test_eight" \
-    'CodexBarTests.`top level works`()' \
-    'CodexBarTests.`top/level slash works`()'
+    "BarsTests.Alpha/test_one()" \
+    "BarsTests.Alpha/test_two(argument:)" \
+    "BarsTests.Beta/test_two" \
+    "BarsTests.Gamma/test_three" \
+    "BarsTests.Delta/test_four" \
+    "BarsTests.Epsilon/test_five" \
+    "BarsTests.Zeta/test_six" \
+    "BarsTests.Eta/test_seven" \
+    "BarsTests.Theta/test_eight" \
+    'BarsTests.`top level works`()' \
+    'BarsTests.`top/level slash works`()'
   exit 0
 fi
 
@@ -150,17 +150,17 @@ if not test_step or not re.search(r"(?m)^\s+\./Scripts/test.sh --direct-workers 
     raise SystemExit("required hosted tests must use the verified two-worker direct runner")
 if "continue-on-error" in test_step.group(1) or re.search(r"(?m)^\s+if:", test_step.group(1)):
     raise SystemExit("required full-inventory tests must remain gating")
-if any(value in job for value in ["--limit-groups", "--shard-index", "--shard-count", "CODEXBAR_TEST_SHARD_"]):
+if any(value in job for value in ["--limit-groups", "--shard-index", "--shard-count", "BARS_TEST_SHARD_"]):
     raise SystemExit("required hosted tests must not limit or shard the full inventory")
 if any(value not in test_step.group(1) for value in [
-    "CODEXBAR_TEST_GROUP_SIZE=8", "CODEXBAR_TEST_SUITE_TIMEOUT=120",
-    "CODEXBAR_TEST_RETRY_NON_TIMEOUT_FAILURES=0",
+    "BARS_TEST_GROUP_SIZE=8", "BARS_TEST_SUITE_TIMEOUT=120",
+    "BARS_TEST_RETRY_NON_TIMEOUT_FAILURES=0",
 ]):
     raise SystemExit("required hosted tests must retain group size, deadlines and failure policy")
 diagnostics = re.search(r"(?ms)^      - name: Collect crash reports on failure\n(.*?)(?=^      - |\Z)", job)
 if not diagnostics or "if: ${{ failure() }}" not in diagnostics.group(1):
     raise SystemExit("crash diagnostics must run for required test failures")
-if 'swift_test_diagnostics.py --since "$RUNNER_TEMP/codexbar-tests-started"' not in job:
+if 'swift_test_diagnostics.py --since "$RUNNER_TEMP/bars-tests-started"' not in job:
     raise SystemExit("crash diagnostics must use the explicit test-start timestamp")
 step_timeout = re.search(r"(?m)^        timeout-minutes: (\d+)$", test_step.group(1)) if test_step else None
 if not step_timeout or int(step_timeout.group(1)) < 75:
@@ -182,18 +182,18 @@ grep -Fq '| First-pass failed groups | `1` |' "${GITHUB_STEP_SUMMARY}"
 grep -Fq '| Full-group retries | `1` |' "${GITHUB_STEP_SUMMARY}"
 grep -Fq '| Recovered groups | `1` |' "${GITHUB_STEP_SUMMARY}"
 [[ "$(grep -c '^test --skip-build --no-parallel' "${FAKE_SWIFT_LOG}")" -eq 4 ]]
-grep -Fq "CodexBarTests\\.Alpha" "${FAKE_SWIFT_LOG}"
-grep -Fq "CodexBarTests\\.Beta" "${FAKE_SWIFT_LOG}"
-grep -Fq "CodexBarTests\\..*top\\ level\\ works" "${FAKE_SWIFT_LOG}"
-grep -Fq "CodexBarTests\\..*top/level\\ slash\\ works" "${FAKE_SWIFT_LOG}"
+grep -Fq "BarsTests\\.Alpha" "${FAKE_SWIFT_LOG}"
+grep -Fq "BarsTests\\.Beta" "${FAKE_SWIFT_LOG}"
+grep -Fq "BarsTests\\..*top\\ level\\ works" "${FAKE_SWIFT_LOG}"
+grep -Fq "BarsTests\\..*top/level\\ slash\\ works" "${FAKE_SWIFT_LOG}"
 [[ "$(wc -l < "${FAKE_SWIFT_LOG}")" -eq 5 ]]
 
 reset_case strict
 export FAKE_SWIFT_MODE=group_fail_once
 set +e
-CODEXBAR_TEST_GROUP_SIZE=4 \
-  CODEXBAR_TEST_SUITE_TIMEOUT=10 \
-  CODEXBAR_TEST_RETRY_NON_TIMEOUT_FAILURES=0 \
+BARS_TEST_GROUP_SIZE=4 \
+  BARS_TEST_SUITE_TIMEOUT=10 \
+  BARS_TEST_RETRY_NON_TIMEOUT_FAILURES=0 \
   "${ROOT_DIR}/Scripts/test.sh" \
     --limit-groups 1 \
     --swift-command /bin/bash \
@@ -229,7 +229,7 @@ run_harness --group-size 4 --timeout 10 --list-only \
 for shard_count in 2 3; do
   for ((shard_index = 0; shard_index < shard_count; shard_index++)); do
     reset_case "shard-list-${shard_count}-${shard_index}"
-    CODEXBAR_TEST_SHARD_INDEX="$shard_index" CODEXBAR_TEST_SHARD_COUNT="$shard_count" \
+    BARS_TEST_SHARD_INDEX="$shard_index" BARS_TEST_SHARD_COUNT="$shard_count" \
       "${ROOT_DIR}/Scripts/test.sh" --group-size 4 --timeout 10 --list-only \
         --swift-command /bin/bash \
         --swift-command-arg=-c \

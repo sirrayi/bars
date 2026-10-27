@@ -1,5 +1,5 @@
 ---
-summary: "Provider data sources and parsing overview for every registered CodexBar provider."
+summary: "Provider data sources and parsing overview for every registered bars provider."
 read_when:
   - Adding or modifying provider fetch/parsing
   - Adjusting provider labels, toggles, or metadata
@@ -8,7 +8,7 @@ read_when:
 
 # Providers
 
-CodexBar currently registers 5 provider IDs. Some companies expose multiple surfaces, such as Codex vs OpenAI API or
+bars currently registers 5 provider IDs. Some companies expose multiple surfaces, such as Codex vs OpenAI API or
 OpenCode vs OpenCode Go, because the auth source and quota shape differ.
 
 
@@ -19,8 +19,8 @@ Source labels (CLI/header): `openai-web`, `web`, `oauth`, `api`, `local`, `cli`,
 Cookie-based providers expose a Cookie source picker (Automatic or Manual) in Settings → Providers.
 Some browser cookie imports are cached in Keychain and reused until the session is invalid. API keys, manual cookie
 headers, source selection, provider ordering, and token accounts are stored in the resolved config file.
-New installs use `~/.config/codexbar/config.json`; existing `~/.codexbar/config.json` installs retain that legacy path.
-See [CLI configuration](cli-configuration.md) for `XDG_CONFIG_HOME` and `CODEXBAR_CONFIG` overrides.
+New installs use `~/.config/bars/config.json`; existing `~/.bars/config.json` installs retain that legacy path.
+See [CLI configuration](cli-configuration.md) for `XDG_CONFIG_HOME` and `BARS_CONFIG` overrides.
 
 ## Usage & Spend settings
 
@@ -41,7 +41,7 @@ dashboard refresh before retrying. Codex account-cache ownership and provider-de
 
 Native cost-history sources are the descriptors that advertise token-cost support: Codex, Claude,
 OpenCode Go, and Devin (local CLI sessions). Providers without that contract are omitted instead of
-appearing as empty subscriptions. Each native currency has its own total, ranking, and daily chart; CodexBar never
+appearing as empty subscriptions. Each native currency has its own total, ranking, and daily chart; bars never
 adds or ranks amounts across currencies.
 
 The page also shows token mix (input / output / cache / reasoning), priced/unpriced/unmetered/estimated coverage,
@@ -136,7 +136,7 @@ complete when the available scan window covers fewer days.
   not include local fallback.
 - Uses the public usage API for rolling 5-hour, weekly, and monthly usage windows, with the workspace Go page/server
   data retained as a compatibility fallback.
-- Optional workspace ID comes from `~/.codexbar/config.json` (`providers[].workspaceID`) or `CODEXBAR_OPENCODEGO_WORKSPACE_ID`.
+- Optional workspace ID comes from `~/.bars/config.json` (`providers[].workspaceID`) or `BARS_OPENCODEGO_WORKSPACE_ID`.
 - Status: none yet.
 - Details: `docs/opencodego.md`.
 

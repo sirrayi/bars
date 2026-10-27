@@ -16,31 +16,31 @@ from direct_swift_test_groups import InventoryMismatch, checked, pool_timeout, p
 class DirectSwiftTestGroupsTests(unittest.TestCase):
     def test_xctest_inventory_keeps_exact_method_identifiers(self):
         value = {"tests": [{"name": "All tests", "tests": [
-            {"name": "CodexBarTests.ExampleTests", "tests": [{"name": "testFirst"}, {"name": "testSecond"}]}
+            {"name": "BarsTests.ExampleTests", "tests": [{"name": "testFirst"}, {"name": "testSecond"}]}
         ]}]}
-        self.assertEqual(xctest_inventory(value), ["CodexBarTests.ExampleTests/testFirst",
-                                                  "CodexBarTests.ExampleTests/testSecond"])
+        self.assertEqual(xctest_inventory(value), ["BarsTests.ExampleTests/testFirst",
+                                                  "BarsTests.ExampleTests/testSecond"])
 
     def test_group_filters_preserve_suite_and_top_level_selections(self):
-        inventory = ["CodexBarTests.ExampleTests/testFirst", "CodexBarTests.OtherTests/testFirst",
-                     "CodexBarTests.`top level test`()"]
-        selections = [{"name": "CodexBarTests.ExampleTests", "suite_name": "CodexBarTests.ExampleTests",
-                       "filter_pattern": r"^CodexBarTests\.ExampleTests/"}]
+        inventory = ["BarsTests.ExampleTests/testFirst", "BarsTests.OtherTests/testFirst",
+                     "BarsTests.`top level test`()"]
+        selections = [{"name": "BarsTests.ExampleTests", "suite_name": "BarsTests.ExampleTests",
+                       "filter_pattern": r"^BarsTests\.ExampleTests/"}]
         self.assertEqual(selected_tests(inventory, selections), inventory[:1])
         selections.append({"name": "top level test", "suite_name": None,
-                           "filter_pattern": r"CodexBarTests\..*top\ level\ test"})
+                           "filter_pattern": r"BarsTests\..*top\ level\ test"})
         self.assertEqual(selected_tests(inventory, selections), [inventory[0], inventory[2]])
 
     def test_worker_environment_isolates_home_and_suppresses_keychain(self):
-        with patch.dict(os.environ, {"HOME": "/synthetic/real-home", "CODEXBAR_ALLOW_TEST_KEYCHAIN_ACCESS": "1",
-                                     "CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS": "0",
-                                     "CODEXBAR_TEST_CODEX_FILE_FIXTURES": "inherited"}):
+        with patch.dict(os.environ, {"HOME": "/synthetic/real-home", "BARS_ALLOW_TEST_KEYCHAIN_ACCESS": "1",
+                                     "BARS_SUPPRESS_TEST_KEYCHAIN_ACCESS": "0",
+                                     "BARS_TEST_CODEX_FILE_FIXTURES": "inherited"}):
             environment = runtime_environment(Path("/synthetic/Xcode/Contents/Developer"), Path("/synthetic/group"))
         self.assertEqual(environment["CFFIXED_USER_HOME"], "/synthetic/group")
         self.assertEqual(environment["HOME"], "/synthetic/group")
-        self.assertEqual(environment["CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS"], "1")
-        self.assertNotIn("CODEXBAR_ALLOW_TEST_KEYCHAIN_ACCESS", environment)
-        self.assertNotIn("CODEXBAR_TEST_CODEX_FILE_FIXTURES", environment)
+        self.assertEqual(environment["BARS_SUPPRESS_TEST_KEYCHAIN_ACCESS"], "1")
+        self.assertNotIn("BARS_ALLOW_TEST_KEYCHAIN_ACCESS", environment)
+        self.assertNotIn("BARS_TEST_CODEX_FILE_FIXTURES", environment)
 
     def test_runtime_includes_private_frameworks_after_inherited_search_paths(self):
         with patch.dict(os.environ, {"DYLD_FRAMEWORK_PATH": "/synthetic/override"}, clear=True):
@@ -80,7 +80,7 @@ class DirectSwiftTestGroupsTests(unittest.TestCase):
 
     def test_diagnostics_redact_escaped_credentials_but_keep_nonsecret_controls(self):
         from swift_test_diagnostics import redact
-        environment = {"API_TOKEN": 'synthetic-"secret"', "CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS": "1"}
+        environment = {"API_TOKEN": 'synthetic-"secret"', "BARS_SUPPRESS_TEST_KEYCHAIN_ACCESS": "1"}
         output = redact(json.dumps(environment) + " /Users/synthetic/Library test 1", environment)
         self.assertNotIn("secret", output)
         self.assertNotIn("/Users/synthetic/", output)
@@ -218,8 +218,8 @@ class DirectSwiftTestGroupsTests(unittest.TestCase):
 
     def test_direct_and_serial_shards_keep_identical_ordered_groups(self):
         selections = [runner.TestSelection(name, f"^{name}/", name) for name in [
-            "CodexBarTests.Alpha", "CodexBarTests.CLIEntryTests", "CodexBarTests.CostUsagePerformanceGateTests",
-            "CodexBarTests.Delta", "CodexBarTests.Epsilon", "CodexBarTests.Zeta"]]
+            "BarsTests.Alpha", "BarsTests.CLIEntryTests", "BarsTests.CostUsagePerformanceGateTests",
+            "BarsTests.Delta", "BarsTests.Epsilon", "BarsTests.Zeta"]]
         for shard_count in [2, 3]:
             for shard_index in range(shard_count):
                 serial_groups = []

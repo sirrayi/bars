@@ -1,4 +1,4 @@
-# SwiftFormat configuration for CodexBar
+# SwiftFormat configuration for bars
 # Compatible with Swift 6 strict concurrency mode
 
 # IMPORTANT: Don't remove self where it's required for Swift 6 concurrency

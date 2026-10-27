@@ -1,6 +1,6 @@
 import Foundation
 
-// Replay harness for the adaptive refresh policy shipped in the `CodexBar` app target. The app
+// Replay harness for the adaptive refresh policy shipped in the `bars` app target. The app
 // and replay adapter both call `AdaptiveRefreshPolicyCore`; these types only normalize replay
 // inputs and report replay-friendly output.
 

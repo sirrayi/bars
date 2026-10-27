@@ -6,8 +6,8 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const keys = JSON.parse(fs.readFileSync(path.join(root, "Scripts/widget-localization-keys.json"), "utf8"));
-const source = path.join(root, "Sources/CodexBar/Resources");
-const target = path.join(root, "Sources/CodexBarWidget/Resources");
+const source = path.join(root, "Sources/Bars/Resources");
+const target = path.join(root, "Sources/BarsWidget/Resources");
 const check = process.argv.includes("--check");
 let failed = false;
 let count = 0;

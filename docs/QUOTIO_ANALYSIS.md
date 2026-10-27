@@ -7,7 +7,7 @@ read_when:
 # Quotio Analysis & Pattern Adaptation
 
 > Historical fork research template. The unchecked tasks and feature counts below are not a current assessment:
-> CodexBar now has multi-account support and a much larger provider registry. See [Providers](providers.md),
+> bars now has multi-account support and a much larger provider registry. See [Providers](providers.md),
 > [Configuration](configuration.md#tokenaccounts), and [Vision](../VISION.md) for current capabilities and scope.
 > `Scripts/analyze_quotio.sh` still exists, so this template is retained as background rather than active guidance.
 
@@ -36,7 +36,7 @@ read_when:
 ### What We ARE Doing
 - ✅ Learning from their architectural decisions
 - ✅ Understanding their UX patterns
-- ✅ Adapting concepts to CodexBar conventions
+- ✅ Adapting concepts to bars conventions
 - ✅ Implementing independently with our own code
 - ✅ Crediting inspiration appropriately
 
@@ -61,7 +61,7 @@ git log --oneline --graph quotio/main --since="30 days ago"
 
 Create a comparison matrix:
 
-| Feature | CodexBar | Quotio | Notes |
+| Feature | bars | Quotio | Notes |
 |---------|----------|--------|-------|
 | Multi-account | ❌ | ✅ | Priority for fork |
 | Provider count | 5 | ? | Check quotio |
@@ -134,7 +134,7 @@ git show quotio/main:path/to/MenuBarView.swift
 - [Key architectural decisions]
 - [Pros and cons]
 
-**CodexBar Current State:**
+**bars Current State:**
 - [What we have now]
 - [Gaps or limitations]
 
@@ -152,7 +152,7 @@ git show quotio/main:path/to/MenuBarView.swift
 ```swift
 // Inspired by quotio's approach to [feature]:
 // https://github.com/nguyenphutrong/quotio/blob/main/path/to/file
-// Implemented independently using CodexBar patterns
+// Implemented independently using bars patterns
 ```
 
 ---
@@ -167,7 +167,7 @@ git show quotio/main:path/to/MenuBarView.swift
 - Active account indicator
 - Quick switch action
 
-**CodexBar Adaptation:**
+**bars Adaptation:**
 ```swift
 // Our implementation (example)
 struct AccountSwitcherView: View {
@@ -194,7 +194,7 @@ struct AccountSwitcherView: View {
 }
 
 // Inspired by quotio's account switching UI pattern
-// Implemented using SwiftUI and CodexBar's UsageStore
+// Implemented using SwiftUI and bars's UsageStore
 ```
 
 ### Example 2: Session Persistence Pattern
@@ -204,7 +204,7 @@ struct AccountSwitcherView: View {
 - Background refresh
 - Error recovery
 
-**CodexBar Adaptation:**
+**bars Adaptation:**
 ```swift
 // Our implementation (example)
 actor SessionPersistence {
@@ -218,7 +218,7 @@ actor SessionPersistence {
 }
 
 // Inspired by quotio's session persistence approach
-// Implemented using Swift concurrency and CodexBar's keychain utilities
+// Implemented using Swift concurrency and bars's keychain utilities
 ```
 
 ---
@@ -249,7 +249,7 @@ actor SessionPersistence {
 
 ### Implementation
 - [ ] Implement independently
-- [ ] Follow CodexBar conventions
+- [ ] Follow bars conventions
 - [ ] Add proper attribution
 - [ ] Write tests
 - [ ] Update documentation
@@ -307,13 +307,13 @@ actor SessionPersistence {
 - [Document questions]
 
 ### Architectural Differences
-- [How quotio differs from CodexBar]
+- [How quotio differs from bars]
 - [Pros and cons of each approach]
 - [What we can learn]
 
 ### Implementation Ideas
 - [Ideas sparked by quotio]
-- [How to adapt to CodexBar]
+- [How to adapt to bars]
 - [Potential improvements]
 
 ---
@@ -346,7 +346,7 @@ actor SessionPersistence {
 Inspired by quotio's approach to [feature]:
 https://github.com/nguyenphutrong/quotio/blob/main/path/to/file
 
-Implemented independently using CodexBar patterns and conventions.
+Implemented independently using bars patterns and conventions.
 ```
 
 ---

@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 class ReleaseAssetTests(unittest.TestCase):
     def run_check(self, failure="", arches="arm64 x86_64"):
-        with tempfile.TemporaryDirectory(prefix="codexbar-release-assets-") as directory:
+        with tempfile.TemporaryDirectory(prefix="bars-release-assets-") as directory:
             root = Path(directory)
             log = root / "calls"
             stub = root / "tool"
@@ -32,9 +32,9 @@ case "$tool" in
     ;;
   ditto)
     if [[ "$FAIL_TOOL" == symlink-app ]]; then
-      ln -s "$EXISTING_APP" "${!#}/CodexBar.app"
+      ln -s "$EXISTING_APP" "${!#}/bars.app"
     elif [[ "$FAIL_TOOL" != missing-app ]]; then
-      mkdir -p "${!#}/CodexBar.app"
+      mkdir -p "${!#}/bars.app"
     fi
     ;;
   codesign)
@@ -75,10 +75,10 @@ esac
         result, calls = self.run_check()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("mac-release <check-assets> <v0.0.1>", calls)
-        self.assertIn("/v0.0.1/CodexBar-macos-universal-0.0.1.zip", calls)
+        self.assertIn("/v0.0.1/bars-macos-universal-0.0.1.zip", calls)
         self.assertIn("ditto <-x> <-k> <--norsrc>", calls)
         self.assertIn("codesign <--verify> <--deep> <--strict> <--all-architectures>", calls)
-        self.assertIn('<--test-requirement> <=anchor apple generic and identifier "com.steipete.codexbar"', calls)
+        self.assertIn('<--test-requirement> <=anchor apple generic and identifier "com.sirrayi.bars"', calls)
         self.assertIn('certificate leaf[subject.OU] = "Y5PE65HELJ"', calls)
         self.assertIn("certificate 1[field.1.2.840.113635.100.6.2.6] exists", calls)
         self.assertIn("certificate leaf[field.1.2.840.113635.100.6.1.13] exists", calls)
@@ -86,7 +86,7 @@ esac
     def test_single_architecture_uses_matching_release_asset(self):
         result, calls = self.run_check(arches="arm64")
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("CodexBar-macos-arm64-0.0.1.zip", calls)
+        self.assertIn("bars-macos-arm64-0.0.1.zip", calls)
 
     def test_invalid_signature_is_rejected(self):
         result, calls = self.run_check("codesign")

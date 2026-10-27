@@ -25,7 +25,7 @@ Run from the repository root in Bash:
 
 ```sh
 source Scripts/test_environment.sh
-CODEXBAR_SPEND_TREND_PROOF_DIR="$PWD/.build/spend-chart-proof" \
+BARS_SPEND_TREND_PROOF_DIR="$PWD/.build/spend-chart-proof" \
   swift test --build-system native --jobs 4 -Xswiftc -gnone \
   --filter 'SpendTrendScopeTests|SpendTrendChartTests|SpendTrendPresentationRegressionTests|SpendTrendCalendarTests|SpendTrendOverflowTests|SpendTrendChartRenderTests'
 ```

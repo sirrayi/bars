@@ -8,7 +8,7 @@ read_when:
 
 # Repository size
 
-The checked-out source tree is not the main cause of CodexBar's clone size. At commit `61ff9320`, tracked files total
+The checked-out source tree is not the main cause of bars's clone size. At commit `61ff9320`, tracked files total
 22,292,801 bytes, while the packed Git object database is 103.91 MiB. `CHANGELOG.md` is 150,271 bytes in the current
 tree and all of its historical blobs occupy about 0.55 MB compressed.
 
@@ -18,8 +18,8 @@ Most of the packed history comes from files that are no longer present on `main`
 | --- | ---: |
 | `screenshots/` | 39,023,716 |
 | `Quotio/` | 23,141,837 |
-| `CodexBar 2.app/` | 7,088,125 |
-| `CodexBar-0.2.2.zip` | 2,296,323 |
+| `bars 2.app/` | 7,088,125 |
+| `bars-0.2.2.zip` | 2,296,323 |
 
 The largest single blob is the retired `Quotio/Resources/Proxy/cli-proxy-api-plus` executable: 49,202,546 bytes
 before compression and about 15.8 MB in the pack. Deleting these files in later commits stopped further growth but
@@ -53,11 +53,11 @@ avoidable clone weight only with a coordinated history rewrite. Candidate paths 
 ```text
 screenshots/
 Quotio/Resources/Proxy/cli-proxy-api-plus
-CodexBar 2.app/
-CodexBar_Dev.app/
-CodexBar-0.2.2.zip
-CodexBar6-2.delta
-CodexBar6-4.delta
+bars 2.app/
+bars_Dev.app/
+bars-0.2.2.zip
+Bars6-2.delta
+Bars6-4.delta
 ```
 
 Use `git filter-repo` on a fresh mirror, validate all branches and tags, and force-push only during an announced

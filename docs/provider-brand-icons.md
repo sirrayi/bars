@@ -8,7 +8,7 @@ read_when:
 # Usage & Spend provider artwork
 
 Provider-level icons request `ProviderBrandIcon.Style.brand`. Account/source and model child rows
-retain CodexBar's existing monochrome provider artwork and 76% opacity, adapting to light and dark
+retain bars's existing monochrome provider artwork and 76% opacity, adapting to light and dark
 appearance. The existing provider association is preserved. Menu bar and other settings callers
 retain the default monochrome rendering.
 
@@ -89,7 +89,7 @@ actual colored pixels in decoded assets, including warm/green Antigravity pixels
 light/dark UI proof, including narrow windows and incomplete model history, with:
 
 ```sh
-CODEXBAR_BRAND_ICON_PROOF_DIR=docs/screenshots/usage-spend-brand-icons \
+BARS_BRAND_ICON_PROOF_DIR=docs/screenshots/usage-spend-brand-icons \
   make test-fast FILTER='test_renderBrandIconScreenshots|test_renderProviderDetailPolishScreenshots'
 ```
 
@@ -97,7 +97,7 @@ The screenshot fixtures use synthetic usage data and an unrelated purple tint to
 brand tinting. Model aggregation and monochrome child icons retain the existing provider association;
 no model-to-vendor identity inference is added.
 
-The contributor's [historical packaged application proof](https://github.com/Yuxin-Qiao/CodexBar/blob/404b28c5b1021fccbd868286ec26fc52349c9d16/docs/screenshots/usage-spend-brand-icons/native/README.md)
+The contributor's [historical packaged application proof](https://github.com/Yuxin-Qiao/bars/blob/404b28c5b1021fccbd868286ec26fc52349c9d16/docs/screenshots/usage-spend-brand-icons/native/README.md)
 records the production settings window with synthetic inputs. The maintained regression path is the
 component rendering suite above; no temporary application-entrypoint overlay is shipped here.
 Menu and widget accent overrides continue to follow the existing palette policy.

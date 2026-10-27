@@ -6,16 +6,16 @@ read_when:
 
 # Qwen Cloud browser-cookie import — real behavior proof
 
-Captured 2026-08-22 against the live Qwen Cloud API via the modified CodexBar
-binary (`/Applications/CodexBar-QwenFix.app`, debug build of branch
+Captured 2026-08-22 against the live Qwen Cloud API via the modified bars
+binary (`/Applications/bars-QwenFix.app`, debug build of branch
 `diagnose/qwen-cloud-cookie-error`).
 
 ## Before the fix (commit `529cc6c24` "Keep Qwen imports Chrome-only")
 
 ```text
-$ CodexBarCLI usage --provider qwen-cloud --format text --no-color
+$ BarsCLI usage --provider qwen-cloud --format text --no-color
 [error] No Qwen Cloud session cookies found in browsers. Sign in to Qwen Cloud
-        in Chrome, allow CodexBar to access Chrome Safe Storage in Keychain
+        in Chrome, allow bars to access Chrome Safe Storage in Keychain
         Access, or paste a manual Cookie header.
 ```
 
@@ -32,7 +32,7 @@ browser list when needed"). Once the user granted macOS Keychain access to
 the modified binary, the same CLI call returns real usage data:
 
 ```text
-$ CodexBarCLI usage --provider qwen-cloud --format text --no-color
+$ BarsCLI usage --provider qwen-cloud --format text --no-color
 == Qwen Cloud (web) ==
 Weekly: 20% left [==----------]
 Resets in 2d 2h
@@ -61,25 +61,25 @@ Plan: Pro
 
 ## How the proof was obtained
 
-1. `swift build` from the worktree at `/tmp/codexbar-main` succeeded.
+1. `swift build` from the worktree at `/tmp/bars-main` succeeded.
 2. `swift test --filter QwenCloudProviderTests` — 32/32 tests passed across 7 suites.
-3. `./Scripts/package_app.sh debug` — packaged `CodexBar.app` (ad-hoc signed).
-4. Installed to `/Applications/CodexBar-QwenFix.app` (no quarantine).
+3. `./Scripts/package_app.sh debug` — packaged `bars.app` (ad-hoc signed).
+4. Installed to `/Applications/bars-QwenFix.app` (no quarantine).
 5. First refresh via the GUI menu bar — the macOS Keychain dialog appeared for `Brave Safe Storage`; "Always Allow" granted permanent ACL access.
-6. CLI runs thereafter (with `CODEXBAR_ALLOW_BROWSER_COOKIE_IMPORT=1`) return the same real usage data shown above.
+6. CLI runs thereafter (with `BARS_ALLOW_BROWSER_COOKIE_IMPORT=1`) return the same real usage data shown above.
 
 ## What changed in the code
 
 ```diff
---- a/Sources/CodexBarCore/Providers/QwenCloud/QwenCloudProviderDescriptor.swift
-+++ b/Sources/CodexBarCore/Providers/QwenCloud/QwenCloudProviderDescriptor.swift
+--- a/Sources/BarsCore/Providers/QwenCloud/QwenCloudProviderDescriptor.swift
++++ b/Sources/BarsCore/Providers/QwenCloud/QwenCloudProviderDescriptor.swift
 -        let browserOrder: BrowserCookieImportOrder = [.chrome]
 +        // Default the import to Chrome + Brave. The full 7-browser list
 +        // (chromeBeta, edge, arc, firefox, safari) was deliberately trimmed to
 +        // avoid unsolicited Keychain / browser-store access prompts on automatic
 +        // refreshes — the repository's prompt-avoidance policy. Brave is kept
 +        // because it shares the same Chromium Safe Storage format and many
-+        // CodexBar users authenticate Qwen Cloud in Brave.
++        // bars users authenticate Qwen Cloud in Brave.
 +        let browserOrder: BrowserCookieImportOrder = [
 +            .chrome,
 +            .brave,
@@ -87,8 +87,8 @@ Plan: Pro
 ```
 
 ```diff
---- a/Tests/CodexBarTests/QwenCloudProviderTests.swift
-+++ b/Tests/CodexBarTests/QwenCloudProviderTests.swift
+--- a/Tests/BarsTests/QwenCloudProviderTests.swift
++++ b/Tests/BarsTests/QwenCloudProviderTests.swift
 -        #expect(metadata.browserCookieOrder == [.chrome])
 -        #expect(QwenCloudWebFetchStrategy.browserOrder == [.chrome])
 +        let expectedOrder: BrowserCookieImportOrder = [

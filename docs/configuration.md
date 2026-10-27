@@ -1,14 +1,14 @@
 ---
-summary: "CodexBar config file layout for CLI + app settings."
+summary: "bars config file layout for CLI + app settings."
 read_when:
-  - "Editing the CodexBar config file or moving settings off Keychain."
+  - "Editing the bars config file or moving settings off Keychain."
   - "Adding new provider settings fields or defaults."
   - "Explaining CLI/app configuration and security."
 ---
 
 # Configuration
 
-The app's **Help → CodexBar Help** command opens the [README](https://github.com/steipete/CodexBar/blob/main/README.md), including setup instructions and links to provider documentation.
+The app's **Help → bars Help** command opens the [README](https://github.com/steipete/CodexBar/blob/main/README.md), including setup instructions and links to provider documentation.
 **Settings → About → Website** opens the project website at [codexbar.app](https://codexbar.app).
 
 The app and CLI share one JSON file for API keys, manual cookie headers, source selection, provider ordering, and token accounts. The running app detects external edits, atomic replacements, and restored older contents, including during watcher startup and change callbacks. App writes update the baseline without being treated as external edits.
@@ -16,11 +16,11 @@ Keychain holds runtime cookie caches, browser Safe Storage access, and provider 
 App settings writes are coalesced. Normal quit finishes any pending configuration write in the background before exiting, including an edit made just before quitting. A failed final write is logged and does not prevent quitting.
 
 ## Location
-- `CODEXBAR_CONFIG=/path/to/config.json` when set.
-- `$XDG_CONFIG_HOME/codexbar/config.json` when `XDG_CONFIG_HOME` is set to an absolute path. Relative values are
+- `BARS_CONFIG=/path/to/config.json` when set.
+- `$XDG_CONFIG_HOME/bars/config.json` when `XDG_CONFIG_HOME` is set to an absolute path. Relative values are
   ignored.
-- `~/.config/codexbar/config.json` by default for new installs.
-- `~/.codexbar/config.json` for existing legacy installs when no XDG config exists.
+- `~/.config/bars/config.json` by default for new installs.
+- `~/.bars/config.json` for existing legacy installs when no XDG config exists.
 - The directory is created if missing.
 - Writes on macOS and Linux create a `0600` file inside a private `0700` staging directory beside the destination before writing any bytes, then sync and atomically replace the destination. Failed writes preserve the previous file and remove staging.
 - Current app and CLI writers coordinate through a persistent, empty `config.json.lock` beside the config. CLI token refresh compares the saved credential and publishes its replacement under this lock, skipping the update if another writer holds it. Older versions and external editors do not participate in this advisory lock.
@@ -53,7 +53,7 @@ replaced by `loadOrCreateDefault()`.
 }
 ```
 
-`shareUsageWithCLI` (optional boolean, default off) lets `codexbar usage` fall back to the app's cached numbers in SSH
+`shareUsageWithCLI` (optional boolean, default off) lets `bars usage` fall back to the app's cached numbers in SSH
 sessions; see [CLI](cli.md#ssh-sessions-macos).
 
 ## External event hooks
@@ -86,7 +86,7 @@ values and command paths appear only as prompts in empty fields.
 Commands run as direct executable invocations, never through a shell. `executable` must be an absolute path,
 `arguments` preserves exact argument boundaries (including spaces and empty arguments), and `timeoutSeconds` must be
 between `0.1` and `300`. Hook processes receive only a small allowlist of general environment variables plus the
-event's `CODEXBAR_*` variables; CodexBar provider keys and tokens are not inherited. The same event is also encoded as
+event's `BARS_*` variables; bars provider keys and tokens are not inherited. The same event is also encoded as
 JSON on stdin. Only configure executables you trust.
 
 
@@ -103,7 +103,7 @@ Events:
   `secondaryResetAt` describe the positional secondary window. Synthetic placeholder windows are omitted.
 - `provider_unavailable`: a provider status changes to a minor, major, or critical outage.
 - `provider_recovered`: that tracked outage returns to normal.
-- `refresh_failed`: a provider refresh fails; `CODEXBAR_STATUS` is a coarse category such as `timeout`, `offline`,
+- `refresh_failed`: a provider refresh fails; `BARS_STATUS` is a coarse category such as `timeout`, `offline`,
   `network_error`, `auth_required`, `cancelled`, or `error`.
 
 `usage_updated`, `provider_unavailable`, and `refresh_failed` allow the first matching attempt immediately,
@@ -113,13 +113,13 @@ the in-memory limiter. Quota and recovery events use their transition detectors 
 contained and never block app provider refresh. `hooks watch` reports only events whose command execution was
 attempted, including failed commands, rather than suppressed candidates.
 
-Payload environment variables are `CODEXBAR_EVENT`, `CODEXBAR_PROVIDER`, `CODEXBAR_TIMESTAMP`, and, when available,
-`CODEXBAR_ACCOUNT`, `CODEXBAR_WINDOW`, `CODEXBAR_USAGE_PERCENT`, `CODEXBAR_USED`, `CODEXBAR_LIMIT`,
-`CODEXBAR_WINDOW_MINUTES`, `CODEXBAR_RESET_AT`, `CODEXBAR_SECONDARY_USAGE_PERCENT`,
-`CODEXBAR_SECONDARY_WINDOW_MINUTES`, `CODEXBAR_SECONDARY_RESET_AT`, and `CODEXBAR_STATUS`. Enabling Hide personal info
-omits `CODEXBAR_ACCOUNT` and the matching JSON field.
+Payload environment variables are `BARS_EVENT`, `BARS_PROVIDER`, `BARS_TIMESTAMP`, and, when available,
+`BARS_ACCOUNT`, `BARS_WINDOW`, `BARS_USAGE_PERCENT`, `BARS_USED`, `BARS_LIMIT`,
+`BARS_WINDOW_MINUTES`, `BARS_RESET_AT`, `BARS_SECONDARY_USAGE_PERCENT`,
+`BARS_SECONDARY_WINDOW_MINUTES`, `BARS_SECONDARY_RESET_AT`, and `BARS_STATUS`. Enabling Hide personal info
+omits `BARS_ACCOUNT` and the matching JSON field.
 
-The stdin JSON uses the same camel-case field names without the `CODEXBAR_` prefix. Dates are UTC ISO 8601 strings,
+The stdin JSON uses the same camel-case field names without the `BARS_` prefix. Dates are UTC ISO 8601 strings,
 usage percentages are `0...1` fractions, unavailable optional fields are omitted rather than encoded as `null`, and
 keys are emitted in sorted order. A `quota_reached` payload is exactly shaped like this (the timestamps vary):
 
@@ -127,7 +127,7 @@ keys are emitted in sorted order. A `quota_reached` payload is exactly shaped li
 {"event":"quota_reached","provider":"claude","resetAt":"2023-11-14T22:13:20Z","timestamp":"2023-11-14T22:15:00Z","usagePercent":0.42,"window":"session"}
 ```
 
-The v1 field names and meanings are compatibility-stable. Hook consumers should ignore unknown fields so CodexBar can
+The v1 field names and meanings are compatibility-stable. Hook consumers should ignore unknown fields so bars can
 add optional observability data without breaking existing commands.
 
 Safety limits: at most 32 rules, 32 arguments per rule, 4 KiB per executable or argument string, 32 KiB per command,
@@ -170,7 +170,7 @@ All provider fields are optional unless noted.
 ## Manual cookies
 Use manual cookies when automatic browser import is unavailable, disabled, or too noisy for your setup.
 The app and CLI both read the same resolved config file, so a manual cookie saved in the UI is also used by
-`codexbar`, and a cookie written by tooling is shown in the app after reload.
+`bars`, and a cookie written by tooling is shown in the app after reload.
 
 `cookieHeader` expects the HTTP `Cookie:` request header value for the provider origin, not a raw Netscape cookie
 export. In browser DevTools, open the Network tab, select a request for the provider site, and copy the request
@@ -199,24 +199,24 @@ Example placeholder config:
 Validate after editing:
 
 ```bash
-codexbar config validate
+bars config validate
 ```
 
-Replace the placeholder with your own cookie before fetching usage with `codexbar usage --provider claude`.
+Replace the placeholder with your own cookie before fetching usage with `bars usage --provider claude`.
 For another provider, use its registered [ID](provider-ids.md) and the cookie format in its [setup guide](providers.md).
 
 ## CLI configuration
 
 ```bash
-codexbar config providers
-codexbar config enable --provider deepseek
-codexbar config disable --provider devin
-printf '%s' "$DEEPSEEK_API_KEY" | codexbar config set-api-key --provider deepseek --stdin
+bars config providers
+bars config enable --provider deepseek
+bars config disable --provider devin
+printf '%s' "$DEEPSEEK_API_KEY" | bars config set-api-key --provider deepseek --stdin
 ```
 
 See [CLI configuration](cli-configuration.md) for scripting examples and output formats.
 
-Manual cookies are secrets. Keep the CodexBar config file private, leave its permissions at `0600`, never commit it,
+Manual cookies are secrets. Keep the bars config file private, leave its permissions at `0600`, never commit it,
 and never paste real cookie values or readable DevTools screenshots into public issues.
 
 ### tokenAccounts
@@ -237,7 +237,7 @@ and never paste real cookie values or readable DevTools screenshots into public 
 ```
 
 Each OpenAI token account can store `tokenAccounts.accounts[].modelRateLimits`: omitted means not set; `[]` means
-explicitly no limits (kept so clears sync and older CodexBar versions cannot erase limits during sync). Rows use
+explicitly no limits (kept so clears sync and older bars versions cannot erase limits during sync). Rows use
 the same validation as provider-level `modelRateLimits`. Limits belong only to that account; there is no
 inheritance. Settings edits the selected account's limits, and switching accounts switches the list.
 
@@ -269,7 +269,7 @@ The order of `providers` controls display/order in the app and CLI. Reorder the 
 ## iCloud sync
 The three sync sub-options are disabled while the main sync switch is off, iCloud is unavailable, or a newer app version is required. Their saved choices are retained when sync is turned off and restored when it is enabled again.
 
-Opt-in (Settings → iCloud Sync, off by default; requires a signed release build and an iCloud account). When enabled, CodexBar syncs across the user's Macs via CloudKit (private database, container `iCloud.com.steipete.codexbar`):
+Opt-in (Settings → iCloud Sync, off by default; requires a signed release build and an iCloud account). When enabled, bars syncs across the user's Macs via CloudKit (private database, container `iCloud.com.sirrayi.bars`):
 
 - **Provider configuration** — portable fields of each provider entry (enabled intent, extras, region, workspace, quota-warning overrides, ordering-relevant metadata). Secrets (`apiKey`, `secretKey`, `cookieHeader`, `tokenAccounts`) sync only when "Include API keys, cookies, and tokens" is on, and travel exclusively in CloudKit `encryptedValues` (end-to-end encrypted; readable only on the user's devices).
 - **A curated preferences subset** — notification/threshold/display settings.
@@ -277,7 +277,7 @@ Opt-in (Settings → iCloud Sync, off by default; requires a signed release buil
 
 With Usage snapshots and Show accounts from other Macs enabled, an enabled provider without local usage can also use the freshest fleet fallback in separate, current-selection, highest-usage, and stacked menu bar icons. The menu labels its source and age; accessibility help includes the source Mac and capture time, respecting Hide personal info. Local snapshots remain authoritative. Remote usage does not enable local credential-dependent fetches or populate local costs, pace, credits, or account labels. Highest usage compares the same presentation snapshots without enabling local fetches. Fleet refreshes preserve an open menu's provider switcher until the menu is closed and reopened.
 
-The **Macs** list offers **Remove** for other devices, including stale duplicates left after a reinstall. Removal deletes that device record and its cached usage snapshots from iCloud; it leaves shared settings, credentials, and this Mac intact. Sync must be enabled and available. Failed removals remain visible and report a sync error. A Mac still running CodexBar with sync enabled can publish its records again: if a save finds that its previous record was deleted, it drops the stale server version and retries with a fresh record. If that fresh record is also reported missing, CodexBar surfaces the error instead of retrying indefinitely.
+The **Macs** list offers **Remove** for other devices, including stale duplicates left after a reinstall. Removal deletes that device record and its cached usage snapshots from iCloud; it leaves shared settings, credentials, and this Mac intact. Sync must be enabled and available. Failed removals remain visible and report a sync error. A Mac still running bars with sync enabled can publish its records again: if a save finds that its previous record was deleted, it drops the stale server version and retries with a fresh record. If that fresh record is also reported missing, bars surfaces the error instead of retrying indefinitely.
 
 Automatic reception of changes requires a release signed with the macOS Push Notifications entitlement. When that capability is present, enabling sync registers for silent remote notifications; CKSyncEngine manages the CloudKit database subscription. The existing launch, foreground, and 15-minute fetch requests remain, but are not a guarantee of prompt delivery without push support. See [release setup](RELEASING.md#icloud-sync-cloudkit).
 
@@ -289,10 +289,10 @@ Never synced, by design: `hooks` (sync payloads structurally cannot create or mo
 - Fields not relevant to a provider are ignored.
 - Omitted providers are appended with defaults during normalization.
 - Unknown or retired provider entries are retained with all their fields, settings, and secrets in their original array positions during unrelated saves. This also applies when plugin discovery fails or the plugin runtime is unavailable. `config providers` labels unavailable entries as `plugin (not loaded)`; `config dump` includes them but redacts their opaque fields unless `--show-secrets` is explicitly requested. Remove plugin data through explicit plugin deletion, or remove the entry by editing the file.
-- When a configuration read reports an error, CodexBar preserves `config.json` during startup and later settings saves. At startup it uses temporary defaults without clearing legacy credentials; repair the file and let CodexBar reload it, or remove it and restart, before saving settings. Temporary defaults and earlier queued or staged saves cannot overwrite the repaired file after a reload. Legacy migration retries on the next launch.
+- When a configuration read reports an error, bars preserves `config.json` during startup and later settings saves. At startup it uses temporary defaults without clearing legacy credentials; repair the file and let bars reload it, or remove it and restart, before saving settings. Temporary defaults and earlier queued or staged saves cannot overwrite the repaired file after a reload. Legacy migration retries on the next launch.
 - Reloading account settings from disk reloads the complete config, preserving unrelated edits. A failed config reload, plugin-settings read, or save-time config validation blocks saving until a valid full reload succeeds.
 - Keep the file private; it contains secrets.
-- Validate the file with `codexbar config validate` (JSON output available with `--format json`).
+- Validate the file with `bars config validate` (JSON output available with `--format json`).
 
 ## Portable UI preferences
 
@@ -301,15 +301,15 @@ for dotfiles. UserDefaults remains the runtime owner; the file is an explicit sn
 configuration source. Provider settings remain in `config.json`, which may contain credentials.
 
 ```sh
-codexbar config preferences export --file ~/dotfiles/codexbar/preferences.json
-codexbar config preferences import --file ~/dotfiles/codexbar/preferences.json --json
+bars config preferences export --file ~/dotfiles/bars/preferences.json
+bars config preferences import --file ~/dotfiles/bars/preferences.json --json
 ```
 
 Export without `--file` writes JSON to stdout. The CLI exports stored overrides (unset preferences keep the
 app's defaults); Settings exports the effective preferences. CLI import queues an intentional local edit:
 the running app applies it through its normal settings setters, or applies it at its next launch. The CLI
 reports `{"status":"queued"}`. Multiple pending imports merge, with the latest supplied value winning.
-`--defaults-domain` can select an alternate app preferences domain; it defaults to `com.steipete.codexbar`.
+`--defaults-domain` can select an alternate app preferences domain; it defaults to `com.sirrayi.bars`.
 These commands transfer macOS UI preferences and are unavailable on Linux.
 
 ```json

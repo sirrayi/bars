@@ -8,17 +8,17 @@ read_when:
 
 # Codex OAuth resolver
 
-> Read Codex's OAuth tokens for usage in CodexBar while leaving refresh and persistence to the
+> Read Codex's OAuth tokens for usage in bars while leaving refresh and persistence to the
 > Codex CLI that owns `auth.json`.
 
 ## Background
 
-Currently, CodexBar fetches Codex usage by:
+Currently, bars fetches Codex usage by:
 1. Running `codex` CLI in PTY mode
 2. Sending `/status` command
 3. Parsing the text output
 
-This is slow and unreliable. CodexBar now reads OAuth tokens for usage and calls the same API
+This is slow and unreliable. bars now reads OAuth tokens for usage and calls the same API
 endpoints that Codex uses internally, while stale native credentials are recovered by the CLI.
 
 ---
@@ -47,7 +47,7 @@ endpoints that Codex uses internally, while stale native credentials are recover
 ### Token Freshness and Ownership
 
 Codex CLI owns the refresh endpoint and the refresh-token lifecycle for the native
-`CODEX_HOME/auth.json`. CodexBar first extracts the access token's JWT `exp` as a best-effort
+`CODEX_HOME/auth.json`. bars first extracts the access token's JWT `exp` as a best-effort
 scheduling hint, with a five-minute refresh window. Only native credentials use this extraction.
 If expiry is unavailable, the existing eight-day `last_refresh` rule applies; a missing or invalid
 timestamp still requires refresh. This keeps a future-expiry token on the OAuth path, including
@@ -78,7 +78,7 @@ refresh token or write a replacement file. Instead:
 Expiry precedence and the five-minute window follow the
 [pinned Codex auth manager](https://github.com/openai/codex/blob/528fd7ace5ec0a1c2a387dcb9c76a09f3fa011ee/codex-rs/login/src/auth/manager.rs#L2924)
 and [signed-integer claim decoder](https://github.com/openai/codex/blob/528fd7ace5ec0a1c2a387dcb9c76a09f3fa011ee/codex-rs/login/src/token_data.rs#L100).
-The refresh endpoint is documented here for ownership context only, not as a CodexBar usage action.
+The refresh endpoint is documented here for ownership context only, not as a bars usage action.
 
 ### Usage API
 
@@ -96,7 +96,7 @@ User-Agent: codex-cli
 
 Use fixture credentials in an isolated `CODEX_HOME` for diagnostics. Do not print the native auth
 file or put bearer tokens in shell history. The safe product-level check is
-`CodexBarCLI usage --provider codex --source oauth --json --pretty` with an isolated environment.
+`BarsCLI usage --provider codex --source oauth --json --pretty` with an isolated environment.
 
 **Response:**
 ```json
@@ -132,9 +132,9 @@ file or put bearer tokens in shell history. The safe product-level check is
 
 | File | Location | Purpose |
 |------|----------|---------|
-| `CodexOAuthCredentials.swift` | `Sources/CodexBarCore/Providers/Codex/CodexOAuth/` | Token storage model + loader |
-| `CodexOAuthUsageFetcher.swift` | `Sources/CodexBarCore/Providers/Codex/CodexOAuth/` | API client for usage endpoint |
-| `CodexTokenRefresher.swift` | `Sources/CodexBarCore/Providers/Codex/CodexOAuth/` | Refresh-error classification and isolated transport tests; not shared-file usage ownership |
+| `CodexOAuthCredentials.swift` | `Sources/BarsCore/Providers/Codex/CodexOAuth/` | Token storage model + loader |
+| `CodexOAuthUsageFetcher.swift` | `Sources/BarsCore/Providers/Codex/CodexOAuth/` | API client for usage endpoint |
+| `CodexTokenRefresher.swift` | `Sources/BarsCore/Providers/Codex/CodexOAuth/` | Refresh-error classification and isolated transport tests; not shared-file usage ownership |
 
 ### Files to Modify
 
@@ -251,7 +251,7 @@ public enum CodexOAuthUsageFetcher {
         var request = URLRequest(url: resolveUsageURL())
         request.httpMethod = "GET"
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
-        request.setValue("CodexBar", forHTTPHeaderField: "User-Agent")
+        request.setValue("bars", forHTTPHeaderField: "User-Agent")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
         if let accountId {
@@ -297,7 +297,7 @@ transport tests, but ownership is handled as follows:
 - `CodexOAuthFetchStrategy` throws `nativeRefreshRequired` for stale native credentials;
 - `CodexOAuthNativeRefreshCLIStrategy` delegates that recovery to Codex CLI;
 - stale external credentials throw `readOnlySource` and never reach a refresh request; and
-- no refresh response is published back to a shared `auth.json` by CodexBar.
+- no refresh response is published back to a shared `auth.json` by bars.
 
 ---
 
@@ -332,7 +332,7 @@ race this design is intended to avoid.
 | Constant | Value | Source |
 |----------|-------|--------|
 | Refresh owner | Codex CLI | `auth.rs:66`, `auth.rs:618` |
-| Refresh URL | `https://auth.openai.com/oauth/token` (CLI-owned; not a CodexBar usage action) | `auth.rs:66` |
+| Refresh URL | `https://auth.openai.com/oauth/token` (CLI-owned; not a bars usage action) | `auth.rs:66` |
 | Usage URL | `https://chatgpt.com/backend-api/wham/usage` (default) | `client.rs:163` |
 | Token refresh interval | 8 days | `auth.rs:59` |
 | Auth file | `~/.codex/auth.json` | `storage.rs` |
@@ -351,8 +351,8 @@ race this design is intended to avoid.
    policy. `CodexOAuthExpiryPipelineTests` exercises file loading through OAuth transport and
    additional-window mapping, with a sentinel instead of launching CLI recovery.
 6. `CodexNativeJWTExpiryTests` in `TestsLinux` covers raw JSON numeric spellings on both platforms.
-   Run focused tests with `CODEXBAR_ALLOW_TEST_KEYCHAIN_ACCESS` unset and
-   `CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS=1 CODEXBAR_TEST_CODEX_FILE_ISOLATION=1`, then `make check`.
+   Run focused tests with `BARS_ALLOW_TEST_KEYCHAIN_ACCESS` unset and
+   `BARS_SUPPRESS_TEST_KEYCHAIN_ACCESS=1 BARS_TEST_CODEX_FILE_ISOLATION=1`, then `make check`.
 
 ---
 

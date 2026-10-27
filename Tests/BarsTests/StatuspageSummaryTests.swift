@@ -1,0 +1,120 @@
+import Foundation
+import Testing
+@testable import Bars
+@testable import BarsCore
+
+@MainActor
+struct StatuspageSummaryTests {
+    @Test
+    func `parse statuspage status decodes overall indicator`() throws {
+        let data = Data(#"""
+        {
+          "page": {"updated_at": "2026-06-18T19:41:22Z"},
+          "status": {"indicator": "minor", "description": "Partial System Degradation"}
+        }
+        """#.utf8)
+
+        let status = try ProviderStatusFetcher.parseStatuspageStatus(data: data)
+        #expect(status.indicator == .minor)
+        #expect(status.description == "Partial System Degradation")
+        #expect(status.updatedAt != nil)
+    }
+
+    @Test
+    func `parse statuspage components maps and sorts leaf rows`() throws {
+        // Mirrors components.json, which includes unlisted rows such as FedRAMP.
+        let data = Data(#"""
+        {
+          "components": [
+            {"id": "c-cli", "name": "CLI", "status": "operational", "position": 2},
+            {"id": "c-api", "name": "Codex API", "status": "major_outage", "position": 1},
+            {"id": "c-fed", "name": "FedRAMP", "status": "degraded_performance", "position": 25}
+          ]
+        }
+        """#.utf8)
+
+        let components = try ProviderStatusFetcher.parseStatuspageComponents(data: data)
+
+        #expect(components.map(\.name) == ["Codex API", "CLI", "FedRAMP"])
+        #expect(components.map(\.indicator) == [.critical, .none, .minor])
+        #expect(components.allSatisfy { !$0.isGroup })
+        #expect(components.last?.status == "degraded_performance")
+        #expect(components.last?.statusLabel == L("status_degraded"))
+    }
+
+    @Test
+    func `parse statuspage components nests children under their group`() throws {
+        let data = Data(#"""
+        {
+          "components": [
+            {"id": "g1", "name": "API", "status": "degraded_performance", "group": true, "position": 0},
+            {"id": "c-resp", "name": "Responses", "status": "operational", "group_id": "g1", "position": 2},
+            {"id": "c-chat", "name": "Chat Completions", "status": "major_outage", "group_id": "g1", "position": 1},
+            {"id": "c-cli", "name": "CLI", "status": "operational", "position": 3}
+          ]
+        }
+        """#.utf8)
+
+        let components = try ProviderStatusFetcher.parseStatuspageComponents(data: data)
+
+        // Top level: the group followed by the ungrouped leaf. Children are not promoted.
+        #expect(components.map(\.name) == ["API", "CLI"])
+
+        let group = try #require(components.first)
+        #expect(group.isGroup)
+        #expect(group.indicator == .minor) // group's own status (degraded)
+        // Children appear inside the group, sorted by position.
+        #expect(group.children.map(\.name) == ["Chat Completions", "Responses"])
+        #expect(group.children.map(\.indicator) == [.critical, .none])
+
+        #expect(components[1].isGroup == false)
+    }
+
+    @Test
+    func `parse statuspage components tolerates missing components`() throws {
+        let components = try ProviderStatusFetcher.parseStatuspageComponents(data: Data("{}".utf8))
+        #expect(components.isEmpty)
+    }
+
+    @Test
+    func `parse statuspage components drops blank names`() throws {
+        let data = Data(#"""
+        {
+          "components": [
+            {"id": "blank", "name": "   ", "status": "operational", "position": 1},
+            {"id": "api", "name": " API ", "status": "operational", "position": 2}
+          ]
+        }
+        """#.utf8)
+
+        let components = try ProviderStatusFetcher.parseStatuspageComponents(data: data)
+
+        #expect(components.map(\.name) == ["API"])
+    }
+
+    @Test
+    func `fetchStatusSummary returns status with empty components when component feed fails`() async throws {
+        let summaryJSON = Data(#"""
+        {
+          "page": {"updated_at": "2026-06-18T19:41:22Z"},
+          "status": {"indicator": "minor", "description": "Partial Outage"}
+        }
+        """#.utf8)
+
+        let stub = ProviderHTTPTransportStub { request in
+            guard let path = request.url?.path else { throw URLError(.badURL) }
+            if path.hasSuffix("summary.json") {
+                let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+                return (summaryJSON, response)
+            }
+            throw URLError(.notConnectedToInternet)
+        }
+
+        let baseURL = try #require(URL(string: "https://status.example.test"))
+        let result = try await ProviderStatusFetcher.fetchStatusSummary(from: baseURL, transport: stub)
+
+        #expect(result.status.indicator == .minor)
+        #expect(result.status.description == "Partial Outage")
+        #expect(result.components == nil)
+    }
+}

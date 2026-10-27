@@ -56,7 +56,7 @@ check_packaged_app_launch() {
 }
 
 check_cli_installer() {
-  /bin/bash "${ROOT_DIR}/Scripts/test_install_codexbar_cli.sh"
+  /bin/bash "${ROOT_DIR}/Scripts/test_install_bars_cli.sh"
 }
 
 check_release_dsym_paths() {

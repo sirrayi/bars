@@ -29,7 +29,7 @@ Local token/cost history is scanned separately; the CLI PTY parser is a manual d
 
 Unavailable strategies are skipped. Authentication failures can allow fallback; network, server, and decode
 failures keep their original error. Stale external OAuth credentials fail closed. A managed workspace disables
-CLI fallback because the CLI cannot receive CodexBar's selected workspace header.
+CLI fallback because the CLI cannot receive bars's selected workspace header.
 
 If OpenAI web extras are enabled in the app and a matching OpenAI web session is available (Automatic or Manual
 cookies), dashboard extras load as a separate follow-up refresh and the source label becomes `primary + openai-web`.
@@ -43,7 +43,7 @@ Usage source picker:
 - OAuth availability and usage reads retry a missing, unreadable, or partially published credential file twice,
   50 milliseconds apart. Usage also rereads a native token due for renewal before reporting that it needs refresh.
   A successful retry retains the selected workspace; unchanged stale credentials still require their owner's renewal.
-- CodexBar never publishes refreshed native tokens into `auth.json`; when native credentials are stale,
+- bars never publishes refreshed native tokens into `auth.json`; when native credentials are stale,
   the explicit OAuth path delegates recovery to the Codex CLI, which owns that file. If the CLI is unavailable,
   the OAuth error is surfaced instead of mutating the shared file.
 - Calls `GET https://chatgpt.com/backend-api/wham/usage` (default) with `Authorization: Bearer <token>`.
@@ -52,7 +52,7 @@ Usage source picker:
   `GET https://chatgpt.com/backend-api/wham/rate-limit-reset-credits` using the same account-scoped OAuth context;
   the CLI requests it only when optional credits are included.
 - The menu and provider settings list every still-available expiry, while the optional credits setting controls
-  nearing-expiry notifications. CodexBar does not redeem or modify reset credits.
+  nearing-expiry notifications. bars does not redeem or modify reset credits.
 - `rate_limit.primary_window` / `secondary_window` map to the session/weekly lanes.
 - Suspicious weekly resets keep the last trusted usage while confirmation is pending. A successful refresh for the
   same account and workspace clears stale connectivity errors even when the reading is withheld; failed, cancelled,
@@ -87,7 +87,7 @@ Usage source picker:
 ### Optional external OAuth sources (off by default)
 - Enable **External Codex OAuth sources** to allow reads of another application's OAuth file. This cross-application credential access defaults off.
 - Without `$CODEX_HOME`, precedence is native Codex auth → legacy `~/.config/codex/auth.json` → OpenCode's `~/.local/share/opencode/auth.json` (or equivalent `XDG_DATA_HOME`). An explicit `$CODEX_HOME` stays isolated.
-- External sources accept OAuth tokens only, ignoring API-key entries. Usage probes cannot refresh or publish tokens to shared `auth.json` without a cross-writer publication contract. Stale native credentials may delegate to CLI recovery; stale external credentials fail closed in every mode. Managed workspace selection suppresses unscoped Auto CLI fallback and stays in private CodexBar metadata, never rewriting source `auth.json` or `account_id`.
+- External sources accept OAuth tokens only, ignoring API-key entries. Usage probes cannot refresh or publish tokens to shared `auth.json` without a cross-writer publication contract. Stale native credentials may delegate to CLI recovery; stale external credentials fail closed in every mode. Managed workspace selection suppresses unscoped Auto CLI fallback and stays in private bars metadata, never rewriting source `auth.json` or `account_id`.
 - **Reauthenticate** follows the credential source shown by the account row: System rows use the existing system Codex login flow even when the same account is also saved; managed rows renew their private managed home. Credentials are not copied between those homes. A queued action is discarded if the row's source or workspace changes.
 - If native credentials need renewal, use **Reauthenticate** for the affected account in Settings → Providers → Codex.
   For CLI recovery, run `codex login` with that account's existing `CODEX_HOME` and select the intended workspace.
@@ -96,7 +96,7 @@ Usage source picker:
   matching, even when its auth file names a different default workspace. Changing the selected workspace while a
   refresh is running discards the old workspace's result.
 - System Account promotion fails closed when a managed selection differs from the auth file's default workspace.
-  CodexBar keeps that selection managed rather than silently promoting the default or rewriting Codex-owned auth.
+  bars keeps that selection managed rather than silently promoting the default or rewriting Codex-owned auth.
 - System Account promotion restarts an already-running managed daemon with `codex app-server daemon restart` and the destination home's `CODEX_HOME`. It verifies PID, process command, and resolved home-scoped control socket, including symlinked homes and sockets in Codex's protected directory outside the home. Dangling links still require the CLI's running-daemon probe. Homes without a running daemon are untouched. If verification/restart is unsupported or fails, the account remains switched with a manual-restart note in menu/settings. Restart can interrupt active server work; it runs no login flow.
 - In the segmented layout, selecting an account refreshes its card while the menu stays open. Delayed results stay
   scoped to that selection. An open chart submenu or highlighted menu command can defer the update until the submenu
@@ -107,7 +107,7 @@ Usage source picker:
   the affected account's reading.
 - Settings → Providers → Codex shows each visible account's saved usage when multiple OAuth accounts are available.
   Opening the pane reads the retained snapshots without starting a refresh. Each row keeps its own usage age and
-  error, including accounts not fetched yet, and distinguishes **CodexBar follows** from **System**.
+  error, including accounts not fetched yet, and distinguishes **bars follows** from **System**.
   The first failed refresh after managed credentials rotate shows its authentication error. Another rotation
   discards the previous credentials' error, even when the saved account metadata has not changed.
   **Hide personal information** uses the same numbered account and workspace labels as the account switcher.
@@ -127,11 +127,11 @@ Usage source picker:
 ### “Codex auth.json needs refresh”
 
 This message comes from the local credential freshness check, before the usage HTTP request. Native credentials
-with a recognized token expiry need renewal within five minutes of expiry; otherwise CodexBar uses the saved
+with a recognized token expiry need renewal within five minutes of expiry; otherwise bars uses the saved
 `last_refresh` timestamp and an eight-day threshold. File modification time is not the freshness signal. Network,
 HTTP, and decoding errors have separate messages.
 
-CodexBar rereads credentials briefly in case their owner is replacing them. A later owner-CLI renewal can therefore
+bars rereads credentials briefly in case their owner is replacing them. A later owner-CLI renewal can therefore
 restore OAuth usage without another login. A managed workspace still requires renewal in its own Codex home;
 successful web usage or a healthy custom proxy does not establish that credential's freshness or workspace identity.
 If the warning recurs, record the usage source, system/managed/profile selection, source label, and timestamps on
@@ -139,8 +139,8 @@ both the failing and successful refresh. Do not share tokens or the contents of 
 
 ### Managed account CLI (macOS)
 
-Use `codexbar codex-accounts list --json` to find managed UUIDs and the current system-identity match,
-then `codexbar codex-accounts promote <exact-uuid-or-email>` to promote an account explicitly. Duplicate
+Use `bars codex-accounts list --json` to find managed UUIDs and the current system-identity match,
+then `bars codex-accounts promote <exact-uuid-or-email>` to promote an account explicitly. Duplicate
 emails require the UUID. The app and CLI share the same preservation and workspace checks: displaced
 live credentials are saved before an owner-only atomic replacement, and detected changes to either
 auth file abort the replacement. A nonblocking process lock serializes participating account writers
@@ -190,11 +190,11 @@ is observational, not an atomic transaction against hostile same-user mutation; 
 
 ### Local account discovery
 
-`codexbar serve` exposes saved managed Codex accounts through `GET /accounts` and
+`bars serve` exposes saved managed Codex accounts through `GET /accounts` and
 `GET /accounts/<id>`, alongside configured provider token accounts. Discovery reads the existing
 managed-account metadata only: it never opens managed homes, reads `auth.json`, migrates storage,
 refreshes usage, or switches accounts. System and advanced profile-home accounts are not included.
-The `active` flag means selected in CodexBar, not necessarily the system Codex identity.
+The `active` flag means selected in bars, not necessarily the system Codex identity.
 
 IDs remain stable across identity modes; treat them as opaque lookup keys. Without an explicit
 `--identity`, discovery follows the app's **Hide personal information** setting per request.
@@ -205,12 +205,12 @@ response fields, and errors.
 
 ### Advanced profile-home accounts
 - Managed Codex accounts remain the default multi-account path.
-- Advanced users can add existing Codex homes to `~/.codexbar/config.json` with
+- Advanced users can add existing Codex homes to `~/.bars/config.json` with
   `providers[].codexProfileHomePaths`.
 - Each configured path must be absolute or start with `~/`, and point at a Codex home that contains `auth.json`.
-- CodexBar reads identity from the configured home, exposes it in the Codex account switcher, and scopes
+- bars reads identity from the configured home, exposes it in the Codex account switcher, and scopes
   remote Codex fetches with `CODEX_HOME`.
-- Profile homes are not copied, reauthenticated, or removed by CodexBar.
+- Profile homes are not copied, reauthenticated, or removed by bars.
 - Selecting a profile-home usage card does not promote credentials or restart its daemon. Daemon refresh belongs to
   System Account promotion and targets only the home whose auth file was replaced.
 
@@ -230,7 +230,7 @@ Example:
 
 Account settings, the System Account picker, and the menu switcher retain the workspace name when it is available.
 If the same email and workspace label would appear more than once (including missing names or the “Personal” fallback),
-CodexBar adds a stable eight-character hash of the workspace identity. The hash stays the same when selecting or promoting
+bars adds a stable eight-character hash of the workspace identity. The hash stays the same when selecting or promoting
 that workspace and never exposes the full provider identifier. This is display-only; stored account metadata and
 credential selection are unchanged. Separate profile homes for the same workspace also include a hashed source identity,
 so their labels stay distinct without exposing paths. Compact switcher buttons keep the discriminator visible when space
@@ -256,7 +256,7 @@ and stable account numbers distinguish rows while usable workspace labels remain
   3) Firefox: `~/Library/Application Support/Firefox/Profiles/*/cookies.sqlite`
   - Domains loaded: `chatgpt.com`, `openai.com`.
   - No cookie-name filter; we import all matching domain cookies.
-- Cached cookies: Keychain cache `com.steipete.codexbar.cache` (account `cookie.codex`, source + timestamp).
+- Cached cookies: Keychain cache `com.sirrayi.bars.cache` (account `cookie.codex`, source + timestamp).
   Reused before re-importing from browsers.
 - Manual cookie header:
   - Paste the `Cookie:` header from a `chatgpt.com` request in Preferences → Providers → Codex.
@@ -290,7 +290,7 @@ and stable account numbers distinguish rows while usable workspace labels remain
   - `account/read`
   - `account/rateLimits/read`
 - RPC reads are bounded: initialization has a longer startup budget, and normal requests have a shorter per-method
-  timeout. On timeout, CodexBar closes the child `codex app-server` process's stdin and escalates from SIGTERM to
+  timeout. On timeout, bars closes the child `codex app-server` process's stdin and escalates from SIGTERM to
   SIGKILL after a bounded grace period, so the stdout reader unwinds and unresponsive children cannot linger.
 - Provides:
   - Usage windows (primary + secondary) with reset timestamps.
@@ -299,9 +299,9 @@ and stable account numbers distinguish rows while usable workspace labels remain
 - The plan from the fresh rate-limit response takes precedence over the account's cached plan after a subscription
   change. A missing or blank rate-limit plan falls back to the account response; email still comes from that account.
 - App-server errors are terminal for the CLI strategy, except when Codex includes a recoverable `wham/usage` JSON body in the error text.
-- If macOS blocks or quarantines the `codex` executable, CodexBar records the launch failure and skips background CLI
+- If macOS blocks or quarantines the `codex` executable, bars records the launch failure and skips background CLI
   launches for 30 minutes. Use a manual refresh after reinstalling or unblocking `codex` to retry immediately.
-- CodexBar also discovers the Codex CLI bundled with current ChatGPT and legacy Codex desktop apps, even when `codex`
+- bars also discovers the Codex CLI bundled with current ChatGPT and legacy Codex desktop apps, even when `codex`
   is absent from the shell PATH. Discovery includes the current `codex-cli/bin/codex` launcher and skips known
   npm launchers whose selected native payload is unavailable, with a diagnostic to reinstall `@openai/codex`.
   The launcher's Node interpreter resolves the architecture and optional package location without evaluating `codex.js`;
@@ -322,7 +322,7 @@ and stable account numbers distinguish rows while usable workspace labels remain
   `npm install -g --include=optional @openai/codex@latest` before retrying Add Account.
 
 ### Codex CLI PTY diagnostics (`/status`)
-- Manual/debug parser only; automatic background refresh and `CodexBarCLI usage --source cli` do not launch bare Codex TUI.
+- Manual/debug parser only; automatic background refresh and `BarsCLI usage --source cli` do not launch bare Codex TUI.
 - Kept for explicit diagnostics/parser coverage because bare `codex` TUI can start interactive auth and open browser tabs.
 - Parses rendered `/status` output:
   - `Credits:` line
@@ -351,7 +351,7 @@ and stable account numbers distinguish rows while usable workspace labels remain
 ## Cost usage (local log scan)
 
 Account quota and estimated API cost have different coverage. Remote quota can include work with no readable local
-token record. CodexBar cannot convert a quota percentage into dollars or recover missing token categories from it.
+token record. bars cannot convert a quota percentage into dollars or recover missing token categories from it.
 
 | Source | Local token/cost coverage |
 | --- | --- |
@@ -375,7 +375,7 @@ is not added again as a local source. This does not read the CLI's keyring crede
 The static musl Linux CLI reserves an 8 MiB thread stack so scanning non-empty Codex session logs
 does not exhaust musl's smaller default stack. The scanner and cache format stay shared with glibc and macOS.
 
-For a manual comparison with another development machine, run `codexbar cost --provider codex --remote <ssh-host>`.
+For a manual comparison with another development machine, run `bars cost --provider codex --remote <ssh-host>`.
 Both hosts scan their own native Codex logs once and return separate summaries, retaining their own day boundaries,
 pricing provenance, missing values, and incomplete-request counts. Only bounded totals cross SSH. A remote error keeps
 the local result and returns a nonzero exit code. See [CLI host reporting](cli.md) for the versioned summary contract.
@@ -452,8 +452,8 @@ unavailable (`costUSD: null`). This opt-in CLI mode does not change ordinary cos
   - Native conversation rows reuse the corrected cached per-file totals and existing pricing tables. They are hidden
     when pi-compatible usage joins the aggregate because the native-only rows would not reconcile with the merged total.
 - Cache:
-  - Native session store: `~/Library/Caches/CodexBar/cost-usage/cost-usage.sqlite`
-  - pi-compatible session cache: `~/Library/Caches/CodexBar/cost-usage/pi-sessions-v9.json`
+  - Native session store: `~/Library/Caches/bars/cost-usage/cost-usage.sqlite`
+  - pi-compatible session cache: `~/Library/Caches/bars/cost-usage/pi-sessions-v9.json`
     is replaced atomically on macOS and Linux, retaining complete cached scan state across refreshes.
     Version 8 rebuilds once from transcripts to establish source scope and completeness. Enabling the standalone
     [Pi provider](pi.md) keeps Codex history native-only in combined views and completed catch-up publication.
@@ -513,7 +513,7 @@ unavailable (`costUSD: null`). This opt-in CLI mode does not change ordinary cos
     Spend and the CLI show its cost as a partial estimate. Fully priced days keep the day-level coverage count.
   - [OpenAI's Help Center](https://help.openai.com/en/articles/11369540-using-codex-with-your-chatgpt-plan)
     says Auto-review safety checks are free and do not count toward plan limits when signed in with ChatGPT.
-    CodexBar assumes an effective cutoff of `2026-10-06T07:00:00Z` (midnight US Pacific), based on the
+    bars assumes an effective cutoff of `2026-10-06T07:00:00Z` (midnight US Pacific), based on the
     [reported October 6 announcement](https://nerdschalk.com/codex-auto-review-is-now-free-for-chatgpt-sign-ins/);
     OpenAI's policy page does not specify the date, and earlier requests keep their previous pricing.
     A `codex-auto-review` request at or after the cutoff is priced at $0 when its rollout's leaf `session_meta`
@@ -564,7 +564,7 @@ unavailable (`costUSD: null`). This opt-in CLI mode does not change ordinary cos
   can deduplicate without donating its price. Stores from 0.72.0 (`ed735dc27ffa70d9`) and the saved-pricing fix
   (`99d920977063318a`) are adopted without rebuilding. Existing unknown-price markers stay unknown during reparsing:
   they do not record whether they came from the timestamp mismatch or from invalidated evidence.
-  `codexbar cache clear --cost` rebuilds such a cache from the session logs.
+  `bars cache clear --cost` rebuilds such a cache from the session logs.
   Thread and execution-session identities are validated separately; copied child history remains excluded by the
   existing subagent boundaries. Cached tails retain these identities across refreshes and SQLite reopen.
   Compatible caches retain stored history and matching saved prices while older parser revisions reparse in bounded
@@ -692,10 +692,10 @@ Storage scans reuse top-level component paths within each scan. Symbolic links s
 and unnormalized roots retain their normalization fallback; directory totals and component names are unchanged.
 
 ## Key files
-- Web: `Sources/CodexBarCore/OpenAIWeb/*`
-- CLI RPC + diagnostic PTY parser: `Sources/CodexBarCore/UsageFetcher.swift`,
-  `Sources/CodexBarCore/Providers/Codex/CodexStatusProbe.swift`
-- Cost usage: `Sources/CodexBarCore/CostUsageFetcher.swift`,
-  `Sources/CodexBarCore/PiSessionCostScanner.swift`,
-  `Sources/CodexBarCore/PiSessionCostCache.swift`,
-  `Sources/CodexBarCore/Vendored/CostUsage/*`
+- Web: `Sources/BarsCore/OpenAIWeb/*`
+- CLI RPC + diagnostic PTY parser: `Sources/BarsCore/UsageFetcher.swift`,
+  `Sources/BarsCore/Providers/Codex/CodexStatusProbe.swift`
+- Cost usage: `Sources/BarsCore/CostUsageFetcher.swift`,
+  `Sources/BarsCore/PiSessionCostScanner.swift`,
+  `Sources/BarsCore/PiSessionCostCache.swift`,
+  `Sources/BarsCore/Vendored/CostUsage/*`

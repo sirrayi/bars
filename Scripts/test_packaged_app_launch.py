@@ -15,7 +15,7 @@ import unittest
 class PackagedAppLaunchTests(unittest.TestCase):
     def test_all_launches_isolate_ambient_accounts_and_normal_launch_mode(self):
         script = Path(__file__).with_name("verify_packaged_app_launch.sh")
-        with tempfile.TemporaryDirectory(prefix="codexbar-launch-fixture-") as directory:
+        with tempfile.TemporaryDirectory(prefix="bars-launch-fixture-") as directory:
             root = Path(directory)
             ambient = root / "ambient-home"
             ambient.mkdir()
@@ -25,29 +25,29 @@ class PackagedAppLaunchTests(unittest.TestCase):
             profiles = root / "profiles.jsonl"
             stubs = root / "bin"
             stubs.mkdir()
-            app = root / "CodexBar.app"
-            (app / "Contents/Helpers/CodexBar_CodexBarCore.bundle").mkdir(parents=True)
+            app = root / "bars.app"
+            (app / "Contents/Helpers/bars_BarsCore.bundle").mkdir(parents=True)
             child = f"#!{sys.executable}\n" + textwrap.dedent(f"""\
                 import json, os, sys, time
                 from pathlib import Path
-                for key in ['SMOKE_AMBIENT_SENTINEL', 'CODEXBAR_ALLOW_TEST_KEYCHAIN_ACCESS',
-                            'CODEXBAR_TEST_CODEX_FILE_FIXTURES']:
+                for key in ['SMOKE_AMBIENT_SENTINEL', 'BARS_ALLOW_TEST_KEYCHAIN_ACCESS',
+                            'BARS_TEST_CODEX_FILE_FIXTURES']:
                     assert key not in os.environ, key
                 home = Path(os.environ['HOME'])
                 assert home == Path(os.environ['CFFIXED_USER_HOME'])
-                assert home.parent.name.startswith('codexbar-launch-smoke.')
+                assert home.parent.name.startswith('bars-launch-smoke.')
                 assert home.parent.parent == Path({str(temporary)!r})
-                config = Path(os.environ['CODEXBAR_CONFIG'])
+                config = Path(os.environ['BARS_CONFIG'])
                 assert config.is_relative_to(home)
                 providers = json.loads(config.read_text())['providers']
                 assert providers and all(p.get('enabled') is False for p in providers)
                 assert Path(os.environ['XDG_CONFIG_HOME']).is_relative_to(home)
                 assert Path(os.environ['TMPDIR']).is_relative_to(home.parent)
                 assert os.environ['PATH'] == '/usr/bin:/bin:/usr/sbin:/sbin'
-                for key in ['SWIFT_TESTING', 'CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS',
-                            'CODEXBAR_TEST_CODEX_FILE_ISOLATION', 'CODEXBAR_TEST_SESSION_FILE_ISOLATION']:
+                for key in ['SWIFT_TESTING', 'BARS_SUPPRESS_TEST_KEYCHAIN_ACCESS',
+                            'BARS_TEST_CODEX_FILE_ISOLATION', 'BARS_TEST_SESSION_FILE_ISOLATION']:
                     assert os.environ[key] == '1', key
-                resource = os.environ.get('CODEXBAR_RESOURCE_SMOKE')
+                resource = os.environ.get('BARS_RESOURCE_SMOKE')
                 if resource is None:
                     args = dict(zip(sys.argv[1::2], sys.argv[2::2]))
                     assert args['-iCloudSyncEnabled'] == 'NO'
@@ -57,11 +57,11 @@ class PackagedAppLaunchTests(unittest.TestCase):
                 with open({str(receipts)!r}, 'a') as out:
                     out.write(json.dumps({{'executable': Path(sys.argv[0]).name, 'resource': resource}}) + '\\n')
                 if resource == '1':
-                    print('CODEXBAR_RESOURCE_SMOKE_OK')
+                    print('BARS_RESOURCE_SMOKE_OK')
                 else:
                     time.sleep(60)
                 """)
-            for relative in ["Contents/MacOS/CodexBar", "Contents/Helpers/CodexBarCLI"]:
+            for relative in ["Contents/MacOS/bars", "Contents/Helpers/BarsCLI"]:
                 executable = app / relative
                 executable.parent.mkdir(parents=True, exist_ok=True)
                 executable.write_text(child)
@@ -84,13 +84,13 @@ class PackagedAppLaunchTests(unittest.TestCase):
                 HOME=str(ambient),
                 CFFIXED_USER_HOME=str(ambient),
                 TMPDIR=str(temporary) + "/",
-                CODEXBAR_CONFIG=str(ambient / "private-config.json"),
-                CODEXBAR_SKIP_LAUNCH_SMOKE="0",
-                CODEXBAR_LAUNCH_SMOKE_SECONDS="6",
+                BARS_CONFIG=str(ambient / "private-config.json"),
+                BARS_SKIP_LAUNCH_SMOKE="0",
+                BARS_LAUNCH_SMOKE_SECONDS="6",
                 SMOKE_AMBIENT_SENTINEL="synthetic-only",
-                CODEXBAR_RESOURCE_SMOKE="1",
-                CODEXBAR_ALLOW_TEST_KEYCHAIN_ACCESS="1",
-                CODEXBAR_TEST_CODEX_FILE_FIXTURES="ambient-fixture-grant",
+                BARS_RESOURCE_SMOKE="1",
+                BARS_ALLOW_TEST_KEYCHAIN_ACCESS="1",
+                BARS_TEST_CODEX_FILE_FIXTURES="ambient-fixture-grant",
             )
             # Keep the normal smoke window so a busy host does not kill the stub before Python starts.
             result = subprocess.run(
@@ -101,7 +101,7 @@ class PackagedAppLaunchTests(unittest.TestCase):
             observations = [json.loads(line) for line in receipts.read_text().splitlines()]
             self.assertEqual([r["resource"] for r in observations], ["1", "1", "1", None])
             self.assertEqual([r["executable"] for r in observations],
-                             ["CodexBarCLI", "codexbar", "CodexBar", "CodexBar"])
+                             ["BarsCLI", "bars", "bars", "bars"])
             sandbox_profiles = [json.loads(line) for line in profiles.read_text().splitlines()]
             self.assertEqual(len(sandbox_profiles), 4)
             for profile in sandbox_profiles:
@@ -112,7 +112,7 @@ class PackagedAppLaunchTests(unittest.TestCase):
                 self.assertIsNotNone(exception)
                 smoke_root = Path(exception[1])
                 self.assertEqual(smoke_root.parent, temporary)
-                self.assertTrue(smoke_root.name.startswith("codexbar-launch-smoke."))
+                self.assertTrue(smoke_root.name.startswith("bars-launch-smoke."))
             self.assertFalse(list(ambient.iterdir()))
             self.assertFalse(list(temporary.iterdir()), "smoke launch left its child home or process files behind")
 

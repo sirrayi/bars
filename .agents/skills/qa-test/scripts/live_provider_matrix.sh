@@ -2,10 +2,10 @@
 set -u
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
-CLI="${CODEXBAR_CLI:-$ROOT/CodexBar.app/Contents/Helpers/CodexBarCLI}"
+CLI="${BARS_CLI:-$ROOT/bars.app/Contents/Helpers/BarsCLI}"
 TIMEOUT_BIN="${TIMEOUT_BIN:-$(command -v gtimeout || command -v timeout || true)}"
-WEB_TIMEOUT="${CODEXBAR_QA_WEB_TIMEOUT:-12}"
-CASE_TIMEOUT="${CODEXBAR_QA_CASE_TIMEOUT:-60}"
+WEB_TIMEOUT="${BARS_QA_WEB_TIMEOUT:-12}"
+CASE_TIMEOUT="${BARS_QA_CASE_TIMEOUT:-60}"
 
 usage() {
   cat <<'USAGE'
@@ -16,15 +16,15 @@ Usage:
   live_provider_matrix.sh --providers openai,zai,deepseek
 
 Environment:
-  CODEXBAR_CLI=/path/to/CodexBarCLI
-  CODEXBAR_CONFIG=/path/to/config.json
-  CODEXBAR_QA_WEB_TIMEOUT=12
-  CODEXBAR_QA_CASE_TIMEOUT=60
+  BARS_CLI=/path/to/BarsCLI
+  BARS_CONFIG=/path/to/config.json
+  BARS_QA_WEB_TIMEOUT=12
+  BARS_QA_CASE_TIMEOUT=60
 USAGE
 }
 
 if [[ ! -x "$CLI" ]]; then
-  echo "missing CodexBarCLI at $CLI" >&2
+  echo "missing BarsCLI at $CLI" >&2
   exit 2
 fi
 if [[ -z "$TIMEOUT_BIN" ]]; then
@@ -47,7 +47,7 @@ case "$mode" in
     provider_list="$(mktemp)"
     if ! "$CLI" config providers --format json --json-only >"$provider_status" 2>"$provider_err"; then
       rm -f "$provider_status" "$provider_err" "$provider_list"
-      echo "failed to list providers via CodexBarCLI config providers" >&2
+      echo "failed to list providers via BarsCLI config providers" >&2
       exit 2
     fi
     if ! node - "$provider_status" >"$provider_list" <<'NODE'; then
@@ -65,7 +65,7 @@ for (const item of payload) {
 }
 NODE
       rm -f "$provider_status" "$provider_err" "$provider_list"
-      echo "failed to parse CodexBarCLI config providers output" >&2
+      echo "failed to parse BarsCLI config providers output" >&2
       exit 2
     fi
     while IFS= read -r provider; do
@@ -73,7 +73,7 @@ NODE
     done <"$provider_list"
     rm -f "$provider_status" "$provider_err" "$provider_list"
     if [[ "${#providers[@]}" -eq 0 ]]; then
-      echo "no enabled providers found via CodexBarCLI config providers" >&2
+      echo "no enabled providers found via BarsCLI config providers" >&2
       exit 2
     fi
     ;;

@@ -35,11 +35,11 @@ def runtime_environment(developer: Path, home: Path) -> dict[str, str]:
         environment[key] = (environment[key] + ":" if environment.get(key) else "") + str(directory)
     environment["CFFIXED_USER_HOME"] = str(home)
     environment["HOME"] = str(home)
-    environment["CODEXBAR_TEST_CODEX_FILE_ISOLATION"] = "1"
-    environment["CODEXBAR_TEST_SESSION_FILE_ISOLATION"] = "1"
-    environment["CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS"] = "1"
-    environment.pop("CODEXBAR_ALLOW_TEST_KEYCHAIN_ACCESS", None)
-    environment.pop("CODEXBAR_TEST_CODEX_FILE_FIXTURES", None)
+    environment["BARS_TEST_CODEX_FILE_ISOLATION"] = "1"
+    environment["BARS_TEST_SESSION_FILE_ISOLATION"] = "1"
+    environment["BARS_SUPPRESS_TEST_KEYCHAIN_ACCESS"] = "1"
+    environment.pop("BARS_ALLOW_TEST_KEYCHAIN_ACCESS", None)
+    environment.pop("BARS_TEST_CODEX_FILE_FIXTURES", None)
     environment["LANG"] = "en_US.UTF-8"
     environment["LC_ALL"] = "en_US.UTF-8"
     return environment
@@ -138,7 +138,7 @@ def prepare_runtime(swift_command: list[str], groups: list[list[dict]], expected
 
 
 def run_worker(manifest: dict, index: int) -> int:
-    with tempfile.TemporaryDirectory(prefix=f"codexbar-direct-group-{index}-") as directory:
+    with tempfile.TemporaryDirectory(prefix=f"bars-direct-group-{index}-") as directory:
         environment = runtime_environment(Path(manifest["runtime"]["developer"]), Path(directory))
         os.environ.clear()
         os.environ.update(environment)

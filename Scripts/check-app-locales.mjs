@@ -11,7 +11,7 @@ import {
 } from "./localization-formats.mjs";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const resources = path.join(repoRoot, "Sources/CodexBar/Resources");
+const resources = path.join(repoRoot, "Sources/Bars/Resources");
 const english = readCatalog("en");
 const englishKeys = Object.keys(english).sort();
 const strictLocales = ["ar", "ca", "fa", "th"];
@@ -186,23 +186,23 @@ const knownKeys = new Set([...englishKeys, ...pluralKeys]);
 const widgetKeys = new Set(
   JSON.parse(fs.readFileSync(path.join(repoRoot, "Scripts/widget-localization-keys.json"), "utf8")),
 );
-for (const directory of ["Sources/CodexBar", "Sources/CodexBarWidget", "Sources/CodexBarCore/Providers"]) {
+for (const directory of ["Sources/Bars", "Sources/BarsWidget", "Sources/BarsCore/Providers"]) {
   for (const file of swiftFiles(path.join(repoRoot, directory))) {
     const source = fs.readFileSync(file, "utf8");
     const keys = literalSwiftKeys(source, String.raw`\b(?:L|W)\(`);
-    if (directory !== "Sources/CodexBarCore/Providers") {
+    if (directory !== "Sources/BarsCore/Providers") {
       const rawUI = literalSwiftKeys(
         source,
         String.raw`(?:\b(?:Text|Button|Toggle|Label|SettingsRowLabel|TextField|SecureField)\(|\.(?:help|accessibilityLabel|alert)\()`,
       );
       for (const key of rawUI) {
-        if (key !== "CodexBar" && /[A-Za-z]/.test(key)) {
+        if (key !== "bars" && /[A-Za-z]/.test(key)) {
           console.error(`${path.relative(repoRoot, file)}: unlocalized UI literal ${JSON.stringify(key)}`);
           hasErrors = true;
         }
       }
     }
-    if (directory === "Sources/CodexBarWidget") {
+    if (directory === "Sources/BarsWidget") {
       for (const key of literalSwiftKeys(source, String.raw`\bW\(`)) {
         if (key && !widgetKeys.has(key)) {
           console.error(`${path.relative(repoRoot, file)}: missing widget resource key ${JSON.stringify(key)}`);
@@ -211,7 +211,7 @@ for (const directory of ["Sources/CodexBar", "Sources/CodexBarWidget", "Sources/
       }
     }
     if (file.includes(`${path.sep}Providers${path.sep}`)) {
-      const isCore = file.includes(`${path.sep}CodexBarCore${path.sep}`);
+      const isCore = file.includes(`${path.sep}BarsCore${path.sep}`);
       const marker =
         !isCore || file.endsWith("Descriptor.swift")
           ? String.raw`\b(?:title|subtitle|placeholder|sessionLabel|weeklyLabel|opusLabel|creditsHint|noDataMessage):`

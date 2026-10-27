@@ -15,7 +15,7 @@ public CLI JSON contract.
 ## Internal navigation scaffold
 
 Debug builds can expose a Codex-only **Workspaces** menu action with
-`CODEXBAR_ENABLE_WORKSPACES_MENU=1`. It opens one reusable native project and
+`BARS_ENABLE_WORKSPACES_MENU=1`. It opens one reusable native project and
 session inspector. The inspector is cache-first: it shows the latest available
 local snapshot immediately, keeps that content visible while an explicit
 **Refresh usage data** action requests a new scan, and does not force a refresh
@@ -72,13 +72,13 @@ The supported internal presentation boundary is:
 The Codex cost cache is:
 
 ```text
-~/Library/Caches/CodexBar/cost-usage/cost-usage.sqlite
+~/Library/Caches/bars/cost-usage/cost-usage.sqlite
 ```
 
 The Workspaces sidecar is:
 
 ```text
-~/Library/Caches/CodexBar/local-usage/codex-workspaces-v1.sqlite
+~/Library/Caches/bars/local-usage/codex-workspaces-v1.sqlite
 ```
 
 The sidecar currently uses SQLite schema version 5 and snapshot payload format

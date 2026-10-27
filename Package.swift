@@ -4,32 +4,32 @@ import PackageDescription
 
 let sweetCookieKitPath = "../SweetCookieKit"
 let useLocalSweetCookieKit =
-    ProcessInfo.processInfo.environment["CODEXBAR_USE_LOCAL_SWEETCOOKIEKIT"] == "1"
+    ProcessInfo.processInfo.environment["BARS_USE_LOCAL_SWEETCOOKIEKIT"] == "1"
 let sweetCookieKitDependency: Package.Dependency =
     useLocalSweetCookieKit && FileManager.default.fileExists(atPath: sweetCookieKitPath)
     ? .package(path: sweetCookieKitPath)
     : .package(url: "https://github.com/steipete/SweetCookieKit", from: "0.5.9")
 
 let package = Package(
-    name: "CodexBar",
+    name: "bars",
     defaultLocalization: "en",
     platforms: [
         .macOS(.v14),
     ],
     products: {
         var products: [Product] = [
-            .library(name: "CodexBarCore", targets: ["CodexBarCore"]),
-            .executable(name: "CodexBarCLI", targets: ["CodexBarCLI"]),
+            .library(name: "BarsCore", targets: ["BarsCore"]),
+            .executable(name: "BarsCLI", targets: ["BarsCLI"]),
             // Offline adaptive-refresh replay harness. Keep the supporting library package-internal.
             .executable(name: "AdaptiveReplayCLI", targets: ["AdaptiveReplayCLI"]),
         ]
 
         #if os(macOS)
         products.append(contentsOf: [
-            .executable(name: "CodexBar", targets: ["CodexBar"]),
-            .executable(name: "CodexBarClaudeWatchdog", targets: ["CodexBarClaudeWatchdog"]),
-            .executable(name: "CodexBarWidget", targets: ["CodexBarWidget"]),
-            .executable(name: "CodexBarClaudeWebProbe", targets: ["CodexBarClaudeWebProbe"]),
+            .executable(name: "bars", targets: ["Bars"]),
+            .executable(name: "BarsClaudeWatchdog", targets: ["BarsClaudeWatchdog"]),
+            .executable(name: "BarsWidget", targets: ["BarsWidget"]),
+            .executable(name: "BarsClaudeWebProbe", targets: ["BarsClaudeWebProbe"]),
         ])
         #endif
 
@@ -46,7 +46,7 @@ let package = Package(
     targets: {
         var targets: [Target] = [
             .target(
-                name: "CodexBarCore",
+                name: "BarsCore",
                 dependencies: [
                     .product(name: "Crypto", package: "swift-crypto"),
                     .product(name: "Logging", package: "swift-log"),
@@ -62,13 +62,13 @@ let package = Package(
                     .linkedFramework("JavaScriptCore", .when(platforms: [.macOS])),
                 ]),
             .executableTarget(
-                name: "CodexBarCLI",
+                name: "BarsCLI",
                 dependencies: [
-                    "CodexBarCore",
+                    "BarsCore",
                     .product(name: "Commander", package: "Commander"),
                     .product(name: "Crypto", package: "swift-crypto"),
                 ],
-                path: "Sources/CodexBarCLI",
+                path: "Sources/BarsCLI",
                 swiftSettings: [
                     .enableUpcomingFeature("StrictConcurrency"),
                 ]),
@@ -82,7 +82,7 @@ let package = Package(
                     .enableUpcomingFeature("StrictConcurrency"),
                 ]),
             // Offline adaptive-refresh replay harness: pure Foundation,
-            // no CodexBar/CodexBarCore dependency, so it builds anywhere CodexBarCore does.
+            // no Bars/BarsCore dependency, so it builds anywhere BarsCore does.
             .target(
                 name: "AdaptiveReplayKit",
                 dependencies: ["AdaptiveRefreshCore"],
@@ -119,21 +119,21 @@ let package = Package(
         #if os(macOS)
         targets.append(contentsOf: [
             .executableTarget(
-                name: "CodexBarClaudeWatchdog",
+                name: "BarsClaudeWatchdog",
                 dependencies: [],
-                path: "Sources/CodexBarClaudeWatchdog",
+                path: "Sources/BarsClaudeWatchdog",
                 swiftSettings: [
                     .enableUpcomingFeature("StrictConcurrency"),
                 ]),
             .executableTarget(
-                name: "CodexBar",
+                name: "Bars",
                 dependencies: [
                     .product(name: "KeyboardShortcuts", package: "KeyboardShortcuts"),
                     .product(name: "Vortex", package: "Vortex"),
                     "AdaptiveRefreshCore",
-                    "CodexBarCore",
+                    "BarsCore",
                 ],
-                path: "Sources/CodexBar",
+                path: "Sources/Bars",
                 resources: [
                     .process("Resources"),
                 ],
@@ -142,9 +142,9 @@ let package = Package(
                     .enableUpcomingFeature("StrictConcurrency"),
                 ]),
             .executableTarget(
-                name: "CodexBarWidget",
-                dependencies: ["CodexBarCore"],
-                path: "Sources/CodexBarWidget",
+                name: "BarsWidget",
+                dependencies: ["BarsCore"],
+                path: "Sources/BarsWidget",
                 resources: [
                     .process("Resources"),
                 ],
@@ -152,18 +152,18 @@ let package = Package(
                     .enableUpcomingFeature("StrictConcurrency"),
                 ]),
             .executableTarget(
-                name: "CodexBarClaudeWebProbe",
-                dependencies: ["CodexBarCore"],
-                path: "Sources/CodexBarClaudeWebProbe",
+                name: "BarsClaudeWebProbe",
+                dependencies: ["BarsCore"],
+                path: "Sources/BarsClaudeWebProbe",
                 swiftSettings: [
                     .enableUpcomingFeature("StrictConcurrency"),
                 ]),
         ])
 
         targets.append(.testTarget(
-            name: "CodexBarTests",
+            name: "BarsTests",
             dependencies: [
-                "CodexBar", "CodexBarCore", "CodexBarCLI", "CodexBarWidget",
+                "Bars", "BarsCore", "BarsCLI", "BarsWidget",
             ],
             path: "Tests",
             exclude: [
@@ -171,7 +171,7 @@ let package = Package(
                 "AdaptiveReplayKitTests",
             ],
             resources: [
-                .copy("CodexBarTests/Fixtures"),
+                .copy("BarsTests/Fixtures"),
             ],
             swiftSettings: [
                 .enableUpcomingFeature("StrictConcurrency"),

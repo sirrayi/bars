@@ -10,9 +10,9 @@ import subprocess
 import tarfile
 
 ROOT = Path(__file__).resolve().parents[1]
-RESOURCE = Path('Sources/CodexBarCore/Resources/Acknowledgements.json')
+RESOURCE = Path('Sources/BarsCore/Resources/Acknowledgements.json')
 LOCKS = [Path('Package.resolved'), Path(
-    'WidgetExtension/CodexBarWidgetExtension.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved')]
+    'WidgetExtension/BarsWidgetExtension.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved')]
 # All resolved packages are intentional, including platform-conditional/transitive products.
 PACKAGES = {
     'commander': ('Commander', ['Peter Steinberger'], 'MIT', ['LICENSE']),
@@ -113,7 +113,7 @@ def check(root, entries):
 
 
 def render(entries):
-    return 'CodexBar — Third-party notices\n\n' + '\n\n'.join(
+    return 'bars — Third-party notices\n\n' + '\n\n'.join(
         f'{item["name"]} ({item["license"]})\n{item["url"]}\n\n' + '\n\n'.join(
             f'--- {notice["path"]} ---\n{notice["text"]}' for notice in item['sources']) for item in entries) + '\n'
 

@@ -10,9 +10,9 @@ read_when:
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Let CodexBar users opt in to one or more Kilo organizations from Preferences → Providers → Kilo. Enabled orgs render as stacked cards alongside their personal account in the Kilo menu.
+**Goal:** Let bars users opt in to one or more Kilo organizations from Preferences → Providers → Kilo. Enabled orgs render as stacked cards alongside their personal account in the Kilo menu.
 
-**Architecture:** Add `KiloUsageScope` and `KiloOrganization` types in `CodexBarCore`. Inject `X-KILOCODE-ORGANIZATIONID` header in `KiloUsageFetcher` when a scope is `.organization`. Persist known orgs and enabled-ids in `ProviderConfig` JSON. Mirror the existing tokenAccounts pattern in `UsageStore` to fan out a fetch per enabled scope and store stacked snapshots. Render via the existing stacked-snapshot menu pipeline by surfacing a Kilo-scoped accounts adapter.
+**Architecture:** Add `KiloUsageScope` and `KiloOrganization` types in `BarsCore`. Inject `X-KILOCODE-ORGANIZATIONID` header in `KiloUsageFetcher` when a scope is `.organization`. Persist known orgs and enabled-ids in `ProviderConfig` JSON. Mirror the existing tokenAccounts pattern in `UsageStore` to fan out a fetch per enabled scope and store stacked snapshots. Render via the existing stacked-snapshot menu pipeline by surfacing a Kilo-scoped accounts adapter.
 
 **Tech Stack:** Swift 6, SwiftUI, Swift Testing (`@Test`), `swift build` / `swift test` / `make check`, GitHub CLI for PR.
 
@@ -50,17 +50,17 @@ Expected: build succeeds, KiloUsageFetcher tests pass.
 ## Task 1: Add `KiloOrganization` data type
 
 **Files:**
-- Create: `Sources/CodexBarCore/Providers/Kilo/KiloOrganization.swift`
-- Create: `Tests/CodexBarTests/KiloOrganizationTests.swift`
+- Create: `Sources/BarsCore/Providers/Kilo/KiloOrganization.swift`
+- Create: `Tests/BarsTests/KiloOrganizationTests.swift`
 
 - [ ] **Step 1.1: Write the failing test**
 
-Create `Tests/CodexBarTests/KiloOrganizationTests.swift`:
+Create `Tests/BarsTests/KiloOrganizationTests.swift`:
 
 ```swift
 import Foundation
 import Testing
-@testable import CodexBarCore
+@testable import BarsCore
 
 struct KiloOrganizationTests {
     @Test
@@ -106,7 +106,7 @@ Expected: compile error "cannot find 'KiloOrganization' in scope".
 
 - [ ] **Step 1.3: Create the type**
 
-Create `Sources/CodexBarCore/Providers/Kilo/KiloOrganization.swift`:
+Create `Sources/BarsCore/Providers/Kilo/KiloOrganization.swift`:
 
 ```swift
 import Foundation
@@ -135,8 +135,8 @@ Expected: all 3 tests pass.
 - [ ] **Step 1.5: Commit**
 
 ```bash
-git add Sources/CodexBarCore/Providers/Kilo/KiloOrganization.swift \
-        Tests/CodexBarTests/KiloOrganizationTests.swift
+git add Sources/BarsCore/Providers/Kilo/KiloOrganization.swift \
+        Tests/BarsTests/KiloOrganizationTests.swift
 git commit -m "feat(kilo): add KiloOrganization model"
 ```
 
@@ -145,12 +145,12 @@ git commit -m "feat(kilo): add KiloOrganization model"
 ## Task 2: Add `KiloUsageScope` enum
 
 **Files:**
-- Create: `Sources/CodexBarCore/Providers/Kilo/KiloUsageScope.swift`
-- Modify: `Tests/CodexBarTests/KiloOrganizationTests.swift`
+- Create: `Sources/BarsCore/Providers/Kilo/KiloUsageScope.swift`
+- Modify: `Tests/BarsTests/KiloOrganizationTests.swift`
 
 - [ ] **Step 2.1: Append failing tests**
 
-Append to `Tests/CodexBarTests/KiloOrganizationTests.swift`:
+Append to `Tests/BarsTests/KiloOrganizationTests.swift`:
 
 ```swift
 struct KiloUsageScopeTests {
@@ -200,7 +200,7 @@ Expected: compile error "cannot find 'KiloUsageScope' in scope".
 
 - [ ] **Step 2.3: Create the type**
 
-Create `Sources/CodexBarCore/Providers/Kilo/KiloUsageScope.swift`:
+Create `Sources/BarsCore/Providers/Kilo/KiloUsageScope.swift`:
 
 ```swift
 import Foundation
@@ -249,8 +249,8 @@ Expected: all 6 tests pass.
 - [ ] **Step 2.5: Commit**
 
 ```bash
-git add Sources/CodexBarCore/Providers/Kilo/KiloUsageScope.swift \
-        Tests/CodexBarTests/KiloOrganizationTests.swift
+git add Sources/BarsCore/Providers/Kilo/KiloUsageScope.swift \
+        Tests/BarsTests/KiloOrganizationTests.swift
 git commit -m "feat(kilo): add KiloUsageScope enum"
 ```
 
@@ -259,12 +259,12 @@ git commit -m "feat(kilo): add KiloUsageScope enum"
 ## Task 3: Inject org header in `KiloUsageFetcher.fetchUsage`
 
 **Files:**
-- Modify: `Sources/CodexBarCore/Providers/Kilo/KiloUsageFetcher.swift`
-- Modify: `Tests/CodexBarTests/KiloUsageFetcherTests.swift`
+- Modify: `Sources/BarsCore/Providers/Kilo/KiloUsageFetcher.swift`
+- Modify: `Tests/BarsTests/KiloUsageFetcherTests.swift`
 
 - [ ] **Step 3.1: Append failing test for header injection**
 
-Append the following inside `struct KiloUsageFetcherTests` in `Tests/CodexBarTests/KiloUsageFetcherTests.swift`:
+Append the following inside `struct KiloUsageFetcherTests` in `Tests/BarsTests/KiloUsageFetcherTests.swift`:
 
 ```swift
     @Test
@@ -300,7 +300,7 @@ Expected: compile error — `_buildRequestForTesting` not found.
 
 - [ ] **Step 3.3: Refactor `KiloUsageFetcher` to accept scope and extract request builder**
 
-In `Sources/CodexBarCore/Providers/Kilo/KiloUsageFetcher.swift`:
+In `Sources/BarsCore/Providers/Kilo/KiloUsageFetcher.swift`:
 
 Replace the existing `public static func fetchUsage(apiKey:environment:)` signature (around line 258) with the scoped version, and extract the request building into a testable helper. The new code:
 
@@ -379,8 +379,8 @@ Expected: all KiloUsageFetcher tests pass (existing + 2 new).
 - [ ] **Step 3.5: Commit**
 
 ```bash
-git add Sources/CodexBarCore/Providers/Kilo/KiloUsageFetcher.swift \
-        Tests/CodexBarTests/KiloUsageFetcherTests.swift
+git add Sources/BarsCore/Providers/Kilo/KiloUsageFetcher.swift \
+        Tests/BarsTests/KiloUsageFetcherTests.swift
 git commit -m "feat(kilo): scope KiloUsageFetcher.fetchUsage with org header"
 ```
 
@@ -389,8 +389,8 @@ git commit -m "feat(kilo): scope KiloUsageFetcher.fetchUsage with org header"
 ## Task 4: Add `fetchOrganizations` to `KiloUsageFetcher`
 
 **Files:**
-- Modify: `Sources/CodexBarCore/Providers/Kilo/KiloUsageFetcher.swift`
-- Modify: `Tests/CodexBarTests/KiloUsageFetcherTests.swift`
+- Modify: `Sources/BarsCore/Providers/Kilo/KiloUsageFetcher.swift`
+- Modify: `Tests/BarsTests/KiloUsageFetcherTests.swift`
 
 - [ ] **Step 4.1: Append failing parse tests**
 
@@ -458,7 +458,7 @@ Expected: compile error — `_parseOrganizationsForTesting` undefined.
 
 - [ ] **Step 4.3: Add organization fetching logic**
 
-Append to `Sources/CodexBarCore/Providers/Kilo/KiloUsageFetcher.swift` (inside the `KiloUsageFetcher` struct):
+Append to `Sources/BarsCore/Providers/Kilo/KiloUsageFetcher.swift` (inside the `KiloUsageFetcher` struct):
 
 ```swift
     public static func fetchOrganizations(
@@ -611,8 +611,8 @@ Expected: all 3 new parse tests pass plus prior tests.
 - [ ] **Step 4.5: Commit**
 
 ```bash
-git add Sources/CodexBarCore/Providers/Kilo/KiloUsageFetcher.swift \
-        Tests/CodexBarTests/KiloUsageFetcherTests.swift
+git add Sources/BarsCore/Providers/Kilo/KiloUsageFetcher.swift \
+        Tests/BarsTests/KiloUsageFetcherTests.swift
 git commit -m "feat(kilo): add fetchOrganizations with REST fallback"
 ```
 
@@ -621,12 +621,12 @@ git commit -m "feat(kilo): add fetchOrganizations with REST fallback"
 ## Task 5: Extend `ProviderConfig` with `kiloOrganizations`
 
 **Files:**
-- Modify: `Sources/CodexBarCore/Config/CodexBarConfig.swift`
+- Modify: `Sources/BarsCore/Config/BarsConfig.swift`
 - Tests: covered indirectly via Task 6 SettingsStore tests.
 
 - [ ] **Step 5.1: Add fields to `ProviderConfig`**
 
-In `Sources/CodexBarCore/Config/CodexBarConfig.swift`, inside `public struct ProviderConfig`:
+In `Sources/BarsCore/Config/BarsConfig.swift`, inside `public struct ProviderConfig`:
 
 After the existing `public var quotaWarnings: QuotaWarningConfig?` line, add:
 
@@ -686,7 +686,7 @@ Expected: build succeeds.
 - [ ] **Step 5.3: Commit**
 
 ```bash
-git add Sources/CodexBarCore/Config/CodexBarConfig.swift
+git add Sources/BarsCore/Config/BarsConfig.swift
 git commit -m "feat(kilo): persist kilo organizations in ProviderConfig"
 ```
 
@@ -695,18 +695,18 @@ git commit -m "feat(kilo): persist kilo organizations in ProviderConfig"
 ## Task 6: Extend `SettingsStore` with Kilo orgs accessors
 
 **Files:**
-- Modify: `Sources/CodexBar/Providers/Kilo/KiloSettingsStore.swift`
-- Create: `Tests/CodexBarTests/KiloSettingsStoreTests.swift`
+- Modify: `Sources/Bars/Providers/Kilo/KiloSettingsStore.swift`
+- Create: `Tests/BarsTests/KiloSettingsStoreTests.swift`
 
 - [ ] **Step 6.1: Write failing tests**
 
-Create `Tests/CodexBarTests/KiloSettingsStoreTests.swift`:
+Create `Tests/BarsTests/KiloSettingsStoreTests.swift`:
 
 ```swift
 import Foundation
 import Testing
-@testable import CodexBar
-@testable import CodexBarCore
+@testable import bars
+@testable import BarsCore
 
 @MainActor
 struct KiloSettingsStoreTests {
@@ -769,7 +769,7 @@ Expected: compile error — missing properties.
 
 - [ ] **Step 6.3: Add accessors to `KiloSettingsStore`**
 
-Append to `Sources/CodexBar/Providers/Kilo/KiloSettingsStore.swift`:
+Append to `Sources/Bars/Providers/Kilo/KiloSettingsStore.swift`:
 
 ```swift
 extension SettingsStore {
@@ -851,8 +851,8 @@ Expected: all 4 tests pass.
 - [ ] **Step 6.5: Commit**
 
 ```bash
-git add Sources/CodexBar/Providers/Kilo/KiloSettingsStore.swift \
-        Tests/CodexBarTests/KiloSettingsStoreTests.swift
+git add Sources/Bars/Providers/Kilo/KiloSettingsStore.swift \
+        Tests/BarsTests/KiloSettingsStoreTests.swift
 git commit -m "feat(kilo): settings accessors for known + enabled organizations"
 ```
 
@@ -861,9 +861,9 @@ git commit -m "feat(kilo): settings accessors for known + enabled organizations"
 ## Task 7: Wire scoped fetching into Kilo strategies
 
 **Files:**
-- Modify: `Sources/CodexBarCore/Providers/Kilo/KiloProviderDescriptor.swift`
-- Modify: `Sources/CodexBar/UsageStore+Refresh.swift`
-- Create: `Sources/CodexBar/Providers/Kilo/UsageStore+KiloOrgRefresh.swift`
+- Modify: `Sources/BarsCore/Providers/Kilo/KiloProviderDescriptor.swift`
+- Modify: `Sources/Bars/UsageStore+Refresh.swift`
+- Create: `Sources/Bars/Providers/Kilo/UsageStore+KiloOrgRefresh.swift`
 
 The `ProviderFetchStrategy` returns one `UsageSnapshot`, so we keep the existing strategy returning the personal scope. Org snapshots are fanned out at the UsageStore layer, mirroring `refreshTokenAccounts`.
 
@@ -875,10 +875,10 @@ This task does NOT change `KiloAPIFetchStrategy.fetch`. The strategy continues t
 
 The codebase already has `TokenAccountUsageSnapshot` for stacked rendering. We mirror that for Kilo scopes.
 
-Create `Sources/CodexBar/Providers/Kilo/UsageStore+KiloOrgRefresh.swift`:
+Create `Sources/Bars/Providers/Kilo/UsageStore+KiloOrgRefresh.swift`:
 
 ```swift
-import CodexBarCore
+import BarsCore
 import Foundation
 
 struct KiloScopeSnapshot: Identifiable, Equatable {
@@ -1003,7 +1003,7 @@ extension UsageSnapshot {
 
 - [ ] **Step 7.3: Add the `kiloScopeSnapshots` stored property to `UsageStore`**
 
-In `Sources/CodexBar/UsageStore.swift`, find the closest place where Codex-related published properties live (e.g. near `codexAccountSnapshots`) and add:
+In `Sources/Bars/UsageStore.swift`, find the closest place where Codex-related published properties live (e.g. near `codexAccountSnapshots`) and add:
 
 ```swift
     @Published var kiloScopeSnapshots: [KiloScopeSnapshot] = []
@@ -1013,7 +1013,7 @@ Choose a location adjacent to existing per-provider stacked snapshot arrays. The
 
 - [ ] **Step 7.4: Invoke fan-out from `refreshProvider`**
 
-In `Sources/CodexBar/UsageStore+Refresh.swift`, find the existing `tokenAccounts` fan-out block in `refreshProvider`:
+In `Sources/Bars/UsageStore+Refresh.swift`, find the existing `tokenAccounts` fan-out block in `refreshProvider`:
 
 ```swift
         let tokenAccounts = self.tokenAccounts(for: provider)
@@ -1063,9 +1063,9 @@ Expected: succeeds. If `UsageSnapshot.replacingIdentityOrganization` clashes wit
 - [ ] **Step 7.7: Commit**
 
 ```bash
-git add Sources/CodexBar/UsageStore.swift \
-        Sources/CodexBar/UsageStore+Refresh.swift \
-        Sources/CodexBar/Providers/Kilo/UsageStore+KiloOrgRefresh.swift
+git add Sources/Bars/UsageStore.swift \
+        Sources/Bars/UsageStore+Refresh.swift \
+        Sources/Bars/Providers/Kilo/UsageStore+KiloOrgRefresh.swift
 git commit -m "feat(kilo): fan out usage fetch per enabled scope"
 ```
 
@@ -1074,15 +1074,15 @@ git commit -m "feat(kilo): fan out usage fetch per enabled scope"
 ## Task 8: Surface scope snapshots in menu rendering
 
 **Files:**
-- Modify: `Sources/CodexBar/StatusItemController+MenuCardModel.swift` (or the file that produces Kilo menu rows)
-- Modify: `Sources/CodexBar/MenuDescriptor.swift` if needed
+- Modify: `Sources/Bars/StatusItemController+MenuCardModel.swift` (or the file that produces Kilo menu rows)
+- Modify: `Sources/Bars/MenuDescriptor.swift` if needed
 
 The menu currently renders one Kilo card. Add a branch: when `kiloScopeSnapshots` has 2+ entries, render one card per scope.
 
 - [ ] **Step 8.1: Locate the Kilo menu-row producer**
 
 ```bash
-grep -n "case \\.kilo" Sources/CodexBar/StatusItemController*.swift Sources/CodexBar/Menu*.swift 2>&1 | head -15
+grep -n "case \\.kilo" Sources/Bars/StatusItemController*.swift Sources/Bars/Menu*.swift 2>&1 | head -15
 ```
 
 This points at the rendering site. Open whichever file produces the per-provider row group for Kilo.
@@ -1125,8 +1125,8 @@ Expected: success.
 - [ ] **Step 8.5: Commit**
 
 ```bash
-git add Sources/CodexBar/StatusItemController+MenuCardModel.swift \
-        Sources/CodexBar/MenuDescriptor.swift
+git add Sources/Bars/StatusItemController+MenuCardModel.swift \
+        Sources/Bars/MenuDescriptor.swift
 git commit -m "feat(kilo): render one menu card per enabled scope"
 ```
 
@@ -1135,8 +1135,8 @@ git commit -m "feat(kilo): render one menu card per enabled scope"
 ## Task 9: Preferences pane — Organizations section
 
 **Files:**
-- Modify: `Sources/CodexBar/Providers/Kilo/KiloProviderImplementation.swift`
-- Possibly modify: `Sources/CodexBar/PreferencesProviderDetailView.swift` and `Sources/CodexBarCore/Providers/ProviderDescriptor.swift` if a new descriptor variant is needed.
+- Modify: `Sources/Bars/Providers/Kilo/KiloProviderImplementation.swift`
+- Possibly modify: `Sources/Bars/PreferencesProviderDetailView.swift` and `Sources/BarsCore/Providers/ProviderDescriptor.swift` if a new descriptor variant is needed.
 
 If a multi-toggle descriptor is not yet supported, surface the org list using a `ProviderSettingsFieldDescriptor.kind = .info`-style wrapper combined with action buttons, OR add a new descriptor variant. Pick the minimum needed.
 
@@ -1146,11 +1146,11 @@ Search first to see whether the existing `ProviderSettingsFieldDescriptor` alrea
 
 ```bash
 grep -n "enum Kind\|case info\|case toggleList\|case checkboxList" \
-    Sources/CodexBarCore/Providers/ProviderDescriptor.swift \
-    Sources/CodexBar/PreferencesProviderDetailView.swift 2>&1 | head -20
+    Sources/BarsCore/Providers/ProviderDescriptor.swift \
+    Sources/Bars/PreferencesProviderDetailView.swift 2>&1 | head -20
 ```
 
-If a toggle-list kind exists, reuse it. Otherwise, add a new `ProviderSettingsOrganizationsDescriptor` in `Sources/CodexBarCore/Providers/ProviderDescriptor.swift`:
+If a toggle-list kind exists, reuse it. Otherwise, add a new `ProviderSettingsOrganizationsDescriptor` in `Sources/BarsCore/Providers/ProviderDescriptor.swift`:
 
 ```swift
 public struct ProviderSettingsOrganizationsDescriptor: Sendable {
@@ -1212,7 +1212,7 @@ Then add an optional `settingsOrganizations:` slot to whatever protocol `Provide
 
 - [ ] **Step 9.2: Implement `settingsOrganizations` in `KiloProviderImplementation`**
 
-In `Sources/CodexBar/Providers/Kilo/KiloProviderImplementation.swift`:
+In `Sources/Bars/Providers/Kilo/KiloProviderImplementation.swift`:
 
 ```swift
     @MainActor
@@ -1276,7 +1276,7 @@ In `Sources/CodexBar/Providers/Kilo/KiloProviderImplementation.swift`:
 
 - [ ] **Step 9.3: Render the new descriptor in `PreferencesProviderDetailView`**
 
-In `Sources/CodexBar/PreferencesProviderDetailView.swift`, follow the existing pattern used by `settingsTokenAccounts`. Add a stored property `settingsOrganizations: ProviderSettingsOrganizationsDescriptor?`, source it from the provider implementation, and render it as a SwiftUI section under the API key:
+In `Sources/Bars/PreferencesProviderDetailView.swift`, follow the existing pattern used by `settingsTokenAccounts`. Add a stored property `settingsOrganizations: ProviderSettingsOrganizationsDescriptor?`, source it from the provider implementation, and render it as a SwiftUI section under the API key:
 
 ```swift
 if let descriptor = self.settingsOrganizations {
@@ -1332,9 +1332,9 @@ Expected: success. If type mismatches arise, follow them and align signatures.
 - [ ] **Step 9.5: Commit**
 
 ```bash
-git add Sources/CodexBarCore/Providers/ProviderDescriptor.swift \
-        Sources/CodexBar/Providers/Kilo/KiloProviderImplementation.swift \
-        Sources/CodexBar/PreferencesProviderDetailView.swift
+git add Sources/BarsCore/Providers/ProviderDescriptor.swift \
+        Sources/Bars/Providers/Kilo/KiloProviderImplementation.swift \
+        Sources/Bars/PreferencesProviderDetailView.swift
 git commit -m "feat(kilo): Preferences organizations section with refresh + toggles"
 ```
 
@@ -1352,7 +1352,7 @@ Append to `docs/kilo.md`:
 ```markdown
 ## Organizations
 
-CodexBar can show usage for any Kilo organization the API key belongs to.
+bars can show usage for any Kilo organization the API key belongs to.
 
 - Open Preferences → Providers → Kilo, set the API key, then click **Refresh
   organizations**.
@@ -1360,7 +1360,7 @@ CodexBar can show usage for any Kilo organization the API key belongs to.
   always shown.
 - When at least one organization is enabled, the menu renders one Kilo card per
   enabled scope.
-- The CodexBar fetcher sends the standard `X-KILOCODE-ORGANIZATIONID` header on
+- The bars fetcher sends the standard `X-KILOCODE-ORGANIZATIONID` header on
   every usage call to scope the response to that organization.
 - CLI source mode (`auth.json`): the header is applied to CLI-resolved tokens
   as well. If a CLI token isn't authorized for the chosen organization, that
@@ -1421,7 +1421,7 @@ git commit -m "chore: swiftformat/swiftlint fixups for kilo orgs work"
 - [ ] **Step 12.1: Ensure a fork exists for `noefabris`**
 
 ```bash
-gh repo view noefabris/CodexBar --json url 2>&1 | head -5
+gh repo view noefabris/bars --json url 2>&1 | head -5
 ```
 
 If 404, fork:
@@ -1433,7 +1433,7 @@ gh repo fork steipete/CodexBar --remote=false --clone=false
 - [ ] **Step 12.2: Add fork as a remote (if missing) and push**
 
 ```bash
-git remote get-url fork 2>/dev/null || git remote add fork https://github.com/noefabris/CodexBar.git
+git remote get-url fork 2>/dev/null || git remote add fork https://github.com/noefabris/bars.git
 git push -u fork feat/kilo-organization-selection
 ```
 

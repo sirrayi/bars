@@ -10,11 +10,11 @@ from ci_swift_test_by_suite import containment_support_error, run_command
 
 def main() -> int:
     try:
-        timeout = int(os.environ.get("CODEXBAR_TEST_NATIVE_TIMEOUT", "1800"))
+        timeout = int(os.environ.get("BARS_TEST_NATIVE_TIMEOUT", "1800"))
         if timeout <= 0:
             raise ValueError
     except ValueError:
-        print("CODEXBAR_TEST_NATIVE_TIMEOUT must be a positive integer", file=sys.stderr)
+        print("BARS_TEST_NATIVE_TIMEOUT must be a positive integer", file=sys.stderr)
         return 2
 
     error = containment_support_error()
@@ -23,7 +23,7 @@ def main() -> int:
         return 2
     # Like serial groups, the whole invocation, including its build, gets temporary HOME and
     # CFFIXED_USER_HOME values instead of the caller's.
-    with tempfile.TemporaryDirectory(prefix="codexbar-native-test-home-") as home:
+    with tempfile.TemporaryDirectory(prefix="bars-native-test-home-") as home:
         return run_command(["swift", "test", "--no-parallel", *sys.argv[1:]], timeout=timeout,
                            environment=os.environ | {"HOME": home, "CFFIXED_USER_HOME": home})
 

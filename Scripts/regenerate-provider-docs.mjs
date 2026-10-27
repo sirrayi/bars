@@ -14,7 +14,7 @@ const update = (file, transform) => {
   if (check) assert.equal(before, after, `${file} is stale; run Scripts/regenerate-provider-docs.mjs`);
   else if (before !== after) fs.writeFileSync(path.join(root, file), after);
 };
-const body = read("Sources/CodexBarCore/Providers/Providers.swift").match(
+const body = read("Sources/BarsCore/Providers/Providers.swift").match(
   /public enum UsageProvider:[^{]+\{([\s\S]*?)\n\}/,
 )[1];
 const ids = [...body.matchAll(/^\s*case (\w+)$/gm)].map((match) => match[1]);
@@ -40,7 +40,7 @@ const entries = fs
     return [entry];
   })
   .sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id));
-const providerRoot = "Sources/CodexBarCore/Providers";
+const providerRoot = "Sources/BarsCore/Providers";
 const descriptors = fs
   .readdirSync(path.join(root, providerRoot), { recursive: true })
   .filter((file) => file.endsWith("ProviderDescriptor.swift"))
@@ -50,7 +50,7 @@ for (const entry of entries) {
   entry.color = descriptor?.match(/color: (?:ProviderColor|\.init)\(hex: 0x([A-Fa-f0-9]{6})\)/u)?.[1];
   assert(entry.color, `Missing hex branding for ${entry.id}`);
   entry.auth = descriptor.includes("webSource:") ? "cookies" : "apiKey";
-  update(`docs/logos/${entry.id}.svg`, () => read(`Sources/CodexBar/Resources/ProviderIcon-${entry.id}.svg`));
+  update(`docs/logos/${entry.id}.svg`, () => read(`Sources/Bars/Resources/ProviderIcon-${entry.id}.svg`));
 }
 const html = (value) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;");
 const section = (text, lines) => {

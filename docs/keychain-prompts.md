@@ -1,5 +1,5 @@
 ---
-summary: "Why macOS Keychain prompts appear, how CodexBar limits them, and safe troubleshooting."
+summary: "Why macOS Keychain prompts appear, how bars limits them, and safe troubleshooting."
 read_when:
   - Investigating Chromium Safe Storage or Claude credential prompts
   - Choosing whether to allow or disable Keychain access
@@ -8,7 +8,7 @@ read_when:
 
 # Keychain prompts
 
-CodexBar uses several credential sources, but three foreign-owned Keychain items are the common authorization surfaces:
+bars uses several credential sources, but three foreign-owned Keychain items are the common authorization surfaces:
 
 - Chromium cookie import needs the browser's Safe Storage secret to decrypt its cookie database. Examples include
   `Chrome Safe Storage`, `Brave Safe Storage`, and `Microsoft Edge Safe Storage`.
@@ -20,11 +20,11 @@ CodexBar uses several credential sources, but three foreign-owned Keychain items
   grant later silent reads. This shares the action’s one interactive read with browser imports; a denial
   suppresses another Muse prompt for six hours.
 
-CodexBar does not need the browser or Claude account password. macOS owns the authorization prompt and should name
+bars does not need the browser or Claude account password. macOS owns the authorization prompt and should name
 the requesting app or binary. Never send a Keychain item value, cookie header, OAuth token, API key, or password in a
 support report.
 
-## When CodexBar can prompt
+## When bars can prompt
 
 Scheduled and settings-triggered Chromium imports never request Keychain interaction, even when a settings change
 occurs during a manual refresh. Every import first tries the actual Safe Storage read without UI. A manual refresh
@@ -34,7 +34,7 @@ browsers once a provider accepts a session; missing or rejected sessions advance
 provider's existing order. Explicit browser/profile selections keep their own scope.
 
 A denied browser prompt suppresses Chromium-family interactive retries for six hours, including repeated Refresh
-clicks in the menu or provider settings. Only `codexbar cookie refresh --allow-keychain-prompt` explicitly overrides
+clicks in the menu or provider settings. Only `bars cookie refresh --allow-keychain-prompt` explicitly overrides
 that cooldown. An acknowledged Claude repair has its own user-action policy.
 
 Scheduled Chromium imports can recover during that denial cooldown when the current no-UI Safe Storage preflight
@@ -45,7 +45,7 @@ disabled Keychain access.
 An inconclusive no-UI preflight gets at most three attempts, with a 30 ms pause before each retry. Stable authorization
 decisions are never retried. Each distinct preflight can add two 30 ms waits plus the Security calls;
 repeated checks within one operation reuse the final result. This applies to generic-password preflights for
-browser storage, credential repair, and CodexBar caches, without changing their permission requirements.
+browser storage, credential repair, and bars caches, without changing their permission requirements.
 
 Concurrent preflights for the same trusted application and executable share an in-flight code-signature validation.
 For the running executable (or its own main app bundle), preflight checks the ACL's signing requirement against the
@@ -61,22 +61,22 @@ executable, enclosing app bundle metadata, bundle version, or main executable in
 Outside the explicit operation memo, the current Keychain ACL and prompt selector are read on every preflight, and
 background secret reads remain non-interactive.
 
-Provider-owned child processes are a separate boundary. CodexBar may intentionally launch a provider CLI such as
-Claude for usage. That executable owns its credential behavior, which CodexBar cannot constrain or fully inspect.
+Provider-owned child processes are a separate boundary. bars may intentionally launch a provider CLI such as
+Claude for usage. That executable owns its credential behavior, which bars cannot constrain or fully inspect.
 
 ## Why permission can be requested again
 
 Keychain access control evaluates the requesting executable's code signature and designated requirement, not just its
-filename or install path. A stable, properly signed CodexBar bundle makes grants more durable, while ad-hoc development
+filename or install path. A stable, properly signed bars bundle makes grants more durable, while ad-hoc development
 builds or a materially changed identity may need authorization again. The Keychain item's owner can also recreate or
 rotate a foreign item. Chromium or Claude Code updates can therefore replace the previous access-control entry even
-when CodexBar itself has not changed.
+when bars itself has not changed.
 
 The item's accessibility class controls when its data is available, such as after the first unlock. It does not grant
 a changed executable access and does not repair a code-signature ACL mismatch.
 
-If a CodexBar-owned cache item's legacy ACL rejects the installed app, reads share a five-minute preflight cooldown.
-When fresh cache data becomes available, CodexBar can delete and recreate its own item using no-UI queries. A failed
+If a bars-owned cache item's legacy ACL rejects the installed app, reads share a five-minute preflight cooldown.
+When fresh cache data becomes available, bars can delete and recreate its own item using no-UI queries. A failed
 replacement is attempted at most once per cooldown; a failed retry starts another cooldown even if the old item is
 already gone. Successful replacement clears the rejection immediately, including when another first-party process wins
 the add race. Cache clearing honors an existing repair cooldown and uses no-UI deletion without requiring decrypt access.
@@ -90,16 +90,16 @@ is not replaced.
 ## Allow Once and Always Allow
 
 - **Allow Once** authorizes the current request or session. A later explicit import or repair may ask again.
-- **Always Allow** adds the current CodexBar identity to that item's access control and is the better choice when you
+- **Always Allow** adds the current bars identity to that item's access control and is the better choice when you
   intentionally use automatic browser import or Claude's direct Keychain repair.
-- **Deny** leaves the source unavailable. CodexBar should fail soft and use another configured source where possible.
+- **Deny** leaves the source unavailable. bars should fail soft and use another configured source where possible.
 
 Only authorize a prompt whose requested item and requesting app match the action you just started. Avoid “Allow all
-applications.” In Keychain Access, adding only the installed, stably signed `CodexBar.app` is the narrower grant.
+applications.” In Keychain Access, adding only the installed, stably signed `bars.app` is the narrower grant.
 
-## Disable CodexBar Keychain access
+## Disable bars Keychain access
 
-Open **CodexBar → Settings → Advanced** and enable **Disable Keychain access**. The stored setting is applied
+Open **bars → Settings → Advanced** and enable **Disable Keychain access**. The stored setting is applied
 immediately; relaunching is useful when diagnosing another already-running copy.
 
 Startup resolves the local preference, falling back to the current shared app-group preference only when no local
@@ -107,9 +107,9 @@ value is stored, before legacy credential migration. While access is disabled, p
 imports can still be saved, but legacy credential cleanup and migration completion remain pending for a later launch
 with access enabled.
 
-This setting blocks CodexBar-owned Security.framework item reads and writes, including foreign-item readers such as
+This setting blocks bars-owned Security.framework item reads and writes, including foreign-item readers such as
 Zed, and disables Chromium Safe Storage decryption. Browser-cookie import that needs Keychain is skipped. It does not
-promise that a provider-owned CLI launched by CodexBar will avoid its own credential store; Claude's owner-CLI policy
+promise that a provider-owned CLI launched by bars will avoid its own credential store; Claude's owner-CLI policy
 is intentionally unchanged.
 
 Alternatives depend on the provider:
@@ -121,14 +121,14 @@ Alternatives depend on the provider:
 
 ## Safe troubleshooting
 
-If a prompt appears unexpectedly, first read the full item name and requesting app/path. Quit CodexBar, then check for
+If a prompt appears unexpectedly, first read the full item name and requesting app/path. Quit bars, then check for
 another running or installed copy:
 
 ```bash
-pgrep -fl 'CodexBar|CodexBarCLI'
-ls -ld /Applications/CodexBar.app
-brew info --cask codexbar
-mdfind 'kMDItemCFBundleIdentifier == "com.steipete.codexbar"'
+pgrep -fl 'bars|BarsCLI'
+ls -ld /Applications/bars.app
+brew info --cask bars
+mdfind 'kMDItemCFBundleIdentifier == "com.sirrayi.bars"'
 ```
 
 Also inspect **Activity Monitor** and **System Settings → General → Login Items**. Deleting an app does not terminate
@@ -137,10 +137,10 @@ dump Keychain contents while troubleshooting.
 
 For a support report, include:
 
-- CodexBar and macOS versions, installation source, and whether this is a development build.
+- bars and macOS versions, installation source, and whether this is a development build.
 - The provider action immediately before the prompt and whether it was automatic or explicitly initiated.
 - The requested item name and requesting app/path from the prompt.
-- Whether Activity Monitor, Login Items, Homebrew, or Spotlight found another CodexBar copy.
+- Whether Activity Monitor, Login Items, Homebrew, or Spotlight found another bars copy.
 - A screenshot of only the prompt, with usernames and unrelated content redacted and no secret values shown.
 
 ## Authoritative references

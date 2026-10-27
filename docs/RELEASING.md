@@ -1,11 +1,11 @@
 ---
-summary: "CodexBar CI release pipeline, dry runs, signing, Sparkle, and Homebrew."
+summary: "bars CI release pipeline, dry runs, signing, Sparkle, and Homebrew."
 read_when:
-  - Preparing or verifying a CodexBar release
+  - Preparing or verifying a bars release
   - Updating release infrastructure
 ---
 
-# Release process (CodexBar)
+# Release process (bars)
 
 [Release](https://github.com/steipete/CodexBar/blob/main/.github/workflows/release.yml) owns publication. Push an existing SSH-signed, annotated `vX.Y.Z` (or `vX.Y.Z-beta.N`) tag to run the pipeline, or dispatch it from protected `main` with that existing tag and `dry_run=false`. It never creates, moves, or overwrites a version tag. Local publishing through `Scripts/release.sh` and `Scripts/make_appcast.sh` has been retired.
 
@@ -42,11 +42,11 @@ retaining the macOS 14 deployment target. The x86_64 CLI is cross-built and
 executed under Rosetta. Signed app verification launches both architectures.
 
 ## iCloud sync (CloudKit)
-Upstream-team identity-signed release builds embed `Scripts/profiles/CodexBar-DeveloperID.provisionprofile` at `Contents/embedded.provisionprofile` and claim the iCloud entitlements (`Scripts/package_app.sh` does both automatically; it fails hard if the profile file is missing). Packaging derives the team from the selected `APP_IDENTITY`; other teams omit upstream CloudKit resources. `sign-and-notarize.sh` honors that same identity, with required timestamping and hardened runtime. The profile expires 2044-07-29; Gatekeeper re-validates it at every launch.
+Upstream-team identity-signed release builds embed `Scripts/profiles/bars-DeveloperID.provisionprofile` at `Contents/embedded.provisionprofile` and claim the iCloud entitlements (`Scripts/package_app.sh` does both automatically; it fails hard if the profile file is missing). Packaging derives the team from the selected `APP_IDENTITY`; other teams omit upstream CloudKit resources. `sign-and-notarize.sh` honors that same identity, with required timestamping and hardened runtime. The profile expires 2044-07-29; Gatekeeper re-validates it at every launch.
 
-Push delivery setup is pending owner approval (#4132): enable **Push Notifications** for the macOS App ID `com.steipete.codexbar`, regenerate its Developer ID provisioning profile, and replace the profile above with one authorizing `com.apple.developer.aps-environment = production`. Then add that exact entitlement and value to the upstream release-only entitlement block in `Scripts/package_app.sh` and extend `Scripts/test_package_signing.sh`. The macOS key is `com.apple.developer.aps-environment`, not the iOS `aps-environment` key. Verify both the embedded profile and final signed app authorize it before publishing. The runtime registers only when CloudKit and a valid push entitlement are present; CKSyncEngine creates or reuses its own `CKDatabaseSubscription`, so no separate subscription or CloudKit schema change is needed. Confirm changes arrive between two signed-in Macs before closing #4132. Registration alone does not repair releases signed without this capability.
+Push delivery setup is pending owner approval (#4132): enable **Push Notifications** for the macOS App ID `com.sirrayi.bars`, regenerate its Developer ID provisioning profile, and replace the profile above with one authorizing `com.apple.developer.aps-environment = production`. Then add that exact entitlement and value to the upstream release-only entitlement block in `Scripts/package_app.sh` and extend `Scripts/test_package_signing.sh`. The macOS key is `com.apple.developer.aps-environment`, not the iOS `aps-environment` key. Verify both the embedded profile and final signed app authorize it before publishing. The runtime registers only when CloudKit and a valid push entitlement are present; CKSyncEngine creates or reuses its own `CKDatabaseSubscription`, so no separate subscription or CloudKit schema change is needed. Confirm changes arrive between two signed-in Macs before closing #4132. Registration alone does not repair releases signed without this capability.
 
-Schema changes: any new record type or field in `Sources/CodexBar*/Sync/` must be reflected in `Scripts/cloudkit/schema.ckdb` and deployed **before** shipping the build:
+Schema changes: any new record type or field in `Sources/Bars*/Sync/` must be reflected in `Scripts/cloudkit/schema.ckdb` and deployed **before** shipping the build:
 ```
 CLOUDKIT_MANAGEMENT_TOKEN=… Scripts/cloudkit/deploy_schema.sh development   # validate
 CLOUDKIT_MANAGEMENT_TOKEN=… Scripts/cloudkit/deploy_schema.sh production

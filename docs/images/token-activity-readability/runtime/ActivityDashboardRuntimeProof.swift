@@ -1,6 +1,6 @@
 #if DEBUG
 import AppKit
-import CodexBarCore
+import BarsCore
 import SwiftUI
 
 /// An isolated opt-in launcher for the complete production Usage & Spend pane.
@@ -12,11 +12,11 @@ enum ActivityDashboardRuntimeProof {
             || Bundle.main.bundleIdentifier?.hasPrefix("org.codex.proof.activity.") == true else { return false }
         let environment = ProcessInfo.processInfo.environment
         guard SettingsStore.isRunningTests,
-              environment["CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS"] == "1",
-              environment["CODEXBAR_TEST_CODEX_FILE_ISOLATION"] == "1",
-              environment["CODEXBAR_TEST_SESSION_FILE_ISOLATION"] == "1",
-              environment["CODEXBAR_ALLOW_TEST_KEYCHAIN_ACCESS"] != "1",
-              let directory = environment["CODEXBAR_ACTIVITY_RUNTIME_PROOF_DIR"]
+              environment["BARS_SUPPRESS_TEST_KEYCHAIN_ACCESS"] == "1",
+              environment["BARS_TEST_CODEX_FILE_ISOLATION"] == "1",
+              environment["BARS_TEST_SESSION_FILE_ISOLATION"] == "1",
+              environment["BARS_ALLOW_TEST_KEYCHAIN_ACCESS"] != "1",
+              let directory = environment["BARS_ACTIVITY_RUNTIME_PROOF_DIR"]
         else { fatalError("Use the isolated runtime-proof launcher environment") }
         KeychainAccessGate.isDisabled = true
         let application = NSApplication.shared
@@ -102,7 +102,7 @@ enum ActivityDashboardRuntimeProof {
                 styleMask: [.titled, .closable, .resizable],
                 backing: .buffered,
                 defer: false)
-            window.title = "CodexBar Usage & Spend — Synthetic proof"
+            window.title = "bars Usage & Spend — Synthetic proof"
             window.isReleasedWhenClosed = false
             window.appearance = NSAppearance(named: .darkAqua)
             window.contentView = NSHostingView(rootView: VStack(spacing: 0) {
@@ -147,7 +147,7 @@ enum ActivityDashboardRuntimeProof {
             let record: [String: Any] = [
                 "timestamp": Date().timeIntervalSince1970,
                 "fixture": "synthetic-only",
-                "host": "fresh packaged CodexBar executable, complete SpendDashboardPane",
+                "host": "fresh packaged bars executable, complete SpendDashboardPane",
                 "keychainDisabled": KeychainAccessGate.isDisabled,
                 "privacy": self.settings?.hidePersonalInfo ?? false,
                 "refreshing": controller.isRefreshing,

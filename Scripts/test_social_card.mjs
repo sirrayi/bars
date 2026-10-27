@@ -38,7 +38,7 @@ function pngImage(data = compressed, ihdr = header) {
 const pngFixture = pngImage();
 
 function fixture(t) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codexbar-social-card-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "bars-social-card-"));
   t.after(() => fs.rmSync(root, { recursive: true }));
   fs.mkdirSync(path.join(root, "docs/logos"), { recursive: true });
   const write = (relativePath, value) => fs.writeFileSync(path.join(root, relativePath), value);

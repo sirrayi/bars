@@ -1,15 +1,15 @@
 ---
 summary: "Issue #139 performance and energy simulation report for Codex CLI subprocess failure paths."
 read_when:
-  - Investigating CodexBar CPU or energy regressions
+  - Investigating bars CPU or energy regressions
   - Changing Codex CLI PTY probe timing or retry behavior
   - Reviewing issue 139 performance evidence
 ---
 
-# CodexBar Issue #139 Performance/Energy Simulation Report
+# bars Issue #139 Performance/Energy Simulation Report
 
 Date: 2026-02-19
-Workspace: /Users/michalkrsik/windsurf_project_folder/CodexBar
+Workspace: /Users/michalkrsik/windsurf_project_folder/bars
 Issue: https://github.com/steipete/codexbar/issues/139
 
 ## Purpose
@@ -34,7 +34,7 @@ Determine which suspected culprit(s) can produce the abnormal CPU/energy behavio
 ## Test Pass 1 (Primary Mechanism Pass)
 
 Artifacts:
-- /tmp/codexbar_perf_sim/results_20260219_111607
+- /tmp/bars_perf_sim/results_20260219_111607
 
 Summary:
 
@@ -53,7 +53,7 @@ Interpretation:
 ## Test Pass 2 (Calibrated Energy Pass)
 
 Artifacts:
-- /tmp/codexbar_perf_sim/energy2_results_20260219_112350
+- /tmp/bars_perf_sim/energy2_results_20260219_112350
 
 Sampling correction:
 - Switched to `top -l 2` and parsed the second sample for tracked PIDs to get non-zero `POWER` values.
@@ -96,7 +96,7 @@ A tiny toolbar app should never keep heavyweight background subprocess/UI loops 
 
 ## Limitations
 
-- These were controlled simulations, not a full end-user UI replay of `CodexBar.app` with all real auth/cookie/account paths.
+- These were controlled simulations, not a full end-user UI replay of `bars.app` with all real auth/cookie/account paths.
 - `powermetrics` could not be used in this session due sudo restriction.
 
 ## Recommended Next Validation (Before Closing Issue)

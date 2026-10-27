@@ -1,7 +1,7 @@
 import AdaptiveRefreshCore
 import Foundation
 
-/// Replay adapter for the same canonical policy core used by the CodexBar app.
+/// Replay adapter for the same canonical policy core used by the bars app.
 public struct AdaptiveReplayPolicy: ReplayPolicy, Sendable {
     public let name = "adaptive"
 
@@ -26,7 +26,7 @@ public struct AdaptiveReplayPolicy: ReplayPolicy, Sendable {
 }
 
 /// A fixed-cadence baseline: always waits the same interval, regardless of signals. Used to
-/// compare the adaptive policy against the flat refresh frequencies CodexBar also offers
+/// compare the adaptive policy against the flat refresh frequencies bars also offers
 /// (2/5/15/30 minutes). Never advances on interaction (`advancesOnInteraction` stays the protocol
 /// default of `false`), matching the real app: fixed-cadence refresh frequencies never wire up
 /// `noteMenuOpened`'s advance check.

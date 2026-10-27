@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>CodexBar — every AI coding limit, in your menu bar</title>
+    <title>bars — every AI coding limit, in your menu bar</title>
     <meta
       name="description"
       content="A tiny macOS menu bar app that tracks AI coding-provider usage windows, credits, costs, and resets across 5 providers — Codex, OpenAI, Claude, Cursor, Gemini, Copilot, LiteLLM, Helmcode, v0, TypeSafe, and more."
@@ -34,7 +34,7 @@
     <link rel="alternate" hreflang="gl" href="https://codexbar.app/?lang=gl" />
     <link rel="alternate" hreflang="ca" href="https://codexbar.app/?lang=ca" />
     <link rel="alternate" hreflang="sv" href="https://codexbar.app/?lang=sv" />
-    <meta property="og:title" content="CodexBar" />
+    <meta property="og:title" content="bars" />
     <meta
       property="og:description"
       content="Track usage windows, credits, and resets across 5 AI coding providers from your macOS menu bar."
@@ -53,7 +53,7 @@
         const queryTheme = new URLSearchParams(location.search).get('theme');
         let storedTheme = 'system';
         try {
-          storedTheme = localStorage.getItem('codexbar-theme') || 'system';
+          storedTheme = localStorage.getItem('bars-theme') || 'system';
         } catch (_) {}
         const preference = queryTheme === 'light' || queryTheme === 'dark' ? queryTheme : storedTheme;
         const resolvedTheme = preference === 'system'
@@ -70,9 +70,9 @@
 
   <body class="min-h-screen overflow-x-hidden text-zinc-100">
     <header class="absolute inset-x-0 top-0 z-20 flex h-[var(--header-height)] items-center justify-between bg-transparent px-5 sm:px-8 md:grid md:grid-cols-[1fr_auto_1fr] lg:px-12">
-      <a href="#top" class="button-press flex w-fit items-center gap-2.5 text-sm font-semibold tracking-[-0.03em] text-white sm:text-base" aria-label="CodexBar home" data-i18n-aria-label="nav.home">
+      <a href="#top" class="button-press flex w-fit items-center gap-2.5 text-sm font-semibold tracking-[-0.03em] text-white sm:text-base" aria-label="bars home" data-i18n-aria-label="nav.home">
         <img src="./icon.png?v=2" alt="" class="h-7 w-7 rounded-[7px] sm:h-8 sm:w-8 sm:rounded-lg" />
-        <span>CodexBar</span>
+        <span>bars</span>
       </a>
 
       <nav class="hidden items-center justify-center gap-3 md:flex" aria-label="Project links" data-i18n-aria-label="nav.projectLinks">
@@ -84,7 +84,7 @@
         <a
           href="https://github.com/steipete/CodexBar"
           class="button-press group flex items-center justify-center gap-2.5 text-[14px] text-zinc-400 hover:text-white"
-          aria-label="CodexBar source on GitHub" data-i18n-aria-label="nav.sourceGitHub"
+          aria-label="bars source on GitHub" data-i18n-aria-label="nav.sourceGitHub"
         >
           <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M12 .8a11.4 11.4 0 0 0-3.6 22.2c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.5-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.6-.3-5.4-1.3-5.4-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.1 1.2a10.8 10.8 0 0 1 5.7 0C16.9 4.7 18 5 18 5c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.4 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A11.4 11.4 0 0 0 12 .8Z" />
@@ -166,7 +166,7 @@
             <div class="mockup-hud-anchor">
             <div class="system-menubar" aria-label="macOS menu bar status items" data-i18n-aria-label="mockup.menuBarAria">
               <img class="sf-symbol sf-symbol--openclaw" src="./images/menubar/openclaw-menubar.svg" alt="" aria-hidden="true" />
-              <div class="menu-bar-mark" aria-label="CodexBar menu bar icon" data-i18n-aria-label="mockup.menuIconAria">
+              <div class="menu-bar-mark" aria-label="bars menu bar icon" data-i18n-aria-label="mockup.menuIconAria">
                 <span></span>
                 <span></span>
               </div>
@@ -175,7 +175,7 @@
               <img class="sf-symbol" src="./images/menubar/person-circle.png" alt="" aria-hidden="true" style="filter: brightness(0) invert(86%) drop-shadow(0 0.08em 0.18em rgba(0, 0, 0, 0.58))" />
               <span class="time" id="menu-time">Sun Jun 28&nbsp;&nbsp;9:41 AM</span>
             </div>
-            <aside class="codex-popover" aria-label="Open CodexBar usage panel" data-i18n-aria-label="mockup.usagePanelAria">
+            <aside class="codex-popover" aria-label="Open bars usage panel" data-i18n-aria-label="mockup.usagePanelAria">
               <header class="popover-top">
                 <p><strong>Codex</strong><span data-i18n="mockup.updatedJustNow">Updated just now</span></p>
                 <p class="right"><strong>user@example.com</strong><span data-i18n="mockup.plus">Plus</span></p>
@@ -456,13 +456,13 @@
       <section class="cli-section px-5 py-20 sm:px-8 lg:px-12 lg:py-28" data-scroll-section>
         <div class="section-inner relative z-10">
           <div class="split-layout">
-            <div class="split-visual-wrap provider-reveal" role="img" aria-label="CodexBar CLI output preview" data-i18n-aria-label="cli.outputPreviewAria">
+            <div class="split-visual-wrap provider-reveal" role="img" aria-label="bars CLI output preview" data-i18n-aria-label="cli.outputPreviewAria">
               <div class="cli-terminal">
                 <div class="cli-terminal-chrome">
                   <div class="cli-terminal-dots" aria-hidden="true">
                     <span></span><span></span><span></span>
                   </div>
-                  <p class="cli-terminal-title">codexbar · terminal</p>
+                  <p class="cli-terminal-title">bars · terminal</p>
                   <div class="cli-terminal-chrome-spacer" aria-hidden="true"></div>
                 </div>
 
@@ -514,18 +514,18 @@
                 </div>
 
                 <div class="cli-terminal-foot">
-                  <p><strong>&gt;</strong> codexbar<span class="cli-terminal-cursor" aria-hidden="true">▍</span></p>
+                  <p><strong>&gt;</strong> bars<span class="cli-terminal-cursor" aria-hidden="true">▍</span></p>
                 </div>
               </div>
             </div>
 
             <div class="split-copy">
               <h2 class="split-copy-heading provider-reveal" style="--reveal-delay: 70ms">
-                <span class="section-title-line">CodexBar</span>
+                <span class="section-title-line">bars</span>
                 <span class="section-title-line" data-i18n="cli.titleLine2">on CLI</span>
               </h2>
               <p class="split-copy-lead provider-reveal" style="--reveal-delay: 110ms">
-                <span data-i18n-rich="cli.lead">A bundled {codexbar} binary with the same usage output as the menu bar — scripts, CI, and quick terminal checks.</span>
+                <span data-i18n-rich="cli.lead">A bundled {bars} binary with the same usage output as the menu bar — scripts, CI, and quick terminal checks.</span>
               </p>
               <p class="split-copy-note provider-reveal" style="--reveal-delay: 150ms">
                 <span data-i18n="cli.note">Standalone tarballs for macOS and Linux on every release.</span>
@@ -536,7 +536,7 @@
                   <path d="M12 2.5 4.5 6.5v5.8c0 4.55 3.08 8.02 7.5 9.2 4.42-1.18 7.5-4.65 7.5-9.2V6.5L12 2.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
                   <path d="m9.25 11.75 1.9 1.9 3.6-3.6" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
-                <span data-i18n="cli.privacy">CodexBar reuses existing provider sessions — no passwords stored on disk.</span>
+                <span data-i18n="cli.privacy">bars reuses existing provider sessions — no passwords stored on disk.</span>
               </p>
             </div>
           </div>
@@ -548,7 +548,7 @@
           <div class="split-layout split-layout--copy-left">
             <div class="split-copy">
               <h2 class="split-copy-heading provider-reveal">
-                <span class="section-title-line">CodexBar</span>
+                <span class="section-title-line">bars</span>
                 <span class="section-title-line" data-i18n="widgets.titleLine2">widgets</span>
               </h2>
               <p class="split-copy-lead provider-reveal" style="--reveal-delay: 70ms">
@@ -586,35 +586,35 @@
                         <span class="mac-widget-nav-icon is-app" aria-hidden="true">
                           <img src="./icon.png?v=2" alt="" loading="lazy" />
                         </span>
-                        CodexBar
+                        bars
                       </li>
                     </ul>
                   </aside>
 
                   <div class="mac-widget-main">
-                    <p class="mac-widget-main__title">CodexBar</p>
+                    <p class="mac-widget-main__title">bars</p>
                     <div class="mac-widget-gallery-wrap">
                     <div class="mac-widget-gallery">
                       <div class="mac-widget-row">
                         <article class="widget-tile is-small">
                           <div class="widget-preview">
-                            <img src="./widgets/03-codexbar-metric-compact.png" alt="" width="204" height="204" loading="lazy" />
+                            <img src="./widgets/03-bars-metric-compact.png" alt="" width="204" height="204" loading="lazy" />
                           </div>
-                          <h4>CodexBar Metric</h4>
+                          <h4>bars Metric</h4>
                           <p data-i18n="widgets.metricCaption">Compact widget for credits or cost.</p>
                         </article>
                         <article class="widget-tile is-medium">
                           <div class="widget-preview">
-                            <img src="./widgets/01-codexbar-history-small.png" alt="" width="428" height="204" loading="lazy" />
+                            <img src="./widgets/01-bars-history-small.png" alt="" width="428" height="204" loading="lazy" />
                           </div>
-                          <h4>CodexBar History</h4>
+                          <h4>bars History</h4>
                           <p data-i18n="widgets.historyCaption">Usage history chart with recent totals.</p>
                         </article>
                         <article class="widget-tile is-large">
                           <div class="widget-preview">
-                            <img src="./widgets/02-codexbar-history-large.png" alt="" width="388" height="370" loading="lazy" />
+                            <img src="./widgets/02-bars-history-large.png" alt="" width="388" height="370" loading="lazy" />
                           </div>
-                          <h4>CodexBar History</h4>
+                          <h4>bars History</h4>
                           <p data-i18n="widgets.historyCaption">Usage history chart with recent totals.</p>
                         </article>
                       </div>
@@ -622,23 +622,23 @@
                       <div class="mac-widget-row">
                         <article class="widget-tile is-small">
                           <div class="widget-preview">
-                            <img src="./widgets/06-codexbar-usage-compact.png" alt="" width="204" height="204" loading="lazy" />
+                            <img src="./widgets/06-bars-usage-compact.png" alt="" width="204" height="204" loading="lazy" />
                           </div>
-                          <h4>CodexBar Usage</h4>
+                          <h4>bars Usage</h4>
                           <p data-i18n="widgets.usageCaption">Session and weekly usage with credits and costs.</p>
                         </article>
                         <article class="widget-tile is-medium">
                           <div class="widget-preview">
-                            <img src="./widgets/07-codexbar-usage-wide.png" alt="" width="428" height="204" loading="lazy" />
+                            <img src="./widgets/07-bars-usage-wide.png" alt="" width="428" height="204" loading="lazy" />
                           </div>
-                          <h4>CodexBar Usage</h4>
+                          <h4>bars Usage</h4>
                           <p data-i18n="widgets.usageCaption">Session and weekly usage with credits and costs.</p>
                         </article>
                         <article class="widget-tile is-large">
                           <div class="widget-preview">
-                            <img src="./widgets/08-codexbar-usage-large.png" alt="" width="388" height="388" loading="lazy" />
+                            <img src="./widgets/08-bars-usage-large.png" alt="" width="388" height="388" loading="lazy" />
                           </div>
-                          <h4>CodexBar Usage</h4>
+                          <h4>bars Usage</h4>
                           <p data-i18n="widgets.usageCaption">Session and weekly usage with credits and costs.</p>
                         </article>
                       </div>
@@ -646,23 +646,23 @@
                       <div class="mac-widget-row">
                         <article class="widget-tile is-small">
                           <div class="widget-preview">
-                            <img src="./widgets/09-codexbar-switcher-compact.png" alt="" width="204" height="204" loading="lazy" />
+                            <img src="./widgets/09-bars-switcher-compact.png" alt="" width="204" height="204" loading="lazy" />
                           </div>
-                          <h4>CodexBar Switcher</h4>
+                          <h4>bars Switcher</h4>
                           <p data-i18n="widgets.switcherCaption">Usage widget with a provider switcher.</p>
                         </article>
                         <article class="widget-tile is-medium">
                           <div class="widget-preview">
-                            <img src="./widgets/10-codexbar-switcher-wide.png" alt="" width="428" height="204" loading="lazy" />
+                            <img src="./widgets/10-bars-switcher-wide.png" alt="" width="428" height="204" loading="lazy" />
                           </div>
-                          <h4>CodexBar Switcher</h4>
+                          <h4>bars Switcher</h4>
                           <p data-i18n="widgets.switcherCaption">Usage widget with a provider switcher.</p>
                         </article>
                         <article class="widget-tile is-large">
                           <div class="widget-preview">
-                            <img src="./widgets/11-codexbar-switcher-large.png" alt="" width="388" height="388" loading="lazy" />
+                            <img src="./widgets/11-bars-switcher-large.png" alt="" width="388" height="388" loading="lazy" />
                           </div>
-                          <h4>CodexBar Switcher</h4>
+                          <h4>bars Switcher</h4>
                           <p data-i18n="widgets.switcherCaption">Usage widget with a provider switcher.</p>
                         </article>
                       </div>
@@ -670,16 +670,16 @@
                       <div class="mac-widget-row">
                         <article class="widget-tile is-medium">
                           <div class="widget-preview">
-                            <img src="./widgets/04-codexbar-burndown.png" alt="" width="427" height="203" loading="lazy" />
+                            <img src="./widgets/04-bars-burndown.png" alt="" width="427" height="203" loading="lazy" />
                           </div>
-                          <h4>CodexBar Burn Down</h4>
+                          <h4>bars Burn Down</h4>
                           <p data-i18n="widgets.burndownCaption">Remaining budget compared with an ideal steady burn rate.</p>
                         </article>
                         <article class="widget-tile is-medium">
                           <div class="widget-preview">
-                            <img src="./widgets/05-codexbar-burndown-combined.png" alt="" width="427" height="203" loading="lazy" />
+                            <img src="./widgets/05-bars-burndown-combined.png" alt="" width="427" height="203" loading="lazy" />
                           </div>
-                          <h4>CodexBar Burn Down (Combined)</h4>
+                          <h4>bars Burn Down (Combined)</h4>
                           <p data-i18n="widgets.burndownCombinedCaption">Session and weekly burn-down charts in one tile.</p>
                         </article>
                       </div>
@@ -712,7 +712,7 @@
           <article class="technical-block provider-reveal" style="--reveal-delay: 110ms">
             <h3 data-i18n="detail.cliTitle">CLI</h3>
             <p>
-              <span data-i18n-rich="detail.cliBody">A bundled {codexbar} binary plus standalone tarballs for macOS and Linux on each release. On Linux: {linuxCommand}.</span>
+              <span data-i18n-rich="detail.cliBody">A bundled {bars} binary plus standalone tarballs for macOS and Linux on each release. On Linux: {linuxCommand}.</span>
             </p>
           </article>
           <article class="technical-block provider-reveal" style="--reveal-delay: 160ms">

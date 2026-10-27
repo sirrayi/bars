@@ -11,7 +11,7 @@ read_when:
 - **P0 local corpus:** `docs/issue-2037-p0-local-corpus-findings.md` (provisional Codex locks from `~/.codex` forks; Ultra golden still open)
 - **Supersedes as the canonical fix:** file-local-only approaches for closing #2037, including claiming [#2066](https://github.com/steipete/CodexBar/pull/2066) as a full fix
 - **Related:** [#2066](https://github.com/steipete/CodexBar/pull/2066) (Codex intra-file containment — interim / non-closing at best), [#2043](https://github.com/steipete/CodexBar/pull/2043) / [#2059](https://github.com/steipete/CodexBar/pull/2059) (Pi file-local reconciliation merged then reverted), #968, #1062, #1164 / `45b68c34`
-- **Affected code (expected):** `Sources/CodexBarCore/Vendored/CostUsage/` (Codex first); Pi only if the sanitized corpus proves the same shape
+- **Affected code (expected):** `Sources/BarsCore/Vendored/CostUsage/` (Codex first); Pi only if the sanitized corpus proves the same shape
 
 ## 0. Framing (read first)
 
@@ -439,7 +439,7 @@ The UI may collapse reasons into simpler copy, but cache/CLI/test output must pr
 2. **Cache** persists both fields and mandatory quality reasons with the family’s accepted events / cost nanos.
 3. **`CostUsageDailyReport`** (and project breakdowns if present) expose rolled-up fields, e.g. `provenanceQuality` + `accountingQuality` (or derived `isEstimate` = either non-ideal).
 4. **UI / menu:** distinct affordances when possible — e.g. “Incomplete fork history” vs “Estimated (conservative accounting)” — not a single vague “Estimated” that conflates the two.
-5. **CLI** (`codexbar cost` JSON): include both fields and quality reasons so agents/scripts do not treat estimates as exact.
+5. **CLI** (`bars cost` JSON): include both fields and quality reasons so agents/scripts do not treat estimates as exact.
 
 Exact UX copy TBD; the **data path for both dimensions** is required in P1 so quality is not documentation-only.
 

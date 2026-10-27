@@ -21,7 +21,7 @@ Codex and Claude already record Plan Usage history during normal refreshes. The
 menu reads the history selected by the existing provider/account ownership rules.
 
 Existing JSON files live under
-`~/Library/Application Support/com.steipete.codexbar/history/`. Entries contain
+`~/Library/Application Support/com.sirrayi.bars/history/`. Entries contain
 capture time, used percentage, and reset time, grouped by quota series, duration,
 and account. Existing hourly compaction preserves peaks and reset boundaries;
 recording caps each account's series at 17,520 samples (roughly 730 days at one
@@ -45,7 +45,7 @@ source Scripts/test_environment.sh
 env -u OP_SERVICE_ACCOUNT_TOKEN -u SLACK_APP_TOKEN -u SLACK_BOT_TOKEN \
   -u DISCORD_BOT_TOKEN -u GOOGLE_PLACES_API_KEY -u KIEAI_API_KEY \
   -u GOG_KEYRING_PASSWORD -u CLAUDE_CODE_MESSAGING_TOKEN \
-  CODEXBAR_BURNDOWN_PROOF_DIR=/tmp/codexbar-burndown-proof \
+  BARS_BURNDOWN_PROOF_DIR=/tmp/bars-burndown-proof \
   swift test --filter QuotaBurndownRenderProofTests
 ```
 

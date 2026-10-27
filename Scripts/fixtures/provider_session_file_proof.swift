@@ -1,7 +1,7 @@
 import Foundation
 
 enum KeychainAccessGate {
-    static let disableAccessEnvironmentKey = "CODEXBAR_DISABLE_KEYCHAIN_ACCESS"
+    static let disableAccessEnvironmentKey = "BARS_DISABLE_KEYCHAIN_ACCESS"
     static var isDisabled: Bool {
         fatalError("Session paths must not consult Keychain state")
     }
@@ -19,7 +19,7 @@ struct ProviderSessionFileProof {
                 child.arguments = [mode, root.path]
                 child.environment = mode == "isolated" ? [
                     ProviderSessionStoreFile.isolationEnvironmentKey: "1",
-                    "CODEXBAR_ALLOW_TEST_KEYCHAIN_ACCESS": "1",
+                    "BARS_ALLOW_TEST_KEYCHAIN_ACCESS": "1",
                 ] : [:]
                 try child.run()
                 child.waitUntilExit()
@@ -31,7 +31,7 @@ struct ProviderSessionFileProof {
 
         let testRoot = root.appendingPathComponent("test")
         let fakeSupport = root.appendingPathComponent("fake-application-support")
-        let fakeUserDirectory = fakeSupport.appendingPathComponent("CodexBar")
+        let fakeUserDirectory = fakeSupport.appendingPathComponent("bars")
         try FileManager.default.createDirectory(at: fakeUserDirectory, withIntermediateDirectories: true)
         for filename in ["cursor-session.json", "augment-session.json", "factory-session.json", "notion-session.json"] {
             let sentinel = fakeUserDirectory.appendingPathComponent(filename)

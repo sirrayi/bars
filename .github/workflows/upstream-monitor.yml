@@ -145,7 +145,7 @@ jobs:
             \`\`\`
             
             ### 🔗 Links
-            - [steipete commits](https://github.com/steipete/CodexBar/compare/${context.sha}...steipete:CodexBar:${upstreamBranch})
+            - [steipete commits](https://github.com/steipete/CodexBar/compare/${context.sha}...steipete:bars:${upstreamBranch})
             - [quotio commits](https://github.com/nguyenphutrong/quotio/commits/${quotioBranch})
             
             ---
