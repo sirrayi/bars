@@ -137,7 +137,6 @@ struct PreferencesPaneSmokeTests {
 
     @Test
     func `inactive display contrast is available only for icon and percent`() {
-        #expect(!MenuBarPane.layoutEditorEnabled(for: .critters))
         #expect(!MenuBarPane.layoutEditorEnabled(for: .bars))
         #expect(MenuBarPane.layoutEditorEnabled(for: .iconAndPercent))
     }
@@ -145,19 +144,17 @@ struct PreferencesPaneSmokeTests {
     @Test
     func `menu bar layout footer follows the selected style`() {
         #expect(MenuBarPane.layoutEditorEnabled(for: .iconAndPercent))
-        #expect(!MenuBarPane.layoutEditorEnabled(for: .critters))
         #expect(!MenuBarPane.layoutEditorEnabled(for: .bars))
 
         BarsLocalizationOverride.$appLanguage.withValue("en") {
             let enabledFooter = MenuBarPane.layoutFooterText(for: .iconAndPercent)
-            let disabledFooter = MenuBarPane.layoutFooterText(for: .critters)
+            let disabledFooter = MenuBarPane.layoutFooterText(for: .bars)
 
             #expect(enabledFooter.contains("Drag tokens"))
             #expect(!enabledFooter.contains("Icon & percent"))
             #expect(disabledFooter.contains("Icon & percent"))
             #expect(!disabledFooter.contains("Drag tokens"))
             #expect(!disabledFooter.contains("%@"))
-            #expect(MenuBarPane.layoutFooterText(for: .bars) == disabledFooter)
         }
 
         BarsLocalizationOverride.$appLanguage.withValue("de") {
@@ -169,31 +166,20 @@ struct PreferencesPaneSmokeTests {
     }
 
     @Test
-    func `menu bar icon style maps existing booleans`() {
+    func `menu bar icon style maps the brand icon boolean`() {
         let settings = Self.makeSettingsStore(suite: "PreferencesPaneSmokeTests-menu-bar-icon-style")
 
         settings.menuBarShowsBrandIconWithPercent = false
-        settings.menuBarHidesCritters = false
-        #expect(settings.menuBarIconStyle == .critters)
-
-        settings.menuBarHidesCritters = true
         #expect(settings.menuBarIconStyle == .bars)
 
         settings.menuBarShowsBrandIconWithPercent = true
         #expect(settings.menuBarIconStyle == .iconAndPercent)
 
-        settings.menuBarHidesCritters = true
-        settings.menuBarIconStyle = .iconAndPercent
-        #expect(settings.menuBarShowsBrandIconWithPercent)
-        #expect(settings.menuBarHidesCritters)
-
-        settings.menuBarIconStyle = .critters
-        #expect(!settings.menuBarShowsBrandIconWithPercent)
-        #expect(!settings.menuBarHidesCritters)
-
         settings.menuBarIconStyle = .bars
         #expect(!settings.menuBarShowsBrandIconWithPercent)
-        #expect(settings.menuBarHidesCritters)
+
+        settings.menuBarIconStyle = .iconAndPercent
+        #expect(settings.menuBarShowsBrandIconWithPercent)
     }
 
     @Test
@@ -209,28 +195,18 @@ struct PreferencesPaneSmokeTests {
     }
 
     @Test
-    func `cost summary option disables without losing style`() {
+    func `cost summary option toggles cost usage`() {
         let settings = Self.makeSettingsStore(suite: "PreferencesPaneSmokeTests-cost-summary-option")
 
-        settings.costSummaryOption = .costSubmenu
+        settings.costSummaryOption = .on
         #expect(settings.costUsageEnabled)
-        #expect(settings.costSummaryDisplayStyle == .costSubmenu)
 
         settings.costSummaryOption = .off
         #expect(!settings.costUsageEnabled)
-        #expect(settings.costSummaryDisplayStyle == .costSubmenu)
         #expect(settings.costSummaryOption == .off)
 
         settings.costUsageEnabled = true
-        #expect(settings.costSummaryOption == .costSubmenu)
-
-        settings.costSummaryOption = .inlineSummary
-        #expect(settings.costUsageEnabled)
-        #expect(settings.costSummaryDisplayStyle == .inlineSummary)
-
-        settings.costSummaryOption = .both
-        #expect(settings.costUsageEnabled)
-        #expect(settings.costSummaryDisplayStyle == .both)
+        #expect(settings.costSummaryOption == .on)
     }
 
     @Test

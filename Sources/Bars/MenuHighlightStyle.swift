@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 extension EnvironmentValues {
@@ -39,7 +40,15 @@ enum MenuHighlightStyle {
         highlighted ? self.selectionText : fallback
     }
 
-    static func selectionBackground(_ highlighted: Bool) -> Color {
-        highlighted ? Color(nsColor: .selectedContentBackgroundColor) : .clear
+    /// Hover fill for card rows: a soft neutral wash over the menu's glass, like Control Center menus,
+    /// instead of the accent-colored selection. Text keeps its normal colors while hovered.
+    static let hoverFillColor = NSColor(name: nil) { appearance in
+        appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(white: 1, alpha: 0.12)
+            : NSColor(white: 0, alpha: 0.07)
     }
+
+    static let hoverCornerRadius: CGFloat = 8
+    static let hoverHorizontalInset: CGFloat = 6
+    static let hoverVerticalInset: CGFloat = 2
 }

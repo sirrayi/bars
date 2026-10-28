@@ -9,17 +9,6 @@ private final class UsageHistoryMenuHostingView<Content: View>: NSHostingView<Co
 }
 
 extension StatusItemController {
-    @discardableResult
-    func addUsageHistoryMenuItemIfNeeded(to menu: NSMenu, provider: UsageProvider, width: CGFloat) -> Bool {
-        guard let submenu = self.makeUsageHistorySubmenu(provider: provider, width: width) else { return false }
-        let item = NSMenuItem(title: L("Plan Usage"), action: nil, keyEquivalent: "")
-        item.isEnabled = true
-        item.representedObject = "usageHistorySubmenu"
-        item.submenu = submenu
-        menu.addItem(item)
-        return true
-    }
-
     func makeUsageHistorySubmenu(provider: UsageProvider, width: CGFloat? = nil) -> NSMenu? {
         guard self.store.supportsPlanUtilizationHistory(for: provider) else { return nil }
         guard !self.store.shouldHidePlanUtilizationMenuItem(for: provider) else { return nil }

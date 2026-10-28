@@ -88,9 +88,10 @@ extension StatusItemController {
 
     @discardableResult
     func hydrateHostedSubviewMenuIfNeeded(_ menu: NSMenu, width requestedWidth: CGFloat? = nil) -> Bool {
+        // A lone status link (a custom action row) also means the component list still needs hydrating.
         guard let placeholder = menu.items.first,
               menu.items.count == 1,
-              placeholder.view == nil,
+              placeholder.view == nil || placeholder.view is MenuActionRowView,
               let chartID = placeholder.representedObject as? String
         else {
             return false
@@ -520,11 +521,17 @@ extension StatusItemController {
         // menu selection change cannot open another provider's status page.
         linkItem.representedObject = Self.statusComponentsID
         linkItem.identifier = NSUserInterfaceItemIdentifier(provider.rawValue)
-        if let image = NSImage(systemSymbolName: "arrow.up.right.square", accessibilityDescription: nil) {
-            image.isTemplate = true
-            image.size = NSSize(width: 16, height: 16)
-            linkItem.image = image
-        }
+        let linkView = MenuActionRowView(
+            title: linkItem.title,
+            systemImageName: nil,
+            shortcutText: nil,
+            onClick: { [weak self, weak linkItem] in
+                guard let self, let linkItem else { return }
+                linkItem.menu?.cancelTracking()
+                NSApp.sendAction(#selector(self.openStatusPageFromMenuItem(_:)), to: self, from: linkItem)
+            })
+        linkView.applySize(width: width, height: MenuActionRowMetrics.defaults.rowHeight)
+        linkItem.view = linkView
         submenu.addItem(linkItem)
         return true
     }

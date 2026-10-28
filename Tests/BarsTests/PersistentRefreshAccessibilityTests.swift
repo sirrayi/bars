@@ -8,7 +8,7 @@ struct PersistentRefreshAccessibilityTests {
     @Test(arguments: [nil, "arrow.clockwise"] as [String?])
     func `disabled refresh row rejects accessibility press`(systemImageName: String?) {
         var pressCount = 0
-        let view = PersistentRefreshMenuView(
+        let view = MenuActionRowView(
             title: "Refresh",
             systemImageName: systemImageName,
             shortcutText: "⌘ R",

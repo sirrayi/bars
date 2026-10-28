@@ -173,7 +173,7 @@ struct MenuCardChartSwitchTests {
                 .environment(\.menuUsageBarSelection, .constant(selected))
                 .environment(\.menuItemHighlighted, highlighted)
                 .environment(\.colorScheme, .dark)
-                .background(highlighted ? MenuHighlightStyle.selectionBackground(true)
+                .background(highlighted ? Color(nsColor: MenuHighlightStyle.hoverFillColor)
                     : Color(nsColor: .windowBackgroundColor))))
         hosting.appearance = NSAppearance(named: .darkAqua)
         hosting.frame = NSRect(x: 0, y: 0, width: 350, height: 400)

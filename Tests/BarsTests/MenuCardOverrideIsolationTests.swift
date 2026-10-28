@@ -26,14 +26,14 @@ struct MenuCardOverrideIsolationTests {
             daily: [],
             updatedAt: Date()), provider: .claude)
         for (index, account) in accounts.enumerated() {
-            let model = store.menuCardModel(
+            let input = store.menuCardInput(
                 for: .claude, context: .account(.init(tokenAccountID: account.id)))
-            #expect((model.tokenUsage != nil) == (index == 0))
+            #expect((input.tokenSnapshot != nil) == (index == 0))
         }
         store.settings.setActiveTokenAccountIndex(1, for: .claude)
-        let formerOwner = store.menuCardModel(
+        let formerOwner = store.menuCardInput(
             for: .claude, context: .account(.init(tokenAccountID: accounts[0].id)))
-        #expect(formerOwner.tokenUsage == nil)
+        #expect(formerOwner.tokenSnapshot == nil)
     }
 
     @Test

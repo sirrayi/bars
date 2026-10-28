@@ -200,7 +200,6 @@ public enum ClaudeProviderDescriptor {
                         menuCardStyle: .claude)
                 },
                 iconWindowResolver: self.iconWindows,
-                iconDecorations: [.notches],
                 reservesMissingSecondaryIconLane: true,
                 menuBarBalanceUsesPrepaidCost: true,
                 automaticSelectionPrioritizesExhaustedWindow: false,

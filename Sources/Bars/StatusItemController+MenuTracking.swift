@@ -513,7 +513,10 @@ extension StatusItemController {
     func isNativeMenuItemHighlighted(in menu: NSMenu) -> Bool {
         let key = ObjectIdentifier(menu)
         guard let item = self.highlightedMenuItems[key], item.menu === menu else { return false }
-        return item.isEnabled && item.view == nil
+        // Custom action rows stand in for native items, so they keep the same rebuild deferral.
+        // Refresh updates in place and stays excluded, as before.
+        let isActionRow = item.view is MenuActionRowView && !self.isPersistentRefreshItem(item)
+        return item.isEnabled && (item.view == nil || isActionRow)
     }
 
     func resumeMenuRebuildDeferredForNativeHighlightIfNeeded(_ menu: NSMenu) {

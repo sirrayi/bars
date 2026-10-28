@@ -2,8 +2,7 @@
 
 ## Conversation usage details
 
-In a cost submenu with session records, click a conversation to open the shared Sessions inspector in
-Usage & Spend and inspect its input, cached input, uncached input, output,
+In Usage & Spend, click a conversation to open the shared Sessions inspector and inspect its input, cached input, uncached input, output,
 reasoning, requests, estimated cost, and per-model breakdown. The search icon next to Conversations opens
 the same inspector for all conversations retained in that menu's current account and history window.
 The Sessions section in Usage & Spend reuses this component and selects providers/accounts separately;

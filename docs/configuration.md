@@ -314,21 +314,17 @@ The unified highest-usage icon uses the same priority for providers set to Auto 
 window's actual percentage. Explicit metric choices and provider-specific credit-pool ordering are preserved.
 This uses reported usage, duration, and reset time; it adds no observation history or background timer.
 
-The **Layout** editor applies only to **Icon & percent**. With **Critters** or **Meter bars** selected, its footer explains which style to choose before editing.
+The **Layout** editor applies only to **Icon & percent**. With **Meter bars** selected, its footer explains which style to choose before editing.
 
 The layout editor includes an optional **Tokens / min** value token (for example `49M/min`) using the provider’s latest reported complete minute. It uses the same unavailable placeholder as other value tokens when no throughput is available. The optional **Tokens / min graph** token shows the last hour as a compact graph, using the maximum minute in each column and excluding minutes that are still reporting. Drag either token into your layout to enable it; default layouts include neither. The graph uses the status item’s own provider data and the standard unavailable placeholder when there are no reported minutes.
 
-Switching from **Icon & percent** back to **Meters** or **Critters** redraws the selected style immediately, even when usage has not changed.
+Switching from **Icon & percent** back to **Meter bars** redraws the meters immediately, even when usage has not changed.
 
 Custom two-line layouts show a single leading provider icon at full size beside both text rows. Merged-provider rows, multiple icons, icon-only rows, high-contrast mode, and provider-colored layouts retain inline icons.
 
 The layout editor's **Usage** palette includes graphical bars for session, weekly, scoped weekly, and automatic windows. **Progress bars stacked** places session and weekly bars on separate rows with their reset countdowns. Bars follow the used/remaining display preference and keep balance-only automatic values as text. The compact three-character **Usage bar** remains available.
 
 Older app versions show matching percentages in place of graphical bars. Returning to the newer version restores the bars when the older layout was unchanged; edits made in the older version take precedence.
-
-**Surprise me** is disabled while brand icons are selected, and static brand layouts do not run the blink timer.
-Your animation preference is kept for switching back to critters. If a brand image is unavailable and the legacy
-layout falls back to a critter, that visible critter can still animate; stored layouts remain static.
 
 In **Settings → Menu Bar**, inactive combined-icon controls use dimmed labels. Their titles and explanations remain readable and available to VoiceOver; label styling follows each control's enabled state, including stacked-icon restrictions. The layout size and gap controls remain independent of Merge Icons.
 

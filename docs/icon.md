@@ -9,6 +9,18 @@ read_when:
 
 We use the new macOS 26 “glass” `.icon` bundle from Icon Composer/IconStudio and convert it to `.icns` via Xcode’s hidden CLI (ictool/icontool), without an Xcode project.
 
+## Artwork
+The bars icon is three stacked capsule meters (white fills over translucent tracks) on a graphite fill.
+`Scripts/icon/make_icon_layers.swift` draws the two layers into `Icon.icon/Assets` (`fills.png`, `tracks.png`);
+`Icon.icon/icon.json` sets the fill, the track opacity, and the glass settings.
+
+Regenerate both icns files after changing the artwork:
+```bash
+swift Scripts/icon/make_icon_layers.swift Icon.icon/Assets
+./Scripts/build_icon.sh Icon.icon Icon build/icon
+cp Icon.icns Sources/Bars/Resources/Icon-classic.icns
+```
+
 ## Script
 `Scripts/build_icon.sh ICON.icon bars [outdir]`
 

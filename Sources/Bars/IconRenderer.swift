@@ -168,13 +168,11 @@ enum IconRenderer {
                     rectPx: RectPx,
                     remaining: Double?,
                     alpha: CGFloat = 1.0,
-                    addNotches: Bool = false,
                     blink: CGFloat = 0,
                     drawTrackFill: Bool = true)
                 {
                     let rect = rectPx.rect()
-                    // Claude reads better as a blockier critter; other providers stay as a capsule.
-                    let cornerRadiusPx = addNotches ? 0 : rectPx.h / 2
+                    let cornerRadiusPx = rectPx.h / 2
                     let radius = Self.grid.pt(cornerRadiusPx)
 
                     let trackPath = NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
@@ -215,91 +213,8 @@ enum IconRenderer {
                             NSGraphicsContext.current?.cgContext.restoreGState()
                         }
                     }
-
-                    // Claude twist: blocky crab-style critter (arms + legs + vertical eyes).
-                    if addNotches {
-                        let ctx = NSGraphicsContext.current?.cgContext
-                        let wiggleOffset = Self.grid.snapDelta(wiggle * 0.6)
-                        let wigglePx = Int((wiggleOffset * Self.outputScale).rounded())
-
-                        fillColor.withAlphaComponent(alpha).setFill()
-
-                        // Arms/claws: mid-height side protrusions.
-                        // Keep within the 18×18pt canvas: barX is 3px, so 3px arms reach the edge without clipping.
-                        let armWidthPx = 3
-                        let armHeightPx = max(0, rectPx.h - 6)
-                        let armYPx = rectPx.y + 3 + wigglePx / 6
-                        let leftArm = Self.grid.rect(
-                            x: rectPx.x - armWidthPx,
-                            y: armYPx,
-                            w: armWidthPx,
-                            h: armHeightPx)
-                        let rightArm = Self.grid.rect(
-                            x: rectPx.x + rectPx.w,
-                            y: armYPx,
-                            w: armWidthPx,
-                            h: armHeightPx)
-                        NSBezierPath(rect: leftArm).fill()
-                        NSBezierPath(rect: rightArm).fill()
-
-                        // Legs: 4 little pixels underneath, like a tiny crab.
-                        let legCount = 4
-                        let legWidthPx = 2
-                        let legHeightPx = 3
-                        let legYPx = rectPx.y - legHeightPx + wigglePx / 6
-                        let stepPx = max(1, rectPx.w / (legCount + 1))
-                        for idx in 0..<legCount {
-                            let cx = rectPx.x + stepPx * (idx + 1)
-                            let leg = Self.grid.rect(
-                                x: cx - legWidthPx / 2,
-                                y: legYPx,
-                                w: legWidthPx,
-                                h: legHeightPx)
-                            NSBezierPath(rect: leg).fill()
-                        }
-
-                        // Eyes: tall vertical cutouts near the top.
-                        let eyeWidthPx = 2
-                        let eyeHeightPx = 5
-                        let eyeOffsetPx = 6
-                        let eyeYPx = rectPx.y + rectPx.h - eyeHeightPx - 2 + wigglePx / 8
-                        ctx?.saveGState()
-                        ctx?.setShouldAntialias(false)
-                        ctx?.clear(Self.grid.rect(
-                            x: rectPx.midXPx - eyeOffsetPx - eyeWidthPx / 2,
-                            y: eyeYPx,
-                            w: eyeWidthPx,
-                            h: eyeHeightPx))
-                        ctx?.clear(Self.grid.rect(
-                            x: rectPx.midXPx + eyeOffsetPx - eyeWidthPx / 2,
-                            y: eyeYPx,
-                            w: eyeWidthPx,
-                            h: eyeHeightPx))
-                        ctx?.restoreGState()
-
-                        // Blink: fill the eyes from the top down (blocky).
-                        if blink > 0.001 {
-                            let clamped = max(0, min(blink, 1))
-                            let blinkHeightPx = Int((CGFloat(eyeHeightPx) * clamped).rounded())
-                            fillColor.withAlphaComponent(alpha).setFill()
-                            let leftBlink = Self.grid.rect(
-                                x: rectPx.midXPx - eyeOffsetPx - eyeWidthPx / 2,
-                                y: eyeYPx + eyeHeightPx - blinkHeightPx,
-                                w: eyeWidthPx,
-                                h: blinkHeightPx)
-                            let rightBlink = Self.grid.rect(
-                                x: rectPx.midXPx + eyeOffsetPx - eyeWidthPx / 2,
-                                y: eyeYPx + eyeHeightPx - blinkHeightPx,
-                                w: eyeWidthPx,
-                                h: blinkHeightPx)
-                            NSBezierPath(rect: leftBlink).fill()
-                            NSBezierPath(rect: rightBlink).fill()
-                        }
-                    }
                 }
 
-                let providerPresentation = UsageProvider(rawValue: style.rawValue)
-                    .map { ProviderDescriptorRegistry.descriptor(for: $0).presentation }
                 let usesMissingSecondaryLayout = quotaLayoutPolicy.treatsExhaustedSecondaryAsMissing
                 let effectiveWeeklyRemaining: Double? = {
                     if usesMissingSecondaryLayout, let weeklyRemaining, weeklyRemaining <= 0 {
@@ -322,9 +237,6 @@ enum IconRenderer {
                 // When the secondary lane is exhausted or missing, show "top primary, bottom dimmed".
                 let missingSecondary = usesMissingSecondaryLayout && !weeklyAvailable
 
-                // "Hide critters" renders plain meter bars: suppress all face/decoration twists.
-                let decorations = hideCritters ? ProviderIconDecorations() : providerPresentation?.iconDecorations ?? []
-                let twistNotches = decorations.contains(.notches)
                 var statusOverlayAttachesToProminentMeter = false
 
                 if let bottomValue, bottomValue > 0, topValue == nil,
@@ -336,14 +248,12 @@ enum IconRenderer {
                     drawBar(
                         rectPx: creditsRectPx,
                         remaining: bottomValue,
-                        addNotches: twistNotches,
                         blink: blink)
                 } else if weeklyAvailable {
                     // Normal: top=primary, bottom=secondary (bonus/weekly).
                     drawBar(
                         rectPx: topRectPx,
                         remaining: topValue,
-                        addNotches: twistNotches,
                         blink: blink)
                     drawBar(rectPx: bottomRectPx, remaining: bottomValue)
                 } else if !hasWeekly || missingSecondary {
@@ -361,7 +271,6 @@ enum IconRenderer {
                                 rectPx: creditsRectPx,
                                 remaining: ratio,
                                 alpha: creditsAlpha,
-                                addNotches: twistNotches,
                                 blink: blink)
                             drawBar(rectPx: creditsBottomRectPx, remaining: nil, alpha: 0.45)
                         } else if !quotaLayoutPolicy.reservesMissingSecondaryLane, let topValue {
@@ -371,7 +280,6 @@ enum IconRenderer {
                             drawBar(
                                 rectPx: creditsRectPx,
                                 remaining: topValue,
-                                addNotches: twistNotches,
                                 blink: blink)
                         } else {
                             // Missing secondary (for example Claude Enterprise): preserve the normal two-lane
@@ -379,7 +287,6 @@ enum IconRenderer {
                             drawBar(
                                 rectPx: topRectPx,
                                 remaining: topValue,
-                                addNotches: twistNotches,
                                 blink: blink)
                             drawBar(rectPx: bottomRectPx, remaining: nil, alpha: 0.45)
                         }
@@ -391,14 +298,12 @@ enum IconRenderer {
                             rectPx: creditsRectPx,
                             remaining: ratio,
                             alpha: creditsAlpha,
-                            addNotches: twistNotches,
                             blink: blink)
                     } else {
                         // No credits available; fall back to 5h if present.
                         drawBar(
                             rectPx: topRectPx,
                             remaining: topValue,
-                            addNotches: twistNotches,
                             blink: blink)
                     }
                     drawBar(rectPx: creditsBottomRectPx, remaining: bottomValue)

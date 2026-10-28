@@ -13,10 +13,6 @@ Enable **Settings → Menu Bar → Show all accounts in Overview** to include th
 cards in Overview. The existing account source and provider selection remain unchanged; see
 [Overview account rows](configuration.md#menu-bar-controls).
 
-The **Plan Usage** submenu includes recorded remaining-quota burndown above utilization history,
-using the same Session, Weekly, and Sonnet labels. See [recorded quota burndown](widgets/burndown-proof.md)
-for capture-age semantics and the existing history retention/privacy behavior.
-
 OAuth history uses a stable account/profile identity after two stable credential observations corroborate that
 binding. External token rotations therefore continue the same history after the new credential is corroborated.
 Saved token-scoped fragments with matching verified bindings migrate into that account's history on a successful

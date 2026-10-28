@@ -235,10 +235,6 @@ struct MenuBarPercentWindowPreferenceTests {
             layout: layout,
             available: options))
         #expect(MenuBarPercentWindowPreference.isVisible(
-            iconStyle: .critters,
-            layout: layout,
-            available: options) == false)
-        #expect(MenuBarPercentWindowPreference.isVisible(
             iconStyle: .bars,
             layout: layout,
             available: options) == false)
@@ -272,14 +268,14 @@ struct MenuBarPercentWindowPreferenceTests {
             defaults: InMemoryUserDefaults(),
             config: testConfigStore(suiteName: "MenuBarPercentWindowPreferenceTests-preserve-style"))
         defer { settings.configFileWatcher?.stop() }
-        settings.menuBarIconStyle = .critters
+        settings.menuBarIconStyle = .bars
         let layout = MenuBarLayout(lines: [[.icon, .percent(window: .automatic)]])
         settings.setMenuBarLayout(layout, for: .claude)
 
         let picker = ProviderMenuBarPercentWindowSettingsView(provider: .claude, settings: settings)
         picker.layoutBinding.wrappedValue = MenuBarPercentWindowPreference.session.applied(to: layout)
 
-        #expect(settings.menuBarIconStyle == .critters)
+        #expect(settings.menuBarIconStyle == .bars)
         #expect(MenuBarPercentWindowPreference.current(in: settings.menuBarLayout(for: .claude)) == .session)
         #expect(settings.menuBarLayoutOverrides[.claude] == MenuBarLayout(lines: [[
             .icon,

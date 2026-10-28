@@ -13,9 +13,9 @@ extension StatusItemController {
     func refreshMenuCardHeights(in menu: NSMenu) {
         let width = self.renderedMenuWidth(for: menu)
         for item in menu.items {
-            if let view = item.view as? PersistentRefreshMenuView {
+            if let view = item.view as? MenuActionRowView {
                 guard abs(view.frame.width - width) > 0.5 else { continue }
-                view.applySize(width: width, height: PersistentRefreshRowMetrics.defaults.rowHeight)
+                view.applySize(width: width, height: MenuActionRowMetrics.defaults.rowHeight)
                 continue
             }
             guard let view = item.view, let measuring = view as? any MenuCardMeasuring else { continue }

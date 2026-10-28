@@ -90,9 +90,10 @@ struct UsageStoreMenuCardModelTests {
         let menu = store.menuCardInput(for: .claude, context: .menu)
         let settings = store.menuCardInput(for: .claude, context: .settings)
 
-        #expect(!menu.costSummaryInlineEnabled)
+        // A legacy submenu-only style no longer hides inline costs, and the menu has no Cost row.
+        #expect(menu.costSummaryInlineEnabled)
         #expect(settings.costSummaryInlineEnabled)
-        #expect(menu.tokenCostMenuSectionEnabled)
+        #expect(!menu.tokenCostMenuSectionEnabled)
         #expect(settings.tokenCostMenuSectionEnabled)
         #expect(menu.tokenCostIsRefreshing)
         #expect(!settings.tokenCostIsRefreshing)

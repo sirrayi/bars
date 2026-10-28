@@ -2,13 +2,9 @@ import BarsCore
 import Foundation
 
 extension SettingsStore {
+    /// Costs always render inline in the provider card; bars has no separate cost submenu.
     func costSummaryShowsInline(for provider: UsageProvider) -> Bool {
-        self.costUsageEnabled && self.costSummaryDisplayStyle.showsInlineSummary
-    }
-
-    func costSummaryShowsSubmenu(for provider: UsageProvider) -> Bool {
-        self.isCostUsageEffectivelyEnabled(for: provider) &&
-            self.costSummaryDisplayStyle.showsCostSubmenu
+        self.costUsageEnabled
     }
 
     func applyTokenCostDefaultIfNeeded() {

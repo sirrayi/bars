@@ -2,23 +2,6 @@ import AppKit
 import BarsCore
 
 extension StatusItemController {
-    func makeOverviewRowSubmenu(
-        provider: UsageProvider,
-        model: UsageMenuCardView.Model,
-        width: CGFloat) -> NSMenu?
-    {
-        if self.settings.costSummaryShowsSubmenu(for: provider),
-           model.tokenUsage != nil,
-           let submenu = self.makeCostHistorySubmenu(provider: provider, width: width)
-        {
-            return submenu
-        }
-        if let submenu = self.makeUsageHistorySubmenu(provider: provider, width: width) {
-            return submenu
-        }
-        return self.makeStorageBreakdownSubmenu(provider: provider, width: width)
-    }
-
     @objc func selectOverviewProvider(_ sender: NSMenuItem) {
         guard let represented = sender.representedObject as? String,
               represented.hasPrefix(Self.overviewRowIdentifierPrefix)

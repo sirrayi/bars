@@ -1,6 +1,6 @@
 import AppKit
 
-struct PersistentRefreshRowMetrics: Equatable {
+struct MenuActionRowMetrics: Equatable {
     static let defaults = Self(
         rowHeight: 24,
         selectionHorizontalInset: 5,

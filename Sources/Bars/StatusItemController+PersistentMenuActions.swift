@@ -15,7 +15,7 @@ extension StatusItemController {
                 self.highlightedMenuItems.removeValue(forKey: ObjectIdentifier(menu))
             }
             item.isEnabled = enabled
-            (item.view as? PersistentRefreshMenuView)?.setEnabled(enabled)
+            (item.view as? MenuActionRowView)?.setEnabled(enabled)
         }
     }
 

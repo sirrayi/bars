@@ -1015,8 +1015,9 @@ extension StatusMenuTests {
         }
         let overviewView = try #require(overview.view as? MenuRowContainerView)
         let providerView = try #require(provider.view as? MenuRowContainerView)
-        let selection = try #require(overviewView.subviews.compactMap { $0 as? NSVisualEffectView }.first)
-        let refreshSelection = try #require(refresh.view?.subviews.compactMap { $0 as? NSVisualEffectView }.first)
+        #expect(overviewView.hasGPUSelectionLayerForTesting)
+        let selection = try #require(overviewView.subviews.first)
+        let refreshSelection = try #require(refresh.view?.subviews.first)
 
         controller.menu(menu, willHighlight: overview)
         #expect(controller.highlightedMenuItems[ObjectIdentifier(menu)] === overview)

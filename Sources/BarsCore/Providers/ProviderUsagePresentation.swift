@@ -141,16 +141,6 @@ public struct ProviderUsageWindowPair: Sendable, Equatable {
     }
 }
 
-public struct ProviderIconDecorations: OptionSet, Sendable {
-    public let rawValue: UInt8
-
-    public init(rawValue: UInt8) {
-        self.rawValue = rawValue
-    }
-
-    public static let notches = Self(rawValue: 1 << 1)
-}
-
 public struct ProviderIconWindowContext: Sendable {
     public let snapshot: UsageSnapshot
     public let secondaryOverrideWindowID: String?
@@ -354,7 +344,6 @@ public struct ProviderUsagePresentation: Sendable {
     private let planUtilizationSeriesNormalizer: PlanUtilizationSeriesNormalizer
     private let widgetRowLimitResolver: WidgetRowLimitResolver
     private let widgetRowResolver: WidgetRowResolver?
-    public let iconDecorations: ProviderIconDecorations
     public let treatsExhaustedSecondaryIconWindowAsMissing: Bool
     public let reservesMissingSecondaryIconLane: Bool
     public let primarySemanticWindow: ProviderSemanticWindow
@@ -385,7 +374,6 @@ public struct ProviderUsagePresentation: Sendable {
         iconWindowResolver: @escaping IconWindowResolver = { context in
             ProviderUsageWindowPair(primary: context.snapshot.primary, secondary: context.snapshot.secondary)
         },
-        iconDecorations: ProviderIconDecorations = [],
         treatsExhaustedSecondaryIconWindowAsMissing: Bool = false,
         reservesMissingSecondaryIconLane: Bool = false,
         semanticWindowResolver: @escaping SemanticWindowResolver = Self.standardSemanticWindows,
@@ -417,7 +405,6 @@ public struct ProviderUsagePresentation: Sendable {
         self.extraRateWindowSelector = extraRateWindowSelector
         self.creditResolver = creditResolver
         self.iconWindowResolver = iconWindowResolver
-        self.iconDecorations = iconDecorations
         self.treatsExhaustedSecondaryIconWindowAsMissing = treatsExhaustedSecondaryIconWindowAsMissing
         self.reservesMissingSecondaryIconLane = reservesMissingSecondaryIconLane
         self.semanticWindowResolver = semanticWindowResolver

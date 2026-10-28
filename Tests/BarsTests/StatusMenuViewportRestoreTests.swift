@@ -840,7 +840,7 @@ extension StatusMenuViewportRestoreTests {
         let menu = controller.makeMenu(for: .opencode)
         controller.menuWillOpen(menu)
         let refreshItem = try #require(menu.items.first(where: controller.isPersistentRefreshItem))
-        let refreshView = try #require(refreshItem.view as? PersistentRefreshMenuView)
+        let refreshView = try #require(refreshItem.view as? MenuActionRowView)
         controller.menu(menu, willHighlight: refreshItem)
 
         var scheduled: [@MainActor () -> Void] = []

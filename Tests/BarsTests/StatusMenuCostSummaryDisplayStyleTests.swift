@@ -6,7 +6,7 @@ import Testing
 @MainActor
 extension StatusMenuTests {
     @Test
-    func `cost summary display style controls codex menu presentation`() throws {
+    func `claude menu shows costs inline without cost or plan usage submenus`() throws {
         self.disableMenuCardsForTesting()
 
         for style in CostSummaryDisplayStyle.allCases {
@@ -57,11 +57,14 @@ extension StatusMenuTests {
             let menu = controller.makeMenu()
             controller.menuWillOpen(menu)
 
+            // A stored legacy style must not bring back the removed Cost row or hover submenus.
             let ids = menu.items.compactMap { $0.representedObject as? String }
-            #expect((model.inlineUsageDashboard != nil) == style.showsInlineSummary)
-            #expect((model.tokenUsage != nil) == style.showsCostSubmenu)
+            #expect(model.inlineUsageDashboard != nil)
+            #expect(model.tokenUsage == nil)
             #expect(providerDetailModel.tokenUsage != nil)
-            #expect(ids.contains("menuCardCost") == style.showsCostSubmenu)
+            #expect(!ids.contains("menuCardCost"))
+            #expect(!ids.contains("usageHistorySubmenu"))
+            #expect(menu.items.allSatisfy { $0.submenu == nil || $0.title == L("Status Page") })
         }
     }
 }

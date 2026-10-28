@@ -110,10 +110,10 @@ struct StatusItemAnimationSignatureTests {
         #expect(button.attributedTitle.string == "\u{FFFC}\(expectedTitle)")
         #expect(button.attributedTitle.attribute(.attachment, at: 0, effectiveRange: nil) is NSTextAttachment)
 
-        settings.menuBarIconStyle = .critters
-        let critterSkipped = controller.applyIcon(phase: nil)
+        settings.menuBarIconStyle = .bars
+        let barsSkipped = controller.applyIcon(phase: nil)
 
-        #expect(!critterSkipped)
+        #expect(!barsSkipped)
         #expect(button.image != nil)
         #expect(button.title.isEmpty)
         #expect(button.imagePosition == .imageOnly)

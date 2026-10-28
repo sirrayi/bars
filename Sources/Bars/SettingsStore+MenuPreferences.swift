@@ -2,13 +2,11 @@ import BarsCore
 import Foundation
 
 enum MenuBarIconStyle: String, CaseIterable {
-    case critters
     case bars
     case iconAndPercent
 
     var label: String {
         switch self {
-        case .critters: L("menu_bar_style_critters")
         case .bars: L("menu_bar_style_bars")
         case .iconAndPercent: L("menu_bar_style_icon_percent")
         }
@@ -93,16 +91,12 @@ enum ConfettiCelebrationOption: String, CaseIterable {
 
 enum CostSummaryOption: String, CaseIterable {
     case off
-    case inlineSummary
-    case costSubmenu
-    case both
+    case on
 
     var label: String {
         switch self {
         case .off: L("cost_summary_off")
-        case .inlineSummary: CostSummaryDisplayStyle.inlineSummary.label
-        case .costSubmenu: CostSummaryDisplayStyle.costSubmenu.label
-        case .both: CostSummaryDisplayStyle.both.label
+        case .on: L("On")
         }
     }
 }
@@ -152,16 +146,12 @@ extension SettingsStore {
             if self.menuBarShowsBrandIconWithPercent {
                 return .iconAndPercent
             }
-            return self.menuBarHidesCritters ? .bars : .critters
+            return .bars
         }
         set {
             switch newValue {
-            case .critters:
-                self.menuBarShowsBrandIconWithPercent = false
-                self.menuBarHidesCritters = false
             case .bars:
                 self.menuBarShowsBrandIconWithPercent = false
-                self.menuBarHidesCritters = true
             case .iconAndPercent:
                 self.menuBarShowsBrandIconWithPercent = true
             }
@@ -227,29 +217,8 @@ extension SettingsStore {
     }
 
     var costSummaryOption: CostSummaryOption {
-        get {
-            guard self.costUsageEnabled else { return .off }
-            switch self.costSummaryDisplayStyle {
-            case .inlineSummary: return .inlineSummary
-            case .costSubmenu: return .costSubmenu
-            case .both: return .both
-            }
-        }
-        set {
-            switch newValue {
-            case .off:
-                self.costUsageEnabled = false
-            case .inlineSummary:
-                self.costSummaryDisplayStyle = .inlineSummary
-                self.costUsageEnabled = true
-            case .costSubmenu:
-                self.costSummaryDisplayStyle = .costSubmenu
-                self.costUsageEnabled = true
-            case .both:
-                self.costSummaryDisplayStyle = .both
-                self.costUsageEnabled = true
-            }
-        }
+        get { self.costUsageEnabled ? .on : .off }
+        set { self.costUsageEnabled = newValue == .on }
     }
 
     func menuBarMetricPreference(for provider: UsageProvider) -> MenuBarMetricPreference {

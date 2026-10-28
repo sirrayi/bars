@@ -137,9 +137,7 @@ extension UsageStore {
             tokenCostIsRefreshing: !isSettings && self.tokenCostRefreshIsActive(for: provider),
             // Settings exposes available costs regardless of the menu's display style.
             costSummaryInlineEnabled: isSettings || self.settings.costSummaryShowsInline(for: provider),
-            tokenCostMenuSectionEnabled: isSettings
-                ? self.settings.isCostUsageEffectivelyEnabled(for: provider)
-                : descriptor.tokenCost.showsCostMenuSection && self.settings.costSummaryShowsSubmenu(for: provider),
+            tokenCostMenuSectionEnabled: isSettings && self.settings.isCostUsageEffectivelyEnabled(for: provider),
             costComparisonPeriodsEnabled: !isSettings && self.settings.costComparisonPeriodsEnabled,
             showOptionalCreditsAndExtraUsage: optionalUsageOverride ?? self.settings.showOptionalCreditsAndExtraUsage,
             showsAllUsageLanes: isSettings,

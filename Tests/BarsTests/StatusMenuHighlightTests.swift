@@ -470,7 +470,7 @@ extension StatusMenuTests {
         defer { controller.menuDidClose(submenu) }
         let originalLink = try #require(submenu.items.last)
         #expect(originalLink.title == L("Open Status Page"))
-        #expect(originalLink.view == nil)
+        #expect(originalLink.view is MenuActionRowView)
         #expect(originalLink.isEnabled)
         controller.menu(submenu, willHighlight: originalLink)
 

@@ -159,11 +159,9 @@ struct MenuCardRowPayload {
 final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasuring {
     let highlightState: MenuCardHighlightState
     let interactiveRegionStore: MenuCardInteractiveRegionStore
-    // Forced vibrancy makes white GPU-tinted content disappear on macOS 15.
     private let hosting: NSHostingView<MenuCardSectionContainerView<AnyView>>
     private var measuredSize: NSSize?
-    private var selectionView: NSVisualEffectView?
-    private var tintFilter: CIFilter?
+    private var selectionView: NSView?
     private(set) var allowsMenuHighlight: Bool
     private var onClick: (() -> Void)?
     private var containsInteractiveControls: Bool
@@ -176,9 +174,6 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
     private var testForwardedHostedControlMouseUp = false
     #endif
 
-    private static let selectionHorizontalInset: CGFloat = 6
-    private static let selectionVerticalInset: CGFloat = 2
-    private static let selectionCornerRadius: CGFloat = 6
     private static let selectionFadeDuration: CFTimeInterval = 0.06
 
     override var intrinsicContentSize: NSSize {
@@ -279,16 +274,15 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
 
     override func viewDidChangeEffectiveAppearance() {
         super.viewDidChangeEffectiveAppearance()
-        self.refreshTintFilter()
+        self.refreshSelectionFill()
     }
 
     override func layout() {
         super.layout()
         self.hosting.frame = self.bounds
         self.selectionView?.frame = self.bounds.insetBy(
-            dx: Self.selectionHorizontalInset,
-            dy: Self.selectionVerticalInset)
-        self.selectionView?.layer?.cornerRadius = Self.selectionCornerRadius
+            dx: MenuHighlightStyle.hoverHorizontalInset,
+            dy: MenuHighlightStyle.hoverVerticalInset)
     }
 
     override func hitTest(_ point: NSPoint) -> NSView? {
@@ -426,12 +420,9 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
     private func configureSelectionMode(animated: Bool) {
         if self.rowPayload.usesGPUSelection {
             _ = self.ensureSelectionView()
-            self.refreshTintFilter()
         } else {
-            self.hosting.layer?.filters = []
             self.selectionView?.removeFromSuperview()
             self.selectionView = nil
-            self.tintFilter = nil
         }
         self.applyHighlight(animated: animated)
         self.needsLayout = true
@@ -444,7 +435,6 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
         }
 
         self.highlightState.isHighlighted = false
-        self.hosting.layer?.filters = self.isRowHighlighted ? self.tintFilter.map { [$0] } ?? [] : []
         let layer = self.ensureSelectionView().layer
         let targetOpacity: Float = self.isRowHighlighted ? 1 : 0
         if animated {
@@ -458,46 +448,28 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
         layer?.opacity = targetOpacity
     }
 
-    private func ensureSelectionView() -> NSVisualEffectView {
+    /// GPU-mode rows fade a layer-backed fill instead of re-rendering SwiftUI content on hover.
+    private func ensureSelectionView() -> NSView {
         if let selectionView {
             return selectionView
         }
-        let selectionView = NSVisualEffectView()
-        selectionView.material = .selection
-        selectionView.blendingMode = .withinWindow
-        selectionView.state = .active
-        selectionView.isEmphasized = true
+        let selectionView = NSView()
         selectionView.wantsLayer = true
-        selectionView.layer?.masksToBounds = true
+        selectionView.layer?.cornerRadius = MenuHighlightStyle.hoverCornerRadius
+        selectionView.layer?.cornerCurve = .continuous
         selectionView.layer?.opacity = 0
         selectionView.autoresizingMask = [.width, .height]
         self.addSubview(selectionView, positioned: .below, relativeTo: self.hosting)
         self.selectionView = selectionView
+        self.refreshSelectionFill()
         return selectionView
     }
 
-    private func refreshTintFilter() {
-        guard self.rowPayload.usesGPUSelection else { return }
-        self.tintFilter = Self.makeSelectedTextTintFilter(appearance: self.effectiveAppearance)
-        if self.isRowHighlighted {
-            self.hosting.layer?.filters = self.tintFilter.map { [$0] } ?? []
+    private func refreshSelectionFill() {
+        guard let layer = self.selectionView?.layer else { return }
+        self.effectiveAppearance.performAsCurrentDrawingAppearance {
+            layer.backgroundColor = MenuHighlightStyle.hoverFillColor.cgColor
         }
-    }
-
-    private static func makeSelectedTextTintFilter(appearance: NSAppearance) -> CIFilter? {
-        guard let filter = CIFilter(name: "CIColorMatrix") else { return nil }
-        var tint: NSColor = .white
-        appearance.performAsCurrentDrawingAppearance {
-            tint = NSColor.selectedMenuItemTextColor.usingColorSpace(.deviceRGB) ?? .white
-        }
-        filter.setValue(CIVector(x: 0, y: 0, z: 0, w: 0), forKey: "inputRVector")
-        filter.setValue(CIVector(x: 0, y: 0, z: 0, w: 0), forKey: "inputGVector")
-        filter.setValue(CIVector(x: 0, y: 0, z: 0, w: 0), forKey: "inputBVector")
-        filter.setValue(CIVector(x: 0, y: 0, z: 0, w: 1), forKey: "inputAVector")
-        filter.setValue(
-            CIVector(x: tint.redComponent, y: tint.greenComponent, z: tint.blueComponent, w: 0),
-            forKey: "inputBiasVector")
-        return filter
     }
 
     private static func makeRootView(
@@ -530,19 +502,23 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
 
 typealias ErasedMenuCardHostingView = MenuRowContainerView
 
+/// Native-looking action row (icon, title, shortcut or submenu chevron) that draws the same neutral hover
+/// fill as card rows instead of AppKit's accent-colored selection.
 @MainActor
-final class PersistentRefreshMenuView: NSView, MenuCardHighlighting {
+final class MenuActionRowView: NSView, MenuCardHighlighting {
     private static let minimumShortcutColumnWidth: CGFloat = 44
     private static let titleShortcutGap: CGFloat = 8
     private static let shortcutReferenceText = "⌘ R"
+    private static let submenuIndicatorTrailingPadding: CGFloat = 14
 
-    private let selectionView = NSVisualEffectView()
+    private let selectionView = NSView()
     private let iconView = NSImageView()
     private let titleField: NSTextField
     private let shortcutField: NSTextField?
+    private let submenuIndicatorView: NSImageView?
     private var isRowHighlighted = false
     private var isRowEnabled = true
-    private var rowHeight = PersistentRefreshRowMetrics.defaults.rowHeight
+    private var rowHeight = MenuActionRowMetrics.defaults.rowHeight
     private var onClick: (() -> Void)?
 
     override var allowsVibrancy: Bool {
@@ -557,15 +533,20 @@ final class PersistentRefreshMenuView: NSView, MenuCardHighlighting {
         title: String,
         systemImageName: String?,
         shortcutText: String?,
+        showsSubmenuIndicator: Bool = false,
         onClick: (() -> Void)? = nil)
     {
         self.titleField = NSTextField(labelWithString: title)
         self.shortcutField = shortcutText.map(NSTextField.init(labelWithString:))
+        self.submenuIndicatorView = showsSubmenuIndicator ? Self.makeSubmenuIndicatorView() : nil
         self.onClick = onClick
         super.init(frame: .zero)
         self.setupSelectionView()
         self.setupIconView(systemImageName: systemImageName)
         self.setupTextFields()
+        if let submenuIndicatorView {
+            self.addSubview(submenuIndicatorView)
+        }
         if onClick != nil {
             self.installClickRecognizer()
         }
@@ -579,6 +560,11 @@ final class PersistentRefreshMenuView: NSView, MenuCardHighlighting {
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
         true
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        self.refreshSelectionFill()
     }
 
     override func accessibilityRole() -> NSAccessibility.Role? {
@@ -629,11 +615,23 @@ final class PersistentRefreshMenuView: NSView, MenuCardHighlighting {
     override func layout() {
         super.layout()
 
-        let metrics = PersistentRefreshRowMetrics.defaults
+        let metrics = MenuActionRowMetrics.defaults
         self.selectionView.frame = self.bounds.insetBy(
             dx: metrics.selectionHorizontalInset,
             dy: metrics.selectionVerticalInset)
         self.selectionView.layer?.cornerRadius = metrics.selectionCornerRadius
+
+        var trailingMaxX = self.bounds.maxX - metrics.trailingPadding
+        if let submenuIndicatorView {
+            let size = submenuIndicatorView.intrinsicContentSize
+            let x = self.bounds.maxX - Self.submenuIndicatorTrailingPadding - size.width
+            submenuIndicatorView.frame = NSRect(
+                x: x,
+                y: floor((self.bounds.height - size.height) / 2),
+                width: size.width,
+                height: size.height)
+            trailingMaxX = x - Self.titleShortcutGap
+        }
 
         var leadingX = metrics.leadingPadding
         if self.iconView.image != nil {
@@ -647,7 +645,7 @@ final class PersistentRefreshMenuView: NSView, MenuCardHighlighting {
             leadingX += metrics.iconWidth + metrics.iconTitleSpacing
         }
 
-        var titleMaxX = self.bounds.maxX - metrics.trailingPadding
+        var titleMaxX = trailingMaxX
         if let shortcutField {
             shortcutField.font = Self.shortcutFont(for: metrics)
             let shortcutSize = shortcutField.intrinsicContentSize
@@ -674,14 +672,26 @@ final class PersistentRefreshMenuView: NSView, MenuCardHighlighting {
     }
 
     private func setupSelectionView() {
-        self.selectionView.material = .selection
-        self.selectionView.blendingMode = .withinWindow
-        self.selectionView.state = .active
-        self.selectionView.isEmphasized = true
         self.selectionView.isHidden = true
         self.selectionView.wantsLayer = true
-        self.selectionView.layer?.masksToBounds = true
+        self.selectionView.layer?.cornerCurve = .continuous
         self.addSubview(self.selectionView)
+        self.refreshSelectionFill()
+    }
+
+    private func refreshSelectionFill() {
+        guard let layer = self.selectionView.layer else { return }
+        self.effectiveAppearance.performAsCurrentDrawingAppearance {
+            layer.backgroundColor = MenuHighlightStyle.hoverFillColor.cgColor
+        }
+    }
+
+    private static func makeSubmenuIndicatorView() -> NSImageView {
+        let view = NSImageView()
+        view.image = NSImage(systemSymbolName: "chevron.forward", accessibilityDescription: nil)
+        view.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 11, weight: .semibold)
+        view.contentTintColor = .secondaryLabelColor
+        return view
     }
 
     private func setupIconView(systemImageName: String?) {
@@ -694,7 +704,7 @@ final class PersistentRefreshMenuView: NSView, MenuCardHighlighting {
 
         baseImage.isTemplate = true
         self.iconView.image = baseImage
-        self.iconView.symbolConfiguration = Self.iconConfiguration(for: PersistentRefreshRowMetrics.defaults)
+        self.iconView.symbolConfiguration = Self.iconConfiguration(for: MenuActionRowMetrics.defaults)
         self.iconView.imageScaling = .scaleProportionallyDown
         self.iconView.contentTintColor = .labelColor
         self.addSubview(self.iconView)
@@ -706,7 +716,7 @@ final class PersistentRefreshMenuView: NSView, MenuCardHighlighting {
         self.configureTitleField(self.titleField)
 
         if let shortcutField {
-            shortcutField.font = Self.shortcutFont(for: PersistentRefreshRowMetrics.defaults)
+            shortcutField.font = Self.shortcutFont(for: MenuActionRowMetrics.defaults)
             self.configureShortcutField(shortcutField)
         }
     }
@@ -742,27 +752,21 @@ final class PersistentRefreshMenuView: NSView, MenuCardHighlighting {
             return
         }
 
-        if self.isRowHighlighted {
-            self.titleField.textColor = .selectedMenuItemTextColor
-            self.shortcutField?.textColor = .selectedMenuItemTextColor
-            self.iconView.contentTintColor = .selectedMenuItemTextColor
-            return
-        }
-
+        // Hover only adds the neutral fill; text and icons keep their normal colors.
         self.titleField.textColor = .labelColor
         self.shortcutField?.textColor = .tertiaryLabelColor
         self.iconView.contentTintColor = .labelColor
     }
 
-    private static func iconConfiguration(for metrics: PersistentRefreshRowMetrics) -> NSImage.SymbolConfiguration {
+    private static func iconConfiguration(for metrics: MenuActionRowMetrics) -> NSImage.SymbolConfiguration {
         NSImage.SymbolConfiguration(pointSize: metrics.iconSymbolPointSize, weight: metrics.iconSymbolWeight)
     }
 
-    private static func shortcutFont(for metrics: PersistentRefreshRowMetrics) -> NSFont {
+    private static func shortcutFont(for metrics: MenuActionRowMetrics) -> NSFont {
         NSFont.menuFont(ofSize: metrics.shortcutFontSize)
     }
 
-    private static func shortcutReferenceWidth(for metrics: PersistentRefreshRowMetrics) -> CGFloat {
+    private static func shortcutReferenceWidth(for metrics: MenuActionRowMetrics) -> CGFloat {
         (self.shortcutReferenceText as NSString).size(withAttributes: [
             .font: self.shortcutFont(for: metrics),
         ]).width
@@ -857,27 +861,28 @@ struct MenuCardSectionContainerView<Content: View>: View {
     }
 
     var body: some View {
+        // Hovered rows keep their normal text palette; only the background fill changes.
         self.content()
-            .environment(\.menuItemHighlighted, self.highlightState.isHighlighted)
+            .environment(\.menuItemHighlighted, false)
             .environment(\.menuCardRefreshMonitor, self.refreshMonitor)
             .coordinateSpace(name: MenuCardInteractiveRegionPreferenceKey.coordinateSpaceName)
             .onPreferenceChange(MenuCardInteractiveRegionPreferenceKey.self) { regions in
                 self.interactiveRegionStore?.regions = regions
             }
-            .foregroundStyle(MenuHighlightStyle.primary(self.highlightState.isHighlighted))
+            .foregroundStyle(MenuHighlightStyle.primary(false))
             .background(alignment: .topLeading) {
                 if self.highlightState.isHighlighted {
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(MenuHighlightStyle.selectionBackground(true))
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
+                    RoundedRectangle(cornerRadius: MenuHighlightStyle.hoverCornerRadius, style: .continuous)
+                        .fill(Color(nsColor: MenuHighlightStyle.hoverFillColor))
+                        .padding(.horizontal, MenuHighlightStyle.hoverHorizontalInset)
+                        .padding(.vertical, MenuHighlightStyle.hoverVerticalInset)
                 }
             }
             .overlay(alignment: self.submenuIndicatorAlignment) {
                 if self.showsSubmenuIndicator {
                     Image(systemName: "chevron.forward")
                         .font(.caption2.weight(.semibold))
-                        .foregroundStyle(MenuHighlightStyle.secondary(self.highlightState.isHighlighted))
+                        .foregroundStyle(MenuHighlightStyle.secondary(false))
                         .padding(.top, self.submenuIndicatorTopPadding)
                         .padding(.trailing, 10)
                 }

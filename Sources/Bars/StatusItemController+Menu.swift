@@ -427,11 +427,7 @@ extension StatusItemController {
         currentProvider: UsageProvider,
         showAllAccounts: Bool) -> MenuSubmenuContext
     {
-        let hasCostHistory = self.settings.costSummaryShowsSubmenu(for: currentProvider) &&
-            (self.store.tokenSnapshot(for: currentProvider)?.daily.isEmpty == false)
-        return MenuSubmenuContext(
-            hasCostHistory: hasCostHistory,
-            hasSubmenuItems: !showAllAccounts && hasCostHistory)
+        MenuSubmenuContext(hasCostHistory: false, hasSubmenuItems: false)
     }
 
     private func addProviderSwitcherIfNeeded(
@@ -515,7 +511,7 @@ extension StatusItemController {
                     spendSummary.provenanceText,
                 ].joined(separator: "|"))
             menu.addItem(summaryItem)
-            if let shareItem = self.makeOverviewShareStatsMenuItem(model: spendModel) {
+            if let shareItem = self.makeOverviewShareStatsMenuItem(model: spendModel, width: menuWidth) {
                 menu.addItem(shareItem)
             }
             menu.addItem(.separator())
@@ -531,10 +527,6 @@ extension StatusItemController {
                 continue
             }
             let storageText = row.accountID == nil ? self.store.storageFootprintText(for: provider) : nil
-            let submenu = row.accountID == nil ? self.makeOverviewRowSubmenu(
-                provider: provider,
-                model: model,
-                width: menuWidth) : nil
             let item = self.makeMenuCardItem(
                 OverviewMenuCardRowView(
                     model: model,
@@ -550,18 +542,15 @@ extension StatusItemController {
                         UsageMenuCardView.Model.heightFingerprintField("storage", storageText),
                         "layout=\(self.settings.mergedOverviewLayout.rawValue)",
                     ]),
-                submenu: submenu,
                 containsInteractiveControls: model.containsInteractiveControls,
                 usesGPUSelection: true,
                 onClick: { [weak self, weak interactionMenu] in
                     guard let self, let interactionMenu else { return }
                     self.selectOverviewProvider(instanceID, menu: interactionMenu)
                 })
-            if submenu == nil {
-                // Keep plain rows wired for keyboard activation and accessibility action paths.
-                item.target = self
-                item.action = #selector(self.selectOverviewProvider(_:))
-            }
+            // Keep rows wired for keyboard activation and accessibility action paths.
+            item.target = self
+            item.action = #selector(self.selectOverviewProvider(_:))
             menu.addItem(item)
         }
         return true
@@ -648,30 +637,13 @@ extension StatusItemController {
             width: context.menuWidth,
             heightCacheScope: context.currentProvider.rawValue,
             heightCacheFingerprint: renderedModel.heightFingerprint(section: "card"),
-            containsInteractiveControls: true))
+            containsInteractiveControls: true,
+            onClick: self.openDashboardAction(for: model.provider)))
         if self.addStorageMenuCardSection(to: menu, provider: context.currentProvider, width: context.menuWidth) {
             menu.addItem(.separator())
         }
         menu.addItem(.separator())
         return false
-    }
-
-    private func addSubmenuItemsIfNeeded(
-        to menu: NSMenu,
-        currentProvider: UsageProvider,
-        context: MenuSubmenuContext,
-        addedSectionedCard: Bool)
-    {
-        guard context.hasSubmenuItems else { return }
-        if !addedSectionedCard {
-            // Only show these when we actually have additional data.
-            if context.hasCostHistory {
-                _ = self.addCostHistorySubmenu(to: menu, provider: currentProvider)
-            }
-        }
-        if menu.items.last?.isSeparatorItem != true {
-            menu.addItem(.separator())
-        }
     }
 
     func addPrimaryMenuContent(
@@ -694,13 +666,7 @@ extension StatusItemController {
                 menu.addItem(.separator())
             }
         } else {
-            let addedSectionedCard = self.addMenuCards(to: menu, context: context, captureMenu: captureMenu)
-            self.addSubmenuItemsIfNeeded(
-                to: menu,
-                currentProvider: context.currentProvider,
-                context: context.submenuContext,
-                addedSectionedCard: addedSectionedCard)
-            self.addUsageHistoryClusterIfNeeded(to: menu, context: context)
+            _ = self.addMenuCards(to: menu, context: context, captureMenu: captureMenu)
         }
     }
 
@@ -751,33 +717,21 @@ extension StatusItemController {
                             width: width))
                         continue
                     }
-                    let (selector, represented) = self.selector(for: action)
-                    let item = NSMenuItem(title: localizedTitle, action: selector, keyEquivalent: "")
-                    item.target = self
-                    item.representedObject = represented
-                    if let shortcut = self.shortcut(for: action) {
-                        item.keyEquivalent = shortcut.key
-                        item.keyEquivalentModifierMask = shortcut.modifiers
-                    }
-                    if let iconName = action.systemImageName,
-                       let image = NSImage(systemSymbolName: iconName, accessibilityDescription: nil)
-                    {
-                        image.isTemplate = true
-                        image.size = NSSize(width: 16, height: 16)
-                        item.image = image
-                    }
-                    self.attachStatusComponentsSubmenuIfNeeded(
-                        to: item,
-                        action: action,
-                        provider: provider,
-                        width: width)
                     if case let .switchAccount(targetProvider) = action,
                        let subtitle = self.switchAccountSubtitle(for: targetProvider)
                     {
+                        // Disabled two-line row: it never hovers, so it keeps the native rendering.
+                        let item = NSMenuItem(title: localizedTitle, action: nil, keyEquivalent: "")
                         item.isEnabled = false
                         self.applySubtitle(subtitle, to: item, title: localizedTitle)
+                        menu.addItem(item)
+                        continue
                     }
-                    menu.addItem(item)
+                    menu.addItem(self.makeActionRowItem(
+                        title: localizedTitle,
+                        action: action,
+                        provider: provider,
+                        width: width))
                 case let .unavailable(title, tooltip):
                     let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
                     item.isEnabled = false
@@ -1103,18 +1057,14 @@ extension StatusItemController {
                 layoutModel: layoutModel,
                 bottomPadding: bottomPadding,
                 width: width)
-            let usageSubmenu = self.makeUsageSubmenu(
-                provider: provider,
-                hasInlineCostDashboard: layoutModel.inlineUsageDashboard != nil,
-                width: width)
             menu.addItem(self.makeMenuCardItem(
                 usageView,
                 id: "menuCardUsage",
                 width: width,
                 heightCacheScope: provider.rawValue,
                 heightCacheFingerprint: layoutModel.heightFingerprint(section: "usage"),
-                submenu: usageSubmenu,
-                containsInteractiveControls: true))
+                containsInteractiveControls: true,
+                onClick: self.openDashboardAction(for: provider)))
         } else {
             let headerView = UsageMenuCardHeaderSectionView(
                 model: layoutModel,
@@ -1215,31 +1165,13 @@ extension StatusItemController {
         return image
     }
 
-    @discardableResult
-    private func addCostHistorySubmenu(to menu: NSMenu, provider: UsageProvider) -> Bool {
-        guard let submenu = self.makeCostHistorySubmenu(provider: provider, width: self.renderedMenuWidth(for: menu))
-        else { return false }
-        let title: String = switch self.store.settings.costReportingPeriod {
-        case .rolling(1): L("Usage history (today)")
-        case let .rolling(days): String(format: L("Usage history (%d days)"), days)
-        case let period: "\(L("cost_history_window_title")) (\(L(period.label)))"
+    /// Clicking a provider's usage card opens its usage dashboard; the click also gives the card its hover fill.
+    private func openDashboardAction(for provider: UsageProvider) -> (() -> Void)? {
+        guard self.dashboardURL(for: provider) != nil else { return nil }
+        return { [weak self] in
+            guard let self, let url = self.dashboardURL(for: provider) else { return }
+            NSWorkspace.shared.open(url)
         }
-        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
-        item.isEnabled = true
-        item.submenu = submenu
-        menu.addItem(item)
-        return true
-    }
-
-    private func makeUsageSubmenu(
-        provider: UsageProvider,
-        hasInlineCostDashboard: Bool,
-        width: CGFloat? = nil) -> NSMenu?
-    {
-        if hasInlineCostDashboard, self.settings.costSummaryShowsSubmenu(for: provider) {
-            return self.makeCostHistorySubmenu(provider: provider, width: width)
-        }
-        return nil
     }
 
     func makeCostHistorySubmenu(provider: UsageProvider, width: CGFloat? = nil) -> NSMenu? {

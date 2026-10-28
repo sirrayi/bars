@@ -145,7 +145,7 @@ struct OverviewSharePresentation {
 }
 
 extension StatusItemController {
-    func makeOverviewShareStatsMenuItem(model: SpendDashboardModel) -> NSMenuItem? {
+    func makeOverviewShareStatsMenuItem(model: SpendDashboardModel, width: CGFloat) -> NSMenuItem? {
         guard ShareStatsPayloadFactory.make(model: model, store: self.store) != nil else { return nil }
         let title = L("Share Usage Snapshot…")
         let item = NSMenuItem(
@@ -154,11 +154,17 @@ extension StatusItemController {
             keyEquivalent: "")
         item.target = self
         item.representedObject = "overviewShareStats"
-        if let image = NSImage(systemSymbolName: "square.and.arrow.up", accessibilityDescription: title) {
-            image.isTemplate = true
-            image.size = NSSize(width: 16, height: 16)
-            item.image = image
-        }
+        let view = MenuActionRowView(
+            title: title,
+            systemImageName: nil,
+            shortcutText: nil,
+            onClick: { [weak self, weak item] in
+                guard let self, let item else { return }
+                item.menu?.cancelTracking()
+                NSApp.sendAction(#selector(self.presentOverviewShareStats), to: self, from: item)
+            })
+        view.applySize(width: width, height: MenuActionRowMetrics.defaults.rowHeight)
+        item.view = view
         return item
     }
 

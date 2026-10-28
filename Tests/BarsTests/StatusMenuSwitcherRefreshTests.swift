@@ -291,7 +291,7 @@ struct StatusMenuSwitcherRefreshTests {
 
         let expectedWidth = controller.renderedMenuWidth(for: menu)
         #expect(expectedWidth == 420)
-        let refreshView = try #require(menu.items.first { $0.title == "Refresh" }?.view as? PersistentRefreshMenuView)
+        let refreshView = try #require(menu.items.first { $0.title == "Refresh" }?.view as? MenuActionRowView)
         #expect(abs(refreshView.frame.width - expectedWidth) <= 0.5)
     }
 

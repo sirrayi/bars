@@ -152,7 +152,7 @@ It colors **Session pace**, **Weekly pace**, **Auto pace**, and **Spend pace** i
 rewrite stored layouts, or migrate legacy display modes. Existing installs stay monochrome until the option is enabled.
 These colors keep the same meaning with either pace sign: reserve is green and deficit is red.
 
-Enable **Color by provider** under **Menu Bar → Icon** to tint each provider slot with its accent color, including custom accents. This single toggle defaults off and works with Critters, Meter bars, and Icon & percent, including stacked provider rows; it never changes the saved layout or the Brand/Monochrome artwork used in Usage & Spend. Pace tokens keep their independent green/red colors and VoiceOver keeps the same spoken labels.
+Enable **Color by provider** under **Menu Bar → Icon** to tint each provider slot with its accent color, including custom accents. This single toggle defaults off and works with Meter bars and Icon & percent, including stacked provider rows; it never changes the saved layout or the Brand/Monochrome artwork used in Usage & Spend. Pace tokens keep their independent green/red colors and VoiceOver keeps the same spoken labels.
 
 Provider color falls back to monochrome while a menu is open, data is stale, system Increase Contrast is enabled, or the inactive-display contrast option is enabled. Color returns immediately when the menu closes. Accents must meet a 2:1 contrast threshold against conservative reference backgrounds (25% sRGB gray in dark appearance, 85% in light appearance); this is not a WCAG text-conformance claim or wallpaper sampling. Unsupported or low-contrast accents use the system template rendering. The layout preview follows its own light/dark and accessibility environment.
 
@@ -180,7 +180,7 @@ model-generic token label while the rendered menu-bar prefix and accessibility l
 - 18×18 template image.
 - Bar windows are provider/style-specific primary and secondary windows.
 - Fill represents percent remaining by default; “Show usage as used” flips to percent used.
-- Renderer/critter icons dim when last refresh failed and can render incident indicators; brand display mode uses provider branding plus title text.
+- Meter-bar icons dim when last refresh failed and can render incident indicators; brand display mode uses provider branding plus title text.
 - Loading animation runs at a bounded frame rate and has a hard continuous-duration ceiling so provider hangs cannot keep
   the menu bar redrawing forever.
 - Ordinary, fresh monochrome token layouts use template images so AppKit supplies native highlighting and
@@ -188,10 +188,14 @@ model-generic token label while the rendered menu-bar prefix and accessibility l
   Individual layout content and appearance remain in the bounded renderer cache; memory-pressure cleanup clears it.
   The cache tracks reset styles referenced by the layout, so absolute-only titles stay cached as countdowns advance.
   Stale data, high-contrast mode, colored glyphs or colored attachments, and layouts with a separate leading icon keep
-  attributed text rendering. Critter and bar styles keep their existing renderers.
+  attributed text rendering. Meter bars keep their existing renderer.
 
 ## Menu card
-- Cards with a history submenu show the active menu selection; deselecting the card clears it. Credits and other sections are separate menu items, so selecting usage does not highlight them.
+- Card rows have no hover submenus. Hovering a clickable card or action row (Refresh, Settings…, Quit, the
+  Status Page link, and the rest) draws a soft neutral rounded fill (Control Center style) instead of the
+  accent-colored selection, and text keeps its normal colors. Action rows keep their native actions and
+  keyboard shortcuts; only the drawing is custom. Clicking the provider usage card
+  opens that provider's usage dashboard. Costs appear inline in the card; there are no separate Plan Usage or Cost rows.
 - Two-column statistics headings wrap to keep the full localized label readable, including estimated current-window tokens.
 - Provider-specific rows with resets (countdown by default; optional absolute clock display). Primary, secondary,
   tertiary, and extra windows render when the provider snapshot has data for them.

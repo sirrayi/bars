@@ -440,7 +440,7 @@ extension StatusMenuTests {
         #expect(controller.overviewShareStatsPayload(now: now) == nil)
         let model = controller.overviewSpendDashboardModel(providers: [.opencode], now: now)
         #expect(model.groups.isEmpty)
-        #expect(controller.makeOverviewShareStatsMenuItem(model: model) == nil)
+        #expect(controller.makeOverviewShareStatsMenuItem(model: model, width: 300) == nil)
     }
 
     @Test
@@ -531,14 +531,10 @@ extension StatusMenuTests {
     }
 
     @Test
-    func `overview spend follows the inline display preference`() throws {
-        for (style, enabled) in [
-            (CostSummaryDisplayStyle.inlineSummary, true),
-            (.both, true),
-            (.costSubmenu, false),
-        ] {
+    func `overview spend follows the cost summary toggle`() throws {
+        for style in CostSummaryDisplayStyle.allCases {
             let result = try self.overviewSpendSummaryIsPresent(style: style, costUsageEnabled: true)
-            #expect(result == enabled, "Unexpected Overview spend visibility for \(style.rawValue)")
+            #expect(result, "Unexpected Overview spend visibility for \(style.rawValue)")
         }
 
         #expect(try !self.overviewSpendSummaryIsPresent(style: .both, costUsageEnabled: false))

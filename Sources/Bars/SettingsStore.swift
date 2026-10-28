@@ -164,14 +164,6 @@ enum CostSummaryDisplayStyle: String, CaseIterable, Identifiable {
         case .both: L("cost_summary_style_both_help")
         }
     }
-
-    var showsInlineSummary: Bool {
-        self != .costSubmenu
-    }
-
-    var showsCostSubmenu: Bool {
-        self != .inlineSummary
-    }
 }
 
 @MainActor
