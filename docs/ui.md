@@ -193,7 +193,9 @@ model-generic token label while the rendered menu-bar prefix and accessibility l
 ## Menu card
 - Card rows have no hover submenus. Hovering a clickable card or action row (Refresh, Settings…, Quit, the
   Status Page link, and the rest) draws a soft neutral rounded fill (Control Center style) instead of the
-  accent-colored selection, and text keeps its normal colors. Action rows keep their native actions and
+  accent-colored selection, and text keeps its normal colors. Like Tahoe's own menus, every fill is inset 7 pt from
+  the menu edge with one 10 pt continuous corner, concentric with the menu's corner; rows shorter than 20 pt become
+  capsules (`MenuHighlightStyle.hoverCornerRadius(forHeight:)`). Action rows keep their native actions and
   keyboard shortcuts; only the drawing is custom. The provider usage card is not clickable and does not highlight
   (Usage Dashboard is its own row), but its daily cost chart still answers hover. Costs appear inline in the card;
   there are no separate Plan Usage or Cost rows.

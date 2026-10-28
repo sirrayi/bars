@@ -280,9 +280,13 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
     override func layout() {
         super.layout()
         self.hosting.frame = self.bounds
-        self.selectionView?.frame = self.bounds.insetBy(
-            dx: MenuHighlightStyle.hoverHorizontalInset,
-            dy: MenuHighlightStyle.hoverVerticalInset)
+        if let selectionView {
+            selectionView.frame = self.bounds.insetBy(
+                dx: MenuHighlightStyle.hoverHorizontalInset,
+                dy: MenuHighlightStyle.hoverVerticalInset)
+            selectionView.layer?.cornerRadius = MenuHighlightStyle.hoverCornerRadius(
+                forHeight: selectionView.frame.height)
+        }
     }
 
     override func hitTest(_ point: NSPoint) -> NSView? {
@@ -455,7 +459,6 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
         }
         let selectionView = NSView()
         selectionView.wantsLayer = true
-        selectionView.layer?.cornerRadius = MenuHighlightStyle.hoverCornerRadius
         selectionView.layer?.cornerCurve = .continuous
         selectionView.layer?.opacity = 0
         selectionView.autoresizingMask = [.width, .height]
@@ -619,7 +622,8 @@ final class MenuActionRowView: NSView, MenuCardHighlighting {
         self.selectionView.frame = self.bounds.insetBy(
             dx: metrics.selectionHorizontalInset,
             dy: metrics.selectionVerticalInset)
-        self.selectionView.layer?.cornerRadius = metrics.selectionCornerRadius
+        self.selectionView.layer?.cornerRadius = MenuHighlightStyle.hoverCornerRadius(
+            forHeight: self.selectionView.frame.height)
 
         var trailingMaxX = self.bounds.maxX - metrics.trailingPadding
         if let submenuIndicatorView {
@@ -872,7 +876,7 @@ struct MenuCardSectionContainerView<Content: View>: View {
             .foregroundStyle(MenuHighlightStyle.primary(false))
             .background(alignment: .topLeading) {
                 if self.highlightState.isHighlighted {
-                    RoundedRectangle(cornerRadius: MenuHighlightStyle.hoverCornerRadius, style: .continuous)
+                    MenuHoverShape()
                         .fill(Color(nsColor: MenuHighlightStyle.hoverFillColor))
                         .padding(.horizontal, MenuHighlightStyle.hoverHorizontalInset)
                         .padding(.vertical, MenuHighlightStyle.hoverVerticalInset)

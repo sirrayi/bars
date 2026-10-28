@@ -48,7 +48,23 @@ enum MenuHighlightStyle {
             : NSColor(white: 0, alpha: 0.07)
     }
 
-    static let hoverCornerRadius: CGFloat = 8
-    static let hoverHorizontalInset: CGFloat = 6
+    /// Tahoe menus inset every row's hover by the same amount and round it with one continuous corner,
+    /// concentric with the menu's own corner. Measured on the Battery and Wi-Fi menus: a 7 pt inset and a
+    /// 10 pt corner on both 22 pt and 32 pt rows. Rows too short for that corner become capsules.
+    static let hoverHorizontalInset: CGFloat = 7
     static let hoverVerticalInset: CGFloat = 2
+
+    static func hoverCornerRadius(forHeight height: CGFloat) -> CGFloat {
+        min(10, max(0, height) / 2)
+    }
+}
+
+/// Hover fill shape whose corner follows `MenuHighlightStyle.hoverCornerRadius(forHeight:)` for its rect.
+struct MenuHoverShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        RoundedRectangle(
+            cornerRadius: MenuHighlightStyle.hoverCornerRadius(forHeight: rect.height),
+            style: .continuous)
+            .path(in: rect)
+    }
 }

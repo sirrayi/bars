@@ -985,9 +985,8 @@ extension StatusMenuPersistentRefreshTests {
     func `refresh row metrics match tuned native-style values`() {
         let metrics = MenuActionRowMetrics.defaults
         #expect(metrics.rowHeight == 24)
-        #expect(metrics.selectionHorizontalInset == 5)
+        #expect(metrics.selectionHorizontalInset == 7)
         #expect(metrics.selectionVerticalInset == 0)
-        #expect(metrics.selectionCornerRadius == 7)
         #expect(metrics.leadingPadding == 15)
         #expect(metrics.trailingPadding == 8)
         #expect(metrics.iconWidth == 16)
@@ -997,6 +996,28 @@ extension StatusMenuPersistentRefreshTests {
         #expect(metrics.shortcutFontSize == 13)
         #expect(metrics.shortcutXOffset == -9.5)
         #expect(metrics.shortcutYOffset == 0)
+    }
+
+    @Test
+    func `hover corner matches Tahoe menus and turns short rows into capsules`() {
+        #expect(MenuHighlightStyle.hoverCornerRadius(forHeight: 24) == 10)
+        #expect(MenuHighlightStyle.hoverCornerRadius(forHeight: 32) == 10)
+        #expect(MenuHighlightStyle.hoverCornerRadius(forHeight: 400) == 10)
+        #expect(MenuHighlightStyle.hoverCornerRadius(forHeight: 16) == 8)
+        #expect(MenuHighlightStyle.hoverCornerRadius(forHeight: 0) == 0)
+    }
+
+    @Test
+    func `action row hover uses the shared menu inset and corner`() throws {
+        let metrics = MenuActionRowMetrics.defaults
+        let view = MenuActionRowView(title: "Refresh", systemImageName: nil, shortcutText: "⌘ R")
+        view.applySize(width: 320, height: metrics.rowHeight)
+        view.layoutSubtreeIfNeeded()
+
+        let selection = try #require(view.subviews.first { type(of: $0) == NSView.self })
+        #expect(selection.frame == view.bounds.insetBy(dx: MenuHighlightStyle.hoverHorizontalInset, dy: 0))
+        #expect(selection.layer?.cornerRadius == 10)
+        #expect(selection.layer?.cornerCurve == .continuous)
     }
 
     @Test

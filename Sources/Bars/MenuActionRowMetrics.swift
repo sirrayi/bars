@@ -3,9 +3,8 @@ import AppKit
 struct MenuActionRowMetrics: Equatable {
     static let defaults = Self(
         rowHeight: 24,
-        selectionHorizontalInset: 5,
+        selectionHorizontalInset: MenuHighlightStyle.hoverHorizontalInset,
         selectionVerticalInset: 0,
-        selectionCornerRadius: 7,
         // Align the custom row's image/title frames with native NSMenuItem columns.
         leadingPadding: 15,
         trailingPadding: 8,
@@ -20,7 +19,6 @@ struct MenuActionRowMetrics: Equatable {
     let rowHeight: CGFloat
     let selectionHorizontalInset: CGFloat
     let selectionVerticalInset: CGFloat
-    let selectionCornerRadius: CGFloat
     let leadingPadding: CGFloat
     let trailingPadding: CGFloat
     let iconWidth: CGFloat
