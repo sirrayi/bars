@@ -180,7 +180,7 @@ model-generic token label while the rendered menu-bar prefix and accessibility l
 - 18×18 template image.
 - Bar windows are provider/style-specific primary and secondary windows.
 - Fill represents percent remaining by default; “Show usage as used” flips to percent used.
-- Meter-bar icons dim when last refresh failed and can render incident indicators; brand display mode uses provider branding plus title text.
+- Meter-bar icons dim when last refresh failed (incidents show in the menu, not on the icon); brand display mode uses provider branding plus title text.
 - Loading animation runs at a bounded frame rate and has a hard continuous-duration ceiling so provider hangs cannot keep
   the menu bar redrawing forever.
 - Ordinary, fresh monochrome token layouts use template images so AppKit supplies native highlighting and
@@ -194,8 +194,9 @@ model-generic token label while the rendered menu-bar prefix and accessibility l
 - Card rows have no hover submenus. Hovering a clickable card or action row (Refresh, Settings…, Quit, the
   Status Page link, and the rest) draws a soft neutral rounded fill (Control Center style) instead of the
   accent-colored selection, and text keeps its normal colors. Action rows keep their native actions and
-  keyboard shortcuts; only the drawing is custom. Clicking the provider usage card
-  opens that provider's usage dashboard. Costs appear inline in the card; there are no separate Plan Usage or Cost rows.
+  keyboard shortcuts; only the drawing is custom. The provider usage card is not clickable and does not highlight
+  (Usage Dashboard is its own row), but its daily cost chart still answers hover. Costs appear inline in the card;
+  there are no separate Plan Usage or Cost rows.
 - Two-column statistics headings wrap to keep the full localized label readable, including estimated current-window tokens.
 - Provider-specific rows with resets (countdown by default; optional absolute clock display). Primary, secondary,
   tertiary, and extra windows render when the provider snapshot has data for them.

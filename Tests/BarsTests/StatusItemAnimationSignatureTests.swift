@@ -138,57 +138,6 @@ struct StatusItemAnimationSignatureTests {
     }
 
     @Test
-    func `merged icon status indicator follows rendered provider`() throws {
-        let suite = "StatusItemAnimationSignatureTests-merged-status-provider-scope"
-        let settings = testSettingsStore(suiteName: suite)
-        settings.statusChecksEnabled = true
-        settings.refreshFrequency = .manual
-        settings.mergeIcons = true
-        settings.selectedMenuProvider = .opencode
-        settings.menuBarShowsBrandIconWithPercent = false
-
-        let registry = ProviderRegistry.shared
-        let codexMeta = try #require(registry.metadata[.opencode])
-        let claudeMeta = try #require(registry.metadata[.claude])
-        settings.setProviderEnabled(provider: .opencode, metadata: codexMeta, enabled: true)
-        settings.setProviderEnabled(provider: .claude, metadata: claudeMeta, enabled: true)
-
-        let store = UsageStore(browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
-            store: store,
-            settings: settings,
-            account: AccountInfo(email: nil, plan: nil),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
-            statusBar: testStatusBar())
-        defer { controller.releaseStatusItemsForTesting() }
-
-        let snapshot = UsageSnapshot(
-            primary: RateWindow(usedPercent: 50, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
-            secondary: nil,
-            updatedAt: Date())
-        store._setSnapshotForTesting(snapshot, provider: .opencode)
-        store._setSnapshotForTesting(snapshot, provider: .claude)
-        store.statuses[.claude] = ProviderStatus(
-            indicator: .major,
-            description: "Claude status issue",
-            updatedAt: Date(timeIntervalSince1970: 20))
-
-        controller.applyIcon(phase: nil)
-
-        #expect(controller.primaryProviderForUnifiedIcon() == .opencode)
-        #expect(controller.lastAppliedMergedIconRenderSignature?.contains("provider=opencode") == true)
-        #expect(controller.lastAppliedMergedIconRenderSignature?.contains("status=none") == true)
-
-        settings.selectedMenuProvider = .claude
-        controller.applyIcon(phase: nil)
-
-        #expect(controller.primaryProviderForUnifiedIcon() == .claude)
-        #expect(controller.lastAppliedMergedIconRenderSignature?.contains("provider=claude") == true)
-        #expect(controller.lastAppliedMergedIconRenderSignature?.contains("status=major") == true)
-    }
-
-    @Test
     func `highest usage icon ranks only overview providers`() throws {
         let suite = "StatusItemAnimationSignatureTests-highest-usage-overview-subset"
         let settings = testSettingsStore(suiteName: suite)

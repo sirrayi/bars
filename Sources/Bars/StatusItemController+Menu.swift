@@ -637,8 +637,7 @@ extension StatusItemController {
             width: context.menuWidth,
             heightCacheScope: context.currentProvider.rawValue,
             heightCacheFingerprint: renderedModel.heightFingerprint(section: "card"),
-            containsInteractiveControls: true,
-            onClick: self.openDashboardAction(for: model.provider)))
+            containsInteractiveControls: true))
         if self.addStorageMenuCardSection(to: menu, provider: context.currentProvider, width: context.menuWidth) {
             menu.addItem(.separator())
         }
@@ -1063,8 +1062,7 @@ extension StatusItemController {
                 width: width,
                 heightCacheScope: provider.rawValue,
                 heightCacheFingerprint: layoutModel.heightFingerprint(section: "usage"),
-                containsInteractiveControls: true,
-                onClick: self.openDashboardAction(for: provider)))
+                containsInteractiveControls: true))
         } else {
             let headerView = UsageMenuCardHeaderSectionView(
                 model: layoutModel,
@@ -1148,7 +1146,6 @@ extension StatusItemController {
         let primary = resolved?.primary
         let weekly = resolved?.secondary
         let stale = self.store.isStale(provider: provider)
-        let indicator = self.store.statusIndicator(for: provider)
         let image = IconRenderer.makeIcon(
             primaryRemaining: primary,
             weeklyRemaining: weekly,
@@ -1158,20 +1155,10 @@ extension StatusItemController {
             blink: 0,
             wiggle: 0,
             tilt: 0,
-            statusIndicator: indicator,
             hideCritters: self.settings.menuBarHidesCritters,
             quotaLayoutPolicy: .provider(provider, snapshot: snapshot))
         image.isTemplate = true
         return image
-    }
-
-    /// Clicking a provider's usage card opens its usage dashboard; the click also gives the card its hover fill.
-    private func openDashboardAction(for provider: UsageProvider) -> (() -> Void)? {
-        guard self.dashboardURL(for: provider) != nil else { return nil }
-        return { [weak self] in
-            guard let self, let url = self.dashboardURL(for: provider) else { return }
-            NSWorkspace.shared.open(url)
-        }
     }
 
     func makeCostHistorySubmenu(provider: UsageProvider, width: CGFloat? = nil) -> NSMenu? {

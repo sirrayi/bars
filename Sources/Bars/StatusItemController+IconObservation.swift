@@ -93,7 +93,6 @@ extension StatusItemController {
             "scopedWeekly=\(Self.iconSignatureValue(scopedWeekly?.window.usedPercent))",
             "scopedTitle=\(scopedWeekly?.title ?? "nil")",
             "stale=\(self.store.isStale(provider: provider) ? "1" : "0")",
-            "status=\(self.store.statusIndicator(for: provider).rawValue)",
             "anim=\(self.shouldAnimate(provider: provider) ? "1" : "0")",
             "refreshing=\(self.store.refreshingProviders.contains(provider.instanceID) ? "1" : "0")",
             "text=\(displayText ?? "nil")",

@@ -61,7 +61,6 @@ enum IconRenderer {
         let credits: Int
         let stale: Bool
         let style: Int
-        let indicator: Int
         let hideCritters: Bool
         let quotaLayoutPolicy: QuotaLayoutPolicy
     }
@@ -137,7 +136,6 @@ enum IconRenderer {
         private static let grid = IconRenderer.grid
     }
 
-    // swiftlint:disable function_body_length
     static func makeIcon(
         primaryRemaining: Double?,
         weeklyRemaining: Double?,
@@ -147,7 +145,6 @@ enum IconRenderer {
         blink: CGFloat = 0,
         wiggle: CGFloat = 0,
         tilt: CGFloat = 0,
-        statusIndicator: ProviderStatusIndicator = .none,
         hideCritters: Bool = false,
         quotaLayoutPolicy: QuotaLayoutPolicy? = nil) -> NSImage
     {
@@ -237,14 +234,11 @@ enum IconRenderer {
                 // When the secondary lane is exhausted or missing, show "top primary, bottom dimmed".
                 let missingSecondary = usesMissingSecondaryLayout && !weeklyAvailable
 
-                var statusOverlayAttachesToProminentMeter = false
-
                 if let bottomValue, bottomValue > 0, topValue == nil,
                    !quotaLayoutPolicy.reservesMissingSecondaryLane,
                    !usesMissingSecondaryLayout
                 {
                     // Some providers surface their only meaningful quota in the secondary slot.
-                    statusOverlayAttachesToProminentMeter = true
                     drawBar(
                         rectPx: creditsRectPx,
                         remaining: bottomValue,
@@ -276,7 +270,6 @@ enum IconRenderer {
                         } else if !quotaLayoutPolicy.reservesMissingSecondaryLane, let topValue {
                             // One meaningful quota should read as one meter. Reserving an unavailable second
                             // lane makes (for example) 46% remaining look like roughly 23% of the icon.
-                            statusOverlayAttachesToProminentMeter = true
                             drawBar(
                                 rectPx: creditsRectPx,
                                 remaining: topValue,
@@ -308,10 +301,6 @@ enum IconRenderer {
                     }
                     drawBar(rectPx: creditsBottomRectPx, remaining: bottomValue)
                 }
-
-                Self.drawStatusOverlay(
-                    indicator: statusIndicator,
-                    attachesToProminentMeter: statusOverlayAttachesToProminentMeter)
             }
         }
 
@@ -322,7 +311,6 @@ enum IconRenderer {
                 credits: self.quantizedCredits(creditsRemaining),
                 stale: stale,
                 style: self.styleKey(style),
-                indicator: self.indicatorKey(statusIndicator),
                 hideCritters: hideCritters,
                 quotaLayoutPolicy: quotaLayoutPolicy)
             if let cached = self.cachedIcon(for: key) {
@@ -335,8 +323,6 @@ enum IconRenderer {
 
         return render()
     }
-
-    // swiftlint:enable function_body_length
 
     /// Morph helper: unbraids a simplified knot into our bar icon.
     static func makeMorphIcon(progress: Double, style: IconStyle, hideCritters: Bool = false) -> NSImage {
@@ -373,17 +359,6 @@ enum IconRenderer {
 
     private static func styleKey(_ style: IconStyle) -> Int {
         self.styleKeyLookup[style] ?? 0
-    }
-
-    private static func indicatorKey(_ indicator: ProviderStatusIndicator) -> Int {
-        switch indicator {
-        case .none: 0
-        case .minor: 1
-        case .major: 2
-        case .critical: 3
-        case .maintenance: 4
-        case .unknown: 5
-        }
     }
 
     private static func morphCacheKey(progress: Double, style: IconStyle, hideCritters: Bool) -> NSNumber {
@@ -506,61 +481,6 @@ enum IconRenderer {
         path.transform(using: transform)
         color.setFill()
         path.fill()
-    }
-
-    private static func drawStatusOverlay(
-        indicator: ProviderStatusIndicator,
-        attachesToProminentMeter: Bool)
-    {
-        guard indicator.hasIssue else { return }
-        let color = NSColor.labelColor
-
-        switch indicator {
-        case .minor, .maintenance:
-            let size: CGFloat = 4
-            let rect = Self.snapRect(
-                x: Self.baseSize.width - size - 2,
-                y: attachesToProminentMeter ? 5 : 2,
-                width: size,
-                height: size)
-            Self.clearStatusOverlayHalo(
-                NSBezierPath(ovalIn: rect.insetBy(dx: -1, dy: -1)))
-            let path = NSBezierPath(ovalIn: rect)
-            color.setFill()
-            path.fill()
-        case .major, .critical, .unknown:
-            let lineRect = Self.snapRect(
-                x: Self.baseSize.width - 6,
-                y: 4,
-                width: 2.0,
-                height: 6)
-            let dotRect = Self.snapRect(
-                x: Self.baseSize.width - 6,
-                y: 2,
-                width: 2.0,
-                height: 2.0)
-
-            let haloRect = lineRect.union(dotRect).insetBy(dx: -1, dy: -1)
-            Self.clearStatusOverlayHalo(
-                NSBezierPath(roundedRect: haloRect, xRadius: 2, yRadius: 2))
-
-            let linePath = NSBezierPath(roundedRect: lineRect, xRadius: 1, yRadius: 1)
-            color.setFill()
-            linePath.fill()
-            NSBezierPath(ovalIn: dotRect).fill()
-        case .none:
-            break
-        }
-    }
-
-    private static func clearStatusOverlayHalo(_ path: NSBezierPath) {
-        guard let ctx = NSGraphicsContext.current?.cgContext else { return }
-        ctx.saveGState()
-        ctx.setBlendMode(.clear)
-        // The fill color is ignored by .clear; it only drives the path fill operation.
-        NSColor.black.setFill()
-        path.fill()
-        ctx.restoreGState()
     }
 
     private static func withScaledContext(_ draw: () -> Void) {

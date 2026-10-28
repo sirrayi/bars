@@ -155,10 +155,6 @@ extension UsageStore {
         return self.statuses[provider.instanceID]
     }
 
-    func statusIndicator(for provider: UsageProvider) -> ProviderStatusIndicator {
-        self.status(for: provider)?.indicator ?? .none
-    }
-
     func statusComponents(for provider: UsageProvider) -> [ProviderStatusComponent] {
         guard self.statusChecksEnabled else { return [] }
         return self.statusComponents[provider.instanceID] ?? []

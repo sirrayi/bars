@@ -409,7 +409,6 @@ extension StatusItemController {
         let wiggle = merged && style == .combined ? 0 : self.wiggleAmount(for: provider)
         let tilt = merged && style == .combined ? 0 : self.tiltAmount(for: provider) * .pi / 28
         let activity = merged ? "anim=\(needsAnimation ? 1 : 0)" : "loading=\(isLoading ? 1 : 0)"
-        let statusIndicator = self.store.statusIndicator(for: provider)
         // Brand + percent returns above; remaining paths are image-only apart from the debug marker.
         let canSkipCachedRender = self.prepareButtonForImageOnlyCacheHit(button)
         if let morphProgress {
@@ -418,7 +417,6 @@ extension StatusItemController {
                 "provider=\(provider.rawValue)",
                 "style=\(String(describing: style))",
                 "morph=\(Self.iconSignatureValue(morphProgress))",
-                "status=\(statusIndicator.rawValue)",
                 "warningFlash=\(warningFlash ? "1" : "0")",
                 activity,
                 "hideCritters=\(self.settings.menuBarHidesCritters ? "1" : "0")",
@@ -447,7 +445,6 @@ extension StatusItemController {
                 "weekly=\(Self.iconSignatureValue(weekly))",
                 "credits=\(Self.iconSignatureValue(credits))",
                 "stale=\(stale ? "1" : "0")",
-                "status=\(statusIndicator.rawValue)",
                 "blink=\(Self.iconSignatureValue(Double(blink)))",
                 "wiggle=\(Self.iconSignatureValue(Double(wiggle)))",
                 "tilt=\(Self.iconSignatureValue(Double(tilt)))",
@@ -470,7 +467,6 @@ extension StatusItemController {
                 blink: blink,
                 wiggle: wiggle,
                 tilt: tilt,
-                statusIndicator: statusIndicator,
                 hideCritters: self.settings.menuBarHidesCritters,
                 quotaLayoutPolicy: .provider(provider, snapshot: snapshot))
             self.setButtonContent(
@@ -1082,48 +1078,6 @@ extension StatusItemController {
     {
         guard let startedAt, startedAt != .distantPast else { return false }
         return now.timeIntervalSince(startedAt) > Self.loadingAnimationMaxContinuousDuration
-    }
-
-    nonisolated static func brandImageWithStatusOverlay(
-        brand: NSImage,
-        statusIndicator: ProviderStatusIndicator) -> NSImage
-    {
-        guard statusIndicator.hasIssue else { return brand }
-
-        let image = NSImage(size: brand.size)
-        image.lockFocus()
-        brand.draw(
-            at: .zero,
-            from: NSRect(origin: .zero, size: brand.size),
-            operation: .sourceOver,
-            fraction: 1.0)
-        Self.drawBrandStatusOverlay(indicator: statusIndicator, size: brand.size)
-        image.unlockFocus()
-        image.isTemplate = brand.isTemplate
-        return image
-    }
-
-    private nonisolated static func drawBrandStatusOverlay(
-        indicator: ProviderStatusIndicator, size: NSSize)
-    {
-        guard indicator.hasIssue else { return }
-
-        let color = NSColor.labelColor
-        switch indicator {
-        case .minor, .maintenance:
-            let dotSize = CGSize(width: 4, height: 4)
-            let dotOrigin = CGPoint(x: size.width - dotSize.width - 2, y: 2)
-            color.setFill()
-            NSBezierPath(ovalIn: CGRect(origin: dotOrigin, size: dotSize)).fill()
-        case .major, .critical, .unknown:
-            color.setFill()
-            let lineRect = CGRect(x: size.width - 6, y: 4, width: 2, height: 6)
-            NSBezierPath(roundedRect: lineRect, xRadius: 1, yRadius: 1).fill()
-            let dotRect = CGRect(x: size.width - 6, y: 2, width: 2, height: 2)
-            NSBezierPath(ovalIn: dotRect).fill()
-        case .none:
-            break
-        }
     }
 
     private func advanceAnimationPattern() {

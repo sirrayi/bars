@@ -19,7 +19,7 @@ read_when:
 - Overlapping requests keep the newest successfully published status for each provider. Older completions cannot replace its status or components, emit recovery hooks, or schedule a redundant retry. A failed newer request still permits an older success to supply status.
 - App and CLI share Core's status-feed decoder and transport-injected fetcher. The app requests component summaries;
   CLI `--status` retains its lightweight Statuspage request and existing JSON fields.
-- Menu shows incident summary + freshness; icon overlays indicator.
+- Menu shows incident summary + freshness under Status Page; the menu bar icon carries no incident mark.
 - Settings sidebar dots describe provider service health in their hover tooltip and the provider row’s accessibility label.
   Unknown or unfetched status is gray. This state is independent of quota refreshes and local cost scans, so a service
   incident can remain visible while usage refreshes succeed.
