@@ -105,6 +105,37 @@ struct ClaudeDirectUsageFallbackTests {
     }
 
     @Test
+    func `passive claude probes drop variables inherited from a parent claude code session`() {
+        let environment = ClaudeCLISession.launchEnvironment(baseEnv: [
+            "CLAUDECODE": "1",
+            "CLAUDE_CODE_ENTRYPOINT": "cli",
+            "CLAUDE_CODE_SSE_PORT": "51234",
+            "CLAUDE_CODE_SESSION_ID": "synthetic-session",
+            "CLAUDE_CODE_MESSAGING_TOKEN": "synthetic-token",
+            "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "0",
+            "CLAUDE_AGENT_SDK_VERSION": "0.0.0",
+            "CLAUDE_PID": "4242",
+            "CLAUDE_EFFORT": "medium",
+            "AI_AGENT": "claude-code",
+            "CLAUDE_CONFIG_DIR": "/synthetic/claude-profile",
+            "CLAUDE_CODE_CLIENT_CERT": "/synthetic/client.pem",
+            "HTTPS_PROXY": "http://proxy.invalid:8080",
+        ])
+
+        for key in [
+            "CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT", "CLAUDE_CODE_SSE_PORT", "CLAUDE_CODE_SESSION_ID",
+            "CLAUDE_CODE_MESSAGING_TOKEN", "CLAUDE_AGENT_SDK_VERSION", "CLAUDE_PID", "CLAUDE_EFFORT", "AI_AGENT",
+        ] {
+            #expect(environment[key] == nil, "\(key) leaked into the probe environment")
+        }
+        #expect(environment["CLAUDE_CONFIG_DIR"] == "/synthetic/claude-profile")
+        #expect(environment["CLAUDE_CODE_CLIENT_CERT"] == "/synthetic/client.pem")
+        #expect(environment["HTTPS_PROXY"] == "http://proxy.invalid:8080")
+        #expect(environment["DISABLE_AUTOUPDATER"] == "1")
+        #expect(environment["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"] == "1")
+    }
+
+    @Test
     func `cli source falls back to direct usage without remote control when pty usage fails`() async throws {
         let fixture = try Self.makeDirectFallbackClaudeCLI()
         defer { try? FileManager.default.removeItem(at: fixture.directory) }

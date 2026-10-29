@@ -480,6 +480,29 @@ actor ClaudeCLISession {
         return sessionID
     }
 
+    /// Variables a parent Claude Code process exports to its child shells: session markers, IDs, effort, and host
+    /// messaging sockets. A bars launched from a Claude Code terminal would otherwise hand them to every probe.
+    private static let claudeCodeSessionKeys: Set<String> = [
+        "AI_AGENT",
+        "CLAUDECODE",
+        "CLAUDE_EFFORT",
+        "CLAUDE_PID",
+        "CLAUDE_PREVIEW_CLASSIFIER_FLOOR",
+    ]
+    private static let claudeCodeSessionKeyPrefixes = ["CLAUDE_CODE_", "CLAUDE_AGENT_SDK_"]
+    /// User settings under those prefixes that still apply to probes: client TLS credentials for mTLS proxies.
+    private static let claudeCodeUserConfigKeys: Set<String> = [
+        "CLAUDE_CODE_CLIENT_CERT",
+        "CLAUDE_CODE_CLIENT_KEY",
+        "CLAUDE_CODE_CLIENT_KEY_PASSPHRASE",
+    ]
+
+    static func isClaudeCodeSessionKey(_ key: String) -> Bool {
+        if self.claudeCodeSessionKeys.contains(key) { return true }
+        guard self.claudeCodeSessionKeyPrefixes.contains(where: { key.hasPrefix($0) }) else { return false }
+        return !self.claudeCodeUserConfigKeys.contains(key)
+    }
+
     static func launchEnvironment(baseEnv: [String: String] = ProcessInfo.processInfo.environment) -> [String: String] {
         var env = TTYCommandRunner.enrichedEnvironment(baseEnv: baseEnv)
         let explicitKeys: [String] = [
@@ -489,7 +512,9 @@ actor ClaudeCLISession {
         for key in explicitKeys {
             env.removeValue(forKey: key)
         }
-        for key in env.keys where key.hasPrefix("ANTHROPIC_") {
+        // `CLAUDE_CONFIG_DIR` and other user config outside the session prefixes stays, so the probe still reads the
+        // profile the user pointed it at.
+        for key in env.keys where key.hasPrefix("ANTHROPIC_") || Self.isClaudeCodeSessionKey(key) {
             env.removeValue(forKey: key)
         }
         // Passive status and auth probes must not mutate or update the user's Claude CLI installation.
