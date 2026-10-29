@@ -35,16 +35,16 @@ struct SettingsStoreAdditionalTests {
     @Test
     func `detects token cost usage sources from filesystem`() throws {
         let fm = FileManager.default
-        let root = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
-        let sessions = root.appendingPathComponent("sessions", isDirectory: true)
-        try fm.createDirectory(at: sessions, withIntermediateDirectories: true)
-        let jsonl = sessions.appendingPathComponent("usage.jsonl")
-        try Data("{}".utf8).write(to: jsonl)
-        defer { try? fm.removeItem(at: root) }
+        let home = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let project = home.appendingPathComponent(".claude/projects/project-a", isDirectory: true)
+        try fm.createDirectory(at: project, withIntermediateDirectories: true)
+        defer { try? fm.removeItem(at: home) }
 
-        let env = ["CODEX_HOME": root.path]
+        #expect(!SettingsStore.hasAnyTokenCostUsageSources(env: [:], fileManager: fm, homeDirectory: home))
 
-        #expect(SettingsStore.hasAnyTokenCostUsageSources(env: env, fileManager: fm))
+        try Data("{}".utf8).write(to: project.appendingPathComponent("usage.jsonl"))
+
+        #expect(SettingsStore.hasAnyTokenCostUsageSources(env: [:], fileManager: fm, homeDirectory: home))
     }
 
     private static func makeSettingsStore(suite: String) -> SettingsStore {

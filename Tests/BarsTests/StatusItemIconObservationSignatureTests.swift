@@ -172,7 +172,7 @@ struct StatusItemIconObservationSignatureTests {
     }
 
     @Test
-    func `store icon observation signature changes when status indicator changes`() {
+    func `store icon observation signature ignores status indicator changes`() {
         let (_, store, controller) = self.makeController(
             suiteName: "StatusItemIconObservationSignatureTests-status-indicator")
         defer { controller.releaseStatusItemsForTesting() }
@@ -188,7 +188,7 @@ struct StatusItemIconObservationSignatureTests {
             description: "major outage",
             updatedAt: Date(timeIntervalSince1970: 20))
 
-        #expect(controller.storeIconObservationSignature() != baseline)
+        #expect(controller.storeIconObservationSignature() == baseline)
     }
 
     @Test
