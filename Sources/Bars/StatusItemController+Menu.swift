@@ -11,9 +11,11 @@ extension StatusItemController {
     private static let maxOverviewProviders = SettingsStore.mergedOverviewProviderLimit
     static let overviewRowIdentifierPrefix = "overviewRow-"
     static let persistentRefreshMenuItemID = "persistentRefreshAction"
-    private static let defaultMenuOpenRefreshDelay: Duration = .seconds(1.2)
+    /// Long enough for the menu to finish opening before refresh work starts, short enough that fresh usage
+    /// arrives while the menu is still being read.
+    private static let defaultMenuOpenRefreshDelay: Duration = .seconds(0.2)
     #if DEBUG
-    private static var menuOpenRefreshDelayForTesting: Duration = .seconds(1.2)
+    private static var menuOpenRefreshDelayForTesting: Duration = .seconds(0.2)
     static func setMenuOpenRefreshDelayForTesting(_ delay: Duration) {
         self.menuOpenRefreshDelayForTesting = delay
     }
@@ -957,7 +959,7 @@ extension StatusItemController {
                 self.clearSatisfiedDeferredMenuInteractionRefreshes(
                     for: self.delayedRefreshRetryProviders(for: menu).map(\.instanceID))
                 // Ordinary store changes intentionally stay queued until the next open. Rebuilding here
-                // made first-open work such as the storage scan flash the visible menu after 1.2 seconds.
+                // made first-open work such as the storage scan flash the visible menu after the open delay.
                 if !providersNeedingRetryAtOpen.isEmpty, self.menuNeedsRefresh(menu) {
                     self.scheduleOpenMenuRebuildIfStillVisible(
                         menu,

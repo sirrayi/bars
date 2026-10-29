@@ -580,6 +580,7 @@ extension UsageStore {
     {
         self.preservingDeepSeekProfileCatalog(in: snapshot, provider: provider)
             .backfillingResetTimesForProvider(provider, from: resetBackfillSource)
+            .rollingOverResetWindows(at: Date())
     }
 
     private func preservingDeepSeekProfileCatalog(

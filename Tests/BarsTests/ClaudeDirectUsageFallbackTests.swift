@@ -46,10 +46,13 @@ struct ClaudeDirectUsageFallbackTests {
                 browserDetection: BrowserDetection(cacheTTL: 0),
                 environment: self.environment,
                 dataSource: .cli)
-            return try await ProviderInteractionContext.$current.withValue(.userInitiated) {
-                try await ClaudeCLISession.withIsolatedSessionForTesting {
-                    try await ClaudeCLIResolver.withResolvedBinaryPathOverrideForTesting(self.cliURL.path) {
-                        try await fetcher.loadLatestUsage(model: "sonnet")
+            // A failed load starts the rate-limit cooldown, which must not hold back probes in parallel tests.
+            return try await ClaudeCLIRateLimitGate.withIsolatedCooldownForTesting {
+                try await ProviderInteractionContext.$current.withValue(.userInitiated) {
+                    try await ClaudeCLISession.withIsolatedSessionForTesting {
+                        try await ClaudeCLIResolver.withResolvedBinaryPathOverrideForTesting(self.cliURL.path) {
+                            try await fetcher.loadLatestUsage(model: "sonnet")
+                        }
                     }
                 }
             }
@@ -82,7 +85,7 @@ struct ClaudeDirectUsageFallbackTests {
     }
 
     @Test
-    func `passive claude probes always disable the cli auto updater`() {
+    func `passive claude probes always disable the cli auto updater and nonessential traffic`() {
         let environment = ClaudeCLISession.launchEnvironment(baseEnv: [
             "DISABLE_AUTOUPDATER": "0",
             ClaudeOAuthCredentialsStore.environmentTokenKey: "oauth-token",
@@ -93,6 +96,7 @@ struct ClaudeDirectUsageFallbackTests {
         ])
 
         #expect(environment["DISABLE_AUTOUPDATER"] == "1")
+        #expect(environment["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"] == "1")
         #expect(environment[ClaudeOAuthCredentialsStore.environmentTokenKey] == nil)
         #expect(environment[ClaudeOAuthCredentialsStore.environmentScopesKey] == nil)
         #expect(environment["ANTHROPIC_API_KEY"] == nil)

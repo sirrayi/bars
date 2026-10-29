@@ -65,7 +65,7 @@ public enum ClaudeStatusProbeError: LocalizedError, Sendable {
         case let .authenticationFailed(message):
             message
         case let .parseFailed(msg):
-            "Could not parse Claude usage: \(msg)"
+            ClaudeCLIRateLimitGate.isEndpointRefusalMessage(msg) ? msg : "Could not parse Claude usage: \(msg)"
         case .timedOut:
             "Claude usage probe timed out."
         }
@@ -93,7 +93,42 @@ public struct ClaudeStatusProbe: Sendable {
     @TaskLocal static var fetchOverride: FetchOverride?
     /// Stands in for bars's dedicated probe directory, so tests never use the real Application Support folder.
     @TaskLocal static var dedicatedProbeDirectoryOverrideForTesting: URL?
+    @TaskLocal static var statusIdentityStoreOverrideForTesting: StatusIdentityStore?
     #endif
+
+    /// `/status` contributes only identity, which changes with the signed-in account that
+    /// `identifiedSessionScope` keys. Background probes reuse it, so each launch runs `/usage` alone; a
+    /// user-initiated refresh reads it again.
+    static let statusIdentityReuseInterval: TimeInterval = 6 * 60 * 60
+    private static let sharedStatusIdentityStore = StatusIdentityStore()
+
+    final class StatusIdentityStore: @unchecked Sendable {
+        private let lock = NSLock()
+        private var entries: [String: (text: String, recordedAt: Date)] = [:]
+
+        func text(for scope: String, now: Date) -> String? {
+            self.lock.withLock {
+                guard let entry = self.entries[scope],
+                      now.timeIntervalSince(entry.recordedAt) < ClaudeStatusProbe.statusIdentityReuseInterval
+                else { return nil }
+                return entry.text
+            }
+        }
+
+        func insert(_ text: String, for scope: String, now: Date) {
+            self.lock.withLock {
+                self.entries[scope] = (text, now)
+            }
+        }
+    }
+
+    private static var statusIdentityStore: StatusIdentityStore {
+        #if DEBUG
+        self.statusIdentityStoreOverrideForTesting ?? self.sharedStatusIdentityStore
+        #else
+        self.sharedStatusIdentityStore
+        #endif
+    }
 
     public init(
         claudeBinary: String = "claude",
@@ -165,12 +200,23 @@ public struct ClaudeStatusProbe: Sendable {
             // `/status` only enriches a valid usage snapshot with identity. Terminal usage errors and loading stalls
             // cannot be repaired by it, so fail now instead of paying for another interactive CLI round trip.
             try Self.validateUsageBeforeStatusProbe(usage)
-            let status = try? await Self.capture(
-                subcommand: "/status",
-                binary: resolved,
-                accountScope: accountScope,
-                timeout: min(timeout, 12),
-                environment: self.environment)
+            let identityScope = ClaudeAccountProfile.identifiedSessionScope(environment: self.environment)
+            var status = identityScope.flatMap { scope in
+                ProviderInteractionContext.current == .background
+                    ? Self.statusIdentityStore.text(for: scope, now: Date())
+                    : nil
+            }
+            if status == nil {
+                status = try? await Self.capture(
+                    subcommand: "/status",
+                    binary: resolved,
+                    accountScope: accountScope,
+                    timeout: min(timeout, 12),
+                    environment: self.environment)
+                if let status, let identityScope, Self.statusTextHasIdentity(status) {
+                    Self.statusIdentityStore.insert(status, for: identityScope, now: Date())
+                }
+            }
             let snap = try Self.parse(text: usage, statusText: status)
 
             Self.log.info("Claude CLI scrape ok", metadata: [
@@ -179,7 +225,10 @@ public struct ClaudeStatusProbe: Sendable {
                 "opusPercentLeft": "\(snap.opusPercentLeft ?? -1)",
             ])
             if !keepAlive {
-                await Self.resetTransientCLISessionAndCleanupProbeArtifacts(environment: self.environment)
+                // The snapshot is complete: stopping Claude and removing its transcript need not delay publishing.
+                // The session's operation gate serializes this reset with any later capture.
+                let environment = self.environment
+                Task { await Self.resetTransientCLISessionAndCleanupProbeArtifacts(environment: environment) }
             }
             return snap
         } catch {
@@ -195,6 +244,11 @@ public struct ClaudeStatusProbe: Sendable {
         let removed = ClaudeProbeSessionArtifactCleaner.cleanupProbeSessionArtifacts(environment: environment)
         guard !removed.isEmpty else { return }
         Self.log.debug("Claude probe session artifacts removed", metadata: ["count": "\(removed.count)"])
+    }
+
+    static func statusTextHasIdentity(_ statusText: String) -> Bool {
+        let identity = Self.parseIdentity(usageText: nil, statusText: statusText)
+        return identity.accountEmail != nil || identity.loginMethod != nil
     }
 
     static func shouldKeepCLISessionAlive(requested: Bool) -> Bool {
@@ -439,6 +493,7 @@ extension ClaudeStatusProbe {
             || normalized.contains("currentweek")
             || normalized.contains("loadingusage")
             || normalized.contains("failedtoloadusagedata")
+            || normalized.contains("usageendpointisratelimited")
             || self.usageCaptureHasSubscriptionNotice(normalized)
     }
 
@@ -451,6 +506,20 @@ extension ClaudeStatusProbe {
         let latestUsagePanel = self.trimToLatestUsagePanel(clean)
         if self.isUsageStillLoading(text: latestUsagePanel ?? clean) {
             throw ClaudeStatusProbeError.parseFailed("Claude CLI /usage is still loading usage data.")
+        }
+        // A capture that ran out of time before the live response would otherwise report Claude's last-known values.
+        // The footer sits below the insights section that `cleanCapture` trims, so check the whole screen.
+        let screen = ClaudeCLIScreen.render(text, preservePlainReports: true).lowercased().filter { !$0.isWhitespace }
+        if self.usageCaptureIsRefreshing(screen) {
+            throw ClaudeStatusProbeError.parseFailed("Claude CLI /usage is still refreshing usage data.")
+        }
+        // When the usage endpoint refuses, Claude redraws the rows it saved at its last successful fetch under a
+        // "Showing last-known usage as of … (could not refresh | rate limited until …)" notice. Those rows can
+        // belong to a window that has reset since.
+        if let notice = screen.range(of: "showinglast-knownusage") {
+            let rateLimited = screen[notice.upperBound...].prefix(80).contains("ratelimited")
+            throw ClaudeStatusProbeError.parseFailed(
+                rateLimited ? ClaudeCLIRateLimitGate.message : ClaudeCLIRateLimitGate.lastKnownUsageMessage)
         }
     }
 
@@ -688,6 +757,10 @@ extension ClaudeStatusProbe {
             || compactFailureLine.contains("ratelimited")
         {
             return "Claude CLI usage endpoint is rate limited right now. Please try again later."
+        }
+        // With no saved rows to show, Claude reports a rate-limited endpoint as "Usage endpoint is rate limited …".
+        if compact.contains("usageendpointisratelimited") {
+            return ClaudeCLIRateLimitGate.message
         }
         if self.isSubscriptionNoticeOnly(text: text) {
             return text.localizedCaseInsensitiveContains(self.usageInsightsMarker)
@@ -1484,15 +1557,20 @@ extension ClaudeStatusProbe {
         timeout: TimeInterval,
         environment: [String: String]) async throws -> String
     {
-        let stopOnSubstrings = subcommand == "/usage" ? ["Failed to load usage data"] : []
+        let stopOnSubstrings = subcommand == "/usage"
+            ? ["Failed to load usage data", "Usage endpoint is rate limited"]
+            : []
         let idleTimeout: TimeInterval? = subcommand == "/usage" ? nil : 3.0
         let sendEnterEvery: TimeInterval? = subcommand == "/usage" ? 0.8 : nil
-        let stopWhenNormalized: (@Sendable (String) -> Bool)? = subcommand == "/usage"
-            ? { @Sendable normalizedScan in
-                Self.usageCaptureHasSessionValue(normalizedScan)
-                    || Self.usageCaptureHasSubscriptionNotice(normalizedScan)
-            }
-            : nil
+        let stopWhenNormalized: (@Sendable (String) -> Bool)? = switch subcommand {
+        case "/usage":
+            { @Sendable normalizedScan in Self.usageCaptureIsFinal(normalizedScan) }
+        case "/status":
+            // Identity is all `/status` contributes; stop once it is drawn instead of waiting out the idle timeout.
+            { @Sendable normalizedScan in Self.statusCaptureHasIdentity(normalizedScan) }
+        default:
+            nil
+        }
         do {
             return try await ClaudeCLISession.current.capture(
                 subcommand: subcommand,
@@ -1503,7 +1581,8 @@ extension ClaudeStatusProbe {
                 idleTimeout: idleTimeout,
                 stopOnSubstrings: stopOnSubstrings,
                 stopWhenNormalized: stopWhenNormalized,
-                settleAfterStop: subcommand == "/usage" ? 2.0 : 0.25,
+                // Both stop conditions are read from complete frames, and each panel draws its data in one frame.
+                settleAfterStop: 0,
                 sendEnterEvery: sendEnterEvery)
         } catch ClaudeCLISession.SessionError.processExited {
             await ClaudeCLISession.current.reset()
@@ -1526,6 +1605,29 @@ extension ClaudeStatusProbe {
         guard let labelRange = quotaText.range(of: "currentsession") else { return false }
         let tail = quotaText[labelRange.upperBound...]
         return tail.range(of: #"[0-9]{1,3}(?:\.[0-9]+)?%"#, options: .regularExpression) != nil
+    }
+
+    /// Claude 2.1 opens `/usage` on its last-known quota rows above a "Refreshing…" footer and redraws them when the
+    /// live response arrives, so the panel is final once quota data is drawn and that footer is gone.
+    static func usageCaptureIsFinal(_ normalizedText: String) -> Bool {
+        guard self.usageCaptureHasSessionValue(normalizedText) || self.usageCaptureHasSubscriptionNotice(normalizedText)
+        else { return false }
+        return !self.usageCaptureIsRefreshing(normalizedText)
+    }
+
+    private static func usageCaptureIsRefreshing(_ normalizedText: String) -> Bool {
+        normalizedText.contains("refreshing\u{2026}") || normalizedText.contains("refreshing...")
+    }
+
+    static func statusCaptureHasIdentity(_ normalizedText: String) -> Bool {
+        guard normalizedText.contains("loginmethod:") else { return false }
+        // Whitespace is stripped, so the address directly follows its label, before the next label's colon.
+        return ["email:", "account:"].contains { label in
+            guard let labelRange = normalizedText.range(of: label) else { return false }
+            let value = normalizedText[labelRange.upperBound...].prefix(80)
+            guard let at = value.firstIndex(of: "@") else { return false }
+            return !value[..<at].contains(":")
+        }
     }
 
     private static func usageCaptureHasSubscriptionNotice(_ normalizedText: String) -> Bool {

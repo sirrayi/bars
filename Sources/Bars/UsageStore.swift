@@ -115,7 +115,11 @@ final class UsageStore {
         }
     }
 
-    var snapshots: [ProviderInstanceID: UsageSnapshot] = [:]
+    var snapshots: [ProviderInstanceID: UsageSnapshot] = [:] {
+        // Every publishing path, for every provider, moves the reset rollover wake-up along with what it shows.
+        didSet { self.scheduleResetRollover() }
+    }
+
     var errors: [ProviderInstanceID: String] = [:]
     var diagnostics: [ProviderInstanceID: String] = [:]
     var knownLimitsAvailabilityByProvider: [ProviderInstanceID: UsageLimitsAvailability] = [:]
@@ -255,6 +259,8 @@ final class UsageStore {
     @ObservationIgnored var resetBoundaryRefreshTask: Task<Void, Never>?
     @ObservationIgnored var scheduledResetBoundaryRefreshAt: Date?
     @ObservationIgnored var attemptedResetBoundaryRefreshes: Set<Date> = []
+    @ObservationIgnored var resetRolloverTask: Task<Void, Never>?
+    @ObservationIgnored var scheduledResetRolloverAt: Date?
     @ObservationIgnored let planUtilizationHistoryStore: PlanUtilizationHistoryStore
     @ObservationIgnored var lastKnownResetSnapshots: [ProviderInstanceID: UsageSnapshot] = [:]
     /// A stable ambient Auto refresh failed after every live Claude source was exhausted, so persisted
@@ -703,9 +709,11 @@ final class UsageStore {
             self.timerTask = Task.detached(priority: .utility) { [weak self] in
                 while !Task.isCancelled {
                     guard let sleepDuration = await Self.nextAdaptiveTimerSleepDuration(for: self) else { return }
-                    try? await Task.sleep(for: sleepDuration)
+                    try? await Task.sleep(for: sleepDuration, tolerance: Self.timerTolerance(for: sleepDuration))
                     guard !Task.isCancelled else { return }
-                    await self?.refresh(enrichmentMode: .automatic)
+                    await ProviderRefreshTriggerContext.$current.withValue(.periodic) {
+                        await self?.refresh(enrichmentMode: .automatic)
+                    }
                 }
             }
             return
@@ -730,7 +738,9 @@ final class UsageStore {
                 interval: .seconds(wait),
                 sleepOverride: fixedTimerSleepOverride,
                 refresh: { [weak self] in
-                    await self?.refresh(enrichmentMode: .automatic)
+                    await ProviderRefreshTriggerContext.$current.withValue(.periodic) {
+                        await self?.refresh(enrichmentMode: .automatic)
+                    }
                 })
         }
     }
@@ -745,6 +755,7 @@ final class UsageStore {
         self.startupConnectivityRetryTask?.cancel()
         self.storageRefreshTask?.cancel()
         self.resetBoundaryRefreshTask?.cancel()
+        self.resetRolloverTask?.cancel()
         self.planUtilizationHistoryLoadTask?.cancel()
     }
 
@@ -889,6 +900,7 @@ extension UsageStore {
     private struct ClaudeDebugExecutionContext {
         let interaction: ProviderInteraction
         let refreshPhase: ProviderRefreshPhase
+        let refreshTrigger: ProviderRefreshTrigger
         #if DEBUG
         let keychainServiceOverride: String?
         let credentialsURLOverride: URL?
@@ -903,42 +915,44 @@ extension UsageStore {
         func apply<T>(_ operation: () async -> T) async -> T {
             await ProviderInteractionContext.$current.withValue(self.interaction) {
                 await ProviderRefreshContext.$current.withValue(self.refreshPhase) {
-                    #if DEBUG
-                    return await KeychainCacheStore.withServiceOverrideForTesting(self.keychainServiceOverride) {
-                        await ClaudeOAuthCredentialsStore
-                            .withCredentialsURLOverrideForTesting(self.credentialsURLOverride) {
-                                await ClaudeOAuthCredentialsStore
-                                    .withTestingOverridesSnapshotForTask(self.testingOverrides) {
-                                        await ClaudeOAuthKeychainAccessGate
-                                            .withDeniedUntilStoreOverrideForTesting(self
-                                                .keychainDeniedUntilStoreOverride)
-                                            {
-                                                await ClaudeOAuthKeychainPromptPreference
-                                                    .withTaskOverrideForTesting(self.keychainPromptModeOverride) {
-                                                        await ClaudeOAuthKeychainReadStrategyPreference
-                                                            .withTaskOverrideForTesting(self
-                                                                .keychainReadStrategyOverride)
-                                                            {
-                                                                await ClaudeCLIResolver
-                                                                    .withResolvedBinaryPathOverrideForTesting(self
-                                                                        .cliPathOverride)
-                                                                    {
-                                                                        await ClaudeStatusProbe
-                                                                            .withFetchOverrideForTesting(self
-                                                                                .statusFetchOverride)
-                                                                            {
-                                                                                await operation()
-                                                                            }
-                                                                    }
-                                                            }
-                                                    }
-                                            }
-                                    }
-                            }
+                    await ProviderRefreshTriggerContext.$current.withValue(self.refreshTrigger) {
+                        #if DEBUG
+                        return await KeychainCacheStore.withServiceOverrideForTesting(self.keychainServiceOverride) {
+                            await ClaudeOAuthCredentialsStore
+                                .withCredentialsURLOverrideForTesting(self.credentialsURLOverride) {
+                                    await ClaudeOAuthCredentialsStore
+                                        .withTestingOverridesSnapshotForTask(self.testingOverrides) {
+                                            await ClaudeOAuthKeychainAccessGate
+                                                .withDeniedUntilStoreOverrideForTesting(self
+                                                    .keychainDeniedUntilStoreOverride)
+                                                {
+                                                    await ClaudeOAuthKeychainPromptPreference
+                                                        .withTaskOverrideForTesting(self.keychainPromptModeOverride) {
+                                                            await ClaudeOAuthKeychainReadStrategyPreference
+                                                                .withTaskOverrideForTesting(self
+                                                                    .keychainReadStrategyOverride)
+                                                                {
+                                                                    await ClaudeCLIResolver
+                                                                        .withResolvedBinaryPathOverrideForTesting(self
+                                                                            .cliPathOverride)
+                                                                        {
+                                                                            await ClaudeStatusProbe
+                                                                                .withFetchOverrideForTesting(self
+                                                                                    .statusFetchOverride)
+                                                                                {
+                                                                                    await operation()
+                                                                                }
+                                                                        }
+                                                                }
+                                                        }
+                                                }
+                                        }
+                                }
+                        }
+                        #else
+                        return await operation()
+                        #endif
                     }
-                    #else
-                    return await operation()
-                    #endif
                 }
             }
         }
@@ -949,6 +963,7 @@ extension UsageStore {
         ClaudeDebugExecutionContext(
             interaction: ProviderInteractionContext.current,
             refreshPhase: ProviderRefreshContext.current,
+            refreshTrigger: ProviderRefreshTriggerContext.current,
             keychainServiceOverride: KeychainCacheStore.currentServiceOverrideForTesting,
             credentialsURLOverride: ClaudeOAuthCredentialsStore.currentCredentialsURLOverrideForTesting,
             testingOverrides: ClaudeOAuthCredentialsStore.currentTestingOverridesSnapshotForTask,
@@ -960,7 +975,8 @@ extension UsageStore {
         #else
         ClaudeDebugExecutionContext(
             interaction: ProviderInteractionContext.current,
-            refreshPhase: ProviderRefreshContext.current)
+            refreshPhase: ProviderRefreshContext.current,
+            refreshTrigger: ProviderRefreshTriggerContext.current)
         #endif
     }
 

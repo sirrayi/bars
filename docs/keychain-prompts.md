@@ -59,6 +59,7 @@ background secret reads remain non-interactive.
 
 Provider-owned child processes are a separate boundary. bars may intentionally launch a provider CLI such as
 Claude for usage. That executable owns its credential behavior, which bars cannot constrain or fully inspect.
+Scheduled Claude refreshes launch it too: Claude reads its own Keychain item, which normally needs no prompt.
 
 ## Why permission can be requested again
 

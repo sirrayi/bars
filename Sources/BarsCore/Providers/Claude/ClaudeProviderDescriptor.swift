@@ -1069,6 +1069,14 @@ struct ClaudeCLIFetchStrategy: ProviderFetchStrategy {
     let browserDetection: BrowserDetection
     let hasWebFallback: Bool
 
+    /// Claude's usage endpoint refusing for a while shows that this account's CLI runs in the background, even before
+    /// a first success, and the rate-limit cooldown bounds the retries. Timeouts and loading stalls say nothing either
+    /// way, so they keep only availability that an earlier success established.
+    static func preservesBackgroundAvailability(after error: Error, established: Bool) -> Bool {
+        ClaudeUsageFetcher.isCLIRateLimitError(error)
+            || (established && ClaudeUsageFetcher.isRetryableCLIProbeError(error))
+    }
+
     func isAvailable(_ context: ProviderFetchContext) async -> Bool {
         guard let binary = ClaudeCLIResolver.resolvedBinaryPath(environment: context.env) else { return false }
 
@@ -1094,20 +1102,15 @@ struct ClaudeCLIFetchStrategy: ProviderFetchStrategy {
             // available even when token rotation invalidated bars's ACL grant; otherwise a dead OAuth step
             // can mask CLI usage that succeeded moments earlier.
             if let throttleKey = self.throttleKey(binary: binary, context: context),
-               ClaudeCLIUsageSpawnThrottle.cachedResult(for: throttleKey) != nil
+               ClaudeCLIUsageSpawnThrottle.cachedResult(for: throttleKey, environment: context.env) != nil
             {
                 return true
             }
-            // Every Claude child process is opaque to bars's no-UI Keychain controls, including
-            // `claude auth status`. Background Auto therefore reuses only availability established by a
-            // successful user-initiated CLI fetch in this process. The narrow exception is the owner usage
-            // fetch when Keychain access is explicitly disabled; version/auth children retain the global gate.
+            // The owner usage fetch launches Claude only for the duration of one probe; version/auth children
+            // retain the global opaque-child gate.
             return ClaudeCLIBackgroundAvailability.allowsBackgroundAutoUsageFetch(
                 binary: binary,
-                environment: context.env,
-                oauthCredentialsConfirmedAbsent: {
-                    ClaudeOAuthFetchStrategy().directCredentialIsMissing(environment: context.env)
-                })
+                environment: context.env)
         }
 
         // App user actions intentionally launch the interactive path directly so the user can complete authentication.
@@ -1121,7 +1124,7 @@ struct ClaudeCLIFetchStrategy: ProviderFetchStrategy {
            ProviderInteractionContext.current == .background,
            !context.claudeOwnerCLIRecoveryOnly,
            let throttleKey,
-           let cached = ClaudeCLIUsageSpawnThrottle.cachedResult(for: throttleKey)
+           let cached = ClaudeCLIUsageSpawnThrottle.cachedResult(for: throttleKey, environment: context.env)
         {
             return cached
         }
@@ -1142,14 +1145,20 @@ struct ClaudeCLIFetchStrategy: ProviderFetchStrategy {
         }
         let usage: ClaudeUsageSnapshot
         do {
-            usage = try await fetcher.loadLatestUsage(model: "sonnet")
+            usage = if ProviderInteractionContext.current == .background {
+                // Closing the menu cancels its refresh, but a launched probe costs the same either way. Background
+                // probes finish and leave their result for the next refresh to reuse instead of discarding it.
+                try await Task { try await fetcher.loadLatestUsage(model: "sonnet") }.value
+            } else {
+                try await fetcher.loadLatestUsage(model: "sonnet")
+            }
         } catch {
             if Task.isCancelled || ClaudeOAuthFetchError.isCancellation(error) {
                 throw error
             }
-            // A transient probe failure does not revoke this account's established CLI availability.
-            if ClaudeUsageFetcher.isRetryableCLIProbeError(error),
-               ClaudeCLIBackgroundAvailability.isEstablished(backgroundAvailabilityMarker)
+            if Self.preservesBackgroundAvailability(
+                after: error,
+                established: ClaudeCLIBackgroundAvailability.isEstablished(backgroundAvailabilityMarker))
             {
                 throw error
             }
@@ -1158,10 +1167,7 @@ struct ClaudeCLIFetchStrategy: ProviderFetchStrategy {
             }
             throw error
         }
-        if context.runtime == .app,
-           ProviderInteractionContext.current == .userInitiated,
-           let backgroundAvailabilityMarker
-        {
+        if context.runtime == .app, let backgroundAvailabilityMarker {
             ClaudeCLIBackgroundAvailability.establish(backgroundAvailabilityMarker)
         }
         let result = self.makeResult(
@@ -1255,46 +1261,13 @@ enum ClaudeCLIBackgroundAvailability {
             || ClaudeOAuthKeychainPromptPreference.storedMode() == .always
     }
 
-    /// - Parameter oauthCredentialsConfirmedAbsent: A prompt-free, no-UI probe proving the OAuth step ahead
-    ///   of this one is durably dead (not merely denied). Consulted lazily, only when no marker exists at
-    ///   all for this profile — a marker that *is* established but denied by prompt policy or Keychain-
-    ///   disable revocation is a deliberate, already-adjudicated gate that this never second-guesses.
-    static func allowsBackgroundAutoUsageFetch(
-        binary: String,
-        environment: [String: String],
-        oauthCredentialsConfirmedAbsent: () -> Bool = { false }) -> Bool
-    {
+    /// Background Auto refreshes run the owner CLI usage fetch on any profile bars can identify, so usage stays
+    /// current without a manual Refresh. Claude reads its own Keychain item, which its ACL already grants, and each
+    /// probe exits once its usage is captured. Without an identified profile a failed attempt could never be
+    /// recorded, so nothing would bound repeated launches; a failed attempt records revocation, which stops
+    /// scheduled retries until the next foreground success.
+    static func allowsBackgroundAutoUsageFetch(binary: String, environment: [String: String]) -> Bool {
         guard ProviderInteractionContext.current == .background else { return true }
-        guard KeychainAccessGate.isExplicitlyDisabled else {
-            if self.allowsOpaqueChildExecution(binary: binary, environment: environment) {
-                return true
-            }
-            guard !self.isEstablished(binary: binary, environment: environment) else { return false }
-            // The deadlock-breaker below requires a profile bars can actually identify. Without one,
-            // a failed attempt could never be recorded via `revoke()` (which needs a marker), so nothing
-            // would ever bound repeated background launches — the same fail-closed contract
-            // `identifiedSessionScope` documents for background work in general.
-            guard let marker = self.captureMarker(binary: binary, environment: environment) else { return false }
-            // A marker that was established and then revoked by a failed foreground fetch is a deliberate,
-            // already-adjudicated "not available right now" outcome — `isEstablished` alone can't see it,
-            // since revocation removes the marker from the established set. The deadlock-breaker below
-            // exists only for profiles that never reached user-initiated status at all; a revoked profile
-            // already tried and must wait for the next foreground success, not be re-permitted here.
-            if self.store.isRevoked(marker) {
-                return false
-            }
-            // The marker gate above never gets a chance to be set when the OAuth step ahead of this one
-            // is durably dead: it is only recorded by a prior *successful* user-initiated CLI fetch, and a
-            // scheduled refresh never reaches user-initiated status. Breaking that deadlock here mirrors
-            // explicit OAuth mode's own absence check (`ClaudeOAuthPlanningAvailability`). A confirmed
-            // absence of bars-readable credentials does not by itself prove the interactive CLI is
-            // safe to launch unattended, so this exception still requires the same explicit background
-            // opt-in (`.always` prompt policy) that `allowsOpaqueChildExecution` requires above.
-            guard ClaudeOAuthKeychainPromptPreference.storedMode() == .always else { return false }
-            return oauthCredentialsConfirmedAbsent()
-        }
-        // Disable Keychain explicitly permits one owner-CLI usage attempt on a cold profile. A failed attempt
-        // records revocation below, preventing each background timer tick from retrying until a foreground success.
         guard let marker = self.captureMarker(binary: binary, environment: environment) else { return false }
         return !self.store.isRevoked(marker)
     }

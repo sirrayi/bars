@@ -111,6 +111,37 @@ struct ClaudeCLIUsageSpawnThrottleTests {
     }
 
     @Test
+    func `a background probe cancelled mid-flight still leaves its result for reuse`() async throws {
+        let strategy = self.makeStrategy()
+        let profile = try self.makeProfile(accountID: "account-a")
+        defer { try? FileManager.default.removeItem(at: profile.root) }
+        let context = self.makeContext(environment: profile.environment)
+        let attempts = AttemptRecorder()
+        let started = AsyncStream<Void>.makeStream()
+        let slowProbe: ClaudeStatusProbe.FetchOverride = { _, _, _ in
+            let attempt = await attempts.record()
+            started.continuation.yield()
+            // A cancelled probe would throw here, as the PTY capture does.
+            try await Task.sleep(for: .milliseconds(200))
+            return Self.makeStatusSnapshot(attempt: attempt)
+        }
+
+        try await self.withGateStack {
+            try await ClaudeStatusProbe.$fetchOverride.withValue(slowProbe) {
+                // Closing the menu cancels the menu-open refresh after Claude has launched.
+                let menuRefresh = Task { try await self.fetch(strategy, context: context, interaction: .background) }
+                var probeStarts = started.stream.makeAsyncIterator()
+                await probeStarts.next()
+                menuRefresh.cancel()
+                _ = try? await menuRefresh.value
+
+                _ = try await self.fetch(strategy, context: context, interaction: .background)
+                #expect(await attempts.snapshot() == 1)
+            }
+        }
+    }
+
+    @Test
     func `user initiated refresh always spawns the CLI`() async throws {
         let strategy = self.makeStrategy()
         let profile = try self.makeProfile(accountID: "account-a")
@@ -204,8 +235,9 @@ struct ClaudeCLIUsageSpawnThrottleTests {
     func `a session reset boundary invalidates the cached CLI result before the spawn floor elapses`() async {
         let start = Date(timeIntervalSince1970: 1_000_000)
         let clock = TestClock(start)
-        // The cached session window resets two minutes out — well inside the 15-minute spawn floor.
-        let result = Self.makeFetchResult(sessionResetsAt: start.addingTimeInterval(2 * 60))
+        // The cached session window resets halfway through the spawn floor.
+        let floor = ClaudeCLIUsageSpawnThrottle.minimumBackgroundSpawnInterval
+        let result = Self.makeFetchResult(sessionResetsAt: start.addingTimeInterval(floor / 2))
         let key = ClaudeCLIUsageSpawnThrottle.Key(
             binary: "/bin/echo",
             accountScope: "scope-a",
@@ -215,13 +247,95 @@ struct ClaudeCLIUsageSpawnThrottleTests {
         await ClaudeCLIUsageSpawnThrottle.withIsolatedStoreForTesting {
             await ClaudeCLIUsageSpawnThrottle.withNowOverrideForTesting(clock.now) {
                 ClaudeCLIUsageSpawnThrottle.record(result, for: key)
-                clock.advance(by: 60)
+                clock.advance(by: floor / 4)
                 #expect(ClaudeCLIUsageSpawnThrottle.cachedResult(for: key) != nil)
 
-                clock.advance(by: 5 * 60)
+                clock.advance(by: floor / 2)
                 #expect(ClaudeCLIUsageSpawnThrottle.cachedResult(for: key) == nil)
             }
         }
+    }
+
+    @Test(arguments: [
+        // A transcript write relative to the cached capture, and the resulting number of Claude launches.
+        (nil as TimeInterval?, 1),
+        (30, 2),
+        (-60, 2),
+        (-600, 1),
+    ])
+    func `periodic tick past the spawn floor relaunches only after local Claude activity`(
+        transcriptOffset: TimeInterval?,
+        expectedAttempts: Int) async throws
+    {
+        let start = Date(timeIntervalSince1970: 1_000_000)
+        let profile = try self.makeProfile(accountID: "account-a")
+        defer { try? FileManager.default.removeItem(at: profile.root) }
+        if let transcriptOffset {
+            try Self.writeTranscript(
+                in: profile.root,
+                project: "-Users-example-project",
+                modifiedAt: start.addingTimeInterval(transcriptOffset))
+        }
+
+        let attempts = try await self.fetchThenPeriodicTick(
+            profile: profile,
+            start: start,
+            after: ClaudeCLIUsageSpawnThrottle.minimumBackgroundSpawnInterval + 1)
+
+        #expect(attempts == expectedAttempts)
+    }
+
+    @Test
+    func `periodic tick ignores transcripts from bars's own probe`() async throws {
+        let start = Date(timeIntervalSince1970: 1_000_000)
+        let profile = try self.makeProfile(accountID: "account-a")
+        defer { try? FileManager.default.removeItem(at: profile.root) }
+        try Self.writeTranscript(
+            in: profile.root,
+            project: ClaudeProbeSessionArtifactCleaner.claudeProjectDirectoryName(
+                for: ClaudeStatusProbe.dedicatedProbeWorkingDirectoryURL()),
+            modifiedAt: start.addingTimeInterval(30))
+
+        let attempts = try await self.fetchThenPeriodicTick(
+            profile: profile,
+            start: start,
+            after: ClaudeCLIUsageSpawnThrottle.minimumBackgroundSpawnInterval + 1)
+
+        #expect(attempts == 1)
+    }
+
+    @Test(arguments: [
+        // Seconds since the last keyboard or pointer input when the tick runs, and the resulting launches.
+        (10 as TimeInterval, 2),
+        (ClaudeCLIUsageSpawnThrottle.minimumBackgroundSpawnInterval + 1, 1),
+    ])
+    func `periodic tick relaunches when the Mac was used since the capture`(
+        secondsSinceUserInput: TimeInterval,
+        expectedAttempts: Int) async throws
+    {
+        let profile = try self.makeProfile(accountID: "account-a")
+        defer { try? FileManager.default.removeItem(at: profile.root) }
+
+        let attempts = try await self.fetchThenPeriodicTick(
+            profile: profile,
+            start: Date(timeIntervalSince1970: 1_000_000),
+            after: ClaudeCLIUsageSpawnThrottle.minimumBackgroundSpawnInterval + 1,
+            secondsSinceUserInput: secondsSinceUserInput)
+
+        #expect(attempts == expectedAttempts)
+    }
+
+    @Test
+    func `periodic tick relaunches once the idle reuse bound elapses`() async throws {
+        let profile = try self.makeProfile(accountID: "account-a")
+        defer { try? FileManager.default.removeItem(at: profile.root) }
+
+        let attempts = try await self.fetchThenPeriodicTick(
+            profile: profile,
+            start: Date(timeIntervalSince1970: 1_000_000),
+            after: ClaudeCLIUsageSpawnThrottle.maximumIdlePeriodicReuse)
+
+        #expect(attempts == 2)
     }
 
     @Test
@@ -319,6 +433,51 @@ struct ClaudeCLIUsageSpawnThrottleTests {
         try await ProviderInteractionContext.$current.withValue(interaction) {
             try await strategy.fetch(context)
         }
+    }
+
+    /// One background fetch at `start`, then one periodic timer tick `interval` later; returns the launch count.
+    /// Nobody has used the Mac for `secondsSinceUserInput` when the tick runs (a day unless stated).
+    private func fetchThenPeriodicTick(
+        profile: (root: URL, configURL: URL, environment: [String: String]),
+        start: Date,
+        after interval: TimeInterval,
+        secondsSinceUserInput: TimeInterval = 24 * 60 * 60) async throws -> Int
+    {
+        let strategy = self.makeStrategy()
+        var environment = profile.environment
+        environment["HOME"] = profile.root.path
+        let context = self.makeContext(environment: environment)
+        let attempts = AttemptRecorder()
+        let clock = TestClock(start)
+
+        try await self.withGateStack {
+            try await ClaudeCLIUsageSpawnThrottle.withNowOverrideForTesting(clock.now) {
+                try await ClaudeCLIUsageSpawnThrottle.withSecondsSinceUserInputOverrideForTesting(
+                    secondsSinceUserInput)
+                {
+                    try await ClaudeStatusProbe.$fetchOverride.withValue(
+                        self.successfulFetchOverride(attempts: attempts))
+                    {
+                        _ = try await self.fetch(strategy, context: context, interaction: .background)
+                        clock.advance(by: interval)
+                        _ = try await ProviderRefreshTriggerContext.$current.withValue(.periodic) {
+                            try await self.fetch(strategy, context: context, interaction: .background)
+                        }
+                    }
+                }
+            }
+        }
+        return await attempts.snapshot()
+    }
+
+    private static func writeTranscript(in configRoot: URL, project: String, modifiedAt: Date) throws {
+        let directory = configRoot
+            .appendingPathComponent("projects", isDirectory: true)
+            .appendingPathComponent(project, isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let transcript = directory.appendingPathComponent("session.jsonl")
+        try Data("{}\n".utf8).write(to: transcript)
+        try FileManager.default.setAttributes([.modificationDate: modifiedAt], ofItemAtPath: transcript.path)
     }
 
     private func successfulFetchOverride(attempts: AttemptRecorder) -> ClaudeStatusProbe.FetchOverride {

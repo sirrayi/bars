@@ -271,6 +271,80 @@ struct ClaudeCLITimeoutRetryTests {
         #expect(recordedAfterBlockedRetry.timeouts == [24])
     }
 
+    @Test(arguments: [false, true])
+    func `cli usage records background cooldown when neither usage answer loads`(ptyTimedOut: Bool) async throws {
+        // The fake `claude` answers the direct `/usage` fallback. It prints nothing after the PTY reported the load
+        // failure itself, and Claude's "Failed to load usage data" after a PTY that only timed out.
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("claude-no-usage-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let claude = directory.appendingPathComponent("claude")
+        let directOutput = ptyTimedOut ? "printf '%s\\n' 'Failed to load usage data'" : "exit 0"
+        try "#!/bin/sh\n\(directOutput)\n".write(to: claude, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes(
+            [.posixPermissions: NSNumber(value: Int16(0o755))],
+            ofItemAtPath: claude.path)
+        // Claude answers an endpoint failure with only "Failed to load usage data" once it has no saved rows.
+        let ptyFailure: ClaudeStatusProbeError = ptyTimedOut
+            ? .timedOut
+            : .parseFailed("Claude CLI could not load usage data. Open the CLI and retry `/usage`.")
+
+        await ClaudeCLIRateLimitGate.withIsolatedCooldownForTesting {
+            await self.expectCooldownWhenNeitherUsageAnswerLoads(ptyFailure: ptyFailure, directBinary: claude.path)
+        }
+    }
+
+    private func expectCooldownWhenNeitherUsageAnswerLoads(
+        ptyFailure: ClaudeStatusProbeError,
+        directBinary: String) async
+    {
+        let attempts = AttemptRecorder()
+        let fetcher = ClaudeUsageFetcher(
+            browserDetection: BrowserDetection(cacheTTL: 0),
+            environment: [:],
+            dataSource: .cli)
+        let fetchOverride: ClaudeStatusProbe.FetchOverride = { _, timeout, _ in
+            _ = await attempts.record(timeout: timeout)
+            throw ptyFailure
+        }
+
+        let error = await ProviderInteractionContext.$current.withValue(.background) {
+            await #expect(throws: ClaudeStatusProbeError.self) {
+                try await ClaudeCLIResolver.withResolvedBinaryPathOverrideForTesting(directBinary) {
+                    try await ClaudeStatusProbe.withFetchOverrideForTesting(fetchOverride) {
+                        try await fetcher.loadLatestUsage(model: "sonnet")
+                    }
+                }
+            }
+        }
+
+        guard case let .parseFailed(message) = error else {
+            Issue.record("Expected a parse failure, got \(String(describing: error))")
+            return
+        }
+        #expect(message == ClaudeCLIRateLimitGate.loadFailedMessage)
+        #expect(error.map { ClaudeUsageFetcher.isCLIRateLimitError($0) } == true)
+        #expect(await (attempts.snapshot()).count == 1)
+        #expect(ClaudeCLIRateLimitGate.currentBlockedUntil() != nil)
+    }
+
+    @Test
+    func `background cooldown lets the next scheduled probe run when it ends within a minute`() async {
+        await ClaudeCLIRateLimitGate.withIsolatedCooldownForTesting {
+            let trippedAt = Date()
+            ClaudeCLIRateLimitGate.recordRateLimit(now: trippedAt)
+            // A tick on a five-minute beat can fire seconds before the cooldown its predecessor started ends.
+            let nextTick = trippedAt.addingTimeInterval(300 - 5)
+
+            #expect(ClaudeCLIRateLimitGate.blockedUntil(interaction: .background, now: nextTick) == nil)
+            #expect(ClaudeCLIRateLimitGate.currentBlockedUntil(now: nextTick) != nil)
+            #expect(ClaudeCLIRateLimitGate.blockedUntil(
+                interaction: .background,
+                now: trippedAt.addingTimeInterval(60)) != nil)
+        }
+    }
+
     @Test
     func `user initiated cli usage bypasses rate limit cooldown`() async throws {
         ClaudeCLIRateLimitGate.resetForTesting()

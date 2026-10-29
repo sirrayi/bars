@@ -167,7 +167,8 @@ extension UsageStore {
             updatedAt: capturedAt,
             dataConfidence: .percentOnly)
         // Provider-specific by design: reconstructed history is published only to Claude's snapshot/reset lanes.
-        self.snapshots[.claude] = snapshot
+        // A capture from a window that has reset since shows that window rolled over, never its ended percentages.
+        self.snapshots[.claude] = snapshot.rollingOverResetWindows(at: Date())
         self.lastKnownResetSnapshots[.claude] = snapshot
         return true
     }

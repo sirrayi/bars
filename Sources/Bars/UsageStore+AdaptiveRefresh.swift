@@ -92,7 +92,7 @@ extension UsageStore {
         sleepOverride: Duration? = nil,
         now: @escaping @Sendable () async -> ContinuousClock.Instant = { ContinuousClock.now },
         sleep: @escaping @Sendable (Duration) async throws -> Void = { duration in
-            try await Task.sleep(for: duration)
+            try await Task.sleep(for: duration, tolerance: UsageStore.timerTolerance(for: duration))
         },
         refresh: @escaping @Sendable () async -> Void) async
     {
@@ -113,6 +113,12 @@ extension UsageStore {
                 completedAt: now(),
                 interval: interval)
         }
+    }
+
+    /// Lets macOS coalesce the refresh wakeup with other timers; a few seconds of slack is invisible on a
+    /// minutes-long cadence.
+    nonisolated static func timerTolerance(for duration: Duration) -> Duration {
+        min(duration / 10, .seconds(30))
     }
 
     func logAdaptiveRefreshDecision(_ decision: AdaptiveRefreshPolicy.Decision) {

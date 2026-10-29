@@ -18,6 +18,17 @@ public enum ProviderRefreshContext {
     @TaskLocal public static var current: ProviderRefreshPhase = .regular
 }
 
+/// Only the automatic refresh timer marks its ticks `.periodic`; launch, wake, menu-open, settings, and manual
+/// refreshes stay `.onDemand`. Providers with an expensive probe may skip periodic work that cannot change the result.
+public enum ProviderRefreshTrigger: Sendable, Equatable {
+    case onDemand
+    case periodic
+}
+
+public enum ProviderRefreshTriggerContext {
+    @TaskLocal public static var current: ProviderRefreshTrigger = .onDemand
+}
+
 public enum ProviderRefreshRequestContext {
     @TaskLocal public static var id: UUID?
 

@@ -98,7 +98,8 @@ public enum ClaudeUsageError: LocalizedError, Sendable {
         case .claudeNotInstalled:
             "Claude CLI is not installed. Install it from https://code.claude.com/docs/en/overview."
         case let .parseFailed(details):
-            "Could not parse Claude usage: \(details)"
+            ClaudeCLIRateLimitGate.isEndpointRefusalMessage(details)
+                ? details : "Could not parse Claude usage: \(details)"
         case let .oauthFailed(details):
             details
         }
@@ -633,7 +634,15 @@ public struct ClaudeUsageFetcher: ClaudeUsageFetching, Sendable {
                         throw directError
                     }
                     guard ClaudeStatusProbe.isSubscriptionQuotaUnavailableDescription(directError.localizedDescription)
-                    else { throw ptyError }
+                    else {
+                        // Neither answer loaded usage and one says Claude failed to load it, so Claude's usage
+                        // endpoint is failing: hold background probes off it like a rate limit rather than
+                        // launching Claude again at every refresh. A PTY that only timed out says nothing alone.
+                        guard Self.isUsageLoadFailure(ptyError) || Self.isUsageLoadFailure(directError)
+                        else { throw ptyError }
+                        ClaudeCLIRateLimitGate.recordRateLimit()
+                        throw ClaudeStatusProbeError.parseFailed(ClaudeCLIRateLimitGate.loadFailedMessage)
+                    }
                     throw directError
                 }
             }
@@ -647,12 +656,12 @@ public struct ClaudeUsageFetcher: ClaudeUsageFetching, Sendable {
         }
 
         private static func shouldTryDirectCLIUsage(after error: Error) -> Bool {
-            if case let ClaudeStatusProbeError.parseFailed(message) = error,
-               message.lowercased().contains("could not load usage data")
-            {
-                return true
-            }
-            return ClaudeUsageFetcher.isRetryableCLIProbeError(error)
+            self.isUsageLoadFailure(error) || ClaudeUsageFetcher.isRetryableCLIProbeError(error)
+        }
+
+        private static func isUsageLoadFailure(_ error: Error) -> Bool {
+            guard case let ClaudeStatusProbeError.parseFailed(message) = error else { return false }
+            return message.lowercased().contains("could not load usage data")
         }
     }
 }

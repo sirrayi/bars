@@ -899,17 +899,22 @@ struct ClaudeOAuthUpgradeCompatibilityTests {
     }
 
     @Test
-    func `background Auto OAuth service error does not launch owner CLI before establishment`() async throws {
+    func `background Auto OAuth service error falls back to the owner CLI before establishment`() async throws {
         let root = try Self.makeTemporaryDirectory()
         defer { try? FileManager.default.removeItem(at: root) }
         let cli = try Self.makeFakeClaudeCLI(in: root)
         let missingCredentials = root.appendingPathComponent("missing-credentials.json")
+        // Background CLI usage needs a profile bars can identify. Pin an isolated identified profile via
+        // CLAUDE_CONFIG_DIR so this does not depend on the host's real ~/.claude.json (absent on CI).
+        try Data(#"{"oauthAccount":{"accountUuid":"upgrade-compat-account"}}"#.utf8)
+            .write(to: root.appendingPathComponent(".config.json"), options: .atomic)
         let context = try self.makePersistedOAuthContext(
             suite: "ClaudeOAuthUpgradeCompatibilityTests-auto-service-error",
             environment: [
                 ClaudeOAuthCredentialsStore.environmentTokenKey: "auto-rate-limited-oauth-token",
                 ClaudeOAuthCredentialsStore.environmentScopesKey: "user:profile",
                 "CLAUDE_CLI_PATH": cli.executable.path,
+                "CLAUDE_CONFIG_DIR": root.path,
             ],
             sourceMode: .auto)
         let descriptor = ProviderDescriptorRegistry.descriptor(for: .claude)
@@ -936,13 +941,15 @@ struct ClaudeOAuthUpgradeCompatibilityTests {
             }
         }
 
-        #expect(outcome.attempts.map(\.strategyID) == ["claude.oauth", "claude.cli", "claude.web"])
-        #expect(outcome.attempts.map(\.wasAvailable) == [true, false, false])
+        // Scheduled refreshes reach the owner CLI without a prior foreground fetch, so a rate-limited OAuth
+        // step still yields usage; the probe override stands in for the CLI, so the fake binary never runs.
+        #expect(outcome.attempts.map(\.strategyID) == ["claude.oauth", "claude.cli"])
+        #expect(outcome.attempts.map(\.wasAvailable) == [true, true])
         switch outcome.result {
         case let .failure(error):
-            #expect(error.localizedDescription.contains("rate limited"))
+            Issue.record("Background Auto OAuth failure did not fall back to the owner CLI: \(error)")
         case let .success(result):
-            Issue.record("Background Auto OAuth failure unexpectedly produced \(result.strategyID)")
+            #expect(result.strategyID == "claude.cli")
         }
         #expect(calls.recordedWebCalls.isEmpty)
         #expect(calls.recordedForeignKeychainReads == 0)

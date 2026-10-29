@@ -250,8 +250,8 @@ change the existing prompt policy or switch to another credential source.
   remains preferred when readable, while CLI/Web fallback stays available when OAuth credentials are not usable.
 - Claude Code periodically rotates its `Claude Code-credentials` Keychain item and can replace the ACL grant that
   allowed bars to read it. Auto treats that as a failed OAuth source, reuses a recent successful CLI result or
-  continues to CLI/Web, and does not misreport the existing credentials as missing. A manual Refresh can re-grant
-  Keychain access; selecting CLI or Web avoids the foreign-Keychain dependency.
+  continues to CLI/Web, including on scheduled refreshes, and does not misreport the existing credentials as missing.
+  A manual Refresh can re-grant Keychain access; selecting CLI or Web avoids the foreign-Keychain dependency.
 - When every live Auto source fails, bars keeps the last captured session/weekly percentages from
   `history/claude.json` visible as stale data and shows their capture age instead of blanking the quota bars.
   Restored history and CLI-scraped percentages both show “Limited usage detail”: the warning describes reduced
@@ -549,12 +549,31 @@ Model-scoped weekly-window proof (synthetic data, no real accounts or credential
   weekly, and model-specific quotas alongside session statistics and usage insights. Erased content remains discarded.
 - The bundled watchdog is discovered only in the running executable's resolved app bundle; launching through a CLI symlink preserves that association.
 - Default behavior: exit after each probe; Debug → "Keep CLI sessions alive" keeps it running between probes.
+- Scheduled, wake, and menu-open refreshes run the probe on any Claude profile bars can identify, so usage stays
+  current without a manual Refresh. Claude reads its own Keychain item, which its ACL already grants. Background work
+  reuses a successful result for 60 seconds instead of respawning, and a failed probe stops scheduled attempts for
+  that account until the next successful manual Refresh, unless Claude's usage endpoint refused it (see below).
+- Refresh-timer ticks also reuse that result for up to 30 minutes while nobody has used the Mac's keyboard or
+  pointer since it was captured and no local Claude transcript has changed since two minutes before it (the same
+  roots as the local cost scan, excluding bars's own probe project; file metadata only), so an unattended Mac does
+  not relaunch Claude. While someone is at the Mac, every tick relaunches, so usage from claude.ai, the desktop app,
+  or another device appears at the next tick. Launch, wake, menu-open, and manual refreshes keep the 60-second rule,
+  and a passed session or weekly reset always relaunches.
+- A background probe that has started runs to completion even when its refresh is cancelled, for example by closing
+  the menu, so the next refresh within 60 seconds reuses its result instead of launching Claude again.
 - Both PTY probes and the non-PTY `/usage` fallback pass `--settings '{"remoteControlAtStartup":false,"disableAllHooks":true}'` to disable Remote Control startup and user hooks for the probe process. This process-local override leaves the user's saved settings unchanged; Claude's managed-settings policy still applies.
-- Both launches use `--strict-mcp-config` to skip the user's configured MCP servers. Saved nonessential-traffic restrictions remain in force.
-- A PTY timeout or usage-loading failure can trigger the non-PTY `/usage` fallback. Cancellation and rate limits stop the probe; a subscription-only notice from the fallback takes precedence over the original PTY failure. An insights-only report is not evidence that the account lacks quotas: it preserves the original PTY failure, which is also logged before fallback.
-- Transient CLI timeouts and loading stalls preserve availability already established for that account, so a later
-  Auto refresh can retry CLI instead of stopping at missing OAuth credentials. They do not establish availability
-  for a previously unverified account; the existing Keychain and prompt policies still apply.
+- Both launches use `--strict-mcp-config` to skip the user's configured MCP servers, and set
+  `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1` so the probe process skips telemetry, error reporting, and
+  feature-flag fetches. Claude then reaches its input box about 0.4 s sooner and exits in about 0.1 s; `/usage`
+  still loads live quota data.
+- A PTY timeout or usage-loading failure can trigger the non-PTY `/usage` fallback. Cancellation and rate limits stop the probe; a subscription-only notice from the fallback takes precedence over the original PTY failure. An insights-only report is not evidence that the account lacks quotas: it preserves the original PTY failure, which is also logged before fallback. When neither answer loads usage and either one shows Claude's "Failed to load usage data", Claude's usage endpoint is failing: the probe reports that and starts the five-minute rate-limit cooldown.
+- Transient CLI timeouts and loading stalls preserve availability already established by a successful probe for that
+  account, so a later Auto refresh can retry CLI instead of stopping at missing OAuth credentials. Usage-endpoint
+  refusals (rate limits, last-known panels, and usage that neither `/usage` answer could load) keep scheduled
+  probes running even before a first success, because Claude itself ran; the cooldown spaces them five minutes
+  apart, so bars picks the data up again soon after the endpoint recovers. A scheduled check treats a cooldown with
+  a minute or less left as over, so a refresh tick that fires just before it ends still probes instead of waiting
+  a whole extra interval. Neither establishes availability for a previously unverified account.
 - Probe working directory: `~/Library/Application Support/bars/ClaudeProbe` with local Claude settings that disable
   deep-link URL handler registration during headless probes.
 - After transient probes exit, bars removes Claude Code `.jsonl` session artifacts for that dedicated
@@ -566,9 +585,23 @@ Model-scoped weekly-window proof (synthetic data, no real accounts or credential
      in the dedicated probe directory. Redirected paths are rejected before local settings are prepared; headless
      probes require that isolated directory and do not launch from the shared temporary fallback. Transcript cleanup
      is also limited to that directory. An explicitly supplied different working directory never receives trust.
-  3) Send `/usage`, wait for rendered panel; send Enter retries if needed.
+  3) Send `/usage` as soon as a complete frame shows the idle input box (the `❯` prompt under its top rule, or the
+     older "? for shortcuts" footer; two seconds at most after launch). Output that has been quiet for 50 ms is a
+     complete frame; Claude writes each frame at once. Claude 2.1 opens the panel on its last-known quota rows above
+     a "Refreshing…" footer and redraws them when the live response arrives, so the capture stops on the first
+     complete frame with quota values and no "Refreshing…" footer. A capture that times out while the footer is
+     still shown fails instead of reporting the last-known values. When the usage endpoint refuses, Claude redraws
+     the rows saved at its last successful fetch under a "Showing last-known usage … (could not refresh)" or
+     "(rate limited until …)" notice. That panel fails as well: the menu keeps the last fresh snapshot with its
+     original "Updated" age, and background probes wait out the five-minute rate-limit cooldown (a manual Refresh
+     still runs). With no saved rows, Claude shows only "Usage endpoint is rate limited …", which ends the capture
+     at once and starts the same cooldown, or "Failed to load usage data", which first tries the non-PTY fallback.
+     Send Enter retries if needed.
   4) Dismiss the open panel with Escape before reusing the session for `/status` identity or the next `/usage` refresh.
-  5) Optionally send `/status` to extract identity fields.
+  5) Optionally send `/status` to extract identity fields; the capture ends with the first complete frame that shows
+     the login method and email.
+     Background probes reuse the last identity read for the same Claude account for up to six hours and skip
+     `/status`; a manual Refresh reads it again. The snapshot is published before the probe process is stopped.
 - Parsing (`ClaudeStatusProbe`):
   - Replays cursor-based `/usage` and `/status` captures onto a bounded screen with the same geometry as the PTY, then locates
     "Current session" + "Current week" headers. Cursor jumps preserve unchanged cells from earlier frames, keeping

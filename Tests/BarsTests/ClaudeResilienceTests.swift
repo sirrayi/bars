@@ -1179,8 +1179,15 @@ extension ClaudeResilienceTests {
         }
     }
 
-    @Test
-    func `Auto restores stale Claude quota bars for a configured account when every source fails`() async throws {
+    @Test(arguments: [
+        (nil as TimeInterval?, 21 as Double),
+        // A capture from a session window that has reset since shows that window rolled over.
+        (-60, 0),
+    ])
+    func `Auto restores stale Claude quota bars for a configured account when every source fails`(
+        sessionResetOffset: TimeInterval?,
+        expectedSessionUsedPercent: Double) async throws
+    {
         let tempDir = FileManager.default.temporaryDirectory
             .appendingPathComponent("bars-claude-history-fallback-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
@@ -1194,7 +1201,8 @@ extension ClaudeResilienceTests {
         try await ClaudeOAuthCredentialsStore.withIsolatedCredentialsFileTrackingForTesting {
             try await ClaudeOAuthCredentialsStore.withCredentialsURLOverrideForTesting(missingCredentialsURL) {
                 let store = try await MainActor.run {
-                    let settings = Self.makeSettingsStore(suite: "ClaudeResilienceTests-history-fallback")
+                    let settings = Self.makeSettingsStore(
+                        suite: "ClaudeResilienceTests-history-fallback-\(String(describing: sessionResetOffset))")
                     settings.refreshFrequency = .manual
                     settings.statusChecksEnabled = false
                     settings.claudeUsageDataSource = .auto
@@ -1221,7 +1229,7 @@ extension ClaudeResilienceTests {
                             entries: [PlanUtilizationHistoryEntry(
                                 capturedAt: sessionCapturedAt,
                                 usedPercent: 21,
-                                resetsAt: nil)]),
+                                resetsAt: sessionResetOffset.map { Date().addingTimeInterval($0) })]),
                         PlanUtilizationSeriesHistory(
                             name: .weekly,
                             windowMinutes: 10080,
@@ -1260,6 +1268,7 @@ extension ClaudeResilienceTests {
                     }
                     return (
                         primary: store.snapshot(for: .claude)?.primary?.usedPercent,
+                        primaryResetsAt: store.snapshot(for: .claude)?.primary?.resetsAt,
                         secondary: store.snapshot(for: .claude)?.secondary?.usedPercent,
                         updatedAt: store.snapshot(for: .claude)?.updatedAt,
                         identity: snapshot?.identity,
@@ -1270,7 +1279,8 @@ extension ClaudeResilienceTests {
                         userFacingError: store.userFacingError(for: .claude))
                 }
 
-                #expect(result.primary == 21)
+                #expect(result.primary == expectedSessionUsedPercent)
+                #expect(result.primaryResetsAt == nil)
                 #expect(result.secondary == 42)
                 #expect(result.updatedAt == weeklyCapturedAt)
                 #expect(result.identity == nil)

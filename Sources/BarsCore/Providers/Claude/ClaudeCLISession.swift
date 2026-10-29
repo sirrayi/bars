@@ -85,6 +85,22 @@ actor ClaudeCLISession {
 
     /// Workspace permission prompts use the directory-constrained handler below, never a generic Enter response.
     private let continuePrompts = ["Press Enter to continue"]
+    /// Normalized marks of Claude's idle input box: the `❯` prompt under the box's top rule (Claude Code 2.1), or the
+    /// "? for shortcuts" footer older versions draw beneath it. Selection lists in dialogs have no rule above `❯`.
+    static let promptReadyNeedles = ["─❯", "?forshortcuts"]
+    /// Claude writes each frame at once and the PTY hands it over in 1 KB pieces within a millisecond, so output that
+    /// has been quiet this long is a complete frame. Prompts, the input box, and stop conditions are read only from
+    /// complete frames.
+    static let frameQuietInterval: TimeInterval = 0.05
+    /// A capture lasts about a second, so polling this often costs a few dozen wakeups per probe.
+    private static let capturePollNanoseconds: UInt64 = 20_000_000
+
+    /// Claude draws the idle input box once it accepts input, so the first command goes out with the complete frame
+    /// that shows it; the fixed startup delay remains the bound when the box never appears.
+    static func commandReadyAt(_ readyAt: Date, normalizedScreen: String, now: Date) -> Date {
+        guard self.promptReadyNeedles.contains(where: normalizedScreen.contains) else { return readyAt }
+        return min(readyAt, now)
+    }
 
     private static func normalizedNeedle(_ text: String) -> String {
         String(text.lowercased().filter { !$0.isWhitespace })
@@ -182,7 +198,8 @@ actor ClaudeCLISession {
             }
             // Startup and command captures share one prompt path. Decode the retained bytes together so split UTF-8
             // and cursor redraws cannot turn the default No selection into an accidental confirmation.
-            if uncheckedFrame, Date().timeIntervalSince(lastOutputAt) >= 0.2 || self.process?.isRunning == false,
+            if uncheckedFrame,
+               Date().timeIntervalSince(lastOutputAt) >= Self.frameQuietInterval || self.process?.isRunning == false,
                let text = String(data: buffer.data, encoding: .utf8)
             {
                 uncheckedFrame = false
@@ -199,6 +216,9 @@ actor ClaudeCLISession {
                         readyAt = Date().addingTimeInterval(2)
                     }
                 } else {
+                    if !commandSent {
+                        readyAt = Self.commandReadyAt(readyAt, normalizedScreen: normalized, now: Date())
+                    }
                     if commandSent, stopNeedles.contains(where: normalized.contains)
                         || (request.stopWhenNormalized?(normalized) == true)
                     {
@@ -217,6 +237,10 @@ actor ClaudeCLISession {
             if !commandSent, !trustPending, !uncheckedFrame, Date() >= readyAt {
                 buffer.removeAll(keepingCapacity: true)
                 if !trimmed.isEmpty { try self.send(trimmed + "\r") }
+                Self.log.debug("Claude CLI command sent", metadata: [
+                    "command": trimmed,
+                    "sinceLaunchSeconds": String(format: "%.2f", Date().timeIntervalSince(self.startedAt ?? Date())),
+                ])
                 commandSent = true
                 lastOutputAt = Date()
                 lastEnterAt = Date()
@@ -236,7 +260,7 @@ actor ClaudeCLISession {
                     metadata: ["status": "\(proc.terminationStatus)"])
                 throw SessionError.processExited
             }
-            try await Task.sleep(nanoseconds: 60_000_000)
+            try await Task.sleep(nanoseconds: Self.capturePollNanoseconds)
         }
         if stoppedEarly {
             let settleDeadline = min(deadline, Date().addingTimeInterval(max(0, request.settleAfterStop)))
@@ -244,6 +268,10 @@ actor ClaudeCLISession {
                 try appendOutput(self.readChunk())
                 try await Task.sleep(nanoseconds: 50_000_000)
             }
+            Self.log.debug("Claude CLI capture settled", metadata: [
+                "command": trimmed,
+                "sinceLaunchSeconds": String(format: "%.2f", Date().timeIntervalSince(self.startedAt ?? Date())),
+            ])
         }
         guard commandSent, !trustPending, !buffer.isEmpty,
               let text = String(data: buffer.data, encoding: .utf8) else { throw SessionError.timedOut }
@@ -466,6 +494,9 @@ actor ClaudeCLISession {
         }
         // Passive status and auth probes must not mutate or update the user's Claude CLI installation.
         env["DISABLE_AUTOUPDATER"] = "1"
+        // Probes skip telemetry, error reporting, and feature-flag fetches: Claude reaches its input box about 0.4 s
+        // sooner and exits in a tenth of a second instead of most of one. `/usage` still loads live quota data.
+        env["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"] = "1"
         return env
     }
 

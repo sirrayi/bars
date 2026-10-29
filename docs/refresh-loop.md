@@ -73,5 +73,10 @@ read_when:
 - Interval-derived heuristics (reset-boundary refresh, persistent-CLI-session idle windows)
   read `UsageStore.normalRefreshIntervalForHeuristics()`, which resolves adaptive mode to the current decision's
   delay — they stay active in adaptive mode rather than degrading to manual, whose interval is nil.
+- Reset rollover is independent of cadence, manual included: `UsageStore` wakes at the earliest published reset time
+  and rolls every window whose reset has passed, for any provider, over to 0% used with no known reset, keeping the
+  snapshot's original "Updated" age. The menu, icon, and widgets therefore stop showing an ended window's
+  percentages at the reset itself, even when the reset-boundary refresh fails or is held back; the next successful
+  refresh fills in the new window. A published or restored snapshot whose reset already passed rolls over at once.
 
 See also: `docs/status.md`, `docs/ui.md`.
