@@ -101,6 +101,65 @@ struct ClaudeExternalLoginPresentationTests {
     }
 
     @Test
+    func `Auto surfaces Claude's usage refusal instead of changed credentials`() async {
+        let environment = ["HOME": "/synthetic/claude-refusal-\(UUID())"]
+        let usage = ClaudeUsageSnapshot(
+            primary: RateWindow(usedPercent: 12, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
+            secondary: nil,
+            opus: nil,
+            updatedAt: Date(timeIntervalSince1970: 1_700_000_000),
+            accountEmail: nil,
+            accountOrganization: nil,
+            loginMethod: nil,
+            rawText: nil)
+        let context = ProviderFetchContext(
+            runtime: .app,
+            sourceMode: .auto,
+            includeCredits: false,
+            includeOptionalUsage: false,
+            webTimeout: 5,
+            webDebugDumpHTML: false,
+            verbose: false,
+            env: environment,
+            settings: .make(claude: .init(
+                usageDataSource: .auto,
+                webExtrasEnabled: false,
+                cookieSource: .manual,
+                manualCookieHeader: "sessionKey=sk-ant-synthetic-session")),
+            claudeFetcher: StubCLI(usage: usage),
+            browserDetection: BrowserDetection(cacheTTL: 0))
+        let changed = ClaudeOAuthCredentialsError.credentialsChanged(Date(timeIntervalSince1970: 1_700_000_000))
+        typealias Loader = @Sendable ([String: String], Bool, Bool) async throws -> ClaudeOAuthCredentials
+        let loadCredentials: Loader = { _, _, _ in throw changed }
+        let loadWeb: ClaudeWebFetchStrategy.UsageLoader = { _ in throw ClaudeWebAPIFetcher.FetchError.unauthorized }
+        let loadCLI: ClaudeStatusProbe.FetchOverride = { _, _, _ in
+            throw ClaudeStatusProbeError.parseFailed(ClaudeCLIRateLimitGate.message)
+        }
+        let outcome = await ClaudeCLIRateLimitGate.withIsolatedCooldownForTesting {
+            await ProviderInteractionContext.$current.withValue(.userInitiated) {
+                await ClaudeCLIResolver.withResolvedBinaryPathOverrideForTesting("/usr/bin/true") {
+                    await ClaudeUsageFetcher.$loadOAuthCredentialsOverride.withValue(loadCredentials) {
+                        await ClaudeWebFetchStrategy.$usageLoaderOverrideForTesting.withValue(loadWeb) {
+                            await ClaudeStatusProbe.$fetchOverride.withValue(loadCLI) {
+                                await ClaudeProviderDescriptor.descriptor.fetchOutcome(context: context)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        #expect(outcome.attempts.first?.errorDescription == changed.localizedDescription)
+        #expect(outcome.attempts.contains { $0.strategyID == "claude.cli" && $0.errorDescription != nil })
+        guard case let .failure(error) = outcome.result else {
+            Issue.record("Every live source should have failed")
+            return
+        }
+        // The refusal is the real reason, and the refresh path keeps the last reading quietly for it.
+        #expect(ClaudeUsageFetcher.isCLIRateLimitError(error))
+        #expect(error.localizedDescription != changed.localizedDescription)
+    }
+
+    @Test
     @MainActor
     func `menu card and CLI JSON share the actionable message and the existing Refresh action`() throws {
         let error = ClaudeOAuthCredentialsError.credentialsChanged(Date(timeIntervalSince1970: 1_700_000_000))

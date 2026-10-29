@@ -157,6 +157,8 @@ change the existing prompt policy or switch to another credential source.
   credential profiles use their own file timestamp, never the global Claude Code Keychain item. bars saves
   only the last failure time per profile so the guidance survives restarts and is shared with the bundled CLI;
   a readable credential clears it. Auto continues to configured CLI/Web sources under their existing access gates.
+  When Claude's usage endpoint refuses the CLI probe in that refresh, the refusal is reported instead and the menu
+  keeps the last reading with its age: re-granting OAuth access would read the same refused endpoint.
 - This setting only affects Claude OAuth Keychain prompting behavior; it does not switch your Claude usage source.
 - The policy also applies to the experimental `/usr/bin/security` reader and delegated OAuth refresh through
   `claude`: background operations that can prompt require `Always allow prompts`.

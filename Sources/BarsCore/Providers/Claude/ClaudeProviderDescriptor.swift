@@ -260,6 +260,10 @@ public enum ClaudeProviderDescriptor {
 
     private static func resolveFallbackError(_ previous: Error?, _ current: Error) -> Error {
         if ClaudeOAuthFetchError.isCancellation(current) { return current }
+        // Claude's usage endpoint refusing the CLI is why usage is not loading. Re-granting OAuth access would read
+        // the same endpoint, so neither the changed-credentials guidance nor a later fallback's failure replaces it.
+        if ClaudeUsageFetcher.isCLIRateLimitError(current) { return current }
+        if let previous, ClaudeUsageFetcher.isCLIRateLimitError(previous) { return previous }
         if let previous, case ClaudeOAuthCredentialsError.credentialsChanged = previous { return previous }
         return current
     }
