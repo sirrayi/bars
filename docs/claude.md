@@ -566,6 +566,10 @@ Model-scoped weekly-window proof (synthetic data, no real accounts or credential
   `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1` so the probe process skips telemetry, error reporting, and
   feature-flag fetches. Claude then reaches its input box about 0.4 s sooner and exits in about 0.1 s; `/usage`
   still loads live quota data.
+- Every probe launch, auth-status checks included, drops the variables a parent Claude Code session exports
+  (`CLAUDECODE`, `CLAUDE_PID`, `CLAUDE_EFFORT`, `AI_AGENT`, `CLAUDE_AGENT_SDK_*`, and `CLAUDE_CODE_*` apart from the
+  mTLS `CLAUDE_CODE_CLIENT_CERT`/`_KEY`/`_KEY_PASSPHRASE`), so bars started from a Claude Code terminal probes like a
+  login-item launch; `CLAUDE_CONFIG_DIR` is kept, and bars' own flags are set after the stripping.
 - A PTY timeout or usage-loading failure can trigger the non-PTY `/usage` fallback. Cancellation and rate limits stop the probe; a subscription-only notice from the fallback takes precedence over the original PTY failure. An insights-only report is not evidence that the account lacks quotas: it preserves the original PTY failure, which is also logged before fallback. When neither answer loads usage and either one shows Claude's "Failed to load usage data", Claude's usage endpoint is failing: the probe reports that and starts the five-minute rate-limit cooldown.
 - Transient CLI timeouts and loading stalls preserve availability already established by a successful probe for that
   account, so a later Auto refresh can retry CLI instead of stopping at missing OAuth credentials. Usage-endpoint
