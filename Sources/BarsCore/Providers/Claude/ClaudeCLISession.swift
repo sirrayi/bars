@@ -519,9 +519,9 @@ actor ClaudeCLISession {
         }
         // Passive status and auth probes must not mutate or update the user's Claude CLI installation.
         env["DISABLE_AUTOUPDATER"] = "1"
-        // Probes skip telemetry, error reporting, and feature-flag fetches: Claude reaches its input box about 0.4 s
-        // sooner and exits in a tenth of a second instead of most of one. `/usage` still loads live quota data.
-        env["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"] = "1"
+        // Never set `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` (stripped above with the other `CLAUDE_CODE_` keys):
+        // it starts Claude about 0.4 s sooner, but Claude 2.1 then never refreshes usage and `/usage` only redraws
+        // its last saved rows under "Showing last-known usage … (could not refresh)".
         return env
     }
 

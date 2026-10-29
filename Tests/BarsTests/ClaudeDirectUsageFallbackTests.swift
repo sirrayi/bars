@@ -85,7 +85,7 @@ struct ClaudeDirectUsageFallbackTests {
     }
 
     @Test
-    func `passive claude probes always disable the cli auto updater and nonessential traffic`() {
+    func `passive claude probes disable the cli auto updater but keep live usage traffic`() {
         let environment = ClaudeCLISession.launchEnvironment(baseEnv: [
             "DISABLE_AUTOUPDATER": "0",
             ClaudeOAuthCredentialsStore.environmentTokenKey: "oauth-token",
@@ -96,7 +96,8 @@ struct ClaudeDirectUsageFallbackTests {
         ])
 
         #expect(environment["DISABLE_AUTOUPDATER"] == "1")
-        #expect(environment["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"] == "1")
+        // With nonessential traffic off, Claude's `/usage` shows only its last saved rows and never refreshes.
+        #expect(environment["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"] == nil)
         #expect(environment[ClaudeOAuthCredentialsStore.environmentTokenKey] == nil)
         #expect(environment[ClaudeOAuthCredentialsStore.environmentScopesKey] == nil)
         #expect(environment["ANTHROPIC_API_KEY"] == nil)
@@ -112,7 +113,7 @@ struct ClaudeDirectUsageFallbackTests {
             "CLAUDE_CODE_SSE_PORT": "51234",
             "CLAUDE_CODE_SESSION_ID": "synthetic-session",
             "CLAUDE_CODE_MESSAGING_TOKEN": "synthetic-token",
-            "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "0",
+            "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
             "CLAUDE_AGENT_SDK_VERSION": "0.0.0",
             "CLAUDE_PID": "4242",
             "CLAUDE_EFFORT": "medium",
@@ -132,7 +133,7 @@ struct ClaudeDirectUsageFallbackTests {
         #expect(environment["CLAUDE_CODE_CLIENT_CERT"] == "/synthetic/client.pem")
         #expect(environment["HTTPS_PROXY"] == "http://proxy.invalid:8080")
         #expect(environment["DISABLE_AUTOUPDATER"] == "1")
-        #expect(environment["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"] == "1")
+        #expect(environment["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"] == nil)
     }
 
     @Test

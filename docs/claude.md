@@ -562,10 +562,10 @@ Model-scoped weekly-window proof (synthetic data, no real accounts or credential
 - A background probe that has started runs to completion even when its refresh is cancelled, for example by closing
   the menu, so the next refresh within 60 seconds reuses its result instead of launching Claude again.
 - Both PTY probes and the non-PTY `/usage` fallback pass `--settings '{"remoteControlAtStartup":false,"disableAllHooks":true}'` to disable Remote Control startup and user hooks for the probe process. This process-local override leaves the user's saved settings unchanged; Claude's managed-settings policy still applies.
-- Both launches use `--strict-mcp-config` to skip the user's configured MCP servers, and set
-  `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1` so the probe process skips telemetry, error reporting, and
-  feature-flag fetches. Claude then reaches its input box about 0.4 s sooner and exits in about 0.1 s; `/usage`
-  still loads live quota data.
+- Both launches use `--strict-mcp-config` to skip the user's configured MCP servers. They never set
+  `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`, and drop it when inherited: it starts Claude about 0.4 s sooner, but
+  Claude 2.1 then never refreshes usage, and `/usage` only redraws its last saved rows under "Showing last-known
+  usage … (could not refresh)", so every probe reads as an endpoint refusal.
 - Every probe launch, auth-status checks included, drops the variables a parent Claude Code session exports
   (`CLAUDECODE`, `CLAUDE_PID`, `CLAUDE_EFFORT`, `AI_AGENT`, `CLAUDE_AGENT_SDK_*`, and `CLAUDE_CODE_*` apart from the
   mTLS `CLAUDE_CODE_CLIENT_CERT`/`_KEY`/`_KEY_PASSPHRASE`), so bars started from a Claude Code terminal probes like a
