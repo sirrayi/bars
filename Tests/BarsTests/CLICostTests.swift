@@ -47,7 +47,7 @@ struct CLICostTests {
         let output = BarsCLI.renderCostText(
             provider: .opencodego, snapshot: snapshot, useColor: false, includeBreakdown: true)
         #expect(output.hasPrefix("OpenCode Go Cost (API-rate estimate)\n"))
-        #expect(output.contains("Estimated from local logs · may differ from your bill"))
+        #expect(output.contains("Estimated from local OpenCode history · may differ from your bill"))
         #expect(output.contains("Daily breakdown"))
         #expect(output.contains("fixture-model"))
         #expect(output.contains("125 tokens"))

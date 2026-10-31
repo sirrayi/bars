@@ -14,6 +14,18 @@ read_when:
 - OpenCode Go usage API at `GET https://opencode.ai/zen/go/v1/usage`, authenticated by `OPENCODE_API_KEY` or
   `providers[].apiKey`, or a selected token account's API key.
 - OpenCode Go local history from `~/.local/share/opencode/opencode.db`.
+- OpenCode Go Console reads with the same API key as a bearer token, tried before the public usage API:
+  - `GET https://opencode.ai/console/api/go/status` returns the micro-cent quota meters. It needs no workspace
+    header when authenticated by API key (the cookie path still uses `x-org-id`).
+  - `GET .../v2/usage/export?range=7d|30d|all` — per-day, per-model billed rows (CSV, CRLF line endings). Every
+    column the Console's separate `usage/summary` and `usage/models` endpoints expose is already here, so both are
+    rolled up locally instead of costing two extra round trips (the export alone takes about a second).
+  - `GET .../activity/go?range=...` — per-day totals for the current Go billing period; the export's fallback.
+  - `GET .../billing/status` — the prepaid Zen balance, so an API-key read never needs a session cookie.
+  - The export is reused from a short-lived on-disk cache (180 s) because billed history moves far more slowly
+    than the meters; quota percentages still come from the live `go/status` read.
+  - Any failure other than credentials or cancellation falls through to the public API, so a key scoped away from
+    the Console keeps working.
 - OpenCode Console JSON, used first for OpenCode Go web reads:
   - `GET https://opencode.ai/console/api/orgs` lists workspaces (cookie auth only).
   - `GET https://opencode.ai/console/api/go/status` returns subscription meters and requires the workspace in the
@@ -38,7 +50,9 @@ read_when:
 
 ## Usage mapping
 - The Go usage API reports `usage.rolling/weekly/monthly.percent` in percentage units (0...100): `1` means 1%, and
-  `0.5` means 0.5%. Generic dashboard JSON still accepts fractional usage values (0...1).
+  `0.5` means 0.5%. Those fields are whole numbers, so they truncate: a month at 1.85% used arrives as `1` and reads
+  as "99% left" against a website showing 2%. Console meters are therefore preferred whenever the API key can read
+  them, because they preserve the exact fraction.
 - Console meters report micro-cents, not percentages: each of `access.meters.fiveHour/week/month` carries
   `usedMicroCents` and `limitMicroCents`, and the percentage is `100 * used / limit`. A missing or null month reset
   uses the billing period end (`access.endsAt`). Other missing reset timestamps stay unknown, without a countdown.
@@ -54,6 +68,14 @@ read_when:
 The base OpenCode provider tracks its web dashboard, while the local SQLite reader selects only records attributed to
 `opencode-go` for OpenCode Go. Ordinary OpenCode sessions using other model providers are not included in local cost
 history.
+
+OpenCode Go prefers Console-billed history when an API key is configured: `v2/usage/export` supplies per-day,
+per-model rows and, rolled up, the window totals, all scoped to the `opencode-go` provider so free Zen rows
+(which bill at $0) do not enter the totals. These are the amounts OpenCode metered, so the projection is
+`vendorMetered` rather than a list-price estimate, and `bars cost` labels it **billed**. Exports carry account
+columns (`user_type`, `user_id`, `user_name`); only the day, provider, model, token, and cost columns are retained.
+Without a readable API key, or when the Console returns nothing, the device-local reader remains the fallback and
+keeps reporting `listPriceEstimate`.
 
 ## Notes
 - OpenCode Go token accounts accept raw API keys as well as existing Cookie headers. Add each key with its own

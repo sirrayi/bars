@@ -12,6 +12,12 @@ with five-hour, weekly, and monthly quota windows when reported by the selected 
 OpenCode Go assistant records from `~/.local/share/opencode/opencode.db`.
 Both legacy `message`/`part` history and v2 `session_message` history are supported; migrated messages are counted once.
 
+With an API key, the Console's micro-cent meters supply the quota windows. The public `zen/go/v1/usage` API reports
+whole-number percents, so it truncates 1.85% to 1% — that reads as "99% left" while opencode.ai shows 2% used. The
+Console also reports metered spend and billed token counts, so `bars cost --provider opencodego` and the Usage & Spend
+dashboard show **billed** totals (`vendorMetered`) instead of an API-rate estimate whenever the Console is readable.
+See [the shared guide](opencode.md#usage-mapping) for the endpoint list and parsing rules.
+
 Without an API key or a usable session, Auto can return `source: "local"` and
 `usage.dataConfidence: "estimated"`. Its $12/$30/$60 denominators apply to five-hour, weekly, and monthly
 local cost windows; they are fixed estimates, **not detected subscription tiers or Console quotas**. Local history

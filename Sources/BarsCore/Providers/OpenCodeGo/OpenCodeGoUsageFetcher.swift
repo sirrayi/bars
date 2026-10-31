@@ -180,25 +180,125 @@ public struct OpenCodeGoUsageFetcher: Sendable {
         return snapshot.withZenBalanceUSD(zenBalance)
     }
 
+    /// Shared parameters for one API-key usage read.
+    private struct APIKeyRequest {
+        let token: String
+        let timeout: TimeInterval
+        let now: Date
+        let historyDays: Int
+        let includeBilledUsage: Bool
+        let includeZenBalance: Bool
+        let session: URLSession
+    }
+
+    /// Reads Go quota with an API key.
+    ///
+    /// The Console meters quota in micro-cents, so it answers with exact fractions (1.85% used) where
+    /// `GET /zen/go/v1/usage` truncates to whole percents (1%), which reads as "99% left" against a
+    /// website showing 2% used. The Console also reports metered spend and billed token counts, which
+    /// no local file holds for usage recorded on another device. The public API stays as the fallback
+    /// for keys the Console does not accept.
     public static func fetchAPIUsage(
         apiKey: String,
         timeout: TimeInterval,
         now: Date = Date(),
+        historyDays: Int = 30,
+        includeBilledUsage: Bool = true,
+        includeZenBalance: Bool = true,
         session: URLSession? = nil) async throws -> OpenCodeGoUsageSnapshot
     {
         let token = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !token.isEmpty else {
             throw OpenCodeGoSettingsError.missingAPIKey
         }
+        let request = APIKeyRequest(
+            token: token,
+            timeout: timeout,
+            now: now,
+            historyDays: historyDays,
+            includeBilledUsage: includeBilledUsage,
+            includeZenBalance: includeZenBalance,
+            session: session ?? self.redirectGuardSession)
+        if let metered = try await self.consoleUsage(request) {
+            return metered
+        }
+        return try await self.publicAPIUsage(request)
+    }
 
+    /// Console reads are best effort: a key scoped away from the Console, a changed endpoint, or a
+    /// transient failure all fall through to the public API instead of failing the refresh.
+    ///
+    /// The meters and the spend window are independent requests, so the optional one runs alongside
+    /// the required one and is joined afterwards; awaiting them in sequence doubled the cold cost.
+    private static func consoleUsage(_ request: APIKeyRequest) async throws -> OpenCodeGoUsageSnapshot? {
+        let billedTask = request.includeBilledUsage
+            ? Task { try await OpenCodeGoConsoleFetcher.fetchBilledUsage(
+                read: OpenCodeGoConsoleFetcher.Read(
+                    apiKey: request.token,
+                    timeout: request.timeout,
+                    session: request.session),
+                historyDays: request.historyDays,
+                now: request.now) }
+            : nil
+        let balanceTask = request.includeZenBalance
+            ? Task { try await OpenCodeGoConsoleFetcher.fetchZenBalance(read: OpenCodeGoConsoleFetcher.Read(
+                apiKey: request.token,
+                timeout: request.timeout,
+                session: request.session)) }
+            : nil
+        defer {
+            billedTask?.cancel()
+            balanceTask?.cancel()
+        }
+        let snapshot: OpenCodeGoUsageSnapshot
+        do {
+            guard let metered = try await OpenCodeGoConsoleFetcher.fetchMeters(
+                read: OpenCodeGoConsoleFetcher.Read(
+                    apiKey: request.token,
+                    timeout: request.timeout,
+                    session: request.session),
+                now: request.now)
+            else {
+                return nil
+            }
+            snapshot = metered
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch let error as URLError where error.code == .cancelled {
+            throw CancellationError()
+        } catch {
+            Self.log.debug("OpenCode Go console meters unavailable: \(error.localizedDescription)")
+            return nil
+        }
+        var result = snapshot
+        if let billedTask {
+            result = try await Self.joinedBilledUsage(
+                result,
+                task: billedTask,
+                failureLabel: "console usage history")
+        }
+        if let balanceTask {
+            do {
+                result = try await result.withZenBalanceUSD(balanceTask.value)
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch {
+                // Keep whatever balance the local snapshot already carried.
+                Self.log.debug("OpenCode Go Zen balance unavailable: \(error.localizedDescription)")
+            }
+        }
+        return result
+    }
+
+    private static func publicAPIUsage(_ apiRequest: APIKeyRequest) async throws -> OpenCodeGoUsageSnapshot {
         var request = URLRequest(url: self.usageAPIURL)
         request.httpMethod = "GET"
-        request.timeoutInterval = timeout
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = apiRequest.timeout
+        request.setValue("Bearer \(apiRequest.token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("bars", forHTTPHeaderField: "User-Agent")
 
-        let response = try await (session ?? self.redirectGuardSession).response(for: request)
+        let response = try await apiRequest.session.response(for: request)
         guard response.statusCode == 200 else {
             if response.statusCode == 401 || response.statusCode == 403 {
                 throw OpenCodeGoUsageError.invalidCredentials
@@ -212,7 +312,35 @@ public struct OpenCodeGoUsageFetcher: Sendable {
         guard let text = String(data: response.data, encoding: .utf8) else {
             throw OpenCodeGoUsageError.parseFailed("Response was not UTF-8.")
         }
-        return try self.parseAPIUsage(text: text, now: now)
+        let snapshot = try self.parseAPIUsage(text: text, now: apiRequest.now)
+        guard apiRequest.includeBilledUsage else { return snapshot }
+        let billedTask = Task { try await OpenCodeGoConsoleFetcher.fetchBilledUsage(
+            read: OpenCodeGoConsoleFetcher.Read(
+                apiKey: apiRequest.token,
+                timeout: apiRequest.timeout,
+                session: apiRequest.session),
+            historyDays: apiRequest.historyDays,
+            now: apiRequest.now) }
+        defer { billedTask.cancel() }
+        return try await Self.joinedBilledUsage(snapshot, task: billedTask, failureLabel: "billed usage")
+    }
+
+    /// Billed spend and token counts are optional: a quota success must never be lost to them.
+    private static func joinedBilledUsage(
+        _ snapshot: OpenCodeGoUsageSnapshot,
+        task: Task<OpenCodeGoBilledUsage?, Error>,
+        failureLabel: String) async throws -> OpenCodeGoUsageSnapshot
+    {
+        do {
+            return try await snapshot.withBilled(task.value)
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch let error as URLError where error.code == .cancelled {
+            throw CancellationError()
+        } catch {
+            Self.log.debug("OpenCode Go \(failureLabel) unavailable: \(error.localizedDescription)")
+            return snapshot
+        }
     }
 
     static func requiredZenBalanceFallback(

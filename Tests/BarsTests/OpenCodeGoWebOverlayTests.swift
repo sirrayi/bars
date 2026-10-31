@@ -349,7 +349,7 @@ struct OpenCodeGoWebOverlayTests {
     }
 
     @Test
-    func `local strategy prefers API windows while preserving local history and web balance`() async throws {
+    func `local strategy prefers API windows and skips the session scrape`() async throws {
         let observedKeys = Recorder<String>()
         let webCalls = Recorder<String>()
         let strategy = OpenCodeGoLocalUsageFetchStrategy(
@@ -377,14 +377,15 @@ struct OpenCodeGoWebOverlayTests {
 
         #expect(result.sourceLabel == "local+api")
         #expect(observedKeys.values == ["go_test"])
-        #expect(webCalls.values == ["auth=test"])
+        // The Console meters and the session scrape read the same micro-cents, and the API path
+        // carries its own Zen balance, so nothing is left for a cookie round trip to add.
+        #expect(webCalls.values.isEmpty)
         #expect(result.usage.primary?.usedPercent == 3)
         #expect(result.usage.secondary?.usedPercent == 1)
         #expect(result.usage.tertiary?.usedPercent == 0)
         #expect(result.usage.opencodegoUsage?.daily.count == 1)
         #expect(result.usage.opencodegoUsage?.daily.first?.costUSD == 11.52)
         #expect(result.usage.opencodegoUsage?.daily.first?.requestCount == 748)
-        #expect(result.usage.providerCost?.used == 42.5)
         #expect(result.usage.dataConfidence != .estimated)
     }
 

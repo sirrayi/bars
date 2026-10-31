@@ -13,6 +13,9 @@ public struct OpenCodeGoUsageSnapshot: Sendable {
     public private(set) var zenBalanceUSD: Double?
     public let renewsAt: Date?
     public private(set) var daily: [CostUsageDailyReport.Entry]
+    /// Console-metered spend and billed token counts. Present only when the workspace API key can
+    /// read the Console; the local SQLite history stays the fallback for device-only accounts.
+    public private(set) var billed: OpenCodeGoBilledUsage?
     public let updatedAt: Date
 
     public init(
@@ -28,6 +31,7 @@ public struct OpenCodeGoUsageSnapshot: Sendable {
         zenBalanceUSD: Double? = nil,
         renewsAt: Date? = nil,
         daily: [CostUsageDailyReport.Entry] = [],
+        billed: OpenCodeGoBilledUsage? = nil,
         updatedAt: Date)
     {
         self.isBalanceOnly = isBalanceOnly
@@ -42,6 +46,7 @@ public struct OpenCodeGoUsageSnapshot: Sendable {
         self.zenBalanceUSD = zenBalanceUSD
         self.renewsAt = renewsAt
         self.daily = daily
+        self.billed = billed
         self.updatedAt = updatedAt
     }
 
@@ -160,17 +165,45 @@ public struct OpenCodeGoUsageSnapshot: Sendable {
             zenBalanceUSD: web.zenBalanceUSD ?? self.zenBalanceUSD,
             renewsAt: web.renewsAt ?? self.renewsAt,
             daily: self.daily,
+            billed: self.billed ?? web.billed,
             updatedAt: self.updatedAt)
     }
 
-    public func withDaily(_ daily: [CostUsageDailyReport.Entry]) -> OpenCodeGoUsageSnapshot {
+    /// Applies Console-reported meters, which are exact micro-cent fractions, over a local estimate.
+    /// Unlike a browser-session overlay this also adopts the server's billed spend and token history,
+    /// because the local SQLite ledger only covers usage this device recorded.
+    public func applyingMeteredUsage(_ metered: OpenCodeGoUsageSnapshot) -> OpenCodeGoUsageSnapshot {
+        guard !metered.isBalanceOnly else {
+            return self.withZenBalanceUSD(metered.zenBalanceUSD ?? self.zenBalanceUSD)
+        }
+        let billed = metered.billed ?? self.billed
+        return OpenCodeGoUsageSnapshot(
+            hasWeeklyUsage: metered.hasWeeklyUsage,
+            hasMonthlyUsage: metered.hasMonthlyUsage,
+            rollingUsagePercent: metered.rollingUsagePercent,
+            weeklyUsagePercent: metered.weeklyUsagePercent,
+            monthlyUsagePercent: metered.monthlyUsagePercent,
+            rollingResetInSec: metered.rollingResetInSec,
+            weeklyResetInSec: metered.weeklyResetInSec,
+            monthlyResetInSec: metered.monthlyResetInSec,
+            zenBalanceUSD: metered.zenBalanceUSD ?? self.zenBalanceUSD,
+            renewsAt: metered.renewsAt ?? self.renewsAt,
+            daily: metered.daily.isEmpty ? self.daily : metered.daily,
+            billed: billed,
+            updatedAt: self.updatedAt)
+    }
+
+    public func withBilled(_ billed: OpenCodeGoBilledUsage?) -> OpenCodeGoUsageSnapshot {
+        guard let billed else { return self }
         var copy = self
-        copy.daily = daily
+        copy.billed = billed
+        copy.daily = billed.daily.isEmpty ? self.daily : billed.daily
         return copy
     }
 
-    /// Projects the local per-day cost buckets into the shared cost-history model so OpenCode Go
-    /// can reuse the same daily usage chart as Claude instead of a bespoke view.
+    /// Projects the recorded per-day cost buckets into the shared cost-history model so OpenCode Go
+    /// can reuse the same daily usage chart as Claude instead of a bespoke view. Console-metered rows
+    /// are the amounts OpenCode charged; local rows are emulated model costs, so they stay estimates.
     public func toCostUsageTokenSnapshot(
         historyDays: Int = 30,
         calendar: Calendar = .current) -> CostUsageTokenSnapshot
@@ -180,6 +213,7 @@ public struct OpenCodeGoUsageSnapshot: Sendable {
             now: self.updatedAt,
             historyDays: historyDays,
             calendar: calendar,
-            costProvenance: .listPriceEstimate)
+            meteredCostUSD: self.billed?.costUSD,
+            costProvenance: self.billed == nil ? .listPriceEstimate : .vendorMetered)
     }
 }

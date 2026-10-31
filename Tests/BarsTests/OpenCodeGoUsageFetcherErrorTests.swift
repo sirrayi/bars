@@ -86,11 +86,14 @@ struct OpenCodeGoUsageFetcherErrorTests {
             apiKey: "go_secret",
             timeout: 2,
             now: now,
+            includeBilledUsage: false,
+            includeZenBalance: false,
             session: self.makeSession())
 
-        #expect(requests.values.count == 1)
-        #expect(requests.values.first?.url?.path == "/zen/go/v1/usage")
-        #expect(requests.values.first?.value(forHTTPHeaderField: "Authorization") == "Bearer go_secret")
+        // Console meters are probed first so exact micro-cent fractions win; the stub answers that
+        // request without a Go meter payload, so the public API supplies the whole-percent fallback.
+        #expect(requests.values.map { $0.url?.path } == ["/console/api/go/status", "/zen/go/v1/usage"])
+        #expect(requests.values.last?.value(forHTTPHeaderField: "Authorization") == "Bearer go_secret")
         let usage = snapshot.toUsageSnapshot()
         #expect(usage.primary?.usedPercent == rolling)
         #expect(usage.secondary?.usedPercent == weekly)

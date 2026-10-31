@@ -76,9 +76,14 @@ public enum OpenCodeGoProviderDescriptor {
             tokenCost: ProviderTokenCostConfig(
                 supportsTokenCost: true,
                 noDataMessage: {
-                    "No OpenCode Go local usage history found in ~/.local/share/opencode/opencode.db."
+                    "No OpenCode Go usage history found. Add an API key to read Console-billed spend and "
+                        + "token counts, or use OpenCode Go on this Mac to record local history."
                 },
-                supportsTokenSnapshot: true),
+                menuHintLines: [.literal(
+                    "Billed spend and tokens come from the OpenCode Console when an API key is configured; "
+                        + "otherwise estimated from local history")],
+                supportsTokenSnapshot: true,
+                estimateDisclaimer: "Estimated from local OpenCode history · may differ from your bill"),
             pace: ProviderPaceCapability(
                 resetWindowPace: .windowDuration(minutes: ProviderPaceCapability.monthlyWindowSentinelMinutes),
                 inferredMonthlyDuration: .windowDuration(minutes: ProviderPaceCapability.monthlyWindowSentinelMinutes),
@@ -201,7 +206,8 @@ struct OpenCodeGoLocalUsageFetchStrategy: ProviderFetchStrategy {
         apiUsageOverlayFetcher: @escaping APIUsageOverlayFetcher = { context, apiKey in
             try await OpenCodeGoUsageFetcher.fetchAPIUsage(
                 apiKey: apiKey,
-                timeout: context.webTimeout)
+                timeout: context.webTimeout,
+                historyDays: context.costUsageHistoryDays)
         })
     {
         self.cookieHeaderResolver = cookieHeaderResolver
@@ -231,7 +237,7 @@ struct OpenCodeGoLocalUsageFetchStrategy: ProviderFetchStrategy {
         var source = "local"
         if let apiKey = OpenCodeGoSettingsReader.apiKey(environment: context.env) {
             do {
-                snapshot = try await snapshot.applyingWebUsage(self.apiUsageOverlayFetcher(context, apiKey))
+                snapshot = try await snapshot.applyingMeteredUsage(self.apiUsageOverlayFetcher(context, apiKey))
                 source = "local+api"
             } catch is CancellationError {
                 throw CancellationError()
@@ -245,6 +251,9 @@ struct OpenCodeGoLocalUsageFetchStrategy: ProviderFetchStrategy {
             snapshot: snapshot,
             sourceLabel: source,
             quotaIsAuthoritative: source == "local+api")
+        // The Console already answered with the same micro-cent meters a session scrape would return,
+        // and it carries the Zen balance too, so a cookie round trip would only add latency.
+        if source == "local+api" { return fallback }
         guard context.settings?.opencodego?.cookieSource != .off else { return fallback }
         var cookie = Self.cachedOrManualCookie(context: context)
         do {
@@ -259,12 +268,6 @@ struct OpenCodeGoLocalUsageFetchStrategy: ProviderFetchStrategy {
             }
             guard let cookie else { return fallback }
             if let web = try await self.webUsageOverlayFetcher(context, cookie.header) {
-                if source == "local+api" {
-                    return SnapshotResult(
-                        snapshot: snapshot.withZenBalanceUSD(web.zenBalanceUSD ?? snapshot.zenBalanceUSD),
-                        sourceLabel: source,
-                        quotaIsAuthoritative: true)
-                }
                 return SnapshotResult(
                     snapshot: snapshot.applyingWebUsage(web),
                     sourceLabel: "local+web",
@@ -374,7 +377,8 @@ struct OpenCodeGoAPIUsageFetchStrategy: ProviderFetchStrategy {
         }
         let snapshot = try await OpenCodeGoUsageFetcher.fetchAPIUsage(
             apiKey: apiKey,
-            timeout: context.webTimeout)
+            timeout: context.webTimeout,
+            historyDays: context.costUsageHistoryDays)
         return self.makeResult(usage: snapshot.toUsageSnapshot(), sourceLabel: "api")
     }
 

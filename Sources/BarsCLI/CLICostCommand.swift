@@ -47,6 +47,10 @@ extension BarsCLI {
             do {
                 let snapshot = try await fetcher.loadTokenSnapshot(
                     provider: provider,
+                    environment: ProviderConfigEnvironment.applyAPIKeyOverride(
+                        base: ProcessInfo.processInfo.environment,
+                        provider: provider,
+                        config: config.providerConfig(for: provider.instanceID)),
                     now: now,
                     forceRefresh: forceRefresh,
                     historyDays: historyDays,
@@ -102,7 +106,11 @@ extension BarsCLI {
         if descriptor.tokenCost.presentation == .tokensOnly {
             return Self.renderLocalTokenHistoryText(name: name, snapshot: snapshot, useColor: useColor)
         }
-        let header = Self.costHeaderLine("\(name) Cost (API-rate estimate)", useColor: useColor)
+        // Vendor-metered spend is the vendor's own figure, so it is not an API-rate estimate.
+        let isMetered = snapshot.costProvenance == .vendorMetered
+        let header = Self.costHeaderLine(
+            isMetered ? "\(name) Cost (billed)" : "\(name) Cost (API-rate estimate)",
+            useColor: useColor)
         let historyNotice = snapshot.historyIsFullyScanned ? nil : "Partial local history · recorded token subtotal"
 
         let todayIncomplete = snapshot.summary(forLastDays: 1, calendar: calendar).incompleteRequestCount
@@ -121,10 +129,14 @@ extension BarsCLI {
             "\(historyLabel): \(monthCost) · \($0) tokens"
         } ?? "\(historyLabel): \(monthCost)"
 
-        // Plan-metered spend over the same window (what Cursor actually deducts), shown
-        // alongside the API-rate estimate. Only providers like Cursor report it.
-        let meteredLine: String? = snapshot.meteredCostUSD.map {
-            let amount = UsageFormatter.currencyString($0, currencyCode: snapshot.currencyCode)
+        // Plan-metered spend over the same window (what Cursor actually deducts), shown alongside the
+        // API-rate estimate. A vendor-metered total already *is* the billed figure, so it only earns a
+        // second row when it disagrees with the window total.
+        let meteredLine: String? = snapshot.meteredCostUSD.flatMap { metered in
+            if isMetered, let total = snapshot.last30DaysCostUSD, abs(total - metered) < 0.005 {
+                return nil
+            }
+            let amount = UsageFormatter.currencyString(metered, currencyCode: snapshot.currencyCode)
             return "Plan metered: \(amount) (\(historyLabel.lowercased()))"
         }
 
@@ -149,7 +161,9 @@ extension BarsCLI {
                 calendar: calendar,
                 useColor: useColor))
         }
-        lines.append(UsageFormatter.costEstimateHint(provider: provider))
+        lines.append(isMetered
+            ? "Billed by \(name) from your workspace usage meters."
+            : UsageFormatter.costEstimateHint(provider: provider))
         return lines.compactMap(\.self).joined(separator: "\n")
     }
 

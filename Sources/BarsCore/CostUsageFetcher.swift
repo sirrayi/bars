@@ -145,11 +145,20 @@ public struct CostUsageFetcher: Sendable {
 
         let clampedHistoryDays = max(1, historyDays)
         var options = overrideScannerOptions ?? CostUsageScanner.Options()
-        // OpenCode Go shares the app's device-local reader and recorded-cost projection.
+        // OpenCode Go reads Console-metered history when the workspace API key is available, then falls
+        // back to its device-local reader and recorded-cost projection.
         if provider == .opencodego {
+            let calendar = options.calendar
+            if let metered = await Self.meteredOpenCodeGoUsage(
+                environment: environment,
+                now: now,
+                historyDays: clampedHistoryDays,
+                calendar: calendar)
+            {
+                return metered
+            }
             let home = environment["HOME"].map { URL(fileURLWithPath: $0, isDirectory: true) }
                 ?? FileManager.default.homeDirectoryForCurrentUser
-            let calendar = options.calendar
             return try await CostUsageScanExecutor.run { _ in
                 let usage = try OpenCodeGoLocalUsageReader(homeDirectory: home).fetch(
                     now: now, historyDays: clampedHistoryDays, calendar: calendar)
