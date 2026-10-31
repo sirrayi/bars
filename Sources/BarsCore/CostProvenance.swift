@@ -175,14 +175,6 @@ public struct CostUsageTokenMix: Sendable, Equatable, Codable {
         self.reasoningTokens = Self.nonnegative(reasoningTokens)
     }
 
-    public var hasAnyClass: Bool {
-        self.inputTokens != nil
-            || self.outputTokens != nil
-            || self.cacheReadTokens != nil
-            || self.cacheCreationTokens != nil
-            || self.reasoningTokens != nil
-    }
-
     public mutating func merge(_ other: CostUsageTokenMix) {
         self.overflowedClasses |= other.overflowedClasses
         self.inputTokens = self.add(self.inputTokens, other.inputTokens, bit: 1)

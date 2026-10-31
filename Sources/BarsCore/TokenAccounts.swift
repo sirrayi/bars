@@ -121,10 +121,6 @@ public struct ProviderTokenAccount: Codable, Identifiable, Sendable {
         Self.clean(self.workspaceID)
     }
 
-    public var sanitizedSeatCreditEntitlement: String? {
-        Self.clean(self.seatCreditEntitlement)
-    }
-
     private static func clean(_ raw: String?) -> String? {
         let trimmed = raw?.trimmingCharacters(in: .whitespacesAndNewlines)
         return (trimmed?.isEmpty ?? true) ? nil : trimmed

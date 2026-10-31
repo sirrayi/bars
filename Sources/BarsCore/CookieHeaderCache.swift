@@ -49,7 +49,6 @@ private enum CookieRefreshStagedMutation: Sendable {
 private struct CookieRefreshSuppressionState: Sendable {
     let provider: UsageProvider
     var stagedMutations: [KeychainCacheStore.Key: CookieRefreshStagedMutation] = [:]
-    var validatedNonpersistentSession = false
 }
 
 private enum CookieRefreshReadResolution {
@@ -1049,14 +1048,6 @@ extension CookieHeaderCache {
         }
     }
 
-    static func markNonpersistentRefreshValidated(provider: UsageProvider) {
-        self.refreshReadSuppressionLock.withLock {
-            guard let token = self.refreshReadSuppressions.first(where: { $0.value.provider == provider })?.key
-            else { return }
-            self.refreshReadSuppressions[token]?.validatedNonpersistentSession = true
-        }
-    }
-
     public static func commitRefreshReadSuppression(
         _ gate: CookieRefreshReadSuppressionGate) -> CookieRefreshCommitSummary
     {
@@ -1071,7 +1062,7 @@ extension CookieHeaderCache {
                 let stagedCount = state.stagedMutations.count
                 guard stagedCount > 0 else {
                     return CookieRefreshCommitSummary(
-                        stagedCount: 0, committedCount: 0, failedCount: state.validatedNonpersistentSession ? 0 : 1)
+                        stagedCount: 0, committedCount: 0, failedCount: 1)
                 }
                 guard stagedCount == 1,
                       let (key, mutation) = state.stagedMutations.first,
@@ -1104,12 +1095,6 @@ extension CookieHeaderCache {
     public static func endRefreshReadSuppression(_ gate: CookieRefreshReadSuppressionGate) {
         _ = self.refreshReadSuppressionLock.withLock {
             self.refreshReadSuppressions.removeValue(forKey: gate.token)
-        }
-    }
-
-    static func isRefreshReadSuppressed(provider: UsageProvider) -> Bool {
-        self.refreshReadSuppressionLock.withLock {
-            self.refreshReadSuppressions.values.contains { $0.provider == provider }
         }
     }
 
@@ -1174,16 +1159,6 @@ extension CookieHeaderCache {
         return ConditionalMutationGate(coordinator: coordinator, key: key, token: token)
     }
 
-    public static func endConditionalMutationGate(_ gate: ConditionalMutationGate) {
-        gate.coordinator.lock.withLock {
-            guard var state = gate.coordinator.gates[gate.key],
-                  state.activeTokens.remove(gate.token) != nil
-            else { return }
-            state.generation &+= 1
-            gate.coordinator.gates[gate.key] = state
-        }
-    }
-
     /// Stores a replacement only when it can be normalized and durably written.
     /// Unlike ``store(provider:scope:cookieHeader:sourceLabel:now:)``, invalid input leaves the current entry intact.
     @discardableResult
@@ -1243,15 +1218,6 @@ extension CookieHeaderCache {
                  let .keychainTemporarilyUnavailable(_, _, coordinator):
                 coordinator
             }
-        }
-
-        /// Updates the expected cache contents after this flow clears its observed entry without
-        /// accepting interactive mutations that happened after the original observation.
-        func afterOwnedClear() -> Self {
-            .authoritative(
-                nil,
-                gateGeneration: self.gateGeneration,
-                coordinator: self.coordinator)
         }
     }
 

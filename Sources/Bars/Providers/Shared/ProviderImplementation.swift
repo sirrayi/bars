@@ -14,9 +14,6 @@ protocol ProviderImplementation: Sendable {
     func presentation(context: ProviderPresentationContext) -> ProviderPresentation
 
     @MainActor
-    func observeSettings(_ settings: SettingsStore)
-
-    @MainActor
     func isAvailable(context: ProviderAvailabilityContext) -> Bool
 
     @MainActor
@@ -119,15 +116,6 @@ extension ProviderImplementation {
     @MainActor
     func presentation(context _: ProviderPresentationContext) -> ProviderPresentation {
         ProviderPresentation(detailLine: ProviderPresentation.standardDetailLine)
-    }
-
-    @MainActor
-    func observeSettings(_ settings: SettingsStore) {
-        guard ProviderDescriptorRegistry.descriptor(for: self.id).settingsSection.cookieContribution != nil else {
-            return
-        }
-        _ = settings.resolvedCookieSource(provider: self.id, fallback: .auto)
-        _ = settings[providerConfig: self.id, field: .cookieHeader]
     }
 
     @MainActor

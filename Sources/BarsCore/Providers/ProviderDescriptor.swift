@@ -232,10 +232,6 @@ public struct ProviderStandardPaceLane: Sendable {
         Self(kind: .weekly, windowRule: .custom { _, _ in true })
     }
 
-    public static var weeklyWithDuration: Self {
-        Self(kind: .weekly, windowRule: .windowDurationPresent)
-    }
-
     public static func exact(kind: ProviderPaceKind, minutes: Int) -> Self {
         Self(kind: kind, windowRule: .windowDuration(minutes: minutes))
     }

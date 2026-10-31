@@ -70,19 +70,4 @@ public enum TextParsing {
         guard let pct = firstInt(pattern: #"([0-9]{1,3})%\s+left"#, text: line) else { return nil }
         return pct
     }
-
-    public static func resetString(fromLine line: String) -> String? {
-        guard let regex = try? NSRegularExpression(pattern: #"resets?\s+(.+)"#, options: [.caseInsensitive]) else {
-            return nil
-        }
-        let range = NSRange(line.startIndex..<line.endIndex, in: line)
-        guard let match = regex.firstMatch(in: line, options: [], range: range),
-              match.numberOfRanges >= 2,
-              let r = Range(match.range(at: 1), in: line)
-        else {
-            return nil
-        }
-        // Return the tail text only (drop the "resets" prefix).
-        return String(line[r]).trimmingCharacters(in: .whitespacesAndNewlines)
-    }
 }

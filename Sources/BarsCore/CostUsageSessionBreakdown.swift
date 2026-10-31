@@ -65,10 +65,4 @@ public struct CostUsageSessionBreakdown: Sendable, Equatable, Identifiable {
         copy.title = title
         return copy
     }
-
-    public func withRequestDetails(_ turns: [CostUsageSessionTurn]) -> CostUsageSessionBreakdown {
-        var copy = self
-        copy.turns = turns
-        return copy
-    }
 }

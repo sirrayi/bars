@@ -72,8 +72,6 @@ public struct ProviderHTTPRetryPolicy: Sendable {
         baseDelaySeconds: 0,
         maxDelaySeconds: 0)
 
-    public static let transientIdempotent = ProviderHTTPRetryPolicy(maxRetries: 1)
-
     func shouldRetry(request: URLRequest, attempt: Int, statusCode: Int) -> Bool {
         self.canRetry(request: request, attempt: attempt)
             && self.retryableStatusCodes.contains(statusCode)

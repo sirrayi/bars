@@ -418,34 +418,6 @@ public enum UsageFormatter {
         return "\(bytes) \(word)"
     }
 
-    public static func creditEventSummary(_ event: CreditEvent) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        let number = NumberFormatter()
-        number.numberStyle = .decimal
-        number.maximumFractionDigits = 2
-        let credits = number.string(from: NSNumber(value: event.creditsUsed)) ?? "0"
-        return "\(formatter.string(from: event.date)) · \(event.service) · \(credits) credits"
-    }
-
-    public static func creditEventCompact(_ event: CreditEvent) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d"
-        let number = NumberFormatter()
-        number.numberStyle = .decimal
-        number.maximumFractionDigits = 2
-        let credits = number.string(from: NSNumber(value: event.creditsUsed)) ?? "0"
-        return "\(formatter.string(from: event.date)) — \(event.service): \(credits)"
-    }
-
-    public static func creditShort(_ value: Double) -> String {
-        if value >= 1000 {
-            let k = value / 1000
-            return String(format: "%.1fk", k)
-        }
-        return String(format: "%.0f", value)
-    }
-
     public static func truncatedSingleLine(_ text: String, max: Int = 80) -> String {
         let single = text
             .replacingOccurrences(of: "\n", with: " ")
@@ -522,23 +494,4 @@ public enum UsageFormatter {
     }
 }
 
-extension UsageFormatter {
-    static func compactResetDescription(_ date: Date?, now: Date = Date()) -> String? {
-        guard let date else { return nil }
-        let interval = date.timeIntervalSince(now)
-        guard interval > 0 else { return "Expired" }
-
-        let hours = Int(interval / 3600)
-        let minutes = Int((interval.truncatingRemainder(dividingBy: 3600)) / 60)
-
-        if hours >= 24 {
-            let days = hours / 24
-            let remainingHours = hours % 24
-            return "Resets in \(days)d \(remainingHours)h"
-        } else if hours > 0 {
-            return "Resets in \(hours)h \(minutes)m"
-        } else {
-            return "Resets in \(minutes)m"
-        }
-    }
-}
+extension UsageFormatter {}

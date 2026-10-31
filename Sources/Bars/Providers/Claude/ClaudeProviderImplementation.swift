@@ -17,24 +17,6 @@ struct ClaudeProviderImplementation: ProviderImplementation {
     }
 
     @MainActor
-    func observeSettings(_ settings: SettingsStore) {
-        _ = settings.claudeUsageDataSource
-        _ = settings.claudeWorkspaceSpendEnabled
-        _ = settings.claudeAdminAPIKey
-        _ = settings.claudeCookieSource
-        _ = settings.claudeDesktopCookiesEnabled
-        _ = settings.claudeCookieHeader
-        _ = settings.claudeOAuthKeychainPromptMode
-        _ = settings.claudeOAuthDirectKeychainReadAllowed
-        _ = settings.claudeOAuthKeychainReadStrategy
-        _ = settings.claudeWebExtrasEnabled
-        _ = settings.claudeSwapEnabled
-        _ = settings.claudeSwapShowSingleAccount
-        _ = settings.claudeSwapExecutablePath
-        _ = settings.claudeSwapSource
-    }
-
-    @MainActor
     func settingsSnapshot(context: ProviderSettingsSnapshotContext) -> ProviderSettingsSnapshotContribution? {
         .claude(context.settings.claudeSettingsSnapshot(tokenOverride: context.tokenOverride))
     }

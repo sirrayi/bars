@@ -157,18 +157,6 @@ public final class HookTransitionDetector {
         self.resetDropThreshold = resetDropThreshold
     }
 
-    /// Drops every baseline when the hook configuration changed.
-    ///
-    /// A rule edit, disable, or re-enable must not fire for a transition that
-    /// happened while the previous configuration was inactive; the next sample
-    /// re-establishes baselines instead.
-    public func resetIfConfigurationChanged(revision: Int) {
-        guard self.configRevision != revision else { return }
-        self.windowObservation.removeAll()
-        self.providerStatusHadIssue.removeAll()
-        self.configRevision = revision
-    }
-
     /// Evaluates one poll of one provider and returns the events to dispatch.
     ///
     /// Events are edge-triggered against the previous sample, so a condition that

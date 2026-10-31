@@ -249,29 +249,6 @@ public enum BrowserCookieAccessGate {
         }
     }
 
-    /// CLI-owned credentials share the manual action's allowance with browser Safe Storage reads.
-    static func claimCredentialRead(service: String, now: Date = Date()) -> Bool {
-        guard !KeychainAccessGate.isDisabled,
-              !BrowserCookieKeychainAccessGate.isUserInteractionDisallowed,
-              ProviderInteractionContext.current == .userInitiated,
-              let scope = self.explicitRetryScope
-        else { return false }
-        let deniedUntil = self.stateLock.withLock { state in
-            self.loadIfNeeded(&state)
-            return state.deniedUntilBySource[self.credentialKeyPrefix + service]
-        }
-        return (deniedUntil.map { $0 <= now } ?? true) && scope.claimCookieRead()
-    }
-
-    static func recordCredentialDenial(service: String, now: Date = Date()) {
-        let blockedUntil = now.addingTimeInterval(self.cooldownInterval)
-        self.stateLock.withLock { state in
-            self.loadIfNeeded(&state)
-            state.deniedUntilBySource[self.credentialKeyPrefix + service] = blockedUntil
-            self.persist(state)
-        }
-    }
-
     #if DEBUG
     static func withIsolatedStateForTesting<T>(_ operation: () throws -> T) rethrows -> T {
         try self.$stateForTesting.withValue(

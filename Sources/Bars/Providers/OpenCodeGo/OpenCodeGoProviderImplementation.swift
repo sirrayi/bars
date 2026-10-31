@@ -22,14 +22,6 @@ struct OpenCodeGoProviderImplementation: ProviderImplementation {
     }
 
     @MainActor
-    func observeSettings(_ settings: SettingsStore) {
-        _ = settings.opencodegoCookieSource
-        _ = settings.opencodegoCookieHeader
-        _ = settings.opencodegoWorkspaceID
-        _ = settings[providerConfig: .opencodego, field: .apiKey]
-    }
-
-    @MainActor
     func settingsSnapshot(context: ProviderSettingsSnapshotContext) -> ProviderSettingsSnapshotContribution? {
         .opencodego(context.settings.opencodegoSettingsSnapshot(tokenOverride: context.tokenOverride))
     }

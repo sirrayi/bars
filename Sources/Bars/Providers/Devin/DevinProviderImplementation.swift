@@ -14,13 +14,6 @@ struct DevinProviderImplementation: ProviderImplementation {
     }
 
     @MainActor
-    func observeSettings(_ settings: SettingsStore) {
-        _ = settings.devinCookieSource
-        _ = settings.devinBearerToken
-        _ = settings.devinOrganization
-    }
-
-    @MainActor
     func settingsSnapshot(context: ProviderSettingsSnapshotContext) -> ProviderSettingsSnapshotContribution? {
         .devin(context.settings.devinSettingsSnapshot(tokenOverride: context.tokenOverride))
     }

@@ -136,13 +136,6 @@ enum CostUsageScanner {
             CostUsageLocalDay.gregorianCalendar(matching: calendar)
         }
 
-        func retainingScanWindow(since scanSinceKey: String, until scanUntilKey: String) -> Self {
-            var retained = self
-            retained.scanSinceKey = min(self.scanSinceKey, scanSinceKey)
-            retained.scanUntilKey = max(self.scanUntilKey, scanUntilKey)
-            return retained
-        }
-
         static func dayKey(from date: Date, calendar: Calendar = .current) -> String {
             CostUsageLocalDay.key(from: date, calendar: calendar)
         }
@@ -150,10 +143,5 @@ enum CostUsageScanner {
         static func isInRange(dayKey: String, since: String, until: String) -> Bool {
             dayKey >= since && dayKey <= until
         }
-    }
-
-    static func localStartOfDay(_ dayKey: String, calendar: Calendar) -> Date? {
-        let calendar = CostUsageDayRange.localGregorianCalendar(matching: calendar)
-        return self.parseDayKey(dayKey, calendar: calendar).map { calendar.startOfDay(for: $0) }
     }
 }

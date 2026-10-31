@@ -241,4 +241,5 @@ public struct ProviderSettingsSnapshotBuilder: Sendable {
     }
 }
 
+/// Placeholder section type for snapshots built without provider-specific settings.
 private struct EmptyProviderSettingsSection: Sendable {}

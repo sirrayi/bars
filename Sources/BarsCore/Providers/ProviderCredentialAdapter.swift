@@ -254,24 +254,6 @@ extension ProviderCredentialEnvironmentProjection {
 }
 
 extension ProviderCredentialAdapter {
-    public static func regionValidator(
-        displayName: String,
-        isValid: @escaping @Sendable (String) -> Bool) -> ConfigValidator
-    {
-        { config in
-            guard let provider = config.id.firstPartyProvider,
-                  let region = config.sanitizedRegion,
-                  !isValid(region)
-            else { return [] }
-            return [BarsConfigIssue(
-                severity: .error,
-                provider: provider,
-                field: "region",
-                code: "invalid_region",
-                message: "Region \(region) is not a valid \(displayName) region.")]
-        }
-    }
-
     public static func apiKey(
         environmentKey: String,
         apiKeyDebugLabel: String? = nil,

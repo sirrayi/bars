@@ -78,17 +78,6 @@ package enum CredentialFileWriter {
         }
     }
 
-    /// If `url` exists and is readable by group or others, restrict it to `0600`. Best-effort;
-    /// used to remediate credential files created `0644` by earlier builds when they are next read.
-    static func repairPermissions(at url: URL) {
-        let fm = FileManager.default
-        guard let attributes = try? fm.attributesOfItem(atPath: url.path),
-              let mode = (attributes[.posixPermissions] as? NSNumber)?.uint16Value,
-              (mode & 0o077) != 0
-        else { return }
-        try? fm.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
-    }
-
     private static func posixError(_ code: Int32, path: String) -> Error {
         NSError(
             domain: NSPOSIXErrorDomain,

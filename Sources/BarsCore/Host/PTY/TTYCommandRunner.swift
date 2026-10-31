@@ -924,25 +924,11 @@ extension TTYCommandRunner {
         try TTYCommandRunnerActiveProcessRegistry.withIsolatedStateForTesting(operation)
     }
 
-    static func withEarlyStopSettleOverrideForTesting<T>(
-        _ settle: @escaping @Sendable (SpawnedProcessGroup) throws -> Void,
-        operation: () throws -> T) rethrows -> T
-    {
-        try TTYCommandRunnerTestingOverrides.$earlyStopSettle.withValue(settle, operation: operation)
-    }
-
     static func withPostDeadlineDrainDurationOverrideForTesting<T>(
         _ duration: TimeInterval,
         operation: () throws -> T) rethrows -> T
     {
         try TTYCommandRunnerTestingOverrides.$postDeadlineDrainDuration.withValue(duration, operation: operation)
-    }
-
-    static func withOutputLimitOverrideForTesting<T>(
-        _ maxBytes: Int,
-        operation: () throws -> T) rethrows -> T
-    {
-        try TTYCommandRunnerTestingOverrides.$outputLimitBytes.withValue(maxBytes, operation: operation)
     }
 
     public static func which(
@@ -1002,13 +988,6 @@ extension TTYCommandRunner {
             }
         }
         return URL(fileURLWithPath: expanded).standardizedFileURL.path
-    }
-
-    /// Uses login-shell PATH when available so TTY probes match the user's shell configuration.
-    public static func enrichedPath() -> String {
-        PathBuilder.effectivePATH(
-            purposes: [.tty, .nodeTooling],
-            env: ProcessInfo.processInfo.environment)
     }
 
     static func enrichedEnvironment(

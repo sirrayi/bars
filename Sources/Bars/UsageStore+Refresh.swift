@@ -527,11 +527,6 @@ extension UsageStore {
             isClaudeOAuthSample: isClaudeOAuthSample,
             sessionRestoredNotificationPending: publication.sessionRestored)
         guard self.isCurrentProviderRefreshGeneration(provider, generation: context.generation) else { return }
-        if let runtime = self.providerRuntimes[provider.instanceID] {
-            let runtimeContext = ProviderRuntimeContext(
-                provider: provider, settings: self.settings, store: self)
-            runtime.providerDidRefresh(context: runtimeContext, provider: provider)
-        }
     }
 
     private func applyProviderRefreshFailure(
@@ -1082,11 +1077,6 @@ extension UsageStore {
             }
         }
         guard self.isCurrentProviderRefreshGeneration(provider, generation: context.generation) else { return }
-        if let runtime = self.providerRuntimes[provider.instanceID] {
-            let context = ProviderRuntimeContext(
-                provider: provider, settings: self.settings, store: self)
-            runtime.providerDidFail(context: context, provider: provider, error: error)
-        }
     }
 
     private func validatedClaudeOAuthTokenAccountFallback(

@@ -193,10 +193,6 @@ enum ClaudeKeychainCredentialMatch: Equatable, Sendable {
         self == .mismatch
     }
 
-    var isAbsent: Bool {
-        self == .absent
-    }
-
     var isUnavailable: Bool {
         self == .unavailable
     }

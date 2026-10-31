@@ -50,12 +50,4 @@ public struct ProviderCLIConfig: Sendable {
         self.ttyLaunch = ttyLaunch
         self.browserSupportExemption = browserSupportExemption
     }
-
-    public func isBrowserSupportExempt(
-        sourceMode: ProviderSourceMode,
-        environment: [String: String]?,
-        settings: ProviderSettingsSnapshot?) -> Bool
-    {
-        self.browserSupportExemption(sourceMode, environment, settings)
-    }
 }

@@ -11,10 +11,6 @@ public enum ProviderSourceMode: String, CaseIterable, Sendable, Codable {
     case cli
     case oauth
     case api
-
-    public var usesWeb: Bool {
-        self == .auto || self == .web
-    }
 }
 
 public struct ProviderFetchContext: Sendable {
@@ -109,20 +105,12 @@ public struct ProviderFetchContext: Sendable {
     }
 }
 
-public enum ProviderCLISessionLifecycle {
-    public static func shutdownPersistentSessions() async {}
-}
-
-public enum ProviderSupplementalUsageUpdate: Sendable {}
-
 public struct ProviderFetchResult: Sendable {
     public let usage: UsageSnapshot
     public let credits: CreditsSnapshot?
     public let sourceLabel: String
     public let strategyID: String
     public let strategyKind: ProviderFetchKind
-    /// Optional provider data that may complete after the primary usage result is published.
-    public let supplementalUsageTask: Task<ProviderSupplementalUsageUpdate, Never>?
     /// Optional live diagnostic retained alongside an otherwise usable snapshot.
     public let diagnostic: String?
     /// Transient account ownership evidence for plan-utilization history.
@@ -146,7 +134,6 @@ public struct ProviderFetchResult: Sendable {
         sourceLabel: String,
         strategyID: String,
         strategyKind: ProviderFetchKind,
-        supplementalUsageTask: Task<ProviderSupplementalUsageUpdate, Never>? = nil,
         diagnostic: String? = nil,
         claudeOAuthKeychainPersistentRefHash: String? = nil,
         claudeOAuthHistoryOwnerIdentifier: String? = nil,
@@ -160,7 +147,6 @@ public struct ProviderFetchResult: Sendable {
         self.sourceLabel = sourceLabel
         self.strategyID = strategyID
         self.strategyKind = strategyKind
-        self.supplementalUsageTask = supplementalUsageTask
         self.diagnostic = diagnostic
         self.claudeOAuthKeychainPersistentRefHash = claudeOAuthKeychainPersistentRefHash
         self.claudeOAuthHistoryOwnerIdentifier = claudeOAuthHistoryOwnerIdentifier
@@ -178,7 +164,6 @@ public struct ProviderFetchResult: Sendable {
             sourceLabel: self.sourceLabel,
             strategyID: self.strategyID,
             strategyKind: self.strategyKind,
-            supplementalUsageTask: self.supplementalUsageTask,
             diagnostic: diagnostic,
             claudeOAuthKeychainPersistentRefHash: self.claudeOAuthKeychainPersistentRefHash,
             claudeOAuthHistoryOwnerIdentifier: self.claudeOAuthHistoryOwnerIdentifier,
@@ -302,7 +287,6 @@ extension ProviderFetchStrategy {
         usage: UsageSnapshot,
         credits: CreditsSnapshot? = nil,
         sourceLabel: String,
-        supplementalUsageTask: Task<ProviderSupplementalUsageUpdate, Never>? = nil,
         diagnostic: String? = nil) -> ProviderFetchResult
     {
         ProviderFetchResult(
@@ -311,7 +295,6 @@ extension ProviderFetchStrategy {
             sourceLabel: sourceLabel,
             strategyID: self.id,
             strategyKind: self.kind,
-            supplementalUsageTask: supplementalUsageTask,
             diagnostic: diagnostic)
     }
 }

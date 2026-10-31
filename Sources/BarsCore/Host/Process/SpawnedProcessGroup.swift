@@ -9,9 +9,6 @@ import Foundation
 
 #if DEBUG
 private enum SpawnedProcessGroupTestingOverrides {
-    @TaskLocal static var outputHolderDiscoveryHook: (@Sendable () -> Void)?
-    @TaskLocal static var outputHolderPreKillSnapshotHook: (@Sendable () -> Void)?
-    @TaskLocal static var outputHolderCleanupMaxLifetime: TimeInterval?
     @TaskLocal static var forcePTYPrimaryDescriptorReservationFailure = false
 }
 #endif
@@ -986,16 +983,9 @@ extension SpawnedProcessGroup {
     /// Hard-stop a live PTY root without making the caller wait on system-wide holder discovery.
     @discardableResult
     package func hardStopLivePTYRootSynchronously(grace: TimeInterval = 0.4) -> Int32? {
-        #if DEBUG
-        // Task-local values do not cross a GCD boundary, so capture the test hooks before dispatching.
-        let discoveryHook = SpawnedProcessGroupTestingOverrides.outputHolderDiscoveryHook
-        let preKillSnapshotHook = SpawnedProcessGroupTestingOverrides.outputHolderPreKillSnapshotHook
-        let cleanupMaxLifetime = max(0, SpawnedProcessGroupTestingOverrides.outputHolderCleanupMaxLifetime ?? 15)
-        #else
         let discoveryHook: (@Sendable () -> Void)? = nil
         let preKillSnapshotHook: (@Sendable () -> Void)? = nil
         let cleanupMaxLifetime: TimeInterval = 15
-        #endif
         guard let reservedPrimaryFileDescriptor = self.reservedPTYPrimaryDescriptor?.take() else {
             return self.abortSynchronously(grace: grace)
         }
@@ -1099,31 +1089,6 @@ extension SpawnedProcessGroup {
     }
 
     #if DEBUG
-    package static func withOutputHolderDiscoveryHookForTesting<T>(
-        _ hook: @escaping @Sendable () -> Void,
-        operation: () throws -> T) rethrows -> T
-    {
-        try SpawnedProcessGroupTestingOverrides.$outputHolderDiscoveryHook.withValue(hook, operation: operation)
-    }
-
-    package static func withOutputHolderPreKillSnapshotHookForTesting<T>(
-        _ hook: @escaping @Sendable () -> Void,
-        operation: () throws -> T) rethrows -> T
-    {
-        try SpawnedProcessGroupTestingOverrides.$outputHolderPreKillSnapshotHook.withValue(
-            hook,
-            operation: operation)
-    }
-
-    package static func withOutputHolderCleanupMaxLifetimeForTesting<T>(
-        _ maxLifetime: TimeInterval,
-        operation: () throws -> T) rethrows -> T
-    {
-        try SpawnedProcessGroupTestingOverrides.$outputHolderCleanupMaxLifetime.withValue(
-            maxLifetime,
-            operation: operation)
-    }
-
     package static func withPTYPrimaryDescriptorReservationFailureForTesting<T>(
         _ operation: () throws -> T) rethrows -> T
     {

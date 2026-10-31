@@ -22,11 +22,6 @@ enum CostUsagePricing {
         let output: Int
     }
 
-    static func optionalPricingFingerprint(_ value: Double?) -> String {
-        guard let value else { return "nil" }
-        return String(format: "%.17g", value)
-    }
-
     private static let claude: [String: ClaudePricing] = [
         "claude-fable-5": ClaudePricing(
             inputCostPerToken: 1e-5,

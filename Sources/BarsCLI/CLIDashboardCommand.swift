@@ -392,7 +392,6 @@ extension BarsCLI {
     {
         await providerOperations.shutdown()
         await costOperations.shutdown()
-        await ProviderCLISessionLifecycle.shutdownPersistentSessions()
         TTYCommandRunner.terminateActiveProcessesForAppShutdown()
     }
 }

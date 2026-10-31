@@ -47,15 +47,6 @@ public struct BarsConfigStore: @unchecked Sendable {
         }
     }
 
-    public func loadOrCreateDefault() throws -> BarsConfig {
-        if let existing = try self.load() {
-            return existing
-        }
-        let config = BarsConfig.makeDefault()
-        try self.save(config)
-        return config
-    }
-
     public func save(_ config: BarsConfig) throws {
         let data = try self.encodedData(for: config)
         try self.saveEncodedData(data)

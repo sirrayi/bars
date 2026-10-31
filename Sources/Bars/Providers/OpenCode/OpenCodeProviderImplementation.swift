@@ -10,13 +10,6 @@ struct OpenCodeProviderImplementation: ProviderImplementation {
     }
 
     @MainActor
-    func observeSettings(_ settings: SettingsStore) {
-        _ = settings.opencodeCookieSource
-        _ = settings.opencodeCookieHeader
-        _ = settings.opencodeWorkspaceID
-    }
-
-    @MainActor
     func settingsSnapshot(context: ProviderSettingsSnapshotContext) -> ProviderSettingsSnapshotContribution? {
         .opencode(context.settings.opencodeSettingsSnapshot(tokenOverride: context.tokenOverride))
     }
