@@ -15,10 +15,6 @@ extension UsageStore {
         self.enabledProvidersForDisplay().compactMap(\.firstPartyProvider)
     }
 
-    func enabledFirstPartyProvidersForBackgroundWork() -> [UsageProvider] {
-        self.enabledProvidersForBackgroundWork().compactMap(\.firstPartyProvider)
-    }
-
     struct DeepSeekProfileTransition {
         var snapshot: UsageSnapshot
         let accountID: UUID?
@@ -89,11 +85,6 @@ extension UsageStore {
 
     var deepseekProfileTransitionSnapshot: UsageSnapshot? {
         self.deepseekProfileTransition?.snapshot
-    }
-
-    var lastClaudeError: String? {
-        // Provider-specific by design: Claude swap/account surfaces consume the active Claude error lane directly.
-        self.errors[.claude]
     }
 
     func error(for provider: UsageProvider) -> String? {

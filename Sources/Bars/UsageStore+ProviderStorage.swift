@@ -15,10 +15,6 @@ extension UsageStore {
             lowPowerModeEnabled: lowPowerModeEnabled) ?? 5 * 60
     }
 
-    var isStorageRefreshInFlight: Bool {
-        self.storageRefreshTask != nil
-    }
-
     func storageFootprint(for provider: UsageProvider) -> ProviderStorageFootprint? {
         guard self.settings.providerStorageFootprintsEnabled else { return nil }
         return self.providerStorageFootprints[provider.instanceID]

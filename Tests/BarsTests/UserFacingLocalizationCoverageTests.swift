@@ -120,9 +120,6 @@ struct UserFacingLocalizationCoverageTests {
                 "\"Disabled —",
                 ".accessibilityLabel(\"Sort",
             ],
-            "Sources/Bars/StatusItemController+CostMenuCard.swift": [
-                "static let costMenuTitle",
-            ],
         ]
 
         var violations: [String] = []

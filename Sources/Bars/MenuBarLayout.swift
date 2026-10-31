@@ -798,10 +798,6 @@ struct MenuBarLayout: Codable, Hashable, Sendable {
         return Array(lines[firstContentLine...].prefix(2))
     }
 
-    var selectedLanes: Set<MenuBarLayoutLane> {
-        Set(self.lines.joined().compactMap(\.selectedLane))
-    }
-
     func v5Compatible() -> MenuBarLayout {
         self.projected { $0.hasV5Representation ? $0 : nil }
     }
@@ -1119,29 +1115,6 @@ enum MenuBarLayoutPersistence {
         }
     }
 
-    /// Pre-V2 installs only have the legacy keys. Materialize V2 plus an older-readable projection
-    /// at load so an immediate downgrade does not need an editor write first. Leave both keys
-    /// untouched when they disagree: that is an older-release edit.
-    static func needsStartupDualWrite(current: MenuBarLayout?, legacy: MenuBarLayout?) -> Bool {
-        switch (current, legacy) {
-        case (nil, .some): true
-        case (.some, nil): true
-        default: false
-        }
-    }
-
-    static func needsStartupDualWrite(
-        current: [String: MenuBarLayout]?,
-        legacy: [String: MenuBarLayout]?)
-        -> Bool
-    {
-        switch (current, legacy) {
-        case (nil, let legacy?): !legacy.isEmpty
-        case (let current?, nil): !current.isEmpty
-        default: false
-        }
-    }
-
     static func encoded(
         _ layout: MenuBarLayout,
         provider: UsageProvider? = nil)
@@ -1318,17 +1291,6 @@ enum MenuBarLayoutPersistence {
             return current
         }
         return legacy
-    }
-
-    static func needsStartupDualWrite(
-        current: [MenuBarLayoutConditional]?,
-        legacy: [MenuBarLayoutConditional]?)
-        -> Bool
-    {
-        switch (current, legacy) {
-        case (nil, .some), (.some, nil): true
-        default: false
-        }
     }
 
     static func encodedLibrary(

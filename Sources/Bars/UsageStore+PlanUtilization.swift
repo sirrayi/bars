@@ -1145,41 +1145,6 @@ extension UsageStore {
         return abs(lhs.timeIntervalSince(rhs)) < self.planUtilizationResetEquivalenceToleranceSeconds
     }
 
-    private nonisolated static func planUtilizationContinuityWindow(
-        for providerBuckets: PlanUtilizationHistoryBuckets) -> ClosedRange<Date>?
-    {
-        let capturedDates = providerBuckets.unscoped.flatMap(\.entries).map(\.capturedAt)
-        guard let lowerBound = capturedDates.min(),
-              let upperBound = capturedDates.max()
-        else {
-            return nil
-        }
-        let allHistories = providerBuckets.unscoped + providerBuckets.accounts.values.flatMap(\.self)
-        let expansionMinutes = allHistories.map(\.windowMinutes).max() ?? 0
-        let expansion = TimeInterval(expansionMinutes) * 60
-        return lowerBound.addingTimeInterval(-expansion)...upperBound.addingTimeInterval(expansion)
-    }
-
-    private nonisolated static func planUtilizationHistories(
-        _ histories: [PlanUtilizationSeriesHistory],
-        overlap continuityWindow: ClosedRange<Date>) -> Bool
-    {
-        histories.contains { history in
-            history.entries.contains { continuityWindow.contains($0.capturedAt) }
-        }
-    }
-
-    private nonisolated static func historiesContainEquivalentWeeklyResetBoundary(
-        _ histories: [PlanUtilizationSeriesHistory],
-        targetWeeklyResetAt: Date) -> Bool
-    {
-        histories.contains { history in
-            history.entries.contains { entry in
-                self.areEquivalentPlanUtilizationResetBoundaries(entry.resetsAt, targetWeeklyResetAt)
-            }
-        }
-    }
-
     private nonisolated static func mergedPlanUtilizationHistories(
         histories: [[PlanUtilizationSeriesHistory]]) -> [PlanUtilizationSeriesHistory]
     {

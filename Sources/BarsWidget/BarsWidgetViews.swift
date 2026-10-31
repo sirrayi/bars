@@ -420,19 +420,6 @@ struct WidgetUsageRow: Identifiable, Equatable {
         }
         return entry.tokenUsage
     }
-
-    private static func isMoreConstrained(_ lhs: WidgetUsageRow, than rhs: WidgetUsageRow) -> Bool {
-        switch (lhs.percentLeft, rhs.percentLeft) {
-        case let (.some(left), .some(right)):
-            left < right
-        case (.some, .none):
-            true
-        case (.none, .some):
-            false
-        case (.none, .none):
-            false
-        }
-    }
 }
 
 enum WidgetUsageDisplay {

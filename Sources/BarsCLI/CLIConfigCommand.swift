@@ -264,14 +264,6 @@ extension BarsCLI {
         }
         return results
     }
-
-    private static func cleanSingleLineConfigValue(_ raw: String?, fieldName: String) throws -> String? {
-        guard let value = SettingsValue.cleaned(raw) else { return nil }
-        guard !value.contains(where: \.isNewline) else {
-            throw CLIArgumentError("--\(fieldName) must be a single line.")
-        }
-        return value
-    }
 }
 
 struct ConfigOptions: CommanderParsable {

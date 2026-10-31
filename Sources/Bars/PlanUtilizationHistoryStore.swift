@@ -159,10 +159,6 @@ struct PlanUtilizationHistoryBuckets: Equatable, Sendable {
         }
     }
 
-    mutating func invalidateSessionEquivalentWindowPairIdentity(for accountKey: String?) {
-        self.sessionEquivalentWindowPairIdentities[Self.identityKey(for: accountKey)] = Self.invalidatedIdentity
-    }
-
     mutating func moveSessionEquivalentWindowPairIdentity(
         from sourceAccountKey: String?,
         to targetAccountKey: String?)

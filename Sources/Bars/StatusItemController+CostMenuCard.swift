@@ -29,10 +29,6 @@ private struct CostMenuCardRowView: View {
 }
 
 extension StatusItemController {
-    static var costMenuTitle: String {
-        L("Cost")
-    }
-
     static func costMenuTitleForProvider(_ provider: UsageProvider) -> String {
         UsageMenuCardView.Model.tokenUsageHeader(provider: provider)
     }

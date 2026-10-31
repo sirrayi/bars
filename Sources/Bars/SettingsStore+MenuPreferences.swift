@@ -236,10 +236,6 @@ extension SettingsStore {
         self.menuBarMetricCapabilities(for: provider).supports(.average)
     }
 
-    func menuBarMetricSupportsPrimaryAndSecondary(for provider: UsageProvider) -> Bool {
-        self.menuBarMetricCapabilities(for: provider).supports(.primaryAndSecondary)
-    }
-
     func menuBarMetricSupportsTertiary(for provider: UsageProvider) -> Bool {
         self.menuBarMetricCapabilities(for: provider).supports(.tertiary)
     }

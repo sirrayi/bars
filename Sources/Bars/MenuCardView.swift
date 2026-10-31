@@ -613,13 +613,6 @@ private struct UsageMenuCardUsageContentView: View {
     var compactMetrics = false
     @Environment(\.menuItemHighlighted) private var isHighlighted
 
-    private func groupHeader(_ title: String) -> some View {
-        Text(L(title))
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
-            .textCase(.uppercase)
-    }
-
     private func metricRows(_ metrics: [UsageMenuCardView.Model.Metric]) -> some View {
         ForEach(metrics, id: \.id) { metric in
             MetricRow(

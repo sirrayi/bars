@@ -42,10 +42,6 @@ enum IconRenderer {
         func rect(x: Int, y: Int, w: Int, h: Int) -> CGRect {
             CGRect(x: self.pt(x), y: self.pt(y), width: self.pt(w), height: self.pt(h))
         }
-
-        func snapDelta(_ value: CGFloat) -> CGFloat {
-            (value * self.scale).rounded() / self.scale
-        }
     }
 
     private static let grid = PixelGrid(scale: outputScale)
@@ -497,10 +493,6 @@ enum IconRenderer {
 
     private static func snap(_ value: CGFloat) -> CGFloat {
         (value * self.outputScale).rounded() / self.outputScale
-    }
-
-    private static func snapRect(x: CGFloat, y: CGFloat, width: CGFloat, height: CGFloat) -> CGRect {
-        CGRect(x: self.snap(x), y: self.snap(y), width: self.snap(width), height: self.snap(height))
     }
 
     private static func renderImage(_ draw: () -> Void) -> NSImage {

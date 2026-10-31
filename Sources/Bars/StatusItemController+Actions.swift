@@ -585,18 +585,6 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
         }
     }
 
-    /// Cancel is the default button on purpose: confirming clears stored provider credentials, so a
-    /// stray Return keypress must not destroy them.
-    func presentLoginConfirmation(title: String, message: String, confirmButtonTitle: String) -> Bool {
-        let alert = NSAlert()
-        alert.messageText = L(title)
-        alert.informativeText = L(message)
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: L("Cancel"))
-        alert.addButton(withTitle: confirmButtonTitle)
-        return alert.runModal() == .alertSecondButtonReturn
-    }
-
     func presentLoginAlert(title: String, message: String) {
         let alert = NSAlert()
         alert.messageText = L(title)

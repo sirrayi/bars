@@ -46,20 +46,6 @@ struct ProviderSettingsContext {
         self.settings.providerConfigBinding(provider: self.provider, field: field)
     }
 
-    func modelRateLimitsBinding(scope: ProviderModelRateLimitScope) -> Binding<[ProviderModelRateLimit]> {
-        Binding(
-            get: {
-                self.settings.providerConfig(for: self.provider)?.modelRateLimits(for: scope) ?? []
-            },
-            set: { limits in
-                self.settings.updateProviderConfig(provider: self.provider, affectsBackgroundWork: false) {
-                    $0.setModelRateLimits(
-                        ProviderModelRateLimit.validated(limits),
-                        for: scope)
-                }
-            })
-    }
-
     func providerConfigSecretBinding(key: String, logField: String) -> Binding<String> {
         self.settings.providerConfigSecretBinding(provider: self.provider, key: key, logField: logField)
     }
