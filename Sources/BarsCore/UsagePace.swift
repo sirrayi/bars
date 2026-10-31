@@ -264,7 +264,9 @@ public struct UsagePace: Sendable {
         calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: date))
     }
 
-    private static func isWorkday(_ date: Date, calendar: Calendar, workDays: Int) -> Bool {
+    /// ISO weekday within the configured work week. Shared with the session-equivalent forecast,
+    /// which had a byte-identical copy.
+    package static func isWorkday(_ date: Date, calendar: Calendar, workDays: Int) -> Bool {
         let weekday = calendar.component(.weekday, from: date)
         let isoWeekday = weekday == 1 ? 7 : weekday - 1
         return isoWeekday <= workDays

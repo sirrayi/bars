@@ -24,7 +24,7 @@ enum ClaudeScopedWeeklyLimitMapper {
             guard let modelName = self.nonEmpty(limit.modelName) else { return nil }
             guard !self.isAllModelsScope(modelID: limit.modelID, modelName: modelName) else { return nil }
             let identity = self.nonEmpty(limit.modelID) ?? modelName
-            let slug = self.slug(identity)
+            let slug = TextParsing.slug(identity)
             guard !slug.isEmpty else { return nil }
 
             let id = "claude-weekly-scoped-\(slug)"
@@ -46,27 +46,12 @@ enum ClaudeScopedWeeklyLimitMapper {
         return if let trimmed, !trimmed.isEmpty { trimmed } else { nil }
     }
 
-    private static func slug(_ value: String) -> String {
-        var result = ""
-        var lastWasDash = false
-        for scalar in value.lowercased().unicodeScalars {
-            if CharacterSet.alphanumerics.contains(scalar) {
-                result.unicodeScalars.append(scalar)
-                lastWasDash = false
-            } else if !lastWasDash {
-                result.append("-")
-                lastWasDash = true
-            }
-        }
-        return result.trimmingCharacters(in: CharacterSet(charactersIn: "-"))
-    }
-
     private static func isAllModelsScope(modelID: String?, modelName: String) -> Bool {
-        if self.slug(modelName) == "all-models" {
+        if TextParsing.slug(modelName) == "all-models" {
             return true
         }
         guard let modelID = self.nonEmpty(modelID) else { return false }
-        let idSlug = self.slug(modelID)
+        let idSlug = TextParsing.slug(modelID)
         return idSlug == "all-models" || idSlug.hasSuffix("-all-models")
     }
 }

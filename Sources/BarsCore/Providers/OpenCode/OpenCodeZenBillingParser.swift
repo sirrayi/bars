@@ -52,8 +52,10 @@ enum OpenCodeZenBillingParser {
     }
 
     private static func parsePayload(text: String) -> OpenCodeZenBillingInfo? {
-        guard self.containsMatch(pattern: self.fieldPattern(for: "customerID", value: #"\"[^\"]+\""#), text: text),
-              let rawUsage = self.number(field: "monthlyUsage", text: text)
+        guard TextParsing.containsMatch(
+            pattern: self.fieldPattern(for: "customerID", value: #"\"[^\"]+\""#),
+            text: text),
+            let rawUsage = self.number(field: "monthlyUsage", text: text)
         else {
             return nil
         }
@@ -68,10 +70,11 @@ enum OpenCodeZenBillingParser {
     /// A subscription is only considered present when the field exists and is not `null`, so a
     /// pay-as-you-go payload never routes back into the retired subscription path.
     private static func hasSubscriptionObject(text: String) -> Bool {
-        guard self.containsMatch(pattern: self.fieldPattern(for: "subscription", value: #"[^,}]+"#), text: text) else {
+        guard TextParsing.containsMatch(pattern: self.fieldPattern(for: "subscription", value: #"[^,}]+"#), text: text)
+        else {
             return false
         }
-        return !self.containsMatch(pattern: self.fieldPattern(for: "subscription", value: "null"), text: text)
+        return !TextParsing.containsMatch(pattern: self.fieldPattern(for: "subscription", value: "null"), text: text)
     }
 
     private static func findCustomerDictionary(in object: Any) -> [String: Any]? {
@@ -123,12 +126,6 @@ enum OpenCodeZenBillingParser {
             return nil
         }
         return String(text[range])
-    }
-
-    private static func containsMatch(pattern: String, text: String) -> Bool {
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return false }
-        let nsrange = NSRange(text.startIndex..<text.endIndex, in: text)
-        return regex.firstMatch(in: text, options: [], range: nsrange) != nil
     }
 
     private static func doubleValue(from value: Any?) -> Double? {

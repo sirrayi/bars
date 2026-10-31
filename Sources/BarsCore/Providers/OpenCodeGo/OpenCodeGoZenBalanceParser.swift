@@ -48,7 +48,7 @@ enum OpenCodeGoZenBalanceParser {
 
         let customerPattern =
             #"(?:\"customerID\"|customerID)\s*:\s*(?:\$R\[\d+\]\s*=\s*)?\"[^\"]+\""#
-        guard self.containsMatch(pattern: customerPattern, text: text) else {
+        guard TextParsing.containsMatch(pattern: customerPattern, text: text) else {
             return nil
         }
         let pattern = #"(?:\"balance\"|balance)\s*:\s*(?:\$R\[\d+\]\s*=\s*)?(-?[0-9]+(?:\.[0-9]+)?)"#
@@ -117,12 +117,6 @@ enum OpenCodeGoZenBalanceParser {
             }
         }
         return nil
-    }
-
-    private static func containsMatch(pattern: String, text: String) -> Bool {
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return false }
-        let nsrange = NSRange(text.startIndex..<text.endIndex, in: text)
-        return regex.firstMatch(in: text, options: [], range: nsrange) != nil
     }
 
     private static func isExplicitBalanceAmountKey(_ key: String) -> Bool {

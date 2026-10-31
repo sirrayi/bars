@@ -572,7 +572,7 @@ extension ClaudeStatusProbe {
                 : "\(usage.modelName) only"
             let resetDescription = usage.resetDescription ?? fallbackResetDescription
             return NamedRateWindow(
-                id: "claude-weekly-scoped-\(self.slug(usage.modelName))",
+                id: "claude-weekly-scoped-\(TextParsing.slug(usage.modelName))",
                 title: modelTitle,
                 window: RateWindow(
                     usedPercent: usedPercent,
@@ -582,21 +582,6 @@ extension ClaudeStatusProbe {
                         expectedWindow: 7 * 24 * 60 * 60),
                     resetDescription: resetDescription))
         }
-    }
-
-    private static func slug(_ value: String) -> String {
-        var result = ""
-        var lastWasDash = false
-        for scalar in value.lowercased().unicodeScalars {
-            if CharacterSet.alphanumerics.contains(scalar) {
-                result.unicodeScalars.append(scalar)
-                lastWasDash = false
-            } else if !lastWasDash {
-                result.append("-")
-                lastWasDash = true
-            }
-        }
-        return result.trimmingCharacters(in: CharacterSet(charactersIn: "-"))
     }
 
     private static func percentFromLine(_ line: String, assumeRemainingWhenUnclear: Bool = false) -> Int? {

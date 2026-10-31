@@ -138,18 +138,12 @@ struct SessionEquivalentForecast: Equatable, Sendable {
                 return wallClockSeconds
             }
             let sliceEnd = min(nextDay, resetsAt)
-            if Self.isWorkday(cursor, workDays: workDays, calendar: calendar) {
+            if UsagePace.isWorkday(cursor, calendar: calendar, workDays: workDays) {
                 workSeconds += sliceEnd.timeIntervalSince(cursor)
             }
             cursor = sliceEnd
         }
         return workSeconds
-    }
-
-    private static func isWorkday(_ date: Date, workDays: Int, calendar: Calendar) -> Bool {
-        let weekday = calendar.component(.weekday, from: date)
-        let isoWeekday = weekday == 1 ? 7 : weekday - 1
-        return isoWeekday <= workDays
     }
 }
 

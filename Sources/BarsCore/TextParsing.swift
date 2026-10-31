@@ -1,6 +1,30 @@
 import Foundation
 
 public enum TextParsing {
+    /// Lowercases and dash-joins a display name into an identifier fragment. Two Claude parsers had
+    /// byte-identical copies of this.
+    static func slug(_ value: String) -> String {
+        var result = ""
+        var lastWasDash = false
+        for scalar in value.lowercased().unicodeScalars {
+            if CharacterSet.alphanumerics.contains(scalar) {
+                result.unicodeScalars.append(scalar)
+                lastWasDash = false
+            } else if !lastWasDash {
+                result.append("-")
+                lastWasDash = true
+            }
+        }
+        return result.trimmingCharacters(in: CharacterSet(charactersIn: "-"))
+    }
+
+    /// Whether `pattern` matches anywhere in `text`. Two OpenCode parsers carried identical copies.
+    static func containsMatch(pattern: String, text: String) -> Bool {
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return false }
+        let nsrange = NSRange(text.startIndex..<text.endIndex, in: text)
+        return regex.firstMatch(in: text, options: [], range: nsrange) != nil
+    }
+
     /// Removes ANSI escape sequences so regex parsing works on colored terminal output.
     public static func stripANSICodes(_ text: String) -> String {
         // CSI sequences: ESC [ ... ending in 0x40–0x7E
