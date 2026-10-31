@@ -2,7 +2,6 @@ import Foundation
 
 public enum ProviderTokenSource: String, Sendable {
     case environment
-    case authFile
 }
 
 public struct ProviderTokenResolution: Sendable {

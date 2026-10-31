@@ -38,24 +38,6 @@ extension ProviderConfig {
             self.tokenAccounts?.accounts.first(where: { $0.id == id })?.modelRateLimits ?? []
         }
     }
-
-    public mutating func setModelRateLimits(
-        _ limits: [ProviderModelRateLimit],
-        for scope: ProviderModelRateLimitScope)
-    {
-        let validated = ProviderModelRateLimit.validated(limits)
-        switch scope {
-        case .provider:
-            self.modelRateLimits = validated
-        case let .tokenAccount(id):
-            guard let data = self.tokenAccounts,
-                  let index = data.accounts.firstIndex(where: { $0.id == id }) else { return }
-            var accounts = data.accounts
-            accounts[index] = accounts[index].withModelRateLimits(validated)
-            self.tokenAccounts = ProviderTokenAccountData(
-                version: data.version, accounts: accounts, activeIndex: data.activeIndex)
-        }
-    }
 }
 
 public enum ProviderRateLimitNumber {

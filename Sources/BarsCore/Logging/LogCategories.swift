@@ -11,7 +11,6 @@ public enum LogCategories {
 
     public static let adaptiveRefresh = "adaptive-refresh"
     public static let app = "app"
-    public static let auggieCLI = "auggie-cli"
     public static let browserCookieGate = "browser-cookie-gate"
     public static let configMigration = "config-migration"
     public static let configStore = "config-store"
@@ -21,7 +20,6 @@ public enum LogCategories {
     public static let creditsPurchase = "creditsPurchase"
     public static let hooks = "hooks"
     public static let keychainCache = "keychain-cache"
-    public static let keychainMigration = "keychain-migration"
     public static let keychainPreflight = "keychain-preflight"
     public static let keychainPrompt = "keychain-prompt"
     public static let launchAtLogin = "launch-at-login"
@@ -40,5 +38,4 @@ public enum LogCategories {
     public static let tokenAccounts = "token-accounts"
     public static let tokenCost = "token-cost"
     public static let ttyRunner = "tty-runner"
-    public static let webkitTeardown = "webkit-teardown"
 }

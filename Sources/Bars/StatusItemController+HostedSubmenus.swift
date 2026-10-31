@@ -543,14 +543,5 @@ extension StatusItemController {
 }
 
 #if DEBUG
-extension StatusItemController {
-    func _hostedSubviewRenderSignatureForTesting(menu: NSMenu, width: CGFloat) -> HostedSubviewRenderSignature? {
-        guard let identity = self.hostedSubviewIdentity(for: menu) else { return nil }
-        return self.hostedSubviewRenderSignature(identity: identity, width: width)
-    }
-
-    func _storedHostedSubviewRenderSignatureForTesting(menu: NSMenu) -> HostedSubviewRenderSignature? {
-        self.hostedSubviewRenderSignatures.object(forKey: menu)?.signature
-    }
-}
+extension StatusItemController {}
 #endif

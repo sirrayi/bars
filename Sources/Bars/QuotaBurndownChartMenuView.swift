@@ -163,16 +163,8 @@ struct QuotaBurndownChartMenuView: View {
         Dictionary(uniqueKeysWithValues: self.series.map { ($0.id, $0.title) })
     }
 
-    var _seriesSampleCountsForTesting: [String: Int] {
-        Dictionary(uniqueKeysWithValues: self.series.map { ($0.id, $0.model.samples.count) })
-    }
-
     var _seriesLastKnownMessagesForTesting: [String: String] {
         Dictionary(uniqueKeysWithValues: self.series.map { ($0.id, $0.lastKnownUsageMessage) })
-    }
-
-    var _seriesStartsForTesting: [String: Date] {
-        Dictionary(uniqueKeysWithValues: self.series.map { ($0.id, $0.model.start) })
     }
 
     var _seriesRemainingForTesting: [String: Double] {

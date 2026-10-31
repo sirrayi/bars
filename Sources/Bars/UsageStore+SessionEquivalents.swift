@@ -29,17 +29,6 @@ extension UsageStore {
         "SessionEquivalentHistoryWindowPairsV2"
     private nonisolated static let unresolvedSessionEquivalentComponentIdentity = "__unresolved__"
 
-    func planUtilizationWeeklyWindow(provider: UsageProvider, snapshot: UsageSnapshot) -> RateWindow? {
-        let standardWeeklyWindow = [snapshot.primary, snapshot.secondary, snapshot.tertiary]
-            .compactMap(\.self)
-            .first { $0.windowMinutes == Self.weeklyWindowMinutes }
-        let extraWeeklyWindow = snapshot.extraRateWindows?
-            .lazy
-            .first { $0.usageKnown && $0.window.windowMinutes == Self.weeklyWindowMinutes }?
-            .window
-        return standardWeeklyWindow ?? extraWeeklyWindow
-    }
-
     func sessionEquivalentWindows(provider: UsageProvider, snapshot: UsageSnapshot)
         -> (session: RateWindow, weekly: RateWindow, weeklyWindowID: String?, historyIdentity: String?)?
     {

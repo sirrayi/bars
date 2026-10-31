@@ -1286,10 +1286,6 @@ extension CostHistoryChartMenuView {
         self.availableMetrics(provider: provider, daily: daily)
     }
 
-    static func _defaultMetricForTesting(provider: UsageProvider, daily: [DailyEntry]) -> ChartMetric {
-        self.defaultMetric(provider: provider, daily: daily)
-    }
-
     static func _chartValuesForTesting(
         provider: UsageProvider,
         daily: [DailyEntry],

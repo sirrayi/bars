@@ -83,12 +83,6 @@ public struct CostUsageQuotaWeek: Sendable, Equatable {
         self.offset == 0
     }
 
-    /// True when this window is within a day of the nominal 7×24h weekly quota.
-    public var isNominalWeek: Bool {
-        abs(self.end.timeIntervalSince(self.start) - TimeInterval(CostUsageTokenSnapshot.quotaWeekMinutes * 60))
-            < 24 * 60 * 60
-    }
-
     public init(
         offset: Int,
         start: Date,

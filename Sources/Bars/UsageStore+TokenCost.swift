@@ -322,7 +322,6 @@ extension UsageStore {
     enum TokenRefreshPublicationDisposition {
         case current
         case scopeChanged
-        case unchangedCredentialMismatch
     }
 
     func tokenRefreshPublicationDisposition(

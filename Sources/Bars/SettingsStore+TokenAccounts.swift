@@ -189,7 +189,6 @@ extension SettingsStore {
         guard let data = self.tokenAccountsData(for: provider), !data.accounts.isEmpty else { return }
         let activeAccountID = data.accounts[data.clampedActiveIndex()].id
         guard let removedIndex = data.accounts.firstIndex(where: { $0.id == accountID }) else { return }
-        let removedAccount = data.accounts[removedIndex]
         let filtered = data.accounts.filter { $0.id != accountID }
         self.updateProviderConfig(provider: provider) { entry in
             if filtered.isEmpty {

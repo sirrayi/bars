@@ -1000,10 +1000,6 @@ extension ProviderSwitcherView {
         self.segments.map(\.title)
     }
 
-    func _test_buttonFittingSizes() -> [NSSize] {
-        self.buttons.map(\.fittingSize)
-    }
-
     func _test_buttonDesiredWidths() -> [CGFloat] {
         self.buttons.map(Self.maxToggleWidth(for:))
     }
@@ -1022,22 +1018,9 @@ extension ProviderSwitcherView {
         self.rowHeight
     }
 
-    func _test_setHoveredButtonTag(_ tag: Int?) {
-        self.hoveredButtonTag = tag
-        self.updateButtonStyles()
-    }
-
     func _test_quotaIndicatorFillRatios() -> [CGFloat] {
         self.buttons.compactMap { button in
             self.quotaIndicators[ObjectIdentifier(button)]?.fillRatio
-        }
-    }
-
-    func _test_quotaIndicatorVisibility() -> [(trackHidden: Bool, fillHidden: Bool)] {
-        self.buttons.compactMap { button in
-            self.quotaIndicators[ObjectIdentifier(button)].map { indicator in
-                (indicator.track.isHidden, indicator.fill.isHidden)
-            }
         }
     }
 
@@ -1305,8 +1288,5 @@ final class TokenAccountSwitcherView: NSView {
         return self.select(index: button.tag)
     }
 
-    func _test_buttonTitles() -> [String] {
-        self.buttons.map(\.title)
-    }
     #endif
 }
