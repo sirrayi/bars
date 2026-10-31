@@ -9,7 +9,6 @@
 "Show all (%d)" = "แสดงทั้งหมด (%d)";
 "Show less" = "แสดงน้อยลง";
 
-
 "(System)" = "(ระบบ)";
 "30d" = "30 วัน";
 "7d" = "7 วัน";
@@ -514,7 +513,6 @@
 "Admin API key" = "คีย์ API ของผู้ดูแลระบบ";
 "Google accounts" = "บัญชี Google";
 "No local data found" = "ไม่พบข้อมูลในเครื่อง";
-"No available fetch strategy for minimax." = "ไม่มีกลยุทธ์การดึงข้อมูลสําหรับ minimax";
 "No OpenCode session cookies found in browsers." = "ไม่พบคุกกี้เซสชัน OpenCode ในเบราว์เซอร์";
 "No available fetch strategy for %@." = "ไม่มีกลยุทธ์การดึงข้อมูลสําหรับ %@";
 "Today" = "วันนี้";
@@ -700,7 +698,6 @@
 "bars could not read managed account storage. Recover the store before adding another account." = "bars อ่านพื้นที่เก็บข้อมูลของบัญชีที่มีการจัดการไม่ได้ กู้คืนร้านค้าก่อนเพิ่มบัญชีอื่น";
 "bars could not read saved auth for that account. Re-authenticate it and try again." = "bars ไม่สามารถอ่านการตรวจสอบสิทธิ์ที่บันทึกไว้สําหรับบัญชีนั้นได้ ตรวจสอบสิทธิ์อีกครั้งแล้วลองอีกครั้ง";
 "bars could not read the current system account on this Mac." = "bars ไม่สามารถอ่านบัญชีระบบปัจจุบันบน Mac เครื่องนี้ได้";
-"bars could not replace the live Codex auth on this Mac." = "bars ไม่สามารถแทนที่การตรวจสอบสิทธิ์ Codex แบบสดบน Mac เครื่องนี้ได้";
 "bars could not safely preserve the current system account before switching." = "bars ไม่สามารถรักษาบัญชีระบบปัจจุบันได้อย่างปลอดภัยก่อนเปลี่ยน";
 "bars could not save the current system account before switching." = "bars ไม่สามารถบันทึกบัญชีระบบปัจจุบันก่อนที่จะเปลี่ยน";
 "bars could not update managed account storage." = "bars อัปเดตพื้นที่เก็บข้อมูลของบัญชีที่มีการจัดการไม่ได้";
@@ -709,12 +706,6 @@
 "bars will ask macOS Keychain for the Claude Code OAuth token so it can fetch your Claude usage. Click OK to continue." = "bars จะขอโทเค็น OAuth Claude Code จาก macOS Keychain เพื่อให้สามารถดึงข้อมูลการใช้งาน Claude ของคุณได้ คลิก ตกลง เพื่อดําเนินการต่อ";
 "bars will ask macOS Keychain for your %@ cookie header so it can fetch usage. Click OK to continue." = "bars จะขอส่วนหัวคุกกี้ %@ macOS Keychain ของคุณเพื่อให้สามารถดึงข้อมูลการใช้งานได้ คลิก ตกลง เพื่อดําเนินการต่อ";
 "bars will ask macOS Keychain for your Claude cookie header so it can fetch Claude web usage. Click OK to continue." = "bars จะขอส่วนหัวคุกกี้ Claude macOS Keychain ของคุณเพื่อให้สามารถดึงข้อมูลการใช้งานเว็บ Claude ได้ คลิก ตกลง เพื่อดําเนินการต่อ";
-"bars will ask macOS Keychain for your GitHub Copilot token so it can fetch usage. Click OK to continue." = "bars จะขอโทเค็น GitHub Copilot ของคุณจาก macOS Keychain เพื่อให้สามารถดึงข้อมูลการใช้งานได้ คลิก ตกลง เพื่อดําเนินการต่อ";
-"bars will ask macOS Keychain for your Kimi auth token so it can fetch usage. Click OK to continue." = "bars จะขอโทเค็นการรับรองความถูกต้อง Kimi macOS Keychain เพื่อให้สามารถดึงการใช้งานได้ คลิก ตกลง เพื่อดําเนินการต่อ";
-"bars will ask macOS Keychain for your MiniMax API token so it can fetch usage. Click OK to continue." = "bars จะขอโทเค็น MiniMax API ของคุณจาก macOS Keychain เพื่อให้สามารถดึงข้อมูลการใช้งานได้ คลิก ตกลง เพื่อดําเนินการต่อ";
-"bars will ask macOS Keychain for your OpenAI cookie header so it can fetch Codex dashboard extras. Click OK to continue." = "bars จะขอให้ macOS Keychain ป้อนส่วนหัวของคุกกี้ OpenAI ของคุณเพื่อให้สามารถดึงข้อมูลพิเศษ Codex แดชบอร์ดได้ คลิก ตกลง เพื่อดําเนินการต่อ";
-"bars will ask macOS Keychain for your Synthetic API key so it can fetch usage. Click OK to continue." = "bars จะขอคีย์ Synthetic API macOS Keychain เพื่อให้สามารถดึงข้อมูลการใช้งานได้ คลิก ตกลง เพื่อดําเนินการต่อ";
-"bars will ask macOS Keychain for your z.ai API token so it can fetch usage. Click OK to continue." = "bars จะขอโทเค็น z.ai API ของคุณจาก macOS Keychain เพื่อให้สามารถดึงข้อมูลการใช้งานได้ คลิก ตกลง เพื่อดําเนินการต่อ";
 "Credits used" = "เครดิตที่ใช้";
 "Day" = "วัน";
 "Deployment" = "การปรับใช้";
@@ -744,8 +735,6 @@
 "Simulated error text" = "ข้อความแสดงข้อผิดพลาดจําลอง";
 "Stored in ~/.bars/config.json. Requires an Anthropic Admin API key." = "เก็บไว้ใน ~/.bars/config.json. ต้องใช้คีย์ API ผู้ดูแลระบบ Anthropic";
 "Team mode" = "โหมดทีม";
-"Timed out waiting for Cursor login. %@" = "หมดเวลารอการเข้าสู่ระบบ Cursor %@";
-"Timed out waiting for Cursor login. %@ Last error: %@" = "หมดเวลารอการเข้าสู่ระบบ Cursor %@ ข้อผิดพลาดล่าสุด: %@";
 "Today requests" = "คําขอวันนี้";
 "Utilization End" = "สิ้นสุดการใช้ประโยชน์";
 "Utilization Start" = "เริ่มต้นการใช้งาน";
@@ -799,8 +788,6 @@
 "Share AI Usage" = "แชร์การใช้งาน AI";
 "Share Stats…" = "แชร์สถิติ…";
 "Stats copied" = "คัดลอกสถิติแล้ว";
-"Timed out waiting for Cursor account switch. %@" = "หมดเวลารอการสลับบัญชี Cursor %@";
-"Timed out waiting for Cursor account switch. %@ Last error: %@" = "หมดเวลารอการสลับบัญชี Cursor %@ ข้อผิดพลาดล่าสุด: %@";
 
 /* Spend dashboard */
 "tab_usage_spend" = "การใช้งานและค่าใช้จ่าย";
@@ -919,8 +906,6 @@
 "Run-out estimate unavailable" = "หมด: ไม่พร้อมใช้งาน";
 "Cost today unavailable" = "ค่าใช้จ่ายวันนี้: ไม่พร้อมใช้งาน";
 "Resets" = "การรีเซ็ต";
-"codex_workspaces_tokens" = "โทเค็น";
-"codex_workspaces_model" = "โมเดล";
 
 "Cumulative" = "สะสม";
 "Token activity" = "กิจกรรมโทเทน";
@@ -1078,12 +1063,10 @@
 "ALL" = "ทั้งหมด";
 "ALL-TIME SPEND" = "การใช้จ่ายในอดีตทั้งหมด";
 "API est." = "API ประมาณ";
-"AWS charges $0.01 per Cost Explorer request against the primary billing view. A refresh can make multiple requests, and CloudWatch activity can add charges. The displayed monthly budget does not cap AWS billing." = "AWS เรียกเก็บเงิน 0.01 ดอลลาร์ต่อคำขอ Cost Explorer สำหรับมุมมองการเรียกเก็บเงินหลัก การรีเฟรชสามารถส่งคำขอได้หลายคำขอ และกิจกรรม CloudWatch สามารถเพิ่มค่าธรรมเนียมได้ งบประมาณรายเดือนที่แสดงไม่ได้จำกัดการเรียกเก็บเงิน AWS";
 "Account %@" = "บัญชี %@";
 "Account Added" = "เพิ่มบัญชีแล้ว";
 "Account Usage" = "การใช้บัญชี";
 "Account slug" = "ตัวระบุบัญชี (slug)";
-"Account switched; restart the Codex background server manually." = "บัญชีถูกเปลี่ยน; รีสตาร์ทเซิร์ฟเวอร์พื้นหลัง Codex ด้วยตนเอง";
 "Allow reading Claude Code's credentials" = "อนุญาตให้อ่านข้อมูลรับรองของ Claude Code";
 "Automatically imports the app.devin.ai session from Chromium browsers." = "นำเข้าเซสชัน app.devin.ai จากเบราว์เซอร์ Chromium โดยอัตโนมัติ";
 "BY USAGE" = "จัดอันดับตามการใช้งาน";
@@ -1142,10 +1125,8 @@
 "Open Devin Usage" = "เปิดหน้าการใช้งาน Devin";
 "OpenCode API key" = "คีย์ OpenCode API";
 "Optional for automatic auth. Use a slug, URL, or internal org-... / org_... ID. Manual auth may need the x-cog-org-id header from a successful Devin quota request." = "ตัวเลือกสำหรับการตรวจสอบสิทธิ์อัตโนมัติ ใช้slug URL หรือภายใน org-... / org_... ID การตรวจสอบสิทธิ์ด้วยตนเองอาจต้องใช้ส่วนหัว x-cog-org-id จากคำขอ Devin โควต้า ที่สำเร็จ";
-"Optional when the API key can access one account; bars discovers it automatically. For multiple accounts, find the slug in the app.fireworks.ai home account switcher or run firectl whoami." = "เป็นทางเลือกเมื่อคีย์ API สามารถเข้าถึงบัญชีเดียวได้ bars ค้นพบมันโดยอัตโนมัติ สำหรับหลายบัญชี ให้ค้นหา Slug ในตัวสลับบัญชีที่บ้าน app.fireworks.ai หรือเรียกใช้ firectl whoami";
 "Organization" = "องค์กร";
 "PARTIAL" = "บางส่วน";
-"Paste a cURL capture from the ZoomMate AI credit usage page." = "วางการจับภาพ cURL จากหน้าการใช้งาน ZoomMate AI เครดิต";
 "Paste an Authorization Bearer token from app.devin.ai." = "วาง Authorization Bearer โทเค็น จาก app.devin.ai";
 "Paste the Authorization header value from app.devin.ai." = "วางค่าส่วนหัว Authorization จาก app.devin.ai";
 "Path to the cswap executable (github.com/realiti4/claude-swap)." = "พาธไปยังไฟล์เรียกทำงาน cswap (github.com/realiti4/claude-swap)";
@@ -1256,7 +1237,6 @@
 "/Applications/TcrBar.app/Contents/MacOS/tcr" = "/Applications/TcrBar.app/Contents/MacOS/tcr";
 
 // Additional localized settings, provider controls, sharing, and widgets.
-"Kilo Pass" = "Kilo ผ่าน";
 "Plan credits" = "แผนการสมัครสมาชิก เครดิต";
 "Premium weekly" = "การใช้งานระดับพรีเมียมรายสัปดาห์ โควต้า";
 "Memory" = "การใช้หน่วยความจำ";
@@ -1289,11 +1269,9 @@
 "Tokens" = "โทเค็น";
 "Budget" = "งบประมาณ";
 "Secondary budget" = "งบประมาณรอง";
-"Project-scoped Aixy key used to read its own usage and applicable budgets." = "คีย์ Aixy ที่มีขอบเขตโปรเจ็กต์ใช้เพื่ออ่านการใช้งานของตัวเองและงบประมาณที่เกี่ยวข้อง";
 "Prompts" = "แจ้ง";
 "Base" = "ฐาน";
 "Model quota" = "รุ่น โควต้า";
-"Monthly Bobcoins" = "Bobcoins รายเดือน";
 "Shared pool" = "โควตาที่ใช้ร่วมกัน";
 "Bearer … or Cookie: …" = "Bearer … หรือ Cookie: …";
 "On-demand" = "การใช้งานตามความต้องการ";
@@ -1309,27 +1287,19 @@
 "OpenCode Go accounts" = "บัญชี OpenCode Go";
 "Store multiple OpenCode Go API keys or Cookie headers." = "เก็บคีย์ OpenCode Go API หรือส่วนหัว Cookie หลายรายการ";
 "API key or Cookie: …" = "คีย์ API หรือ Cookie: …";
-"Amp Free" = "Amp ฟรี";
 "Individual and workspace credit balances from Amp." = "ยอดเครดิตของบัญชีส่วนบุคคลและพื้นที่ทำงานใน Amp";
 "Agent" = "ตัวแทน";
 "Bonus" = "โบนัส";
 "Daily refresh" = "รีเฟรชทุกวัน";
 "session_id=…" = "session_id=…";
-"Raycast AI credits are a monthly allowance, not a cost history." = "เครดิต Raycast AI เป็นโควตาที่จัดสรรให้ในแต่ละเดือน ไม่ใช่ประวัติค่าใช้จ่าย";
 "Five-hour quota" = "โควต้า ห้าชั่วโมง";
 "Weekly tokens" = "โทเค็น รายสัปดาห์";
-"Synthetic cost summary is not supported." = "ไม่รองรับการสรุปต้นทุน Synthetic";
 "Add-on credits" = "อุปกรณ์เสริม เครดิต";
-"Fuel Pack" = "ชุดเชื้อเพลิง";
 "Daily free tokens" = "ฟรีทุกวัน โทเค็น";
 "Inference" = "การอนุมาน";
-"ZeroGPU" = "ZeroGPU";
-"Credit balance from the Codebuff API" = "ยอดคงเหลือ เครดิต จาก Codebuff API";
 "Cookie header or bare session value" = "ส่วนหัว Cookie หรือค่าเซสชันเปล่า";
 "Gemini Models" = "รุ่น Gemini";
 "Claude and GPT" = "Claude และ GPT";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "Personal budget" = "งบประมาณส่วนบุคคล";
 "Team budget" = "งบประมาณทีม";
 "Standard" = "มาตรฐาน";
@@ -1401,7 +1371,6 @@
 
 "Click a bar to explore. Use the menu below for exact amounts." = "คลิกแท่งกราฟเพื่อดูรายละเอียด ใช้เมนูด้านล่างเพื่อดูจำนวนเงินที่แน่นอน";
 
-
 // Structured session performance layout.
 "spend_performance_first_token" = "โทเค็นแรก";
 "spend_performance_output" = "เอาต์พุตต่อรอบ";
@@ -1427,13 +1396,10 @@
 /* Provider menu bar color */
 "Color by provider" = "สีตามผู้ให้บริการ";
 
-
-
 /* Tool activity (English fallback pending translation) */
 
 /* Account provider settings */
 "Account JWT" = "JWT ของบัญชี";
-"Account JWT, not an Agent Endpoint key" = "JWT ของบัญชี ไม่ใช่คีย์ Agent Endpoint";
 "Input tokens" = "โทเค็นอินพุต";
 "Output tokens" = "โทเค็นเอาต์พุต";
 "Pace sign" = "เครื่องหมายอัตราการใช้งาน";
@@ -1532,9 +1498,7 @@
 "Move down" = "เลื่อนลง";
 "Leave blank to keep the saved credential." = "เว้นว่างไว้เพื่อใช้ข้อมูลรับรองที่บันทึกไว้ต่อไป";
 
-
 "monthly_daily_target_format" = "≈ %@ / วัน เพื่อให้ใช้ได้จนถึงการรีเซ็ต";
-
 
 // Session usage browser
 "Search sessions" = "ค้นหาเซสชัน";
@@ -1551,7 +1515,6 @@
 "Turn %d" = "รอบที่ %d";
 "Model requests" = "คำขอโมเดล";
 "Request %d" = "คำขอที่ %d";
-
 
 "Primary" = "หลัก";
 "Secondary" = "รอง";

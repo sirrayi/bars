@@ -97,7 +97,7 @@ struct DashboardSnapshotBuilderTests {
                 updatedAt: updatedAt,
                 url: "https://status.example.com"),
             usage: usage,
-            credits: CreditsSnapshot(remaining: 112.4, events: [], updatedAt: updatedAt),
+            credits: CreditsSnapshot(remaining: 112.4, updatedAt: updatedAt),
             error: nil)
         let cost = CostPayload(
             provider: "opencode",

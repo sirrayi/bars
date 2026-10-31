@@ -39,7 +39,6 @@
 "Activity" = "النشاط";
 "Add-on credits" = "الوظيفة الإضافية الاعتمادات";
 "Agent" = "وكيل";
-"Amp Free" = "Amp مجاني";
 "Balance" = "الرصيد";
 "Base" = "قاعدة";
 "Billing" = "الفواتير";
@@ -83,11 +82,9 @@
 "Five-hour quota" = "خمس ساعات الحصة";
 "Flash" = "Flash";
 "Flash Lite" = "Flash Lite";
-"Fuel Pack" = "حزمة الوقود";
 "Gemini Models" = "نماذج Gemini";
 "Inference" = "الاستدلال";
 "Key allowance" = "بدل الاستخدام لمفتاح API هذا";
-"Kilo Pass" = "ممر Kilo";
 "Last %d days" = "آخر %d أيام";
 "Last 30 days" = "آخر 30 يوما";
 "Memory" = "استخدام الذاكرة";
@@ -95,7 +92,6 @@
 "Model quota" = "الموديل الحصة";
 "Models" = "النماذج";
 "Monthly" = "شهريا";
-"Monthly Bobcoins" = "بوبكوينز الشهرية";
 "Monthly budget" = "الميزانية الشهرية";
 "Monthly credits" = "الاعتمادات الشهرية";
 "Monthly quota" = "الحصة الشهرية";
@@ -178,10 +174,7 @@
 "Weekly quota" = "أسبوعي الحصة";
 "Weekly tokens" = "أسبوعي الرموز";
 "Window" = "نافذة الاستخدام";
-"ZeroGPU" = "ZeroGPU";
 "after reset" = "بعد إعادة التعيين";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "budget spent" = "تم استنفاد ميزانية الحصة";
 "conserving" = "الحفاظ على الحصة";
 "full" = "كامل الحصة متاح";

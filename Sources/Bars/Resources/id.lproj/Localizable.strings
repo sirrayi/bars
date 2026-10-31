@@ -9,7 +9,6 @@
 "Show all (%d)" = "Tampilkan semua (%d)";
 "Show less" = "Tampilkan lebih sedikit";
 
-
 "(System)" = "(Sistem)";
 "30d" = "30 hari";
 "7d" = "7 hari";
@@ -516,7 +515,6 @@
 "Admin API key" = "Kunci API Admin";
 "Google accounts" = "Akun Google";
 "No local data found" = "Tidak ada data lokal ditemukan";
-"No available fetch strategy for minimax." = "Tidak ada strategi pengambilan tersedia untuk minimax.";
 "No OpenCode session cookies found in browsers." = "Cookie sesi OpenCode tidak ditemukan di browser.";
 "No available fetch strategy for %@." = "Tidak ada strategi pengambilan tersedia untuk %@.";
 "Today" = "Hari ini";
@@ -702,7 +700,6 @@
 "bars could not read managed account storage. Recover the store before adding another account." = "bars tidak dapat membaca penyimpanan akun terkelola. Pulihkan penyimpanan sebelum menambahkan akun lain.";
 "bars could not read saved auth for that account. Re-authenticate it and try again." = "bars tidak dapat membaca auth tersimpan untuk akun tersebut. Autentikasi ulang dan coba lagi.";
 "bars could not read the current system account on this Mac." = "bars tidak dapat membaca akun sistem saat ini di Mac ini.";
-"bars could not replace the live Codex auth on this Mac." = "bars tidak dapat mengganti auth Codex aktif di Mac ini.";
 "bars could not safely preserve the current system account before switching." = "bars tidak dapat menyimpan akun sistem saat ini dengan aman sebelum beralih.";
 "bars could not save the current system account before switching." = "bars tidak dapat menyimpan akun sistem saat ini sebelum beralih.";
 "bars could not update managed account storage." = "bars tidak dapat memperbarui penyimpanan akun terkelola.";
@@ -712,12 +709,6 @@
 "bars will ask macOS Keychain for the Claude Code OAuth token so it can fetch your Claude usage. Click OK to continue." = "bars akan meminta Keychain macOS untuk token OAuth Claude Code agar dapat mengambil penggunaan Claude Anda. Klik OK untuk melanjutkan.";
 "bars will ask macOS Keychain for your %@ cookie header so it can fetch usage. Click OK to continue." = "bars akan meminta Keychain macOS untuk header cookie %@ Anda agar dapat mengambil penggunaan. Klik OK untuk melanjutkan.";
 "bars will ask macOS Keychain for your Claude cookie header so it can fetch Claude web usage. Click OK to continue." = "bars akan meminta Keychain macOS untuk header cookie Claude Anda agar dapat mengambil penggunaan web Claude. Klik OK untuk melanjutkan.";
-"bars will ask macOS Keychain for your GitHub Copilot token so it can fetch usage. Click OK to continue." = "bars akan meminta Keychain macOS untuk token GitHub Copilot Anda agar dapat mengambil penggunaan. Klik OK untuk melanjutkan.";
-"bars will ask macOS Keychain for your Kimi auth token so it can fetch usage. Click OK to continue." = "bars akan meminta Keychain macOS untuk token auth Kimi Anda agar dapat mengambil penggunaan. Klik OK untuk melanjutkan.";
-"bars will ask macOS Keychain for your MiniMax API token so it can fetch usage. Click OK to continue." = "bars akan meminta Keychain macOS untuk token API MiniMax Anda agar dapat mengambil penggunaan. Klik OK untuk melanjutkan.";
-"bars will ask macOS Keychain for your OpenAI cookie header so it can fetch Codex dashboard extras. Click OK to continue." = "bars akan meminta Keychain macOS untuk header cookie OpenAI Anda agar dapat mengambil ekstra dasbor Codex. Klik OK untuk melanjutkan.";
-"bars will ask macOS Keychain for your Synthetic API key so it can fetch usage. Click OK to continue." = "bars akan meminta Keychain macOS untuk kunci API Synthetic Anda agar dapat mengambil penggunaan. Klik OK untuk melanjutkan.";
-"bars will ask macOS Keychain for your z.ai API token so it can fetch usage. Click OK to continue." = "bars akan meminta Keychain macOS untuk token API z.ai Anda agar dapat mengambil penggunaan. Klik OK untuk melanjutkan.";
 "Credits used" = "Kredit terpakai";
 "Day" = "Hari";
 "Deployment" = "Penempatan";
@@ -747,8 +738,6 @@
 "Simulated error text" = "Teks error simulasi";
 "Stored in ~/.bars/config.json. Requires an Anthropic Admin API key." = "Disimpan di ~/.bars/config.json. Memerlukan kunci API Admin Anthropic.";
 "Team mode" = "Mode tim";
-"Timed out waiting for Cursor login. %@" = "Kehabisan waktu menunggu login Cursor. %@";
-"Timed out waiting for Cursor login. %@ Last error: %@" = "Kehabisan waktu menunggu login Cursor. %@ Error terakhir: %@";
 "Today requests" = "Permintaan hari ini";
 "Utilization End" = "Akhir Pemanfaatan";
 "Utilization Start" = "Awal Pemanfaatan";
@@ -800,8 +789,6 @@
 "Share AI Usage" = "Bagikan Penggunaan AI";
 "Share Stats…" = "Bagikan Statistik…";
 "Stats copied" = "Statistik disalin";
-"Timed out waiting for Cursor account switch. %@" = "Waktu tunggu untuk beralih akun Cursor habis. %@";
-"Timed out waiting for Cursor account switch. %@ Last error: %@" = "Waktu tunggu untuk beralih akun Cursor habis. %@ Kesalahan terakhir: %@";
 
 /* Spend dashboard */
 "tab_usage_spend" = "Penggunaan & Pengeluaran";
@@ -920,8 +907,6 @@
 "Run-out estimate unavailable" = "Habis: Tidak tersedia";
 "Cost today unavailable" = "Biaya hari ini: Tidak tersedia";
 "Resets" = "Reset";
-"codex_workspaces_tokens" = "Token";
-"codex_workspaces_model" = "Model";
 
 "Cumulative" = "Kumulatif";
 "Token activity" = "Aktivitas token";
@@ -1078,12 +1063,10 @@
 "ALL" = "SEMUA";
 "ALL-TIME SPEND" = "Total pembelanjaan historis";
 "API est." = "Perkiraan API.";
-"AWS charges $0.01 per Cost Explorer request against the primary billing view. A refresh can make multiple requests, and CloudWatch activity can add charges. The displayed monthly budget does not cap AWS billing." = "AWS mengenakan biaya $0,01 per permintaan Cost Explorer terhadap tampilan penagihan utama. Penyegaran dapat membuat banyak permintaan, dan aktivitas CloudWatch dapat menambah biaya. Anggaran bulanan yang ditampilkan tidak membatasi penagihan AWS.";
 "Account %@" = "Akun %@";
 "Account Added" = "Akun Ditambahkan";
 "Account Usage" = "Penggunaan Akun";
 "Account slug" = "Pengidentifikasi akun (slug)";
-"Account switched; restart the Codex background server manually." = "Akun dialihkan; restart server latar belakang Codex secara manual.";
 "Allow reading Claude Code's credentials" = "Izinkan membaca kredensial Claude Code";
 "Automatically imports the app.devin.ai session from Chromium browsers." = "Secara otomatis mengimpor sesi app.devin.ai dari browser Chromium.";
 "BY USAGE" = "Diberi peringkat berdasarkan penggunaan";
@@ -1142,10 +1125,8 @@
 "Open Devin Usage" = "Buka halaman penggunaan Devin";
 "OpenCode API key" = "Kunci OpenCode API";
 "Optional for automatic auth. Use a slug, URL, or internal org-... / org_... ID. Manual auth may need the x-cog-org-id header from a successful Devin quota request." = "Opsional untuk autentikasi otomatis. Gunakan slug, URL, atau internal org-... / org_... ID. Otentikasi manual mungkin memerlukan header x-cog-org-id dari permintaan Devin Kuota yang berhasil.";
-"Optional when the API key can access one account; bars discovers it automatically. For multiple accounts, find the slug in the app.fireworks.ai home account switcher or run firectl whoami." = "Opsional ketika kunci API dapat mengakses satu akun; bars menemukannya secara otomatis. Untuk beberapa akun, temukan slug di pengalih akun rumah app.fireworks.ai atau jalankan firectl whoami.";
 "Organization" = "Organisasi";
 "PARTIAL" = "SEBAGIAN";
-"Paste a cURL capture from the ZoomMate AI credit usage page." = "Tempelkan tangkapan cURL dari halaman penggunaan ZoomMate AI Kredit.";
 "Paste an Authorization Bearer token from app.devin.ai." = "Tempelkan Authorization Bearer token dari app.devin.ai.";
 "Paste the Authorization header value from app.devin.ai." = "Tempelkan nilai header Authorization dari app.devin.ai.";
 "Path to the cswap executable (github.com/realiti4/claude-swap)." = "Jalur ke cswap yang dapat dieksekusi (github.com/realiti4/claude-swap).";
@@ -1256,7 +1237,6 @@
 "/Applications/TcrBar.app/Contents/MacOS/tcr" = "/Applications/TcrBar.app/Contents/MacOS/tcr";
 
 // Additional localized settings, provider controls, sharing, and widgets.
-"Kilo Pass" = "Tiket Kilo";
 "Plan credits" = "Paket berlangganan Kredit";
 "Premium weekly" = "Penggunaan mingguan premium Kuota";
 "Memory" = "Penggunaan memori";
@@ -1289,11 +1269,9 @@
 "Tokens" = "token";
 "Budget" = "Anggaran";
 "Secondary budget" = "Anggaran sekunder";
-"Project-scoped Aixy key used to read its own usage and applicable budgets." = "Kunci Aixy cakupan proyek digunakan untuk membaca penggunaannya sendiri dan anggaran yang berlaku.";
 "Prompts" = "Anjuran";
 "Base" = "Pangkalan";
 "Model quota" = "Model Kuota";
-"Monthly Bobcoins" = "Bobcoin Bulanan";
 "Shared pool" = "Kuota bersama";
 "Bearer … or Cookie: …" = "Bearer … atau Cookie: …";
 "On-demand" = "Penggunaan sesuai permintaan";
@@ -1309,27 +1287,19 @@
 "OpenCode Go accounts" = "Akun OpenCode Go";
 "Store multiple OpenCode Go API keys or Cookie headers." = "Simpan beberapa kunci OpenCode Go API atau header Cookie.";
 "API key or Cookie: …" = "Kunci API atau Cookie: …";
-"Amp Free" = "Amp Gratis";
 "Individual and workspace credit balances from Amp." = "Saldo kredit individu dan ruang kerja dari Amp.";
 "Agent" = "Agen";
 "Bonus" = "Bonusnya";
 "Daily refresh" = "Penyegaran setiap hari";
 "session_id=…" = "session_id=…";
-"Raycast AI credits are a monthly allowance, not a cost history." = "Raycast AI Kredit adalah tunjangan bulanan, bukan riwayat biaya.";
 "Five-hour quota" = "Kuota lima jam";
 "Weekly tokens" = "token mingguan";
-"Synthetic cost summary is not supported." = "Ringkasan biaya Synthetic tidak didukung.";
 "Add-on credits" = "Tambahan Kredit";
-"Fuel Pack" = "Paket Bahan Bakar";
 "Daily free tokens" = "token gratis setiap hari";
 "Inference" = "Kesimpulan";
-"ZeroGPU" = "ZeroGPU";
-"Credit balance from the Codebuff API" = "Saldo Kredit dari Codebuff API";
 "Cookie header or bare session value" = "Header Cookie atau nilai sesi tanpa header";
 "Gemini Models" = "Model Gemini";
 "Claude and GPT" = "Claude dan GPT";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "Personal budget" = "Anggaran pribadi";
 "Team budget" = "Anggaran tim";
 "Standard" = "Standar";
@@ -1401,7 +1371,6 @@
 
 "Click a bar to explore. Use the menu below for exact amounts." = "Klik batang untuk menelusuri. Gunakan menu di bawah untuk melihat jumlah tepat.";
 
-
 // Structured session performance layout.
 "spend_performance_first_token" = "Token pertama";
 "spend_performance_output" = "Output giliran";
@@ -1427,13 +1396,10 @@
 /* Provider menu bar color */
 "Color by provider" = "Warna menurut penyedia";
 
-
-
 /* Tool activity (English fallback pending translation) */
 
 /* Account provider settings */
 "Account JWT" = "JWT akun";
-"Account JWT, not an Agent Endpoint key" = "JWT akun, bukan kunci Agent Endpoint";
 "Input tokens" = "Token input";
 "Output tokens" = "Token output";
 "Pace sign" = "Tanda laju penggunaan";
@@ -1532,9 +1498,7 @@
 "Move down" = "Pindah ke bawah";
 "Leave blank to keep the saved credential." = "Biarkan kosong untuk mempertahankan kredensial tersimpan.";
 
-
 "monthly_daily_target_format" = "≈ %@ / hari agar cukup hingga reset";
-
 
 // Session usage browser
 "Search sessions" = "Cari sesi";
@@ -1551,7 +1515,6 @@
 "Turn %d" = "Giliran %d";
 "Model requests" = "Permintaan model";
 "Request %d" = "Permintaan %d";
-
 
 "Primary" = "Utama";
 "Secondary" = "Sekunder";

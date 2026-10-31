@@ -166,7 +166,7 @@ struct MenuCardModelTests {
             provider: .opencode,
             metadata: metadata,
             snapshot: updatedSnap,
-            credits: CreditsSnapshot(remaining: 12, events: [], updatedAt: now),
+            credits: CreditsSnapshot(remaining: 12, updatedAt: now),
             creditsError: nil,
             dashboardError: nil,
             tokenSnapshot: nil,

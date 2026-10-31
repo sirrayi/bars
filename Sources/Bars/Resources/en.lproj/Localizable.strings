@@ -520,7 +520,6 @@
 "Admin API key" = "Admin API key";
 "Google accounts" = "Google accounts";
 "No local data found" = "No local data found";
-"No available fetch strategy for minimax." = "No available fetch strategy for minimax.";
 "No OpenCode session cookies found in browsers." = "No OpenCode session cookies found in browsers.";
 "No available fetch strategy for %@." = "No available fetch strategy for %@.";
 "Today" = "Today";
@@ -706,7 +705,6 @@
 "bars could not read managed account storage. Recover the store before adding another account." = "bars could not read managed account storage. Recover the store before adding another account.";
 "bars could not read saved auth for that account. Re-authenticate it and try again." = "bars could not read saved auth for that account. Re-authenticate it and try again.";
 "bars could not read the current system account on this Mac." = "bars could not read the current system account on this Mac.";
-"bars could not replace the live Codex auth on this Mac." = "bars could not replace the live Codex auth on this Mac.";
 "bars could not safely preserve the current system account before switching." = "bars could not safely preserve the current system account before switching.";
 "bars could not save the current system account before switching." = "bars could not save the current system account before switching.";
 "bars could not update managed account storage." = "bars could not update managed account storage.";
@@ -715,12 +713,6 @@
 "bars will ask macOS Keychain for the Claude Code OAuth token so it can fetch your Claude usage. Click OK to continue." = "bars will ask macOS Keychain for the Claude Code OAuth token so it can fetch your Claude usage. Click OK to continue.";
 "bars will ask macOS Keychain for your %@ cookie header so it can fetch usage. Click OK to continue." = "bars will ask macOS Keychain for your %@ cookie header so it can fetch usage. Click OK to continue.";
 "bars will ask macOS Keychain for your Claude cookie header so it can fetch Claude web usage. Click OK to continue." = "bars will ask macOS Keychain for your Claude cookie header so it can fetch Claude web usage. Click OK to continue.";
-"bars will ask macOS Keychain for your GitHub Copilot token so it can fetch usage. Click OK to continue." = "bars will ask macOS Keychain for your GitHub Copilot token so it can fetch usage. Click OK to continue.";
-"bars will ask macOS Keychain for your Kimi auth token so it can fetch usage. Click OK to continue." = "bars will ask macOS Keychain for your Kimi auth token so it can fetch usage. Click OK to continue.";
-"bars will ask macOS Keychain for your MiniMax API token so it can fetch usage. Click OK to continue." = "bars will ask macOS Keychain for your MiniMax API token so it can fetch usage. Click OK to continue.";
-"bars will ask macOS Keychain for your OpenAI cookie header so it can fetch Codex dashboard extras. Click OK to continue." = "bars will ask macOS Keychain for your OpenAI cookie header so it can fetch Codex dashboard extras. Click OK to continue.";
-"bars will ask macOS Keychain for your Synthetic API key so it can fetch usage. Click OK to continue." = "bars will ask macOS Keychain for your Synthetic API key so it can fetch usage. Click OK to continue.";
-"bars will ask macOS Keychain for your z.ai API token so it can fetch usage. Click OK to continue." = "bars will ask macOS Keychain for your z.ai API token so it can fetch usage. Click OK to continue.";
 "Credits used" = "Credits used";
 "Day" = "Day";
 "Deployment" = "Deployment";
@@ -750,8 +742,6 @@
 "Simulated error text" = "Simulated error text";
 "Stored in ~/.bars/config.json. Requires an Anthropic Admin API key." = "Stored in ~/.bars/config.json. Requires an Anthropic Admin API key.";
 "Team mode" = "Team mode";
-"Timed out waiting for Cursor login. %@" = "Timed out waiting for Cursor login. %@";
-"Timed out waiting for Cursor login. %@ Last error: %@" = "Timed out waiting for Cursor login. %@ Last error: %@";
 "Today requests" = "Today requests";
 "Utilization End" = "Utilization End";
 "Utilization Start" = "Utilization Start";
@@ -806,8 +796,6 @@
 "Share AI Usage" = "Share AI Usage";
 "Share Stats…" = "Share Stats…";
 "Stats copied" = "Stats copied";
-"Timed out waiting for Cursor account switch. %@" = "Timed out waiting for Cursor account switch. %@";
-"Timed out waiting for Cursor account switch. %@ Last error: %@" = "Timed out waiting for Cursor account switch. %@ Last error: %@";
 
 /* Spend dashboard */
 "tab_usage_spend" = "Usage & Spend";
@@ -946,9 +934,6 @@
 "Run-out estimate unavailable" = "Run-out estimate unavailable";
 "Cost today unavailable" = "Cost today unavailable";
 "Resets" = "Resets";
-"codex_workspaces_model" = "Model";
-"codex_workspaces_tokens" = "Tokens";
-
 
 "Cumulative" = "Cumulative";
 "Token activity" = "Token activity";
@@ -1078,12 +1063,10 @@
 "ALL" = "ALL";
 "ALL-TIME SPEND" = "ALL-TIME SPEND";
 "API est." = "API est.";
-"AWS charges $0.01 per Cost Explorer request against the primary billing view. A refresh can make multiple requests, and CloudWatch activity can add charges. The displayed monthly budget does not cap AWS billing." = "AWS charges $0.01 per Cost Explorer request against the primary billing view. A refresh can make multiple requests, and CloudWatch activity can add charges. The displayed monthly budget does not cap AWS billing.";
 "Account %@" = "Account %@";
 "Account Added" = "Account Added";
 "Account Usage" = "Account Usage";
 "Account slug" = "Account slug";
-"Account switched; restart the Codex background server manually." = "Account switched; restart the Codex background server manually.";
 "Allow reading Claude Code's credentials" = "Allow reading Claude Code's credentials";
 "Automatically imports the app.devin.ai session from Chromium browsers." = "Automatically imports the app.devin.ai session from Chromium browsers.";
 "BY USAGE" = "BY USAGE";
@@ -1142,10 +1125,8 @@
 "Open Devin Usage" = "Open Devin Usage";
 "OpenCode API key" = "OpenCode API key";
 "Optional for automatic auth. Use a slug, URL, or internal org-... / org_... ID. Manual auth may need the x-cog-org-id header from a successful Devin quota request." = "Optional for automatic auth. Use a slug, URL, or internal org-... / org_... ID. Manual auth may need the x-cog-org-id header from a successful Devin quota request.";
-"Optional when the API key can access one account; bars discovers it automatically. For multiple accounts, find the slug in the app.fireworks.ai home account switcher or run firectl whoami." = "Optional when the API key can access one account; bars discovers it automatically. For multiple accounts, find the slug in the app.fireworks.ai home account switcher or run firectl whoami.";
 "Organization" = "Organization";
 "PARTIAL" = "PARTIAL";
-"Paste a cURL capture from the ZoomMate AI credit usage page." = "Paste a cURL capture from the ZoomMate AI credit usage page.";
 "Paste an Authorization Bearer token from app.devin.ai." = "Paste an Authorization Bearer token from app.devin.ai.";
 "Paste the Authorization header value from app.devin.ai." = "Paste the Authorization header value from app.devin.ai.";
 "Path to the cswap executable (github.com/realiti4/claude-swap)." = "Path to the cswap executable (github.com/realiti4/claude-swap).";
@@ -1256,7 +1237,6 @@
 "/Applications/TcrBar.app/Contents/MacOS/tcr" = "/Applications/TcrBar.app/Contents/MacOS/tcr";
 
 // Additional localized settings, provider controls, sharing, and widgets.
-"Kilo Pass" = "Kilo Pass";
 "Plan credits" = "Plan credits";
 "Premium weekly" = "Premium weekly";
 "Memory" = "Memory";
@@ -1289,11 +1269,9 @@
 "Tokens" = "Tokens";
 "Budget" = "Budget";
 "Secondary budget" = "Secondary budget";
-"Project-scoped Aixy key used to read its own usage and applicable budgets." = "Project-scoped Aixy key used to read its own usage and applicable budgets.";
 "Prompts" = "Prompts";
 "Base" = "Base";
 "Model quota" = "Model quota";
-"Monthly Bobcoins" = "Monthly Bobcoins";
 "Shared pool" = "Shared pool";
 "Bearer … or Cookie: …" = "Bearer … or Cookie: …";
 "On-demand" = "On-demand";
@@ -1309,27 +1287,19 @@
 "OpenCode Go accounts" = "OpenCode Go accounts";
 "Store multiple OpenCode Go API keys or Cookie headers." = "Store multiple OpenCode Go API keys or Cookie headers.";
 "API key or Cookie: …" = "API key or Cookie: …";
-"Amp Free" = "Amp Free";
 "Individual and workspace credit balances from Amp." = "Individual and workspace credit balances from Amp.";
 "Agent" = "Agent";
 "Bonus" = "Bonus";
 "Daily refresh" = "Daily refresh";
 "session_id=…" = "session_id=…";
-"Raycast AI credits are a monthly allowance, not a cost history." = "Raycast AI credits are a monthly allowance, not a cost history.";
 "Five-hour quota" = "Five-hour quota";
 "Weekly tokens" = "Weekly tokens";
-"Synthetic cost summary is not supported." = "Synthetic cost summary is not supported.";
 "Add-on credits" = "Add-on credits";
-"Fuel Pack" = "Fuel Pack";
 "Daily free tokens" = "Daily free tokens";
 "Inference" = "Inference";
-"ZeroGPU" = "ZeroGPU";
-"Credit balance from the Codebuff API" = "Credit balance from the Codebuff API";
 "Cookie header or bare session value" = "Cookie header or bare session value";
 "Gemini Models" = "Gemini Models";
 "Claude and GPT" = "Claude and GPT";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "Personal budget" = "Personal budget";
 "Team budget" = "Team budget";
 "Standard" = "Standard";
@@ -1401,7 +1371,6 @@
 
 "Click a bar to explore. Use the menu below for exact amounts." = "Click a bar to explore. Use the menu below for exact amounts.";
 
-
 // Structured session performance layout.
 "spend_performance_first_token" = "First token";
 "spend_performance_output" = "Turn output";
@@ -1427,13 +1396,10 @@
 /* Provider menu bar color */
 "Color by provider" = "Color by provider";
 
-
-
 /* Tool activity */
 
 /* Account provider usage and credentials */
 "Account JWT" = "Account JWT";
-"Account JWT, not an Agent Endpoint key" = "Account JWT, not an Agent Endpoint key";
 "Input tokens" = "Input tokens";
 "Output tokens" = "Output tokens";
 "Pace sign" = "Pace sign";
@@ -1535,9 +1501,7 @@
 "Move down" = "Move down";
 "Leave blank to keep the saved credential." = "Leave blank to keep the saved credential.";
 
-
 "monthly_daily_target_format" = "≈ %@ / day to last until reset";
-
 
 // Session usage browser
 "Search sessions" = "Search sessions";
@@ -1554,7 +1518,6 @@
 "Turn %d" = "Turn %d";
 "Model requests" = "Model requests";
 "Request %d" = "Request %d";
-
 
 "Primary" = "Primary";
 "Secondary" = "Secondary";

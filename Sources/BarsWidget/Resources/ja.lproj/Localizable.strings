@@ -39,7 +39,6 @@
 "Activity" = "アクティビティ";
 "Add-on credits" = "アドオン クレジット";
 "Agent" = "エージェント";
-"Amp Free" = "Amp 無料";
 "Balance" = "残高";
 "Base" = "ベース";
 "Billing" = "請求";
@@ -83,11 +82,9 @@
 "Five-hour quota" = "5時間 クォータ";
 "Flash" = "Flash";
 "Flash Lite" = "Flash Lite";
-"Fuel Pack" = "燃料パック";
 "Gemini Models" = "Geminiモデル";
 "Inference" = "推論";
 "Key allowance" = "この API キーの使用許可";
-"Kilo Pass" = "Kilo パス";
 "Last %d days" = "過去%d日間";
 "Last 30 days" = "過去30日間";
 "Memory" = "メモリ使用量";
@@ -95,7 +92,6 @@
 "Model quota" = "モデル クォータ";
 "Models" = "モデル";
 "Monthly" = "月間";
-"Monthly Bobcoins" = "月間ボブコイン";
 "Monthly budget" = "月々の予算";
 "Monthly credits" = "月刊 クレジット";
 "Monthly quota" = "月刊 クォータ";
@@ -178,10 +174,7 @@
 "Weekly quota" = "週刊 クォータ";
 "Weekly tokens" = "週刊 トークン";
 "Window" = "利用窓口";
-"ZeroGPU" = "ZeroGPU";
 "after reset" = "リセット後";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "budget spent" = "クォータ 予算を使い果たしました";
 "conserving" = "節約ペース";
 "full" = "全枠が利用可能";

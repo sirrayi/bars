@@ -30,7 +30,6 @@
 "hooks_add_argument" = "引数を追加";
 "hooks_delete_argument" = "引数を削除";
 
-
 "(System)" = "（システム）";
 "30d" = "30日";
 "7d" = "7日";
@@ -511,7 +510,6 @@
 "Admin API key" = "管理者 API キー";
 "Google accounts" = "Google アカウント";
 "No local data found" = "ローカルデータが見つかりません";
-"No available fetch strategy for minimax." = "minimax に利用可能な取得戦略がありません。";
 "No OpenCode session cookies found in browsers." = "ブラウザに OpenCode のセッション Cookie が見つかりません。";
 "No available fetch strategy for %@." = "%@ に利用可能な取得戦略がありません。";
 "Today" = "今日";
@@ -687,7 +685,6 @@
 "bars could not read managed account storage. Recover the store before adding another account." = "bars は管理アカウントのストレージを読み取れませんでした。別のアカウントを追加する前にストアを復旧してください。";
 "bars could not read saved auth for that account. Re-authenticate it and try again." = "bars はそのアカウントの保存済み認証情報を読み取れませんでした。再認証してからやり直してください。";
 "bars could not read the current system account on this Mac." = "bars はこの Mac の現在のシステムアカウントを読み取れませんでした。";
-"bars could not replace the live Codex auth on this Mac." = "bars はこの Mac の現在使用中の Codex 認証情報を置き換えられませんでした。";
 "bars could not safely preserve the current system account before switching." = "bars は切り替え前に現在のシステムアカウントを安全に保全できませんでした。";
 "bars could not save the current system account before switching." = "bars は切り替え前に現在のシステムアカウントを保存できませんでした。";
 "bars could not update managed account storage." = "bars は管理アカウントのストレージを更新できませんでした。";
@@ -696,12 +693,6 @@
 "bars will ask macOS Keychain for the Claude Code OAuth token so it can fetch your Claude usage. Click OK to continue." = "bars は Claude の使用量を取得するために、macOS キーチェーンに Claude Code の OAuth トークンへのアクセスを求めます。続けるには OK をクリックしてください。";
 "bars will ask macOS Keychain for your %@ cookie header so it can fetch usage. Click OK to continue." = "bars は使用量を取得するために、macOS キーチェーンに %@ の Cookie ヘッダーへのアクセスを求めます。続けるには OK をクリックしてください。";
 "bars will ask macOS Keychain for your Claude cookie header so it can fetch Claude web usage. Click OK to continue." = "bars は Claude ウェブの使用量を取得するために、macOS キーチェーンに Claude の Cookie ヘッダーへのアクセスを求めます。続けるには OK をクリックしてください。";
-"bars will ask macOS Keychain for your GitHub Copilot token so it can fetch usage. Click OK to continue." = "bars は使用量を取得するために、macOS キーチェーンに GitHub Copilot のトークンへのアクセスを求めます。続けるには OK をクリックしてください。";
-"bars will ask macOS Keychain for your Kimi auth token so it can fetch usage. Click OK to continue." = "bars は使用量を取得するために、macOS キーチェーンに Kimi の認証トークンへのアクセスを求めます。続けるには OK をクリックしてください。";
-"bars will ask macOS Keychain for your MiniMax API token so it can fetch usage. Click OK to continue." = "bars は使用量を取得するために、macOS キーチェーンに MiniMax の API トークンへのアクセスを求めます。続けるには OK をクリックしてください。";
-"bars will ask macOS Keychain for your OpenAI cookie header so it can fetch Codex dashboard extras. Click OK to continue." = "bars は Codex ダッシュボードの追加情報を取得するために、macOS キーチェーンに OpenAI の Cookie ヘッダーへのアクセスを求めます。続けるには OK をクリックしてください。";
-"bars will ask macOS Keychain for your Synthetic API key so it can fetch usage. Click OK to continue." = "bars は使用量を取得するために、macOS キーチェーンに Synthetic の API キーへのアクセスを求めます。続けるには OK をクリックしてください。";
-"bars will ask macOS Keychain for your z.ai API token so it can fetch usage. Click OK to continue." = "bars は使用量を取得するために、macOS キーチェーンに z.ai の API トークンへのアクセスを求めます。続けるには OK をクリックしてください。";
 "Credits used" = "使用済みクレジット";
 "Day" = "日";
 "Deployment" = "デプロイメント";
@@ -731,8 +722,6 @@
 "Simulated error text" = "シミュレートされたエラーテキスト";
 "Stored in ~/.bars/config.json. Requires an Anthropic Admin API key." = "~/.bars/config.json に保存されます。Anthropic の Admin API キーが必要です。";
 "Team mode" = "チームモード";
-"Timed out waiting for Cursor login. %@" = "Cursor のログイン待機がタイムアウトしました。%@";
-"Timed out waiting for Cursor login. %@ Last error: %@" = "Cursor のログイン待機がタイムアウトしました。%@ 最後のエラー: %@";
 "Today requests" = "本日のリクエスト";
 "Utilization End" = "使用率終了";
 "Utilization Start" = "使用率開始";
@@ -797,8 +786,6 @@
 
 "%@: %@" = "%@: %@";
 "Sign in with Claude Code..." = "Claude Code でサインイン...";
-"Timed out waiting for Cursor account switch. %@" = "Cursor アカウントの切り替え待機中にタイムアウトしました。%@";
-"Timed out waiting for Cursor account switch. %@ Last error: %@" = "Cursor アカウントの切り替え待機中にタイムアウトしました。%@ 最後のエラー: %@";
 /* Spend dashboard */
 "tab_usage_spend" = "使用量と支出";
 "Usage & Spend" = "使用量と支出";
@@ -916,8 +903,6 @@
 "Run-out estimate unavailable" = "使い切り: 利用不可";
 "Cost today unavailable" = "今日のコスト: 利用不可";
 "Resets" = "リセット";
-"codex_workspaces_model" = "モデル";
-"codex_workspaces_tokens" = "トークン";
 
 "Cumulative" = "累計";
 "Token activity" = "トークンアクティビティ";
@@ -1074,12 +1059,10 @@
 "ALL" = "すべて";
 "ALL-TIME SPEND" = "過去の総支出額";
 "API est." = "API 推定";
-"AWS charges $0.01 per Cost Explorer request against the primary billing view. A refresh can make multiple requests, and CloudWatch activity can add charges. The displayed monthly budget does not cap AWS billing." = "AWS は、プライマリ請求ビューに対して Cost Explorer リクエストごとに 0.01 ドルを請求します。更新では複数のリクエストが行われる可能性があり、CloudWatch アクティビティによって料金が追加される場合があります。表示される毎月の予算には、AWS の請求の上限はありません。";
 "Account %@" = "アカウント %@";
 "Account Added" = "アカウントが追加されました";
 "Account Usage" = "アカウントの使用状況";
 "Account slug" = "アカウント識別子 (スラッグ)";
-"Account switched; restart the Codex background server manually." = "アカウントが切り替わりました。 Codex バックグラウンド サーバーを手動で再起動します。";
 "Allow reading Claude Code's credentials" = "Claude Code の認証情報の読み取りを許可する";
 "Automatically imports the app.devin.ai session from Chromium browsers." = "Chromium ブラウザから app.devin.ai セッションを自動的にインポートします。";
 "BY USAGE" = "使用量順";
@@ -1138,10 +1121,8 @@
 "Open Devin Usage" = "Devin の使用方法ページを開く";
 "OpenCode API key" = "OpenCode API キー";
 "Optional for automatic auth. Use a slug, URL, or internal org-... / org_... ID. Manual auth may need the x-cog-org-id header from a successful Devin quota request." = "自動認証では省略できます。slug、URL、または org-... / org_... 形式の内部 ID を使用します。手動認証では、成功した Devin クォータリクエストの x-cog-org-id ヘッダーが必要になる場合があります。";
-"Optional when the API key can access one account; bars discovers it automatically. For multiple accounts, find the slug in the app.fireworks.ai home account switcher or run firectl whoami." = "API キーが 1 つのアカウントにアクセスできる場合はオプションです。 bars は自動的に検出します。複数のアカウントの場合は、app.fireworks.ai ホーム アカウント スイッチャーでスラッグを見つけるか、firectl whoami を実行します。";
 "Organization" = "組織";
 "PARTIAL" = "部分的";
-"Paste a cURL capture from the ZoomMate AI credit usage page." = "ZoomMate AI クレジット 使用法ページから cURL キャプチャを貼り付けます。";
 "Paste an Authorization Bearer token from app.devin.ai." = "app.devin.ai から Authorization Bearer トークン を貼り付けます。";
 "Paste the Authorization header value from app.devin.ai." = "app.devin.ai から Authorization ヘッダー値を貼り付けます。";
 "Path to the cswap executable (github.com/realiti4/claude-swap)." = "cswap 実行可能ファイルへのパス (github.com/realiti4/claude-swap)。";
@@ -1252,7 +1233,6 @@
 "/Applications/TcrBar.app/Contents/MacOS/tcr" = "/Applications/TcrBar.app/Contents/MacOS/tcr";
 
 // Additional localized settings, provider controls, sharing, and widgets.
-"Kilo Pass" = "Kilo パス";
 "Plan credits" = "サブスクリプションプラン クレジット";
 "Premium weekly" = "プレミアム週間使用量 クォータ";
 "Memory" = "メモリ使用量";
@@ -1285,11 +1265,9 @@
 "Tokens" = "トークン";
 "Budget" = "予算";
 "Secondary budget" = "二次予算";
-"Project-scoped Aixy key used to read its own usage and applicable budgets." = "プロジェクト スコープの Aixy キーは、独自の使用量と該当する予算を読み取るために使用されます。";
 "Prompts" = "プロンプト";
 "Base" = "ベース";
 "Model quota" = "モデル クォータ";
-"Monthly Bobcoins" = "月間ボブコイン";
 "Shared pool" = "共有プール";
 "Bearer … or Cookie: …" = "Bearer … または Cookie: …";
 "On-demand" = "オンデマンドでの使用";
@@ -1305,27 +1283,19 @@
 "OpenCode Go accounts" = "OpenCode Go アカウント";
 "Store multiple OpenCode Go API keys or Cookie headers." = "複数の OpenCode Go API キーまたは Cookie ヘッダーを保存します。";
 "API key or Cookie: …" = "API キーまたは Cookie: …";
-"Amp Free" = "Amp 無料";
 "Individual and workspace credit balances from Amp." = "Amp の個人アカウントとワークスペースのクレジット残高。";
 "Agent" = "エージェント";
 "Bonus" = "ボーナス";
 "Daily refresh" = "毎日のリフレッシュ";
 "session_id=…" = "session_id=…";
-"Raycast AI credits are a monthly allowance, not a cost history." = "Raycast AI クレジット は、コスト履歴ではなく、毎月の手当です。";
 "Five-hour quota" = "5時間 クォータ";
 "Weekly tokens" = "週刊 トークン";
-"Synthetic cost summary is not supported." = "Synthetic コスト概要はサポートされていません。";
 "Add-on credits" = "アドオン クレジット";
-"Fuel Pack" = "燃料パック";
 "Daily free tokens" = "毎日無料 トークン";
 "Inference" = "推論";
-"ZeroGPU" = "ZeroGPU";
-"Credit balance from the Codebuff API" = "Codebuff API からの クレジット 残高";
 "Cookie header or bare session value" = "Cookie ヘッダーまたは裸のセッション値";
 "Gemini Models" = "Geminiモデル";
 "Claude and GPT" = "Claude および GPT";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "Personal budget" = "個人の予算";
 "Team budget" = "チームの予算";
 "Standard" = "標準";
@@ -1397,7 +1367,6 @@
 
 "Click a bar to explore. Use the menu below for exact amounts." = "棒をクリックして詳しく確認できます。下のメニューで正確な金額を確認できます。";
 
-
 // Structured session performance layout.
 "spend_performance_first_token" = "最初のトークン";
 "spend_performance_output" = "ターンの出力";
@@ -1423,13 +1392,10 @@
 /* Provider menu bar color */
 "Color by provider" = "プロバイダー別の色";
 
-
-
 /* Tool activity (English fallback pending translation) */
 
 /* Account provider settings */
 "Account JWT" = "アカウント JWT";
-"Account JWT, not an Agent Endpoint key" = "Agent Endpoint キーではなく、アカウント JWT";
 "Input tokens" = "入力トークン";
 "Output tokens" = "出力トークン";
 "Pace sign" = "ペースの符号";
@@ -1530,9 +1496,7 @@
 "Move down" = "下へ移動";
 "Leave blank to keep the saved credential." = "保存済みの認証情報を維持するには空欄にしてください。";
 
-
 "monthly_daily_target_format" = "リセットまで持たせる目安：1日あたり約 %@";
-
 
 // Session usage browser
 "Search sessions" = "セッションを検索";
@@ -1549,7 +1513,6 @@
 "Turn %d" = "ターン %d";
 "Model requests" = "モデルリクエスト";
 "Request %d" = "リクエスト %d";
-
 
 "Primary" = "プライマリ";
 "Secondary" = "セカンダリ";

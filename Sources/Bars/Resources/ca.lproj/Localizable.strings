@@ -13,7 +13,6 @@
 "Show all (%d)" = "Mostra-ho tot (%d)";
 "Show less" = "Mostra menys";
 
-
 "(System)" = "(Sistema)";
 "30d" = "30d";
 "7d" = "7d";
@@ -582,7 +581,6 @@
 "bars could not read managed account storage. Recover the store before adding another account." = "bars no ha pogut llegir l'emmagatzematge de comptes gestionats. Recupereu-lo abans d'afegir un altre compte.";
 "bars could not read saved auth for that account. Re-authenticate it and try again." = "bars no ha pogut llegir l'autenticació desada per a aquest compte. Torneu-lo a autenticar i torneu-ho a provar.";
 "bars could not read the current system account on this Mac." = "bars no ha pogut llegir el compte del sistema actual en aquest Mac.";
-"bars could not replace the live Codex auth on this Mac." = "bars no ha pogut substituir l'autenticació activa de Codex en aquest Mac.";
 "bars could not safely preserve the current system account before switching." = "bars no ha pogut preservar de manera segura el compte del sistema actual abans de canviar.";
 "bars could not save the current system account before switching." = "bars no ha pogut desar el compte del sistema actual abans de canviar.";
 "bars could not update managed account storage." = "bars no ha pogut actualitzar l'emmagatzematge de comptes gestionats.";
@@ -591,12 +589,6 @@
 "bars will ask macOS Keychain for the Claude Code OAuth token so it can fetch your Claude usage. Click OK to continue." = "bars demanarà a Clauer de macOS el token OAuth de Claude Code per obtenir l'ús de Claude. Premeu D'acord per continuar.";
 "bars will ask macOS Keychain for your %@ cookie header so it can fetch usage. Click OK to continue." = "bars demanarà a Clauer de macOS la capçalera Cookie corresponent a %@ per obtenir l'ús. Premeu D'acord per continuar.";
 "bars will ask macOS Keychain for your Claude cookie header so it can fetch Claude web usage. Click OK to continue." = "bars demanarà a Clauer de macOS la capçalera Cookie de Claude per obtenir l'ús web de Claude. Premeu D'acord per continuar.";
-"bars will ask macOS Keychain for your GitHub Copilot token so it can fetch usage. Click OK to continue." = "bars demanarà a Clauer de macOS el token de GitHub Copilot per obtenir l'ús. Premeu D'acord per continuar.";
-"bars will ask macOS Keychain for your Kimi auth token so it can fetch usage. Click OK to continue." = "bars demanarà a Clauer de macOS el token d'autenticació de Kimi per obtenir l'ús. Premeu D'acord per continuar.";
-"bars will ask macOS Keychain for your MiniMax API token so it can fetch usage. Click OK to continue." = "bars demanarà a Clauer de macOS el token API de MiniMax per obtenir l'ús. Premeu D'acord per continuar.";
-"bars will ask macOS Keychain for your OpenAI cookie header so it can fetch Codex dashboard extras. Click OK to continue." = "bars demanarà a Clauer de macOS la capçalera Cookie d'OpenAI per obtenir extres del tauler de Codex. Premeu D'acord per continuar.";
-"bars will ask macOS Keychain for your Synthetic API key so it can fetch usage. Click OK to continue." = "bars demanarà a Clauer de macOS la clau API de Synthetic per obtenir l'ús. Premeu D'acord per continuar.";
-"bars will ask macOS Keychain for your z.ai API token so it can fetch usage. Click OK to continue." = "bars demanarà a Clauer de macOS el token API de z.ai per obtenir l'ús. Premeu D'acord per continuar.";
 "Credits used" = "Crèdits usats";
 "Day" = "Dia";
 "Deployment" = "Desplegament";
@@ -626,8 +618,6 @@
 "Simulated error text" = "Text d'error simulat";
 "Stored in ~/.bars/config.json. Requires an Anthropic Admin API key." = "Desat a ~/.bars/config.json. Requereix una clau Anthropic Admin API.";
 "Team mode" = "Mode d'equip";
-"Timed out waiting for Cursor login. %@" = "S'ha esgotat el temps esperant l'inici de sessió de Cursor. %@";
-"Timed out waiting for Cursor login. %@ Last error: %@" = "S'ha esgotat el temps esperant l'inici de sessió de Cursor. %@ Últim error: %@";
 "Today requests" = "Sol·licituds d'avui";
 "Utilization End" = "Final d'utilització";
 "Utilization Start" = "Inici d'utilització";
@@ -712,7 +702,6 @@
 "Missing DeepSeek API key." = "Falta la clau d'API de DeepSeek.";
 "No %@ utilization data yet." = "Encara no hi ha dades d'utilització de %@.";
 "No available fetch strategy for %@." = "No hi ha cap estratègia d'obtenció disponible per a %@.";
-"No available fetch strategy for minimax." = "No hi ha cap estratègia d'obtenció disponible per a MiniMax.";
 "No local data found" = "No s'han trobat dades locals";
 "No OpenCode session cookies found in browsers." = "No s'han trobat galetes de sessió d'OpenCode als navegadors.";
 "No overview data available." = "No hi ha dades de resum disponibles.";
@@ -802,8 +791,6 @@
 "Share AI Usage" = "Comparteix l'ús de la IA";
 "Share Stats…" = "Comparteix les estadístiques…";
 "Stats copied" = "Estadístiques copiades";
-"Timed out waiting for Cursor account switch. %@" = "S'ha esgotat el temps d'espera del canvi de compte de Cursor. %@";
-"Timed out waiting for Cursor account switch. %@ Last error: %@" = "S'ha esgotat el temps d'espera del canvi de compte de Cursor. %@ Últim error: %@";
 
 /* Spend dashboard */
 "tab_usage_spend" = "Ús i despesa";
@@ -922,8 +909,6 @@
 "Run-out estimate unavailable" = "S'esgota: No disponible";
 "Cost today unavailable" = "Cost d'avui: No disponible";
 "Resets" = "Reinicis";
-"codex_workspaces_tokens" = "Tòkens";
-"codex_workspaces_model" = "Model";
 
 "Cumulative" = "Acumulat";
 "Token activity" = "Activitat de tokens";
@@ -1078,12 +1063,10 @@
 "ALL" = "TOTS";
 "ALL-TIME SPEND" = "Despesa històrica total";
 "API est." = "API est.";
-"AWS charges $0.01 per Cost Explorer request against the primary billing view. A refresh can make multiple requests, and CloudWatch activity can add charges. The displayed monthly budget does not cap AWS billing." = "AWS cobra 0,01 $ per sol·licitud de Cost Explorer a la visualització de facturació principal. Una actualització pot fer diverses sol·licituds i l'activitat de CloudWatch pot afegir càrrecs. El pressupost mensual que es mostra no limita la facturació de AWS.";
 "Account %@" = "Compte %@";
 "Account Added" = "Compte afegit";
 "Account Usage" = "Ús del compte";
 "Account slug" = "Identificador del compte (slug)";
-"Account switched; restart the Codex background server manually." = "Compte canviat; reinicieu el servidor de fons Codex manualment.";
 "Allow reading Claude Code's credentials" = "Permet llegir les credencials de Claude Code";
 "Automatically imports the app.devin.ai session from Chromium browsers." = "Importa automàticament la sessió app.devin.ai dels navegadors Chromium.";
 "BY USAGE" = "Classificat per ús";
@@ -1142,10 +1125,8 @@
 "Open Devin Usage" = "Obriu la pàgina d'ús de Devin";
 "OpenCode API key" = "Clau OpenCode API";
 "Optional for automatic auth. Use a slug, URL, or internal org-... / org_... ID. Manual auth may need the x-cog-org-id header from a successful Devin quota request." = "Opcional per a l'autenticació automàtica. Utilitzeu un slug, URL o org-... / org_... ID intern. L'autorització manual pot necessitar la capçalera x-cog-org-id d'una sol·licitud de quota Devin correcta.";
-"Optional when the API key can access one account; bars discovers it automatically. For multiple accounts, find the slug in the app.fireworks.ai home account switcher or run firectl whoami." = "Opcional quan la clau API pot accedir a un compte; bars el descobreix automàticament. Per a diversos comptes, trobeu el slug al commutador de comptes de casa app.fireworks.ai o executeu firectl whoami.";
 "Organization" = "Organització";
 "PARTIAL" = "PARCIAL";
-"Paste a cURL capture from the ZoomMate AI credit usage page." = "Enganxeu una captura cURL de la pàgina d'ús ZoomMate AI Crèdits.";
 "Paste an Authorization Bearer token from app.devin.ai." = "Enganxeu un testimoni Authorization Bearer de app.devin.ai.";
 "Paste the Authorization header value from app.devin.ai." = "Enganxeu el valor de la capçalera Authorization de app.devin.ai.";
 "Path to the cswap executable (github.com/realiti4/claude-swap)." = "Camí a l'executable cswap (github.com/realiti4/claude-swap).";
@@ -1256,7 +1237,6 @@
 "/Applications/TcrBar.app/Contents/MacOS/tcr" = "/Applications/TcrBar.app/Contents/MacOS/tcr";
 
 // Additional localized settings, provider controls, sharing, and widgets.
-"Kilo Pass" = "Kilo Pass";
 "Plan credits" = "Pla de subscripció Crèdits";
 "Premium weekly" = "Ús setmanal premium Quota";
 "Memory" = "Ús de memòria";
@@ -1289,11 +1269,9 @@
 "Tokens" = "tokens";
 "Budget" = "Pressupost";
 "Secondary budget" = "Pressupost secundari";
-"Project-scoped Aixy key used to read its own usage and applicable budgets." = "Clau Aixy de l'àmbit del projecte que s'utilitza per llegir el seu propi ús i els pressupostos aplicables.";
 "Prompts" = "Indicacions";
 "Base" = "Base";
 "Model quota" = "Model Quota";
-"Monthly Bobcoins" = "Bobcoins mensuals";
 "Shared pool" = "Quota compartida";
 "Bearer … or Cookie: …" = "Bearer... o Cookie:...";
 "On-demand" = "Ús sota demanda";
@@ -1309,27 +1287,19 @@
 "OpenCode Go accounts" = "OpenCode Go comptes";
 "Store multiple OpenCode Go API keys or Cookie headers." = "Emmagatzemeu diverses claus OpenCode Go API o capçaleres Cookie.";
 "API key or Cookie: …" = "Clau API o Cookie:...";
-"Amp Free" = "Amp Gratuït";
 "Individual and workspace credit balances from Amp." = "Saldos de crèdits individuals i de l’espai de treball d’Amp.";
 "Agent" = "Agent";
 "Bonus" = "Bonificació";
 "Daily refresh" = "Actualització diària";
 "session_id=…" = "session_id=…";
-"Raycast AI credits are a monthly allowance, not a cost history." = "Raycast AI Crèdits són un subsidi mensual, no un historial de costos.";
 "Five-hour quota" = "Quota de cinc hores";
 "Weekly tokens" = "tokens setmanal";
-"Synthetic cost summary is not supported." = "El resum de costos Synthetic no s'admet.";
 "Add-on credits" = "Complement Crèdits";
-"Fuel Pack" = "Paquet de combustible";
 "Daily free tokens" = "tokens diari gratuït";
 "Inference" = "Inferència";
-"ZeroGPU" = "ZeroGPU";
-"Credit balance from the Codebuff API" = "Saldo Crèdits del Codebuff API";
 "Cookie header or bare session value" = "Capçalera Cookie o valor de sessió nu";
 "Gemini Models" = "Models Gemini";
 "Claude and GPT" = "Claude i GPT";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "Personal budget" = "Pressupost personal";
 "Team budget" = "Pressupost de l'equip";
 "Standard" = "Estàndard";
@@ -1401,7 +1371,6 @@
 
 "Click a bar to explore. Use the menu below for exact amounts." = "Fes clic en una barra per explorar. Consulta els imports exactes al menú inferior.";
 
-
 // Structured session performance layout.
 "spend_performance_first_token" = "Primer token";
 "spend_performance_output" = "Sortida per torn";
@@ -1427,13 +1396,10 @@
 /* Provider menu bar color */
 "Color by provider" = "Color per proveïdor";
 
-
-
 /* Tool activity (English fallback pending translation) */
 
 /* Account provider settings */
 "Account JWT" = "JWT del compte";
-"Account JWT, not an Agent Endpoint key" = "JWT del compte, no una clau d'Agent Endpoint";
 "Input tokens" = "Tokens d'entrada";
 "Output tokens" = "Tokens de sortida";
 "Pace sign" = "Signe del ritme";
@@ -1532,9 +1498,7 @@
 "Move down" = "Mou avall";
 "Leave blank to keep the saved credential." = "Deixeu-ho en blanc per conservar la credencial desada.";
 
-
 "monthly_daily_target_format" = "≈ %@ / dia perquè duri fins al reinici";
-
 
 // Session usage browser
 "Search sessions" = "Cerca sessions";
@@ -1551,7 +1515,6 @@
 "Turn %d" = "Torn %d";
 "Model requests" = "Peticions al model";
 "Request %d" = "Petició %d";
-
 
 "Primary" = "Principal";
 "Secondary" = "Secundària";

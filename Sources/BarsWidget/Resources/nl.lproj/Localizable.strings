@@ -39,7 +39,6 @@
 "Activity" = "Activiteit";
 "Add-on credits" = "Aanvulling Kredieten";
 "Agent" = "Agent";
-"Amp Free" = "Amp Gratis";
 "Balance" = "Saldo";
 "Base" = "Basis";
 "Billing" = "Facturering";
@@ -83,11 +82,9 @@
 "Five-hour quota" = "Vijf uur Quotum";
 "Flash" = "Flash";
 "Flash Lite" = "Flash Lite";
-"Fuel Pack" = "Brandstofpakket";
 "Gemini Models" = "Gemini-modellen";
 "Inference" = "Gevolgtrekking";
 "Key allowance" = "Gebruikslimiet voor deze API-sleutel";
-"Kilo Pass" = "Kilo-pas";
 "Last %d days" = "Afgelopen %d dagen";
 "Last 30 days" = "Laatste 30 dagen";
 "Memory" = "Geheugengebruik";
@@ -95,7 +92,6 @@
 "Model quota" = "ModelQuotum";
 "Models" = "Modellen";
 "Monthly" = "Maandelijks";
-"Monthly Bobcoins" = "Maandelijkse bobcoins";
 "Monthly budget" = "Maandelijks budget";
 "Monthly credits" = "Maandelijks Kredieten";
 "Monthly quota" = "Maandelijks Quotum";
@@ -178,10 +174,7 @@
 "Weekly quota" = "Wekelijks Quotum";
 "Weekly tokens" = "Wekelijks tokens";
 "Window" = "Gebruiksvenster";
-"ZeroGPU" = "ZeroGPU";
 "after reset" = "na resetten";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "budget spent" = "Quotum-budget is op";
 "conserving" = "behoud van Quotum";
 "full" = "volledige Quotum beschikbaar";

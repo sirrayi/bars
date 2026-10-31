@@ -39,7 +39,6 @@
 "Activity" = "Активность";
 "Add-on credits" = "Дополнение Кредиты";
 "Agent" = "Агент";
-"Amp Free" = "Amp Бесплатно";
 "Balance" = "Баланс";
 "Base" = "База";
 "Billing" = "Биллинг";
@@ -83,11 +82,9 @@
 "Five-hour quota" = "Пятичасовой Квота";
 "Flash" = "Flash";
 "Flash Lite" = "Flash Lite";
-"Fuel Pack" = "Топливный пакет";
 "Gemini Models" = "Модели Gemini";
 "Inference" = "Вывод";
 "Key allowance" = "Допуск на использование этого ключа API";
-"Kilo Pass" = "Kilo Пропуск";
 "Last %d days" = "Последние %d дн.";
 "Last 30 days" = "Последние 30 дней";
 "Memory" = "Использование памяти";
@@ -95,7 +92,6 @@
 "Model quota" = "Модель Квота";
 "Models" = "Модели";
 "Monthly" = "Ежемесячно";
-"Monthly Bobcoins" = "Ежемесячные бобкоины";
 "Monthly budget" = "Ежемесячный бюджет";
 "Monthly credits" = "Ежемесячно Кредиты";
 "Monthly quota" = "Ежемесячно Квота";
@@ -178,10 +174,7 @@
 "Weekly quota" = "Еженедельно Квота";
 "Weekly tokens" = "Еженедельно токены";
 "Window" = "Окно использования";
-"ZeroGPU" = "ZeroGPU";
 "after reset" = "после сброса";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "budget spent" = "Бюджет Квота исчерпан";
 "conserving" = "сохранение Квота";
 "full" = "доступен полный Квота";

@@ -9,7 +9,6 @@
 "Show all (%d)" = "إظهار الكل (%d)";
 "Show less" = "إظهار أقل";
 
-
 "(System)" = "(النظام)";
 "30d" = "30 يومًا";
 "7d" = "7 أيام";
@@ -514,7 +513,6 @@
 "Admin API key" = "مفتاح API الإدارة";
 "Google accounts" = "حسابات Google";
 "No local data found" = "لم يتم العثور على بيانات محلية";
-"No available fetch strategy for minimax." = "لا توجد استراتيجية جلب متاحة للمينيماكس.";
 "No OpenCode session cookies found in browsers." = "لا توجد ملفات تعريف الارتباط للجلسة OpenCode في المتصفحات.";
 "No available fetch strategy for %@." = "لا توجد استراتيجية جلب متاحة %@.";
 "Today" = "اليوم";
@@ -700,7 +698,6 @@
 "bars could not read managed account storage. Recover the store before adding another account." = "لم يكن bars قادرا على قراءة تخزين الحساب المدار. استرجع المتجر قبل إضافة حساب آخر.";
 "bars could not read saved auth for that account. Re-authenticate it and try again." = "لم bars أستطيع قراءة المصادقة المحفوظة لهذا الحساب. أعد التحقق من صحتك وحاول مرة أخرى.";
 "bars could not read the current system account on this Mac." = "لم bars أستطيع قراءة حساب النظام الحالي على هذا الجهاز.";
-"bars could not replace the live Codex auth on this Mac." = "لم bars استطعت استبدال المصادقة الحية Codex على هذا الجهاز.";
 "bars could not safely preserve the current system account before switching." = "لم يكن بإمكان bars الحفاظ على حساب النظام الحالي بأمان قبل التحويل.";
 "bars could not save the current system account before switching." = "لم يكن بإمكان bars حفظ حساب النظام الحالي قبل التحويل.";
 "bars could not update managed account storage." = "لم يتمكن bars تحديث تخزين الحساب المدار.";
@@ -709,12 +706,6 @@
 "bars will ask macOS Keychain for the Claude Code OAuth token so it can fetch your Claude usage. Click OK to continue." = "سيطلب bars macOS Keychain رمز Claude OAuth ليتمكن من جلب استخدامك Claude. انقر موافقا للمتابعة.";
 "bars will ask macOS Keychain for your %@ cookie header so it can fetch usage. Click OK to continue." = "bars سيطلب macOS Keychain رأس الكوكيز %@ الخاص بك حتى يتمكن من استخدام الاستخدام. انقر موافقا للمتابعة.";
 "bars will ask macOS Keychain for your Claude cookie header so it can fetch Claude web usage. Click OK to continue." = "bars ستطلب macOS Keychain رأس الكوكيز Claude الخاص بك حتى يتمكن من جلب Claude استخدام الويب. انقر موافقا للمتابعة.";
-"bars will ask macOS Keychain for your GitHub Copilot token so it can fetch usage. Click OK to continue." = "bars سيطلب macOS Keychain رمز GitHub Copilot الخاص بك حتى يتمكن من استدعاء الاستخدام. انقر موافقا للمتابعة.";
-"bars will ask macOS Keychain for your Kimi auth token so it can fetch usage. Click OK to continue." = "bars سيطلب macOS Keychain رمز التوثيق Kimi الخاص بك حتى يتمكن من استدعاء الاستخدام. انقر موافقا للمتابعة.";
-"bars will ask macOS Keychain for your MiniMax API token so it can fetch usage. Click OK to continue." = "bars سيطلب macOS Keychain رمز MiniMax API الخاص بك حتى يتمكن من استدعاء الاستخدام. انقر موافقا للمتابعة.";
-"bars will ask macOS Keychain for your OpenAI cookie header so it can fetch Codex dashboard extras. Click OK to continue." = "سيطلب bars macOS Keychain رأس الكوكيز OpenAI الخاص بك حتى يتمكن من جلب إضافات Codex لوحة التحكم. انقر موافقا للمتابعة.";
-"bars will ask macOS Keychain for your Synthetic API key so it can fetch usage. Click OK to continue." = "bars ستطلب macOS Keychain مفتاح Synthetic API الخاص بك حتى يتمكن من جلب الاستخدام. انقر موافقا للمتابعة.";
-"bars will ask macOS Keychain for your z.ai API token so it can fetch usage. Click OK to continue." = "bars سيطلب macOS Keychain رمز z.ai API الخاص بك حتى يتمكن من استدعاء الاستخدام. انقر موافقا للمتابعة.";
 "Credits used" = "الاعتمادات المستخدمة";
 "Day" = "اليوم";
 "Deployment" = "النشر";
@@ -744,8 +735,6 @@
 "Simulated error text" = "نص خطأ محاكى";
 "Stored in ~/.bars/config.json. Requires an Anthropic Admin API key." = "التخزين في ~/.bars/config.json. يتطلب مفتاح API إداري بشري.";
 "Team mode" = "وضع الفريق";
-"Timed out waiting for Cursor login. %@" = "انتهى الوقت في انتظار تسجيل الدخول Cursor. %@";
-"Timed out waiting for Cursor login. %@ Last error: %@" = "انتهى الوقت في انتظار تسجيل الدخول Cursor. %@ آخر خطأ: %@";
 "Today requests" = "طلبات اليوم";
 "Utilization End" = "نهاية الاستخدام";
 "Utilization Start" = "بداية الاستخدام";
@@ -799,8 +788,6 @@
 "Share AI Usage" = "مشاركة استخدام الذكاء الاصطناعي";
 "Share Stats…" = "مشاركة الإحصاءات…";
 "Stats copied" = "تم نسخ الإحصاءات";
-"Timed out waiting for Cursor account switch. %@" = "انتهت مهلة انتظار تبديل حساب Cursor. %@";
-"Timed out waiting for Cursor account switch. %@ Last error: %@" = "انتهت مهلة انتظار تبديل حساب Cursor. %@ آخر خطأ: %@";
 
 /* Spend dashboard */
 "tab_usage_spend" = "الاستخدام والإنفاق";
@@ -919,8 +906,6 @@
 "Run-out estimate unavailable" = "ينفد: غير متوفر";
 "Cost today unavailable" = "تكلفة اليوم: غير متوفر";
 "Resets" = "إعادات الضبط";
-"codex_workspaces_tokens" = "الرموز";
-"codex_workspaces_model" = "النموذج";
 
 "Cumulative" = "تراكمي";
 "Token activity" = "نشاط الرموز";
@@ -1078,12 +1063,10 @@
 "ALL" = "الكل";
 "ALL-TIME SPEND" = "إجمالي الإنفاق التاريخي";
 "API est." = "تقدير API";
-"AWS charges $0.01 per Cost Explorer request against the primary billing view. A refresh can make multiple requests, and CloudWatch activity can add charges. The displayed monthly budget does not cap AWS billing." = "يقوم AWS بتحصيل 0.01 USD لكل طلب Cost Explorer مقابل طريقة عرض الفواتير الأساسية. يمكن أن يؤدي التحديث إلى تقديم طلبات متعددة، ويمكن أن يؤدي نشاط CloudWatch إلى إضافة رسوم. الميزانية الشهرية المعروضة لا تضع حدًا أقصى لفواتير AWS.";
 "Account %@" = "الحساب %@";
 "Account Added" = "تمت إضافة الحساب";
 "Account Usage" = "استخدام الحساب";
 "Account slug" = "معرّف الحساب (slug)";
-"Account switched; restart the Codex background server manually." = "تم تبديل الحساب؛ أعد تشغيل خادم الخلفية Codex يدويًا.";
 "Allow reading Claude Code's credentials" = "السماح بقراءة بيانات اعتماد Claude Code";
 "Automatically imports the app.devin.ai session from Chromium browsers." = "استيراد جلسة app.devin.ai تلقائيًا من متصفحات Chromium.";
 "BY USAGE" = "مرتبة حسب الاستخدام";
@@ -1142,10 +1125,8 @@
 "Open Devin Usage" = "افتح صفحة استخدام Devin";
 "OpenCode API key" = "مفتاح OpenCode API";
 "Optional for automatic auth. Use a slug, URL, or internal org-... / org_... ID. Manual auth may need the x-cog-org-id header from a successful Devin quota request." = "اختياري للمصادقة التلقائية. استخدم slug، URL، أو org-... / org_... ID. قد تحتاج المصادقة اليدوية إلى رأس x-cog-org-id من طلب Devin الحصة الناجح.";
-"Optional when the API key can access one account; bars discovers it automatically. For multiple accounts, find the slug in the app.fireworks.ai home account switcher or run firectl whoami." = "اختياري عندما يتمكن مفتاح API من الوصول إلى حساب واحد؛ يكتشفها bars تلقائيًا. بالنسبة للحسابات المتعددة، ابحث عن الارتباط الثابت في مبدل الحساب المنزلي app.fireworks.ai أو قم بتشغيل firectl whoami.";
 "Organization" = "التنظيم";
 "PARTIAL" = "جزئي";
-"Paste a cURL capture from the ZoomMate AI credit usage page." = "قم بلصق التقاط cURL من صفحة استخدام ZoomMate AI الاعتمادات.";
 "Paste an Authorization Bearer token from app.devin.ai." = "الصق Authorization Bearer الرموز من app.devin.ai.";
 "Paste the Authorization header value from app.devin.ai." = "الصق قيمة رأس Authorization من app.devin.ai.";
 "Path to the cswap executable (github.com/realiti4/claude-swap)." = "المسار إلى الملف القابل للتنفيذ cswap (github.com/realiti4/claude-swap).";
@@ -1256,7 +1237,6 @@
 "/Applications/TcrBar.app/Contents/MacOS/tcr" = "/Applications/TcrBar.app/Contents/MacOS/tcr";
 
 // Additional localized settings, provider controls, sharing, and widgets.
-"Kilo Pass" = "ممر Kilo";
 "Plan credits" = "خطة الاشتراك الاعتمادات";
 "Premium weekly" = "الاستخدام الأسبوعي المتميز الحصة";
 "Memory" = "استخدام الذاكرة";
@@ -1289,11 +1269,9 @@
 "Tokens" = "الرموز";
 "Budget" = "الميزانية";
 "Secondary budget" = "الميزانية الثانوية";
-"Project-scoped Aixy key used to read its own usage and applicable budgets." = "يستخدم مفتاح Aixy على نطاق المشروع لقراءة الاستخدام الخاص به والميزانيات المعمول بها.";
 "Prompts" = "يطالب";
 "Base" = "قاعدة";
 "Model quota" = "الموديل الحصة";
-"Monthly Bobcoins" = "بوبكوينز الشهرية";
 "Shared pool" = "الحصة المشتركة";
 "Bearer … or Cookie: …" = "Bearer … أو Cookie: …";
 "On-demand" = "الاستخدام حسب الطلب";
@@ -1309,27 +1287,19 @@
 "OpenCode Go accounts" = "حسابات OpenCode Go";
 "Store multiple OpenCode Go API keys or Cookie headers." = "قم بتخزين العديد من مفاتيح OpenCode Go API أو رؤوس Cookie.";
 "API key or Cookie: …" = "مفتاح API أو Cookie: ...";
-"Amp Free" = "Amp مجاني";
 "Individual and workspace credit balances from Amp." = "أرصدة الاعتمادات للحساب الفردي ومساحة العمل في Amp.";
 "Agent" = "وكيل";
 "Bonus" = "مكافأة";
 "Daily refresh" = "التحديث اليومي";
 "session_id=…" = "session_id=…";
-"Raycast AI credits are a monthly allowance, not a cost history." = "Raycast AI الاعتمادات عبارة عن بدل شهري، وليس سجل تكلفة.";
 "Five-hour quota" = "خمس ساعات الحصة";
 "Weekly tokens" = "أسبوعي الرموز";
-"Synthetic cost summary is not supported." = "ملخص تكلفة Synthetic غير مدعوم.";
 "Add-on credits" = "الوظيفة الإضافية الاعتمادات";
-"Fuel Pack" = "حزمة الوقود";
 "Daily free tokens" = "الرموز مجانًا يوميًا";
 "Inference" = "الاستدلال";
-"ZeroGPU" = "ZeroGPU";
-"Credit balance from the Codebuff API" = "رصيد الاعتمادات من Codebuff API";
 "Cookie header or bare session value" = "رأس Cookie أو قيمة الجلسة العارية";
 "Gemini Models" = "نماذج Gemini";
 "Claude and GPT" = "Claude وGPT";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "Personal budget" = "الميزانية الشخصية";
 "Team budget" = "ميزانية الفريق";
 "Standard" = "قياسي";
@@ -1401,7 +1371,6 @@
 
 "Click a bar to explore. Use the menu below for exact amounts." = "انقر على عمود لاستكشاف البيانات. استخدم القائمة أدناه لعرض المبالغ الدقيقة.";
 
-
 // Structured session performance layout.
 "spend_performance_first_token" = "الرمز الأول";
 "spend_performance_output" = "مخرجات جولة المحادثة";
@@ -1427,13 +1396,10 @@
 /* Provider menu bar color */
 "Color by provider" = "تلوين حسب المزوّد";
 
-
-
 /* Tool activity (English fallback pending translation) */
 
 /* Account provider settings */
 "Account JWT" = "JWT الحساب";
-"Account JWT, not an Agent Endpoint key" = "JWT الحساب، وليس مفتاح Agent Endpoint";
 "Input tokens" = "رموز الإدخال";
 "Output tokens" = "رموز الإخراج";
 "Pace sign" = "إشارة وتيرة الاستخدام";
@@ -1534,9 +1500,7 @@
 "Move down" = "نقل لأسفل";
 "Leave blank to keep the saved credential." = "اتركه فارغًا للاحتفاظ ببيانات الاعتماد المحفوظة.";
 
-
 "monthly_daily_target_format" = "≈ %@ يوميًا ليكفي حتى إعادة التعيين";
-
 
 // Session usage browser
 "Search sessions" = "البحث في الجلسات";
@@ -1553,7 +1517,6 @@
 "Turn %d" = "الجولة %d";
 "Model requests" = "طلبات النموذج";
 "Request %d" = "الطلب %d";
-
 
 "Primary" = "أساسية";
 "Secondary" = "ثانوية";

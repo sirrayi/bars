@@ -39,7 +39,6 @@
 "Activity" = "Etkinlik";
 "Add-on credits" = "Eklenti Krediler";
 "Agent" = "Temsilci";
-"Amp Free" = "Amp Ücretsiz";
 "Balance" = "Bakiye";
 "Base" = "Baz";
 "Billing" = "Faturalandırma";
@@ -83,11 +82,9 @@
 "Five-hour quota" = "Beş saatlik Kota";
 "Flash" = "Flash";
 "Flash Lite" = "Flash Lite";
-"Fuel Pack" = "Yakıt Paketi";
 "Gemini Models" = "Gemini Modelleri";
 "Inference" = "Çıkarım";
 "Key allowance" = "Bu API anahtarı için kullanım izni";
-"Kilo Pass" = "Kilo Geçişi";
 "Last %d days" = "Son %d gün";
 "Last 30 days" = "Son 30 gün";
 "Memory" = "Bellek kullanımı";
@@ -95,7 +92,6 @@
 "Model quota" = "Model Kota";
 "Models" = "Modeller";
 "Monthly" = "Aylık";
-"Monthly Bobcoins" = "Aylık Bobcoinler";
 "Monthly budget" = "Aylık bütçe";
 "Monthly credits" = "Aylık Krediler";
 "Monthly quota" = "Aylık Kota";
@@ -178,10 +174,7 @@
 "Weekly quota" = "Haftalık Kota";
 "Weekly tokens" = "Haftalık token";
 "Window" = "Kullanım penceresi";
-"ZeroGPU" = "ZeroGPU";
 "after reset" = "sıfırlamadan sonra";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "budget spent" = "Kota bütçesi tükendi";
 "conserving" = "Kota tasarrufu";
 "full" = "tam Kota mevcut";

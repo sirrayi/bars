@@ -9,7 +9,6 @@
 "Show all (%d)" = "Tümünü göster (%d)";
 "Show less" = "Daha az göster";
 
-
 "(System)" = "(Sistem)";
 "30d" = "30 gün";
 "7d" = "7 gün";
@@ -512,7 +511,6 @@
 "Admin API key" = "Yönetici API anahtarı";
 "Google accounts" = "Google hesapları";
 "No local data found" = "Yerel veri bulunamadı";
-"No available fetch strategy for minimax." = "MiniMax için kullanılabilir veri alma stratejisi yok.";
 "No OpenCode session cookies found in browsers." = "Tarayıcılarda OpenCode oturum çerezleri bulunamadı.";
 "No available fetch strategy for %@." = "%@ için kullanılabilir veri alma stratejisi yok.";
 "Today" = "Bugün";
@@ -697,7 +695,6 @@
 "bars could not read managed account storage. Recover the store before adding another account." = "bars yönetilen hesap depolamasını okuyamadı. Başka bir hesap eklemeden önce depoyu kurtarın.";
 "bars could not read saved auth for that account. Re-authenticate it and try again." = "bars bu hesap için kaydedilmiş kimlik doğrulamasını okuyamadı. Yeniden kimlik doğrulayın ve tekrar deneyin.";
 "bars could not read the current system account on this Mac." = "bars bu Mac'teki geçerli sistem hesabını okuyamadı.";
-"bars could not replace the live Codex auth on this Mac." = "bars bu Mac'teki canlı Codex kimlik doğrulamasını değiştiremedi.";
 "bars could not safely preserve the current system account before switching." = "bars geçiş yapmadan önce geçerli sistem hesabını güvenli bir şekilde koruyamadı.";
 "bars could not save the current system account before switching." = "bars geçiş yapmadan önce geçerli sistem hesabını kaydedemedi.";
 "bars could not update managed account storage." = "bars yönetilen hesap depolamasını güncelleyemedi.";
@@ -706,12 +703,6 @@
 "bars will ask macOS Keychain for the Claude Code OAuth token so it can fetch your Claude usage. Click OK to continue." = "bars, Claude kullanımınızı almak için macOS Anahtar Zinciri'nden Claude Code OAuth tokenını isteyecek. Devam etmek için Tamam'a tıklayın.";
 "bars will ask macOS Keychain for your %@ cookie header so it can fetch usage. Click OK to continue." = "bars, kullanımı almak için macOS Anahtar Zinciri'nden %@ çerez başlığınızı isteyecek. Devam etmek için Tamam'a tıklayın.";
 "bars will ask macOS Keychain for your Claude cookie header so it can fetch Claude web usage. Click OK to continue." = "bars, Claude web kullanımını almak için macOS Anahtar Zinciri'nden Claude çerez başlığınızı isteyecek. Devam etmek için Tamam'a tıklayın.";
-"bars will ask macOS Keychain for your GitHub Copilot token so it can fetch usage. Click OK to continue." = "bars, kullanımı almak için macOS Anahtar Zinciri'nden GitHub Copilot tokenınızı isteyecek. Devam etmek için Tamam'a tıklayın.";
-"bars will ask macOS Keychain for your Kimi auth token so it can fetch usage. Click OK to continue." = "bars, kullanımı almak için macOS Anahtar Zinciri'nden Kimi kimlik doğrulama tokenınızı isteyecek. Devam etmek için Tamam'a tıklayın.";
-"bars will ask macOS Keychain for your MiniMax API token so it can fetch usage. Click OK to continue." = "bars, kullanımı almak için macOS Anahtar Zinciri'nden MiniMax API tokenınızı isteyecek. Devam etmek için Tamam'a tıklayın.";
-"bars will ask macOS Keychain for your OpenAI cookie header so it can fetch Codex dashboard extras. Click OK to continue." = "bars, Codex panel eklerini almak için macOS Anahtar Zinciri'nden OpenAI çerez başlığınızı isteyecek. Devam etmek için Tamam'a tıklayın.";
-"bars will ask macOS Keychain for your Synthetic API key so it can fetch usage. Click OK to continue." = "bars, kullanımı almak için macOS Anahtar Zinciri'nden Synthetic API anahtarınızı isteyecek. Devam etmek için Tamam'a tıklayın.";
-"bars will ask macOS Keychain for your z.ai API token so it can fetch usage. Click OK to continue." = "bars, kullanımı almak için macOS Anahtar Zinciri'nden z.ai API tokenınızı isteyecek. Devam etmek için Tamam'a tıklayın.";
 "Credits used" = "Kullanılan krediler";
 "Day" = "Gün";
 "Deployment" = "Dağıtım";
@@ -740,8 +731,6 @@
 "Simulated error text" = "Simüle edilmiş hata metni";
 "Stored in ~/.bars/config.json. Requires an Anthropic Admin API key." = "~/.bars/config.json dosyasında depolandı. Anthropic Yönetici API anahtarı gerektirir.";
 "Team mode" = "Takım modu";
-"Timed out waiting for Cursor login. %@" = "Cursor girişi beklenirken zaman aşımına uğradı. %@";
-"Timed out waiting for Cursor login. %@ Last error: %@" = "Cursor girişi beklenirken zaman aşımına uğradı. %@ Son hata: %@";
 "Today requests" = "Bugünkü istekler";
 "Utilization End" = "Kullanım sonu";
 "Utilization Start" = "Kullanım başlangıcı";
@@ -797,8 +786,6 @@
 "Share AI Usage" = "Yapay zekâ kullanımını paylaş";
 "Share Stats…" = "İstatistikleri paylaş…";
 "Stats copied" = "İstatistikler kopyalandı";
-"Timed out waiting for Cursor account switch. %@" = "Cursor hesap değişikliği beklenirken zaman aşımına uğradı. %@";
-"Timed out waiting for Cursor account switch. %@ Last error: %@" = "Cursor hesap değişikliği beklenirken zaman aşımına uğradı. %@ Son hata: %@";
 
 /* Spend dashboard */
 "tab_usage_spend" = "Kullanım ve Harcama";
@@ -917,8 +904,6 @@
 "Run-out estimate unavailable" = "Biter: kullanılamıyor";
 "Cost today unavailable" = "Bugünkü maliyet: kullanılamıyor";
 "Resets" = "Sıfırlamalar";
-"codex_workspaces_tokens" = "Tokenlar";
-"codex_workspaces_model" = "Modeli";
 
 "Cumulative" = "Kümülatif";
 "Token activity" = "Token etkinliği";
@@ -1077,12 +1062,10 @@
 "ALL" = "TÜMÜ";
 "ALL-TIME SPEND" = "Toplam geçmiş harcama";
 "API est." = "API tahmini.";
-"AWS charges $0.01 per Cost Explorer request against the primary billing view. A refresh can make multiple requests, and CloudWatch activity can add charges. The displayed monthly budget does not cap AWS billing." = "AWS, birincil faturalandırma görünümüne karşılık Cost Explorer isteği başına 0,01 ABD doları tutarında ücret alır. Yenileme birden fazla istekte bulunabilir ve CloudWatch etkinliği ücret ekleyebilir. Görüntülenen aylık bütçe, AWS faturalandırmasını sınırlamıyor.";
 "Account %@" = "Hesap %@";
 "Account Added" = "Hesap Eklendi";
 "Account Usage" = "Hesap Kullanımı";
 "Account slug" = "Hesap tanımlayıcı (slug)";
-"Account switched; restart the Codex background server manually." = "Hesap değiştirildi; Codex arka plan sunucusunu manuel olarak yeniden başlatın.";
 "Allow reading Claude Code's credentials" = "Claude Code'nin kimlik bilgilerinin okunmasına izin ver";
 "Automatically imports the app.devin.ai session from Chromium browsers." = "app.devin.ai oturumunu Chromium tarayıcılarından otomatik olarak içe aktarır.";
 "BY USAGE" = "Kullanıma göre sıralanmıştır";
@@ -1141,10 +1124,8 @@
 "Open Devin Usage" = "Devin kullanım sayfasını açın";
 "OpenCode API key" = "OpenCode API anahtarı";
 "Optional for automatic auth. Use a slug, URL, or internal org-... / org_... ID. Manual auth may need the x-cog-org-id header from a successful Devin quota request." = "Otomatik kimlik doğrulama için isteğe bağlıdır. Bir slug, URL veya dahili org-... / org_... ID kullanın. Manuel kimlik doğrulama, başarılı bir Devin Kota isteğinden gelen x-cog-org-id başlığına ihtiyaç duyabilir.";
-"Optional when the API key can access one account; bars discovers it automatically. For multiple accounts, find the slug in the app.fireworks.ai home account switcher or run firectl whoami." = "API anahtarı bir hesaba erişebildiğinde isteğe bağlıdır; bars bunu otomatik olarak keşfeder. Birden fazla hesap için app.fireworks.ai ev hesabı değiştiricide slug değerini bulun veya firectl whoami'yi çalıştırın.";
 "Organization" = "Organizasyon";
 "PARTIAL" = "KISMİ";
-"Paste a cURL capture from the ZoomMate AI credit usage page." = "ZoomMate AI Krediler kullanım sayfasından bir cURL yakalamasını yapıştırın.";
 "Paste an Authorization Bearer token from app.devin.ai." = "app.devin.ai'den bir Authorization Bearer token yapıştırın.";
 "Paste the Authorization header value from app.devin.ai." = "Authorization başlık değerini app.devin.ai'den yapıştırın.";
 "Path to the cswap executable (github.com/realiti4/claude-swap)." = "cswap yürütülebilir dosyasının yolu (github.com/realiti4/claude-swap).";
@@ -1255,7 +1236,6 @@
 "/Applications/TcrBar.app/Contents/MacOS/tcr" = "/Applications/TcrBar.app/Contents/MacOS/tcr";
 
 // Additional localized settings, provider controls, sharing, and widgets.
-"Kilo Pass" = "Kilo Geçişi";
 "Plan credits" = "Abonelik planı Krediler";
 "Premium weekly" = "Premium haftalık kullanım Kota";
 "Memory" = "Bellek kullanımı";
@@ -1288,11 +1268,9 @@
 "Tokens" = "token";
 "Budget" = "Bütçe";
 "Secondary budget" = "İkincil bütçe";
-"Project-scoped Aixy key used to read its own usage and applicable budgets." = "Kendi kullanımını ve geçerli bütçeleri okumak için kullanılan proje kapsamlı Aixy anahtarı.";
 "Prompts" = "İstemler";
 "Base" = "Baz";
 "Model quota" = "Model Kota";
-"Monthly Bobcoins" = "Aylık Bobcoinler";
 "Shared pool" = "Ortak kota";
 "Bearer … or Cookie: …" = "Bearer … veya Cookie: …";
 "On-demand" = "İsteğe bağlı kullanım";
@@ -1308,27 +1286,19 @@
 "OpenCode Go accounts" = "OpenCode Go hesapları";
 "Store multiple OpenCode Go API keys or Cookie headers." = "Birden fazla OpenCode Go API anahtarını veya Cookie başlığını saklayın.";
 "API key or Cookie: …" = "API anahtarı veya Cookie: …";
-"Amp Free" = "Amp Ücretsiz";
 "Individual and workspace credit balances from Amp." = "Amp kişisel hesap ve çalışma alanı kredi bakiyeleri.";
 "Agent" = "Temsilci";
 "Bonus" = "Bonus";
 "Daily refresh" = "Günlük yenileme";
 "session_id=…" = "session_id=…";
-"Raycast AI credits are a monthly allowance, not a cost history." = "Raycast AI Krediler, maliyet geçmişi değil aylık ödenektir.";
 "Five-hour quota" = "Beş saatlik Kota";
 "Weekly tokens" = "Haftalık token";
-"Synthetic cost summary is not supported." = "Synthetic maliyet özeti desteklenmiyor.";
 "Add-on credits" = "Eklenti Krediler";
-"Fuel Pack" = "Yakıt Paketi";
 "Daily free tokens" = "Günlük ücretsiz token";
 "Inference" = "Çıkarım";
-"ZeroGPU" = "ZeroGPU";
-"Credit balance from the Codebuff API" = "Codebuff API'den Krediler bakiyesi";
 "Cookie header or bare session value" = "Cookie üstbilgisi veya çıplak oturum değeri";
 "Gemini Models" = "Gemini Modelleri";
 "Claude and GPT" = "Claude ve GPT";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "Personal budget" = "Kişisel bütçe";
 "Team budget" = "Takım bütçesi";
 "Standard" = "Standart";
@@ -1400,7 +1370,6 @@
 
 "Click a bar to explore. Use the menu below for exact amounts." = "Ayrıntılar için bir çubuğa tıklayın. Kesin tutarlar için aşağıdaki menüyü kullanın.";
 
-
 // Structured session performance layout.
 "spend_performance_first_token" = "İlk token";
 "spend_performance_output" = "Konuşma turu çıktısı";
@@ -1426,13 +1395,10 @@
 /* Provider menu bar color */
 "Color by provider" = "Sağlayıcıya göre renk";
 
-
-
 /* Tool activity (English fallback pending translation) */
 
 /* Account provider settings */
 "Account JWT" = "Hesap JWT'si";
-"Account JWT, not an Agent Endpoint key" = "Agent Endpoint anahtarı değil, hesap JWT'si";
 "Input tokens" = "Girdi tokenları";
 "Output tokens" = "Çıktı tokenları";
 "Pace sign" = "Kullanım hızı işareti";
@@ -1533,9 +1499,7 @@
 "Move down" = "Aşağı taşı";
 "Leave blank to keep the saved credential." = "Kayıtlı kimlik bilgisini korumak için boş bırakın.";
 
-
 "monthly_daily_target_format" = "Sıfırlamaya kadar yetmesi için günde ≈ %@";
-
 
 // Session usage browser
 "Search sessions" = "Oturum ara";
@@ -1552,7 +1516,6 @@
 "Turn %d" = "Tur %d";
 "Model requests" = "Model istekleri";
 "Request %d" = "İstek %d";
-
 
 "Primary" = "Birincil";
 "Secondary" = "İkincil";

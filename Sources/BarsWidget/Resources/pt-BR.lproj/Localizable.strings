@@ -39,7 +39,6 @@
 "Activity" = "Atividade";
 "Add-on credits" = "Complemento Créditos";
 "Agent" = "Agente";
-"Amp Free" = "Amp Grátis";
 "Balance" = "Saldo";
 "Base" = "base";
 "Billing" = "Faturamento";
@@ -83,11 +82,9 @@
 "Five-hour quota" = "Cota de cinco horas";
 "Flash" = "Flash";
 "Flash Lite" = "Flash Lite";
-"Fuel Pack" = "Pacote de combustível";
 "Gemini Models" = "Modelos Gemini";
 "Inference" = "Inferência";
 "Key allowance" = "Limite de uso para esta chave API";
-"Kilo Pass" = "Passe Kilo";
 "Last %d days" = "Últimos %d dias";
 "Last 30 days" = "Últimos 30 dias";
 "Memory" = "Uso de memória";
@@ -95,7 +92,6 @@
 "Model quota" = "Modelo Cota";
 "Models" = "Modelos";
 "Monthly" = "Mensal";
-"Monthly Bobcoins" = "Bobcoins Mensais";
 "Monthly budget" = "Orçamento mensal";
 "Monthly credits" = "Mensal Créditos";
 "Monthly quota" = "Mensal Cota";
@@ -178,10 +174,7 @@
 "Weekly quota" = "Cota semanal";
 "Weekly tokens" = "tokens semanal";
 "Window" = "Janela de uso";
-"ZeroGPU" = "ZeroGPU";
 "after reset" = "depois de redefinir";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "budget spent" = "Orçamento Cota esgotado";
 "conserving" = "conservando Cota";
 "full" = "Cota completo disponível";

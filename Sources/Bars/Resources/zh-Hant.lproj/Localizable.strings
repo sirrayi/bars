@@ -30,7 +30,6 @@
 "hooks_add_argument" = "新增引數";
 "hooks_delete_argument" = "刪除引數";
 
-
 "(System)" = "（系統）";
 "30d" = "30 天";
 "7d" = "7 天";
@@ -597,7 +596,6 @@
 "bars could not read managed account storage. Recover the store before adding another account." = "bars 無法讀取受管理帳號儲存區。請先修復儲存區，再新增其他帳號。";
 "bars could not read saved auth for that account. Re-authenticate it and try again." = "bars 無法讀取該帳號已儲存的認證。請重新認證後再試。";
 "bars could not read the current system account on this Mac." = "bars 無法讀取此 Mac 上目前的系統帳號。";
-"bars could not replace the live Codex auth on this Mac." = "bars 無法取代此 Mac 上的目前 Codex 認證。";
 "bars could not safely preserve the current system account before switching." = "bars 無法在切換前安全保留目前的系統帳號。";
 "bars could not save the current system account before switching." = "bars 無法在切換前儲存目前的系統帳號。";
 "bars could not update managed account storage." = "bars 無法更新受管理帳號儲存區。";
@@ -606,12 +604,6 @@
 "bars will ask macOS Keychain for the Claude Code OAuth token so it can fetch your Claude usage. Click OK to continue." = "bars 將向 macOS 鑰匙圈要求 Claude Code OAuth token，以取得你的 Claude 使用量。按一下「確定」繼續。";
 "bars will ask macOS Keychain for your %@ cookie header so it can fetch usage. Click OK to continue." = "bars 將向 macOS 鑰匙圈要求你的 %@ Cookie 標頭，以取得使用量。按一下「確定」繼續。";
 "bars will ask macOS Keychain for your Claude cookie header so it can fetch Claude web usage. Click OK to continue." = "bars 將向 macOS 鑰匙圈要求你的 Claude Cookie 標頭，以取得 Claude 網頁使用量。按一下「確定」繼續。";
-"bars will ask macOS Keychain for your GitHub Copilot token so it can fetch usage. Click OK to continue." = "bars 將向 macOS 鑰匙圈要求你的 GitHub Copilot token，以取得使用量。按一下「確定」繼續。";
-"bars will ask macOS Keychain for your Kimi auth token so it can fetch usage. Click OK to continue." = "bars 將向 macOS 鑰匙圈要求你的 Kimi 認證 token，以取得使用量。按一下「確定」繼續。";
-"bars will ask macOS Keychain for your MiniMax API token so it can fetch usage. Click OK to continue." = "bars 將向 macOS 鑰匙圈要求你的 MiniMax API token，以取得使用量。按一下「確定」繼續。";
-"bars will ask macOS Keychain for your OpenAI cookie header so it can fetch Codex dashboard extras. Click OK to continue." = "bars 將向 macOS 鑰匙圈要求你的 OpenAI Cookie 標頭，以取得 Codex 儀表板額外資料。按一下「確定」繼續。";
-"bars will ask macOS Keychain for your Synthetic API key so it can fetch usage. Click OK to continue." = "bars 將向 macOS 鑰匙圈要求你的 Synthetic API 金鑰，以取得使用量。按一下「確定」繼續。";
-"bars will ask macOS Keychain for your z.ai API token so it can fetch usage. Click OK to continue." = "bars 將向 macOS 鑰匙圈要求你的 z.ai API token，以取得使用量。按一下「確定」繼續。";
 "Credits used" = "已用額度";
 "Day" = "日期";
 "Deployment" = "部署";
@@ -641,8 +633,6 @@
 "Simulated error text" = "模擬錯誤文字";
 "Stored in ~/.bars/config.json. Requires an Anthropic Admin API key." = "儲存在 ~/.bars/config.json 中。需要 Anthropic Admin API 金鑰。";
 "Team mode" = "團隊模式";
-"Timed out waiting for Cursor login. %@" = "等待 Cursor 登入逾時。%@";
-"Timed out waiting for Cursor login. %@ Last error: %@" = "等待 Cursor 登入逾時。%@ 最後錯誤：%@";
 "Today requests" = "今日請求";
 "Utilization End" = "使用率終點";
 "Utilization Start" = "使用率起點";
@@ -720,7 +710,6 @@
 "%@ left" = "剩餘 %@";
 "This month" = "本月";
 "Clearing removes cached large pastes or attached images." = "會移除快取的大型貼上內容或附加圖片。";
-"No available fetch strategy for minimax." = "minimax 沒有可用的取得策略。";
 "Manual cleanup: file checkpoints" = "手動清理：檔案檢查點";
 "Updated %@" = "%@ 已更新";
 "Updated relative %@" = "%@已更新";
@@ -785,8 +774,6 @@
 "Select a DeepSeek Chrome profile in Settings." = "請在「設定」中選擇 DeepSeek Chrome 設定檔。";
 "Select profile…" = "選擇設定檔…";
 
-"Timed out waiting for Cursor account switch. %@" = "等待切換 Cursor 帳號逾時。%@";
-"Timed out waiting for Cursor account switch. %@ Last error: %@" = "等待切換 Cursor 帳號逾時。%@ 最近錯誤：%@";
 /* Spend dashboard */
 "tab_usage_spend" = "使用量與支出";
 "Usage & Spend" = "使用量與支出";
@@ -904,8 +891,6 @@
 "Run-out estimate unavailable" = "預計用盡: 無法使用";
 "Cost today unavailable" = "今日費用: 無法使用";
 "Resets" = "重設";
-"codex_workspaces_model" = "模型";
-"codex_workspaces_tokens" = "權杖";
 
 "Cumulative" = "累計";
 "Token activity" = "Token 活動";
@@ -1062,11 +1047,9 @@
 "ALL" = "全部";
 "ALL-TIME SPEND" = "累計支出";
 "API est." = "API 預估";
-"AWS charges $0.01 per Cost Explorer request against the primary billing view. A refresh can make multiple requests, and CloudWatch activity can add charges. The displayed monthly budget does not cap AWS billing." = "AWS 對主計費視圖的每個 Cost Explorer 請求收取 0.01 美元。一次刷新可以發出多個請求，CloudWatch 活動可能會增加費用。顯示的每月預算不限制 AWS 計費。";
 "Account %@" = "帳戶 %@";
 "Account Usage" = "帳戶使用狀況";
 "Account slug" = "帳戶標識（slug）";
-"Account switched; restart the Codex background server manually." = "已切換帳戶，請手動重啓 Codex 後台服務。";
 "Allow reading Claude Code's credentials" = "允許讀取 Claude Code 的憑證";
 "Automatically imports the app.devin.ai session from Chromium browsers." = "自動從 Chromium 瀏覽器匯入 app.devin.ai 會話。";
 "BY USAGE" = "按用量排序";
@@ -1122,10 +1105,8 @@
 "Open Devin Usage" = "打開 Devin 用量頁面";
 "OpenCode API key" = "OpenCode API 密鑰";
 "Optional for automatic auth. Use a slug, URL, or internal org-... / org_... ID. Manual auth may need the x-cog-org-id header from a successful Devin quota request." = "自動身份驗證可選。使用 slug、URL 或內部 org-... / org_... ID。手動身份驗證可能需要來自成功的 Devin 配額 請求的 x-cog-org-id 標頭。";
-"Optional when the API key can access one account; bars discovers it automatically. For multiple accounts, find the slug in the app.fireworks.ai home account switcher or run firectl whoami." = "當API金鑰可以存取一個帳戶時可選；bars 自動發現它。對於多個帳戶，請在 app.fireworks.ai 主帳戶切換器中找到 slug 或運行 firectl whoami。";
 "Organization" = "組織機構";
 "PARTIAL" = "部分";
-"Paste a cURL capture from the ZoomMate AI credit usage page." = "粘貼從 ZoomMate AI 額度用量頁面複製的 cURL 請求。";
 "Paste an Authorization Bearer token from app.devin.ai." = "粘貼 app.devin.ai 的 Authorization Bearer 令牌。";
 "Paste the Authorization header value from app.devin.ai." = "粘貼 app.devin.ai 的 Authorization 請求頭值。";
 "Path to the cswap executable (github.com/realiti4/claude-swap)." = "cswap 執行檔的路徑 (github.com/realiti4/claude-swap)。";
@@ -1234,7 +1215,6 @@
 "/Applications/TcrBar.app/Contents/MacOS/tcr" = "/Applications/TcrBar.app/Contents/MacOS/tcr";
 
 // Additional localized settings, provider controls, sharing, and widgets.
-"Kilo Pass" = "Kilo Pass";
 "Plan credits" = "套餐額度";
 "Premium weekly" = "高級套餐每周額度";
 "Memory" = "內存";
@@ -1267,11 +1247,9 @@
 "Tokens" = "token";
 "Budget" = "預算";
 "Secondary budget" = "第二項預算";
-"Project-scoped Aixy key used to read its own usage and applicable budgets." = "用於讀取所屬項目使用情況和適用預算的 Aixy 密鑰。";
 "Prompts" = "提示詞";
 "Base" = "基礎";
 "Model quota" = "模型額度";
-"Monthly Bobcoins" = "每月 Bobcoin 額度";
 "Shared pool" = "共享額度池";
 "Bearer … or Cookie: …" = "Bearer … 或 Cookie: …";
 "On-demand" = "按需使用";
@@ -1287,27 +1265,19 @@
 "OpenCode Go accounts" = "OpenCode Go 帳戶";
 "Store multiple OpenCode Go API keys or Cookie headers." = "儲存多個 OpenCode Go API 金鑰或 Cookie 標頭。";
 "API key or Cookie: …" = "API 密鑰或 Cookie: …";
-"Amp Free" = "Amp Free";
 "Individual and workspace credit balances from Amp." = "Amp 的個人帳戶和工作區額度餘額。";
 "Agent" = "智能體";
 "Bonus" = "贈送額度";
 "Daily refresh" = "每日重新整理";
 "session_id=…" = "session_id=…";
-"Raycast AI credits are a monthly allowance, not a cost history." = "Raycast AI 額度是每月使用限額，不代表費用歷史。";
 "Five-hour quota" = "5 小時額度";
 "Weekly tokens" = "每周 token";
-"Synthetic cost summary is not supported." = "暫不支持 Synthetic 費用匯總。";
 "Add-on credits" = "額外購買的額度";
-"Fuel Pack" = "燃料包";
 "Daily free tokens" = "每日免費 token";
 "Inference" = "推理";
-"ZeroGPU" = "ZeroGPU";
-"Credit balance from the Codebuff API" = "來自 Codebuff API 的額度餘額";
 "Cookie header or bare session value" = "Cookie 請求頭或會話值";
 "Gemini Models" = "Gemini 模型";
 "Claude and GPT" = "Claude 和 GPT";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "Personal budget" = "個人預算";
 "Team budget" = "團隊預算";
 "Standard" = "標準型";
@@ -1375,7 +1345,6 @@
 
 "Click a bar to explore. Use the menu below for exact amounts." = "點擊長條逐層查看，下方選單可查詢詳細金額。";
 
-
 // Structured session performance layout.
 "spend_performance_first_token" = "首 token";
 "spend_performance_output" = "整輪輸出";
@@ -1401,13 +1370,10 @@
 /* Provider menu bar color */
 "Color by provider" = "依服務商著色";
 
-
-
 /* Tool activity */
 
 /* Account provider settings */
 "Account JWT" = "帳戶 JWT";
-"Account JWT, not an Agent Endpoint key" = "帳戶 JWT，而非 Agent Endpoint 金鑰";
 "Input tokens" = "輸入 token";
 "Output tokens" = "輸出 token";
 "Pace sign" = "使用節奏符號";
@@ -1508,9 +1474,7 @@
 "Move down" = "下移";
 "Leave blank to keep the saved credential." = "留空以保留已儲存的憑證。";
 
-
 "monthly_daily_target_format" = "每天約 %@，可用至重置";
-
 
 // Session usage browser
 "Search sessions" = "搜尋對話";
@@ -1527,7 +1491,6 @@
 "Turn %d" = "第 %d 輪";
 "Model requests" = "模型請求";
 "Request %d" = "第 %d 次請求";
-
 
 "Primary" = "主要";
 "Secondary" = "次要";

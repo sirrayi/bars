@@ -30,7 +30,6 @@
 "hooks_add_argument" = "Thêm đối số";
 "hooks_delete_argument" = "Xóa đối số";
 
-
 "(System)" = "(Hệ thống)";
 "30d" = "30d";
 "7d" = "7d";
@@ -510,7 +509,6 @@
 "Admin API key" = "Khóa quản trị API";
 "Google accounts" = "Google tài khoản";
 "No local data found" = "Không tìm thấy dữ liệu cục bộ";
-"No available fetch strategy for minimax." = "Không có chiến lược tìm nạp nào cho minimax.";
 "No OpenCode session cookies found in browsers." = "Không tìm thấy cookie phiên OpenCode trong trình duyệt.";
 "No available fetch strategy for %@." = "Không có chiến lược tìm nạp nào cho %@ .";
 "Today" = "Hôm nay";
@@ -686,7 +684,6 @@
 "bars could not read managed account storage. Recover the store before adding another account." = "bars không thể đọc bộ nhớ tài khoản được quản lý. Khôi phục cửa hàng trước khi thêm tài khoản khác.";
 "bars could not read saved auth for that account. Re-authenticate it and try again." = "bars không thể đọc xác thực đã lưu cho tài khoản đó. Xác thực lại nó và thử lại.";
 "bars could not read the current system account on this Mac." = "bars không thể đọc tài khoản hệ thống hiện tại trên máy Mac này.";
-"bars could not replace the live Codex auth on this Mac." = "bars không thể thay thế xác thực Codex trực tiếp trên máy Mac này.";
 "bars could not safely preserve the current system account before switching." = "bars không thể bảo toàn tài khoản hệ thống hiện tại một cách an toàn trước khi chuyển đổi.";
 "bars could not save the current system account before switching." = "bars không thể lưu tài khoản hệ thống hiện tại trước khi chuyển đổi.";
 "bars could not update managed account storage." = "bars không thể cập nhật bộ nhớ tài khoản được quản lý.";
@@ -695,12 +692,6 @@
 "bars will ask macOS Keychain for the Claude Code OAuth token so it can fetch your Claude usage. Click OK to continue." = "bars sẽ yêu cầu macOS Keychain cung cấp Claude Mã OAuth token để nó có thể tìm nạp Claude Mức sử dụng của bạn. Nhấn OK để tiếp tục.";
 "bars will ask macOS Keychain for your %@ cookie header so it can fetch usage. Click OK to continue." = "bars sẽ yêu cầu macOS Keychain cho tiêu đề cookie %@ của bạn để nó có thể tìm nạp Mức sử dụng . Nhấn OK để tiếp tục.";
 "bars will ask macOS Keychain for your Claude cookie header so it can fetch Claude web usage. Click OK to continue." = "bars sẽ yêu cầu macOS Keychain về tiêu đề cookie Claude của bạn để nó có thể tìm nạp Claude web Mức sử dụng . Nhấn OK để tiếp tục.";
-"bars will ask macOS Keychain for your GitHub Copilot token so it can fetch usage. Click OK to continue." = "bars sẽ yêu cầu macOS Keychain cho GitHub Copilot token của bạn để nó có thể tìm nạp Mức sử dụng . Nhấn OK để tiếp tục.";
-"bars will ask macOS Keychain for your Kimi auth token so it can fetch usage. Click OK to continue." = "bars sẽ yêu cầu macOS Keychain cho Kimi auth token của bạn để nó có thể tìm nạp Mức sử dụng . Nhấn OK để tiếp tục.";
-"bars will ask macOS Keychain for your MiniMax API token so it can fetch usage. Click OK to continue." = "bars sẽ yêu cầu macOS Keychain cung cấp MiniMax API token của bạn để nó có thể tìm nạp Mức sử dụng . Nhấn OK để tiếp tục.";
-"bars will ask macOS Keychain for your OpenAI cookie header so it can fetch Codex dashboard extras. Click OK to continue." = "bars sẽ yêu cầu macOS Keychain cho tiêu đề cookie OpenAI của bạn để nó có thể tìm nạp các tính năng bổ sung của trang tổng quan Codex. Nhấn OK để tiếp tục.";
-"bars will ask macOS Keychain for your Synthetic API key so it can fetch usage. Click OK to continue." = "bars sẽ yêu cầu macOS Keychain cung cấp khóa Tổng hợp API của bạn để nó có thể tìm nạp Mức sử dụng . Nhấn OK để tiếp tục.";
-"bars will ask macOS Keychain for your z.ai API token so it can fetch usage. Click OK to continue." = "bars sẽ yêu cầu macOS Keychain cung cấp z.ai API token của bạn để nó có thể tìm nạp Mức sử dụng . Nhấn OK để tiếp tục.";
 "Credits used" = "Tín dụng đã sử dụng";
 "Day" = "Ngày";
 "Deployment" = "Triển khai";
@@ -730,8 +721,6 @@
 "Simulated error text" = "Văn bản lỗi mô phỏng";
 "Stored in ~/.bars/config.json. Requires an Anthropic Admin API key." = "Được lưu trữ trong ~/.bars/config.json. Yêu cầu khóa Anthropic Quản trị viên API.";
 "Team mode" = "Chế độ nhóm";
-"Timed out waiting for Cursor login. %@" = "Đã hết thời gian chờ đăng nhập Con trỏ. %@";
-"Timed out waiting for Cursor login. %@ Last error: %@" = "Đã hết thời gian chờ đăng nhập Con trỏ. %@ Lỗi cuối cùng: %@";
 "Today requests" = "Hôm nay yêu cầu";
 "Utilization End" = "Kết thúc sử dụng";
 "Utilization Start" = "Bắt đầu sử dụng";
@@ -797,8 +786,6 @@
 
 "%@: %@" = "%@: %@";
 "Sign in with Claude Code..." = "Đăng nhập bằng Claude Code...";
-"Timed out waiting for Cursor account switch. %@" = "Đã hết thời gian chờ chuyển đổi tài khoản Cursor. %@";
-"Timed out waiting for Cursor account switch. %@ Last error: %@" = "Đã hết thời gian chờ chuyển đổi tài khoản Cursor. %@ Lỗi gần nhất: %@";
 /* Spend dashboard */
 "tab_usage_spend" = "Sử dụng & Chi tiêu";
 "Usage & Spend" = "Sử dụng & Chi tiêu";
@@ -916,8 +903,6 @@
 "Run-out estimate unavailable" = "Sắp hết: Không có sẵn";
 "Cost today unavailable" = "Chi phí hôm nay: Không có sẵn";
 "Resets" = "Lần đặt lại";
-"codex_workspaces_model" = "Mô hình";
-"codex_workspaces_tokens" = "Token";
 
 "Cumulative" = "Tích lũy";
 "Token activity" = "Hoạt động token";
@@ -1075,12 +1060,10 @@
 "ALL" = "TẤT CẢ";
 "ALL-TIME SPEND" = "Tổng chi tiêu lịch sử";
 "API est." = "Ước tính API.";
-"AWS charges $0.01 per Cost Explorer request against the primary billing view. A refresh can make multiple requests, and CloudWatch activity can add charges. The displayed monthly budget does not cap AWS billing." = "AWS tính phí 0,01 USD cho mỗi yêu cầu Cost Explorer đối với chế độ xem thanh toán chính. Việc làm mới có thể thực hiện nhiều yêu cầu và hoạt động CloudWatch có thể tính thêm phí. Ngân sách hàng tháng được hiển thị không giới hạn thanh toán AWS.";
 "Account %@" = "Tài khoản %@";
 "Account Added" = "Đã thêm tài khoản";
 "Account Usage" = "Sử dụng tài khoản";
 "Account slug" = "Mã định danh tài khoản (slug)";
-"Account switched; restart the Codex background server manually." = "Tài khoản đã chuyển đổi; khởi động lại máy chủ nền Codex theo cách thủ công.";
 "Allow reading Claude Code's credentials" = "Cho phép đọc thông tin đăng nhập của Claude Code";
 "Automatically imports the app.devin.ai session from Chromium browsers." = "Tự động nhập phiên app.devin.ai từ trình duyệt Chromium.";
 "BY USAGE" = "Xếp hạng theo cách sử dụng";
@@ -1139,10 +1122,8 @@
 "Open Devin Usage" = "Mở trang sử dụng Devin";
 "OpenCode API key" = "Phím OpenCode API";
 "Optional for automatic auth. Use a slug, URL, or internal org-... / org_... ID. Manual auth may need the x-cog-org-id header from a successful Devin quota request." = "Tùy chọn để xác thực tự động. Sử dụng slug, URL hoặc org-... / org_... ID nội bộ. Xác thực thủ công có thể cần tiêu đề x-cog-org-id từ yêu cầu Devin Hạn mức thành công.";
-"Optional when the API key can access one account; bars discovers it automatically. For multiple accounts, find the slug in the app.fireworks.ai home account switcher or run firectl whoami." = "Tùy chọn khi khóa API có thể truy cập một tài khoản; bars tự động phát hiện ra nó. Đối với nhiều tài khoản, hãy tìm slug trong trình chuyển đổi tài khoản chính app.fireworks.ai hoặc chạy firectl whoami.";
 "Organization" = "Tổ chức";
 "PARTIAL" = "MỘT PHẦN";
-"Paste a cURL capture from the ZoomMate AI credit usage page." = "Dán bản chụp cURL từ trang sử dụng ZoomMate AI Tín dụng.";
 "Paste an Authorization Bearer token from app.devin.ai." = "Dán Authorization Bearer mã thông báo từ app.devin.ai.";
 "Paste the Authorization header value from app.devin.ai." = "Dán giá trị tiêu đề Authorization từ app.devin.ai.";
 "Path to the cswap executable (github.com/realiti4/claude-swap)." = "Đường dẫn đến tệp thực thi cswap (github.com/realiti4/claude-swap).";
@@ -1253,7 +1234,6 @@
 "/Applications/TcrBar.app/Contents/MacOS/tcr" = "/Applications/TcrBar.app/Contents/MacOS/tcr";
 
 // Additional localized settings, provider controls, sharing, and widgets.
-"Kilo Pass" = "Thẻ Kilo";
 "Plan credits" = "Gói đăng ký Tín dụng";
 "Premium weekly" = "Mức sử dụng cao cấp hàng tuần Hạn mức";
 "Memory" = "Sử dụng bộ nhớ";
@@ -1286,11 +1266,9 @@
 "Tokens" = "mã thông báo";
 "Budget" = "Ngân sách";
 "Secondary budget" = "Ngân sách phụ";
-"Project-scoped Aixy key used to read its own usage and applicable budgets." = "Khóa Aixy trong phạm vi dự án được sử dụng để đọc mức sử dụng của chính nó và ngân sách hiện hành.";
 "Prompts" = "Lời nhắc";
 "Base" = "Căn cứ";
 "Model quota" = "Mẫu Hạn mức";
-"Monthly Bobcoins" = "Bobcoin hàng tháng";
 "Shared pool" = "Hạn mức dùng chung";
 "Bearer … or Cookie: …" = "Bearer … hoặc Cookie: …";
 "On-demand" = "Sử dụng theo yêu cầu";
@@ -1306,27 +1284,19 @@
 "OpenCode Go accounts" = "Tài khoản OpenCode Go";
 "Store multiple OpenCode Go API keys or Cookie headers." = "Lưu trữ nhiều khóa OpenCode Go API hoặc tiêu đề Cookie.";
 "API key or Cookie: …" = "Phím API hoặc Cookie: …";
-"Amp Free" = "Amp miễn phí";
 "Individual and workspace credit balances from Amp." = "Số dư tín dụng của tài khoản cá nhân và không gian làm việc trên Amp.";
 "Agent" = "đại lý";
 "Bonus" = "Tiền thưởng";
 "Daily refresh" = "Làm mới hàng ngày";
 "session_id=…" = "session_id=…";
-"Raycast AI credits are a monthly allowance, not a cost history." = "Raycast AI Tín dụng là khoản trợ cấp hàng tháng, không phải là lịch sử chi phí.";
 "Five-hour quota" = "Hạn mức năm giờ";
 "Weekly tokens" = "mã thông báo hàng tuần";
-"Synthetic cost summary is not supported." = "Tóm tắt chi phí Synthetic không được hỗ trợ.";
 "Add-on credits" = "Tiện ích bổ sung Tín dụng";
-"Fuel Pack" = "Gói nhiên liệu";
 "Daily free tokens" = "mã thông báo miễn phí hàng ngày";
 "Inference" = "suy luận";
-"ZeroGPU" = "ZeroGPU";
-"Credit balance from the Codebuff API" = "Cân Tín dụng từ Codebuff API";
 "Cookie header or bare session value" = "Tiêu đề Cookie hoặc giá trị phiên trần";
 "Gemini Models" = "Model Gemini";
 "Claude and GPT" = "Claude và GPT";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "Personal budget" = "Ngân sách cá nhân";
 "Team budget" = "Ngân sách nhóm";
 "Standard" = "Tiêu chuẩn";
@@ -1398,7 +1368,6 @@
 
 "Click a bar to explore. Use the menu below for exact amounts." = "Nhấp vào cột để khám phá. Dùng menu bên dưới để xem số tiền chính xác.";
 
-
 // Structured session performance layout.
 "spend_performance_first_token" = "Token đầu tiên";
 "spend_performance_output" = "Đầu ra mỗi lượt";
@@ -1424,13 +1393,10 @@
 /* Provider menu bar color */
 "Color by provider" = "Màu theo nhà cung cấp";
 
-
-
 /* Tool activity (English fallback pending translation) */
 
 /* Account provider settings */
 "Account JWT" = "JWT tài khoản";
-"Account JWT, not an Agent Endpoint key" = "JWT tài khoản, không phải khóa Agent Endpoint";
 "Input tokens" = "Token đầu vào";
 "Output tokens" = "Token đầu ra";
 "Pace sign" = "Dấu nhịp sử dụng";
@@ -1531,9 +1497,7 @@
 "Move down" = "Di chuyển xuống";
 "Leave blank to keep the saved credential." = "Để trống để giữ thông tin xác thực đã lưu.";
 
-
 "monthly_daily_target_format" = "≈ %@ / ngày để đủ dùng đến khi đặt lại";
-
 
 // Session usage browser
 "Search sessions" = "Tìm phiên";
@@ -1550,7 +1514,6 @@
 "Turn %d" = "Lượt %d";
 "Model requests" = "Yêu cầu mô hình";
 "Request %d" = "Yêu cầu %d";
-
 
 "Primary" = "Chính";
 "Secondary" = "Phụ";

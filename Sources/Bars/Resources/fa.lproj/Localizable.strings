@@ -9,7 +9,6 @@
 "Show all (%d)" = "نمایش همه (%d)";
 "Show less" = "نمایش کمتر";
 
-
 "(System)" = "(سیستم)";
 "30d" = "30 روز";
 "7d" = "7 روز";
@@ -514,7 +513,6 @@
 "Admin API key" = "کلید API مدیریت";
 "Google accounts" = "Google حساب ها";
 "No local data found" = "داده محلی یافت نشد";
-"No available fetch strategy for minimax." = "هیچ استراتژی جمع آوری برای مینیمکس در دسترس نیست.";
 "No OpenCode session cookies found in browsers." = "هیچ کوکی نشست OpenCode در مرورگرها یافت نمی شود.";
 "No available fetch strategy for %@." = "استراتژی جمع آوری برای %@ موجود نیست.";
 "Today" = "امروز";
@@ -700,7 +698,6 @@
 "bars could not read managed account storage. Recover the store before adding another account." = "bars نمی توانست ذخیره سازی حساب مدیریت شده را بخواند. قبل از اضافه کردن حساب جدید، فروشگاه را بازیابی کنید.";
 "bars could not read saved auth for that account. Re-authenticate it and try again." = "bars نمی توانستم احراز هویت ذخیره شده آن حساب را بخوانم. دوباره احراز هویت کنید و دوباره تلاش کنید.";
 "bars could not read the current system account on this Mac." = "bars نمی توانستم حساب فعلی سیستم را روی این مک بخوانم.";
-"bars could not replace the live Codex auth on this Mac." = "bars نتوانستم احراز هویت زنده Codex این مک را جایگزین کنم.";
 "bars could not safely preserve the current system account before switching." = "bars نتوانستم حساب فعلی سیستم را قبل از تغییر به طور ایمن حفظ کنم.";
 "bars could not save the current system account before switching." = "bars نتوانستم حساب فعلی سیستم را قبل از تغییر ذخیره کنم.";
 "bars could not update managed account storage." = "bars نتوانست ذخیره سازی حساب مدیریت شده را به روزرسانی کند.";
@@ -709,12 +706,6 @@
 "bars will ask macOS Keychain for the Claude Code OAuth token so it can fetch your Claude usage. Click OK to continue." = "bars از macOS Keychain کد Claude توکن OAuth را درخواست می کند تا بتواند استفاده Claude شما را دریافت کند. برای ادامه روی OK کلیک کنید.";
 "bars will ask macOS Keychain for your %@ cookie header so it can fetch usage. Click OK to continue." = "bars از macOS Keychain %@ هدر کوکی تان را می خواهید تا بتواند استفاده را دریافت کند. برای ادامه روی OK کلیک کنید.";
 "bars will ask macOS Keychain for your Claude cookie header so it can fetch Claude web usage. Click OK to continue." = "bars از macOS Keychain هدر کوکی Claude شما را می خواهید تا بتواند استفاده Claude وب را دریافت کند. برای ادامه روی OK کلیک کنید.";
-"bars will ask macOS Keychain for your GitHub Copilot token so it can fetch usage. Click OK to continue." = "bars از macOS Keychain توکن GitHub Copilot شما را درخواست می کند تا بتواند استفاده را دریافت کند. برای ادامه روی OK کلیک کنید.";
-"bars will ask macOS Keychain for your Kimi auth token so it can fetch usage. Click OK to continue." = "bars از macOS Keychain توکن احراز هویت Kimi می خواهید تا بتواند استفاده را دریافت کند. برای ادامه روی OK کلیک کنید.";
-"bars will ask macOS Keychain for your MiniMax API token so it can fetch usage. Click OK to continue." = "bars از macOS Keychain توکن MiniMax API شما را درخواست می کند تا بتواند استفاده را دریافت کند. برای ادامه روی OK کلیک کنید.";
-"bars will ask macOS Keychain for your OpenAI cookie header so it can fetch Codex dashboard extras. Click OK to continue." = "bars از macOS Keychain OpenAI هدر کوکی تان را می خواهید تا اضافه های داشبورد Codex را دریافت کند. برای ادامه روی OK کلیک کنید.";
-"bars will ask macOS Keychain for your Synthetic API key so it can fetch usage. Click OK to continue." = "bars از macOS Keychain کلید Synthetic API می خواهید تا بتواند استفاده را دریافت کند. برای ادامه روی OK کلیک کنید.";
-"bars will ask macOS Keychain for your z.ai API token so it can fetch usage. Click OK to continue." = "bars از macOS Keychain توکن z.ai API شما را درخواست می کند تا بتواند استفاده را دریافت کند. برای ادامه روی OK کلیک کنید.";
 "Credits used" = "اعتبارات استفاده شده";
 "Day" = "روز";
 "Deployment" = "استقرار";
@@ -744,8 +735,6 @@
 "Simulated error text" = "متن خطای شبیه سازی شده";
 "Stored in ~/.bars/config.json. Requires an Anthropic Admin API key." = "ذخیره سازی در ~/.bars/config.json. نیاز به کلید API مدیریت انسان شناسی دارد.";
 "Team mode" = "حالت تیم";
-"Timed out waiting for Cursor login. %@" = "زمان خروج منتظر ورود Cursor هستم. %@";
-"Timed out waiting for Cursor login. %@ Last error: %@" = "زمان خروج منتظر ورود Cursor هستم. %@ آخرین خطا: %@";
 "Today requests" = "درخواست های امروز";
 "Utilization End" = "پایان استفاده";
 "Utilization Start" = "شروع استفاده";
@@ -799,8 +788,6 @@
 "Share AI Usage" = "اشتراک‌گذاری مصرف هوش مصنوعی";
 "Share Stats…" = "اشتراک‌گذاری آمار…";
 "Stats copied" = "آمار کپی شد";
-"Timed out waiting for Cursor account switch. %@" = "مهلت انتظار برای تغییر حساب Cursor به پایان رسید. %@";
-"Timed out waiting for Cursor account switch. %@ Last error: %@" = "مهلت انتظار برای تغییر حساب Cursor به پایان رسید. %@ آخرین خطا: %@";
 
 /* Spend dashboard */
 "tab_usage_spend" = "مصرف و هزینه";
@@ -919,8 +906,6 @@
 "Run-out estimate unavailable" = "تمام می‌شود: در دسترس نیست";
 "Cost today unavailable" = "هزینهٔ امروز: در دسترس نیست";
 "Resets" = "بازنشانی‌ها";
-"codex_workspaces_tokens" = "توکن‌ها";
-"codex_workspaces_model" = "مدل";
 
 "Cumulative" = "تجمعی";
 "Token activity" = "فعالیت توکن";
@@ -1078,12 +1063,10 @@
 "ALL" = "همه";
 "ALL-TIME SPEND" = "کل هزینه های تاریخی";
 "API est." = "API est.";
-"AWS charges $0.01 per Cost Explorer request against the primary billing view. A refresh can make multiple requests, and CloudWatch activity can add charges. The displayed monthly budget does not cap AWS billing." = "AWS 0.01 دلار برای هر درخواست Cost Explorer در مقابل نمای صورت‌حساب اولیه هزینه می‌گیرد. یک به‌روزرسانی می‌تواند چندین درخواست ایجاد کند و فعالیت CloudWatch می‌تواند هزینه‌هایی را اضافه کند. بودجه ماهانه نمایش داده شده صورتحساب AWS را محدود نمی کند.";
 "Account %@" = "حساب %@";
 "Account Added" = "حساب اضافه شد";
 "Account Usage" = "استفاده از حساب";
 "Account slug" = "شناسه حساب (Slug)";
-"Account switched; restart the Codex background server manually." = "تغییر حساب؛ سرور پس زمینه Codex را به صورت دستی راه اندازی مجدد کنید.";
 "Allow reading Claude Code's credentials" = "اجازه خواندن اعتبارنامه Claude Code را بدهید";
 "Automatically imports the app.devin.ai session from Chromium browsers." = "به طور خودکار جلسه app.devin.ai را از مرورگرهای Chromium وارد می کند.";
 "BY USAGE" = "رتبه بندی بر اساس استفاده";
@@ -1142,10 +1125,8 @@
 "Open Devin Usage" = "صفحه استفاده از Devin را باز کنید";
 "OpenCode API key" = "کلید OpenCode API";
 "Optional for automatic auth. Use a slug, URL, or internal org-... / org_... ID. Manual auth may need the x-cog-org-id header from a successful Devin quota request." = "اختیاری برای احراز هویت خودکار از Slug، URL یا org-... / org_... ID داخلی استفاده کنید. احراز هویت دستی ممکن است به هدر x-cog-org-id از یک درخواست موفق Devin سهمیه نیاز داشته باشد.";
-"Optional when the API key can access one account; bars discovers it automatically. For multiple accounts, find the slug in the app.fireworks.ai home account switcher or run firectl whoami." = "زمانی که کلید API بتواند به یک حساب دسترسی داشته باشد اختیاری است. bars آن را به طور خودکار کشف می کند. برای چندین حساب، اسلاگ را در تعویض کننده حساب خانگی app.fireworks.ai پیدا کنید یا firectl whoami را اجرا کنید.";
 "Organization" = "سازمان";
 "PARTIAL" = "جزئی";
-"Paste a cURL capture from the ZoomMate AI credit usage page." = "یک دستور cURL را از صفحه استفاده ZoomMate AI اعتبارات جای‌گذاری کنید.";
 "Paste an Authorization Bearer token from app.devin.ai." = "یک Authorization Bearer توکن ها از app.devin.ai جای‌گذاری کنید.";
 "Paste the Authorization header value from app.devin.ai." = "مقدار هدر Authorization را از app.devin.ai جای‌گذاری کنید.";
 "Path to the cswap executable (github.com/realiti4/claude-swap)." = "مسیری به فایل اجرایی cswap (github.com/realiti4/claude-swap).";
@@ -1256,7 +1237,6 @@
 "/Applications/TcrBar.app/Contents/MacOS/tcr" = "/Applications/TcrBar.app/Contents/MacOS/tcr";
 
 // Additional localized settings, provider controls, sharing, and widgets.
-"Kilo Pass" = "پاس Kilo";
 "Plan credits" = "طرح اشتراک اعتبارات";
 "Premium weekly" = "استفاده هفتگی ممتاز سهمیه";
 "Memory" = "استفاده از حافظه";
@@ -1289,11 +1269,9 @@
 "Tokens" = "توکن ها";
 "Budget" = "بودجه";
 "Secondary budget" = "بودجه ثانویه";
-"Project-scoped Aixy key used to read its own usage and applicable budgets." = "کلید Aixy با محدوده پروژه برای خواندن میزان مصرف خود و بودجه های قابل اجرا استفاده می شود.";
 "Prompts" = "درخواست می کند";
 "Base" = "پایه";
 "Model quota" = "مدل سهمیه";
-"Monthly Bobcoins" = "باب کوین ماهانه";
 "Shared pool" = "سهمیه مشترک";
 "Bearer … or Cookie: …" = "Bearer … یا Cookie: …";
 "On-demand" = "استفاده بر حسب تقاضا";
@@ -1309,27 +1287,19 @@
 "OpenCode Go accounts" = "حساب های OpenCode Go";
 "Store multiple OpenCode Go API keys or Cookie headers." = "چندین کلید OpenCode Go API یا هدرهای Cookie را ذخیره کنید.";
 "API key or Cookie: …" = "کلید API یا Cookie: …";
-"Amp Free" = "Amp رایگان";
 "Individual and workspace credit balances from Amp." = "موجودی اعتبار حساب فردی و فضای کاری در Amp.";
 "Agent" = "عامل";
 "Bonus" = "پاداش";
 "Daily refresh" = "تازه کردن روزانه";
 "session_id=…" = "session_id=…";
-"Raycast AI credits are a monthly allowance, not a cost history." = "Raycast AI اعتبارات کمک هزینه ماهانه است، نه سابقه هزینه.";
 "Five-hour quota" = "پنج ساعته سهمیه";
 "Weekly tokens" = "هفتگی توکن ها";
-"Synthetic cost summary is not supported." = "خلاصه هزینه Synthetic پشتیبانی نمی شود.";
 "Add-on credits" = "افزونه اعتبارات";
-"Fuel Pack" = "پک سوخت";
 "Daily free tokens" = "توکن ها رایگان روزانه";
 "Inference" = "استنتاج";
-"ZeroGPU" = "ZeroGPU";
-"Credit balance from the Codebuff API" = "موجودی اعتبارات از Codebuff API";
 "Cookie header or bare session value" = "سرآیند Cookie یا مقدار نشست بدون سرآیند";
 "Gemini Models" = "مدل های Gemini";
 "Claude and GPT" = "Claude و GPT";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "Personal budget" = "بودجه شخصی";
 "Team budget" = "بودجه تیم";
 "Standard" = "استاندارد";
@@ -1401,7 +1371,6 @@
 
 "Click a bar to explore. Use the menu below for exact amounts." = "برای مشاهده جزئیات روی ستون کلیک کنید. مبلغ دقیق را در منوی زیر ببینید.";
 
-
 // Structured session performance layout.
 "spend_performance_first_token" = "اولین توکن";
 "spend_performance_output" = "خروجی نوبت گفت‌وگو";
@@ -1427,13 +1396,10 @@
 /* Provider menu bar color */
 "Color by provider" = "رنگ بر اساس ارائه‌دهنده";
 
-
-
 /* Tool activity (English fallback pending translation) */
 
 /* Account provider settings */
 "Account JWT" = "JWT حساب";
-"Account JWT, not an Agent Endpoint key" = "JWT حساب، نه کلید Agent Endpoint";
 "Input tokens" = "توکن‌های ورودی";
 "Output tokens" = "توکن‌های خروجی";
 "Pace sign" = "علامت آهنگ مصرف";
@@ -1534,9 +1500,7 @@
 "Move down" = "انتقال به پایین";
 "Leave blank to keep the saved credential." = "برای حفظ اطلاعات ورود ذخیره‌شده، خالی بگذارید.";
 
-
 "monthly_daily_target_format" = "≈ %@ در روز برای دوام تا زمان ریست";
-
 
 // Session usage browser
 "Search sessions" = "جستجوی نشست‌ها";
@@ -1553,7 +1517,6 @@
 "Turn %d" = "نوبت %d";
 "Model requests" = "درخواست‌های مدل";
 "Request %d" = "درخواست %d";
-
 
 "Primary" = "اصلی";
 "Secondary" = "ثانویه";

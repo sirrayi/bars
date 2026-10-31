@@ -39,7 +39,6 @@
 "Activity" = "กิจกรรม";
 "Add-on credits" = "อุปกรณ์เสริม เครดิต";
 "Agent" = "ตัวแทน";
-"Amp Free" = "Amp ฟรี";
 "Balance" = "ยอดคงเหลือ";
 "Base" = "ฐาน";
 "Billing" = "การเรียกเก็บเงิน";
@@ -83,11 +82,9 @@
 "Five-hour quota" = "โควต้า ห้าชั่วโมง";
 "Flash" = "Flash";
 "Flash Lite" = "Flash Lite";
-"Fuel Pack" = "ชุดเชื้อเพลิง";
 "Gemini Models" = "รุ่น Gemini";
 "Inference" = "การอนุมาน";
 "Key allowance" = "ค่าเผื่อการใช้งานสำหรับคีย์ API นี้";
-"Kilo Pass" = "Kilo ผ่าน";
 "Last %d days" = "%d วันที่ผ่านมา";
 "Last 30 days" = "30 วันที่ผ่านมา";
 "Memory" = "การใช้หน่วยความจำ";
@@ -95,7 +92,6 @@
 "Model quota" = "รุ่น โควต้า";
 "Models" = "โมเดล";
 "Monthly" = "รายเดือน";
-"Monthly Bobcoins" = "Bobcoins รายเดือน";
 "Monthly budget" = "งบประมาณรายเดือน";
 "Monthly credits" = "เครดิต รายเดือน";
 "Monthly quota" = "โควต้า รายเดือน";
@@ -178,10 +174,7 @@
 "Weekly quota" = "โควต้า รายสัปดาห์";
 "Weekly tokens" = "โทเค็น รายสัปดาห์";
 "Window" = "หน้าต่างการใช้งาน";
-"ZeroGPU" = "ZeroGPU";
 "after reset" = "หลังจากรีเซ็ต";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "budget spent" = "งบประมาณ โควต้า หมดลง";
 "conserving" = "อนุรักษ์ โควต้า";
 "full" = "โควต้า เต็มรูปแบบพร้อมใช้งาน";

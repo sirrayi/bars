@@ -30,7 +30,6 @@
 "hooks_add_argument" = "Ajouter un argument";
 "hooks_delete_argument" = "Supprimer l’argument";
 
-
 "(System)" = "(Système)";
 "30d" = "30d";
 "7d" = "7d";
@@ -514,7 +513,6 @@
 "Admin API key" = "Clé API d'administration";
 "Google accounts" = "Comptes Google";
 "No local data found" = "Aucune donnée locale trouvée";
-"No available fetch strategy for minimax." = "Aucune stratégie de récupération disponible pour minimax.";
 "No OpenCode session cookies found in browsers." = "Aucun cookie de session OpenCode trouvé dans les navigateurs.";
 "No available fetch strategy for %@." = "Aucune stratégie de récupération disponible pour %@.";
 "Today" = "Aujourd’hui";
@@ -690,7 +688,6 @@
 "bars could not read managed account storage. Recover the store before adding another account." = "bars n'a pas pu lire le stockage du compte géré. Récupérez la boutique avant d'ajouter un autre compte.";
 "bars could not read saved auth for that account. Re-authenticate it and try again." = "bars n'a pas pu lire l'authentification enregistrée pour ce compte. Ré-authentifiez-le et réessayez.";
 "bars could not read the current system account on this Mac." = "bars n'a pas pu lire le compte système actuel sur ce Mac.";
-"bars could not replace the live Codex auth on this Mac." = "bars n'a pas pu remplacer l'authentification Codex en direct sur ce Mac.";
 "bars could not safely preserve the current system account before switching." = "bars n'a pas pu conserver en toute sécurité le compte système actuel avant le changement.";
 "bars could not save the current system account before switching." = "bars n'a pas pu enregistrer le compte système actuel avant de changer.";
 "bars could not update managed account storage." = "bars n'a pas pu mettre à jour le stockage du compte géré.";
@@ -699,12 +696,6 @@
 "bars will ask macOS Keychain for the Claude Code OAuth token so it can fetch your Claude usage. Click OK to continue." = "bars demandera au Trousseau macOS le jeton Claude Code OAuth afin de pouvoir récupérer votre utilisation de Claude. Cliquez sur OK pour continuer.";
 "bars will ask macOS Keychain for your %@ cookie header so it can fetch usage. Click OK to continue." = "bars demandera au Trousseau macOS votre en-tête de cookie %@ afin de pouvoir récupérer son utilisation. Cliquez sur OK pour continuer.";
 "bars will ask macOS Keychain for your Claude cookie header so it can fetch Claude web usage. Click OK to continue." = "bars demandera au Trousseau macOS votre en-tête de cookie Claude afin de pouvoir récupérer l'utilisation du Web de Claude. Cliquez sur OK pour continuer.";
-"bars will ask macOS Keychain for your GitHub Copilot token so it can fetch usage. Click OK to continue." = "bars demandera au Trousseau macOS votre jeton GitHub Copilot afin de pouvoir récupérer son utilisation. Cliquez sur OK pour continuer.";
-"bars will ask macOS Keychain for your Kimi auth token so it can fetch usage. Click OK to continue." = "bars demandera au Trousseau macOS votre jeton d'authentification Kimi afin de pouvoir récupérer son utilisation. Cliquez sur OK pour continuer.";
-"bars will ask macOS Keychain for your MiniMax API token so it can fetch usage. Click OK to continue." = "bars demandera au Trousseau macOS votre jeton API MiniMax afin de pouvoir récupérer son utilisation. Cliquez sur OK pour continuer.";
-"bars will ask macOS Keychain for your OpenAI cookie header so it can fetch Codex dashboard extras. Click OK to continue." = "bars demandera au Trousseau macOS votre en-tête de cookie OpenAI afin de pouvoir récupérer les extras du tableau de bord Codex. Cliquez sur OK pour continuer.";
-"bars will ask macOS Keychain for your Synthetic API key so it can fetch usage. Click OK to continue." = "bars demandera au Trousseau macOS votre clé API synthétique afin de pouvoir récupérer son utilisation. Cliquez sur OK pour continuer.";
-"bars will ask macOS Keychain for your z.ai API token so it can fetch usage. Click OK to continue." = "bars demandera au Trousseau macOS votre jeton API z.ai afin de pouvoir récupérer son utilisation. Cliquez sur OK pour continuer.";
 "Credits used" = "Crédits utilisés";
 "Day" = "Jour";
 "Deployment" = "Déploiement";
@@ -734,8 +725,6 @@
 "Simulated error text" = "Texte d'erreur simulé";
 "Stored in ~/.bars/config.json. Requires an Anthropic Admin API key." = "Stocké dans ~/.bars/config.json. Nécessite une clé API Anthropic Admin.";
 "Team mode" = "Mode équipe";
-"Timed out waiting for Cursor login. %@" = "Le délai d'attente pour la connexion au curseur a expiré. %@";
-"Timed out waiting for Cursor login. %@ Last error: %@" = "Le délai d'attente pour la connexion au curseur a expiré. %@ Dernière erreur : %@";
 "Today requests" = "Demandes d'aujourd'hui";
 "Utilization End" = "Fin d'utilisation";
 "Utilization Start" = "Début de l'utilisation";
@@ -796,8 +785,6 @@
 
 "%@: %@" = "%@ : %@";
 "Sign in with Claude Code..." = "Connectez-vous avec Claude Code...";
-"Timed out waiting for Cursor account switch. %@" = "Le délai d'attente pour le changement de compte Cursor a expiré. %@";
-"Timed out waiting for Cursor account switch. %@ Last error: %@" = "Le délai d'attente pour le changement de compte Cursor a expiré. %@ Dernière erreur : %@";
 /* Spend dashboard */
 "tab_usage_spend" = "Utilisation et dépenses";
 "Usage & Spend" = "Utilisation et dépenses";
@@ -915,8 +902,6 @@
 "Run-out estimate unavailable" = "Épuisé: Indisponible";
 "Cost today unavailable" = "Coût aujourd’hui: Indisponible";
 "Resets" = "Réinitialisations";
-"codex_workspaces_model" = "Modèle";
-"codex_workspaces_tokens" = "Jetons";
 
 "Cumulative" = "Cumulé";
 "Token activity" = "Activité des tokens";
@@ -1073,12 +1058,10 @@
 "ALL" = "TOUS";
 "ALL-TIME SPEND" = "Dépenses historiques totales";
 "API est." = "API est.";
-"AWS charges $0.01 per Cost Explorer request against the primary billing view. A refresh can make multiple requests, and CloudWatch activity can add charges. The displayed monthly budget does not cap AWS billing." = "AWS facture 0,01 $ par demande Cost Explorer par rapport à la vue de facturation principale. Une actualisation peut effectuer plusieurs requêtes et l'activité CloudWatch peut ajouter des frais. Le budget mensuel affiché ne plafonne pas la facturation AWS.";
 "Account %@" = "Compte %@";
 "Account Added" = "Compte ajouté";
 "Account Usage" = "Utilisation du compte";
 "Account slug" = "Identifiant de compte (slug)";
-"Account switched; restart the Codex background server manually." = "Changement de compte ; redémarrez manuellement le serveur d'arrière-plan Codex.";
 "Allow reading Claude Code's credentials" = "Autoriser la lecture des informations d'identification de Claude Code";
 "Automatically imports the app.devin.ai session from Chromium browsers." = "Importe automatiquement la session app.devin.ai à partir des navigateurs Chromium.";
 "BY USAGE" = "Classé par utilisation";
@@ -1137,10 +1120,8 @@
 "Open Devin Usage" = "Ouvrez la page d'utilisation du Devin";
 "OpenCode API key" = "Clé OpenCode API";
 "Optional for automatic auth. Use a slug, URL, or internal org-... / org_... ID. Manual auth may need the x-cog-org-id header from a successful Devin quota request." = "Facultatif pour l'authentification automatique. Utilisez un slug, URL, ou un org-... / org_... interne ID. L'authentification manuelle peut nécessiter l'en-tête x-cog-org-id d'une demande de quota Devin réussie.";
-"Optional when the API key can access one account; bars discovers it automatically. For multiple accounts, find the slug in the app.fireworks.ai home account switcher or run firectl whoami." = "Facultatif lorsque la clé API peut accéder à un compte ; bars le découvre automatiquement. Pour plusieurs comptes, recherchez le slug dans le sélecteur de compte personnel app.fireworks.ai ou exécutez firectl whoami.";
 "Organization" = "Organisation";
 "PARTIAL" = "PARTIEL";
-"Paste a cURL capture from the ZoomMate AI credit usage page." = "Collez une capture cURL à partir de la page d'utilisation ZoomMate AI Crédits.";
 "Paste an Authorization Bearer token from app.devin.ai." = "Collez un Authorization Bearer jetons à partir de app.devin.ai.";
 "Paste the Authorization header value from app.devin.ai." = "Collez la valeur d'en-tête Authorization à partir de app.devin.ai.";
 "Path to the cswap executable (github.com/realiti4/claude-swap)." = "Chemin d'accès à l'exécutable cswap (github.com/realiti4/claude-swap).";
@@ -1251,7 +1232,6 @@
 "/Applications/TcrBar.app/Contents/MacOS/tcr" = "/Applications/TcrBar.app/Contents/MacOS/tcr";
 
 // Additional localized settings, provider controls, sharing, and widgets.
-"Kilo Pass" = "Passe Kilo";
 "Plan credits" = "Plan d'abonnement Crédits";
 "Premium weekly" = "Utilisation hebdomadaire premium Quota";
 "Memory" = "Utilisation de la mémoire";
@@ -1284,11 +1264,9 @@
 "Tokens" = "jetons";
 "Budget" = "Budget";
 "Secondary budget" = "Budget secondaire";
-"Project-scoped Aixy key used to read its own usage and applicable budgets." = "Clé Aixy à l'échelle du projet utilisée pour lire sa propre utilisation et les budgets applicables.";
 "Prompts" = "Invites";
 "Base" = "Socle";
 "Model quota" = "Modèle Quota";
-"Monthly Bobcoins" = "Bobcoins mensuels";
 "Shared pool" = "Quota partagé";
 "Bearer … or Cookie: …" = "Bearer … ou Cookie : …";
 "On-demand" = "Utilisation à la demande";
@@ -1304,27 +1282,19 @@
 "OpenCode Go accounts" = "Comptes Go OpenCode";
 "Store multiple OpenCode Go API keys or Cookie headers." = "Stockez plusieurs clés OpenCode Go API ou en-têtes Cookie.";
 "API key or Cookie: …" = "Clé API ou Cookie : …";
-"Amp Free" = "Amp Gratuit";
 "Individual and workspace credit balances from Amp." = "Soldes de crédits individuels et de l’espace de travail d’Amp.";
 "Agent" = "Agent";
 "Bonus" = "Bonus";
 "Daily refresh" = "Actualisation quotidienne";
 "session_id=…" = "session_id=…";
-"Raycast AI credits are a monthly allowance, not a cost history." = "Raycast AI Crédits représente une allocation mensuelle et non un historique des coûts.";
 "Five-hour quota" = "Cinq heures Quota";
 "Weekly tokens" = "Hebdomadaire jetons";
-"Synthetic cost summary is not supported." = "Le récapitulatif des coûts Synthetic n’est pas pris en charge.";
 "Add-on credits" = "Module complémentaire Crédits";
-"Fuel Pack" = "Pack Carburant";
 "Daily free tokens" = "Gratuit quotidiennement jetons";
 "Inference" = "Inférence";
-"ZeroGPU" = "ZeroGPU";
-"Credit balance from the Codebuff API" = "Balance Crédits du Codebuff API";
 "Cookie header or bare session value" = "En-tête Cookie ou valeur de session nue";
 "Gemini Models" = "Modèles Gemini";
 "Claude and GPT" = "Claude et GPT";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "Personal budget" = "Budget personnel";
 "Team budget" = "Budget de l'équipe";
 "Standard" = "Norme";
@@ -1396,7 +1366,6 @@
 
 "Click a bar to explore. Use the menu below for exact amounts." = "Cliquez sur une barre pour explorer. Le menu ci-dessous affiche les montants exacts.";
 
-
 // Structured session performance layout.
 "spend_performance_first_token" = "Premier token";
 "spend_performance_output" = "Débit par tour de dialogue";
@@ -1422,13 +1391,10 @@
 /* Provider menu bar color */
 "Color by provider" = "Couleur par fournisseur";
 
-
-
 /* Tool activity (English fallback pending translation) */
 
 /* Account provider usage and credentials */
 "Account JWT" = "JWT du compte";
-"Account JWT, not an Agent Endpoint key" = "JWT du compte, pas une clé Agent Endpoint";
 "Input tokens" = "Jetons d’entrée";
 "Output tokens" = "Jetons de sortie";
 "Pace sign" = "Signe du rythme";
@@ -1529,9 +1495,7 @@
 "Move down" = "Descendre";
 "Leave blank to keep the saved credential." = "Laissez ce champ vide pour conserver les identifiants enregistrés.";
 
-
 "monthly_daily_target_format" = "≈ %@ / jour pour tenir jusqu’à la réinitialisation";
-
 
 // Session usage browser
 "Search sessions" = "Rechercher des sessions";
@@ -1548,7 +1512,6 @@
 "Turn %d" = "Tour %d";
 "Model requests" = "Requêtes au modèle";
 "Request %d" = "Requête %d";
-
 
 "Primary" = "Principale";
 "Secondary" = "Secondaire";

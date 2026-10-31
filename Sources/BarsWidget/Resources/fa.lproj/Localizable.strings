@@ -39,7 +39,6 @@
 "Activity" = "فعالیت ها";
 "Add-on credits" = "افزونه اعتبارات";
 "Agent" = "عامل";
-"Amp Free" = "Amp رایگان";
 "Balance" = "موجودی";
 "Base" = "پایه";
 "Billing" = "صورتحساب";
@@ -83,11 +82,9 @@
 "Five-hour quota" = "پنج ساعته سهمیه";
 "Flash" = "Flash";
 "Flash Lite" = "Flash Lite";
-"Fuel Pack" = "پک سوخت";
 "Gemini Models" = "مدل های Gemini";
 "Inference" = "استنتاج";
 "Key allowance" = "میزان استفاده از این کلید API";
-"Kilo Pass" = "پاس Kilo";
 "Last %d days" = "%d روز آخر";
 "Last 30 days" = "۳۰ روز آخر";
 "Memory" = "استفاده از حافظه";
@@ -95,7 +92,6 @@
 "Model quota" = "مدل سهمیه";
 "Models" = "مدل ها";
 "Monthly" = "ماهانه";
-"Monthly Bobcoins" = "باب کوین ماهانه";
 "Monthly budget" = "بودجه ماهانه";
 "Monthly credits" = "ماهانه اعتبارات";
 "Monthly quota" = "ماهانه سهمیه";
@@ -178,10 +174,7 @@
 "Weekly quota" = "هفتگی سهمیه";
 "Weekly tokens" = "هفتگی توکن ها";
 "Window" = "پنجره استفاده";
-"ZeroGPU" = "ZeroGPU";
 "after reset" = "پس از تنظیم مجدد";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "budget spent" = "بودجه سهمیه تمام شده است";
 "conserving" = "حفظ سهمیه";
 "full" = "سهمیه کامل موجود است";

@@ -39,7 +39,6 @@
 "Activity" = "활동";
 "Add-on credits" = "애드온 크레딧";
 "Agent" = "대리인";
-"Amp Free" = "Amp 무료";
 "Balance" = "잔액";
 "Base" = "베이스";
 "Billing" = "청구";
@@ -83,11 +82,9 @@
 "Five-hour quota" = "5시간 할당량";
 "Flash" = "Flash";
 "Flash Lite" = "Flash Lite";
-"Fuel Pack" = "연료 팩";
 "Gemini Models" = "Gemini 모델";
 "Inference" = "추론";
 "Key allowance" = "이 API 키에 대한 사용 허용량";
-"Kilo Pass" = "Kilo 패스";
 "Last %d days" = "최근 %d일";
 "Last 30 days" = "지난 30일";
 "Memory" = "메모리 사용량";
@@ -95,7 +92,6 @@
 "Model quota" = "모델 할당량";
 "Models" = "모델";
 "Monthly" = "월간";
-"Monthly Bobcoins" = "월간 밥코인";
 "Monthly budget" = "월예산";
 "Monthly credits" = "월간 크레딧";
 "Monthly quota" = "월간 할당량";
@@ -178,10 +174,7 @@
 "Weekly quota" = "주간 할당량";
 "Weekly tokens" = "주간 토큰";
 "Window" = "사용량 창";
-"ZeroGPU" = "ZeroGPU";
 "after reset" = "재설정 후";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "budget spent" = "할당량 예산이 고갈되었습니다";
 "conserving" = "할당량 보존";
 "full" = "전체 할당량 사용 가능";

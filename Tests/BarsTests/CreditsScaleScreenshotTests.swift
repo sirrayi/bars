@@ -17,7 +17,7 @@ struct CreditsScaleScreenshotTests {
                 provider: .claude,
                 metadata: #require(ProviderDefaults.metadata[.claude]),
                 snapshot: nil,
-                credits: CreditsSnapshot(remaining: balance, events: [], updatedAt: now),
+                credits: CreditsSnapshot(remaining: balance, updatedAt: now),
                 creditsError: nil,
                 dashboardError: nil,
                 tokenSnapshot: nil,

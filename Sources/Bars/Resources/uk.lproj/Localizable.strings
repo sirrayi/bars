@@ -30,7 +30,6 @@
 "hooks_add_argument" = "Додати аргумент";
 "hooks_delete_argument" = "Видалити аргумент";
 
-
 "(System)" = "(Система)";
 "30d" = "30д";
 "7d" = "7д";
@@ -514,7 +513,6 @@
 "Admin API key" = "Ключ API адміністратора";
 "Google accounts" = "Облікові записи Google";
 "No local data found" = "Немає локальних даних";
-"No available fetch strategy for minimax." = "Немає доступної стратегії вибірки для minimax.";
 "No OpenCode session cookies found in browsers." = "У браузерах не знайдено сеансових файлів cookie OpenCode.";
 "No available fetch strategy for %@." = "Немає доступної стратегії отримання для %@.";
 "Today" = "Сьогодні";
@@ -690,7 +688,6 @@
 "bars could not read managed account storage. Recover the store before adding another account." = "bars не зміг прочитати сховище керованих облікових записів. Відновіть його, перш ніж додавати інший обліковий запис.";
 "bars could not read saved auth for that account. Re-authenticate it and try again." = "bars не зміг прочитати збережену авторизацію для цього облікового запису. Повторно автентифікуйте його та повторіть спробу.";
 "bars could not read the current system account on this Mac." = "bars не вдалося прочитати поточний обліковий запис системи на цьому Mac.";
-"bars could not replace the live Codex auth on this Mac." = "bars не зміг замінити поточну автентифікацію Codex на цьому Mac.";
 "bars could not safely preserve the current system account before switching." = "bars не зміг безпечно зберегти поточний обліковий запис системи перед перемиканням.";
 "bars could not save the current system account before switching." = "bars не зміг зберегти поточний обліковий запис системи перед перемиканням.";
 "bars could not update managed account storage." = "bars не вдалося оновити сховище керованого облікового запису.";
@@ -699,12 +696,6 @@
 "bars will ask macOS Keychain for the Claude Code OAuth token so it can fetch your Claude usage. Click OK to continue." = "bars запитає у macOS Keychain маркер Claude Code OAuth, щоб отримати дані про використання Claude. Натисніть OK, щоб продовжити.";
 "bars will ask macOS Keychain for your %@ cookie header so it can fetch usage. Click OK to continue." = "bars запитає у macOS Keychain ваш заголовок cookie %@, щоб отримати інформацію про використання. Натисніть OK, щоб продовжити.";
 "bars will ask macOS Keychain for your Claude cookie header so it can fetch Claude web usage. Click OK to continue." = "bars попросить macOS надати доступ до заголовка Cookie Claude у Keychain, щоб отримати дані про використання Claude у вебверсії. Натисніть «OK», щоб продовжити.";
-"bars will ask macOS Keychain for your GitHub Copilot token so it can fetch usage. Click OK to continue." = "bars запитає у macOS Keychain ваш маркер GitHub Copilot, щоб отримати інформацію про використання. Натисніть OK, щоб продовжити.";
-"bars will ask macOS Keychain for your Kimi auth token so it can fetch usage. Click OK to continue." = "bars запитає у macOS Keychain ваш токен автентифікації Kimi, щоб отримати інформацію про використання. Натисніть OK, щоб продовжити.";
-"bars will ask macOS Keychain for your MiniMax API token so it can fetch usage. Click OK to continue." = "bars запитає у macOS Keychain ваш токен MiniMax API, щоб отримати інформацію про використання. Натисніть OK, щоб продовжити.";
-"bars will ask macOS Keychain for your OpenAI cookie header so it can fetch Codex dashboard extras. Click OK to continue." = "bars запитає у macOS Keychain ваш заголовок файлів cookie OpenAI, щоб він міг отримати додаткові елементи панелі інструментів Codex. Натисніть OK, щоб продовжити.";
-"bars will ask macOS Keychain for your Synthetic API key so it can fetch usage. Click OK to continue." = "bars попросить macOS надати доступ до ключа API Synthetic у Keychain, щоб отримати дані про використання. Натисніть «OK», щоб продовжити.";
-"bars will ask macOS Keychain for your z.ai API token so it can fetch usage. Click OK to continue." = "bars запитає у macOS Keychain ваш токен API z.ai, щоб отримати інформацію про використання. Натисніть OK, щоб продовжити.";
 "Credits used" = "Використані кредити";
 "Day" = "День";
 "Deployment" = "Розгортання";
@@ -734,8 +725,6 @@
 "Simulated error text" = "Змодельований текст помилки";
 "Stored in ~/.bars/config.json. Requires an Anthropic Admin API key." = "Зберігається в ~/.bars/config.json. Потрібен ключ API адміністратора Anthropic.";
 "Team mode" = "Командний режим";
-"Timed out waiting for Cursor login. %@" = "Перевищено час очікування входу до Cursor. %@";
-"Timed out waiting for Cursor login. %@ Last error: %@" = "Перевищено час очікування входу до Cursor. %@ Остання помилка: %@";
 "Today requests" = "Сьогоднішні запити";
 "Utilization End" = "Кінець використання";
 "Utilization Start" = "Початок використання";
@@ -797,8 +786,6 @@
 
 "%@: %@" = "%@: %@";
 "Sign in with Claude Code..." = "Увійти через Claude Code...";
-"Timed out waiting for Cursor account switch. %@" = "Минув час очікування зміни облікового запису Cursor. %@";
-"Timed out waiting for Cursor account switch. %@ Last error: %@" = "Минув час очікування зміни облікового запису Cursor. %@ Остання помилка: %@";
 /* Spend dashboard */
 "tab_usage_spend" = "Використання й витрати";
 "Usage & Spend" = "Використання й витрати";
@@ -916,8 +903,6 @@
 "Run-out estimate unavailable" = "Прогноз вичерпання недоступний";
 "Cost today unavailable" = "Вартість за сьогодні недоступна";
 "Resets" = "Скидання";
-"codex_workspaces_model" = "Модель";
-"codex_workspaces_tokens" = "Токени";
 
 "Cumulative" = "Наростаючим підсумком";
 "Token activity" = "Активність токенів";
@@ -1075,12 +1060,10 @@
 "ALL" = "ВСЕ";
 "ALL-TIME SPEND" = "ВИТРАТИ ЗА ВЕСЬ ЧАС";
 "API est." = "Орієнтовна вартість API";
-"AWS charges $0.01 per Cost Explorer request against the primary billing view. A refresh can make multiple requests, and CloudWatch activity can add charges. The displayed monthly budget does not cap AWS billing." = "AWS стягує 0,01 дол. США за кожен запит до Cost Explorer в основному платіжному обліковому записі. Під час оновлення може виконуватися кілька запитів, а активність CloudWatch може спричиняти додаткові витрати. Показаний місячний бюджет не обмежує витрати на AWS.";
 "Account %@" = "Обліковий запис %@";
 "Account Added" = "Обліковий запис додано";
 "Account Usage" = "Використання облікового запису";
 "Account slug" = "Ідентифікатор облікового запису (слаг)";
-"Account switched; restart the Codex background server manually." = "Обліковий запис змінено; перезапустіть фоновий сервер Codex вручну.";
 "Allow reading Claude Code's credentials" = "Дозволити читання облікових даних Claude Code";
 "Automatically imports the app.devin.ai session from Chromium browsers." = "Автоматично імпортує сеанс app.devin.ai із браузерів Chromium.";
 "BY USAGE" = "ЗА ВИКОРИСТАННЯМ";
@@ -1139,10 +1122,8 @@
 "Open Devin Usage" = "Відкрити дані про використання Devin";
 "OpenCode API key" = "Ключ OpenCode API";
 "Optional for automatic auth. Use a slug, URL, or internal org-... / org_... ID. Manual auth may need the x-cog-org-id header from a successful Devin quota request." = "Необов’язково для автоматичної автентифікації. Вкажіть slug, URL або внутрішній ідентифікатор org-... / org_.... Для ручної автентифікації може знадобитися заголовок x-cog-org-id з успішного запиту квоти Devin.";
-"Optional when the API key can access one account; bars discovers it automatically. For multiple accounts, find the slug in the app.fireworks.ai home account switcher or run firectl whoami." = "Необов’язково, якщо ключ API має доступ лише до одного облікового запису: bars знайде його автоматично. Якщо облікових записів кілька, знайдіть slug у перемикачі на головній сторінці app.fireworks.ai або виконайте `firectl whoami`.";
 "Organization" = "Організація";
 "PARTIAL" = "ЧАСТКОВИЙ";
-"Paste a cURL capture from the ZoomMate AI credit usage page." = "Вставте cURL-запит зі сторінки використання кредитів ZoomMate AI.";
 "Paste an Authorization Bearer token from app.devin.ai." = "Вставте токен авторизації Bearer із app.devin.ai.";
 "Paste the Authorization header value from app.devin.ai." = "Вставте значення заголовка Authorization з app.devin.ai.";
 "Path to the cswap executable (github.com/realiti4/claude-swap)." = "Шлях до виконуваного файлу cswap (github.com/realiti4/claude-swap).";
@@ -1253,7 +1234,6 @@
 "/Applications/TcrBar.app/Contents/MacOS/tcr" = "/Applications/TcrBar.app/Contents/MacOS/tcr";
 
 // Additional localized settings, provider controls, sharing, and widgets.
-"Kilo Pass" = "Kilo Pass";
 "Plan credits" = "Кредити тарифу";
 "Premium weekly" = "Тижневий ліміт Premium";
 "Memory" = "Пам’ять";
@@ -1286,11 +1266,9 @@
 "Tokens" = "Токени";
 "Budget" = "Бюджет";
 "Secondary budget" = "Додатковий бюджет";
-"Project-scoped Aixy key used to read its own usage and applicable budgets." = "Ключ Aixy для конкретного проєкту, який дає змогу переглядати дані про використання й відповідні бюджети.";
 "Prompts" = "Промпти";
 "Base" = "База";
 "Model quota" = "Квота моделі";
-"Monthly Bobcoins" = "Bobcoins на місяць";
 "Shared pool" = "Спільний пул";
 "Bearer … or Cookie: …" = "Bearer … або Cookie: …";
 "On-demand" = "Використання за вимогою";
@@ -1306,27 +1284,19 @@
 "OpenCode Go accounts" = "Облікові записи OpenCode Go";
 "Store multiple OpenCode Go API keys or Cookie headers." = "Зберігайте кілька ключів OpenCode Go API або заголовків Cookie.";
 "API key or Cookie: …" = "Ключ API або Cookie: …";
-"Amp Free" = "Amp Free";
 "Individual and workspace credit balances from Amp." = "Залишки кредитів особистого облікового запису й робочого простору в Amp.";
 "Agent" = "Агент";
 "Bonus" = "Бонус";
 "Daily refresh" = "Щоденне оновлення";
 "session_id=…" = "session_id=…";
-"Raycast AI credits are a monthly allowance, not a cost history." = "Кредити Raycast AI — це місячний ліміт, а не історія витрат.";
 "Five-hour quota" = "П’ятигодинна квота";
 "Weekly tokens" = "Токени за тиждень";
-"Synthetic cost summary is not supported." = "Підсумок вартості Synthetic не підтримується.";
 "Add-on credits" = "Додаткові кредити";
-"Fuel Pack" = "Паливний пакет";
 "Daily free tokens" = "Безкоштовні токени за день";
 "Inference" = "Інференс";
-"ZeroGPU" = "ZeroGPU";
-"Credit balance from the Codebuff API" = "Баланс кредитів за даними API Codebuff";
 "Cookie header or bare session value" = "Заголовок Cookie або чисте значення сеансу";
 "Gemini Models" = "Моделі Gemini";
 "Claude and GPT" = "Claude і GPT";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "Personal budget" = "Особистий бюджет";
 "Team budget" = "Бюджет команди";
 "Standard" = "Стандартний";
@@ -1398,7 +1368,6 @@
 
 "Click a bar to explore. Use the menu below for exact amounts." = "Натисніть на стовпчик для перегляду деталей. Точні суми доступні в меню нижче.";
 
-
 // Structured session performance layout.
 "spend_performance_first_token" = "Перший токен";
 "spend_performance_output" = "Вивід за хід діалогу";
@@ -1424,13 +1393,10 @@
 /* Provider menu bar color */
 "Color by provider" = "Колір за провайдером";
 
-
-
 /* Tool activity (English fallback pending translation) */
 
 /* Account provider settings */
 "Account JWT" = "JWT облікового запису";
-"Account JWT, not an Agent Endpoint key" = "JWT облікового запису, а не ключ Agent Endpoint";
 "Input tokens" = "Вхідні токени";
 "Output tokens" = "Вихідні токени";
 "Pace sign" = "Знак темпу витрат";
@@ -1531,9 +1497,7 @@
 "Move down" = "Перемістити вниз";
 "Leave blank to keep the saved credential." = "Залиште порожнім, щоб зберегти поточні облікові дані.";
 
-
 "monthly_daily_target_format" = "≈ %@ на день, щоб вистачило до скидання";
-
 
 // Session usage browser
 "Search sessions" = "Пошук сеансів";
@@ -1550,7 +1514,6 @@
 "Turn %d" = "Хід %d";
 "Model requests" = "Запити до моделі";
 "Request %d" = "Запит %d";
-
 
 "Primary" = "Основне";
 "Secondary" = "Додаткове";

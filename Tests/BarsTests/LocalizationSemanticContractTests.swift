@@ -31,7 +31,6 @@ struct LocalizationSemanticContractTests {
         ("pl", "Unpriced", "bez określonej ceny"),
         ("sv", "Rate limit", "anropsfrekvens"),
         ("nl", "Optional project ID or slug. Leave blank for the default v0 scope.", "slug"),
-        ("pt-BR", "codex_workspaces_tokens", "Tokens"),
         ("pt-BR", "tab_menu", "Menu"),
         ("nl", "Account", "Account"),
         ("vi", "Unpriced", "chưa có giá"),
@@ -54,34 +53,21 @@ struct LocalizationSemanticContractTests {
         ("ar", "API est.", "تقدير"),
         ("nl", "Overage", "Meerverbruik"),
         ("th", "%@-hour limit", "ช่วง"),
-        ("fa", "Paste a cURL capture from the ZoomMate AI credit usage page.", "دستور"),
-        ("pl", "Credit balance from the Codebuff API", "Saldo kredytów"),
-        ("th", "Raycast AI credits are a monthly allowance, not a cost history.", "จัดสรร"),
     ])
     func `technical translations retain their domain meaning`(language: String, key: String, term: String) {
         #expect(L(key, language: language).contains(term))
     }
 
-    @Test(arguments: [("es", "Plan", "Plan"), ("pl", "codex_workspaces_model", "Model")])
+    @Test(arguments: [("es", "Plan", "Plan")])
     func `subscription and model labels use technical nouns`(language: String, key: String, expected: String) {
         #expect(L(key, language: language) == expected)
     }
 
     @Test
-    func `billing warnings and authentication guidance preserve operational meaning`() {
-        let billing = "AWS charges $0.01 per Cost Explorer request against the primary billing view. "
-            + "A refresh can make multiple requests, and CloudWatch activity can add charges. "
-            + "The displayed monthly budget does not cap AWS billing."
-        #expect(L(billing, language: "ko").contains("AWS 청구액의 상한을 설정하지 않습니다"))
+    func `authentication guidance preserves operational meaning`() {
         let organization = "Optional for automatic auth. Use a slug, URL, or internal org-... / org_... ID. "
             + "Manual auth may need the x-cog-org-id header from a successful Devin quota request."
         #expect(L(organization, language: "tr").contains("slug"))
-        let account = "Optional when the API key can access one account; bars discovers it automatically. "
-            + "For multiple accounts, find the slug in the app.fireworks.ai home account switcher "
-            + "or run firectl whoami."
-        for language in ["pl", "ru"] {
-            #expect(L(account, language: language).contains("slug"))
-        }
     }
 
     @Test(arguments: AppLanguage.allCases.filter { $0 != .system })

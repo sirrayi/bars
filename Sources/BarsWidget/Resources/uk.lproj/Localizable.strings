@@ -39,7 +39,6 @@
 "Activity" = "Активність";
 "Add-on credits" = "Додаткові кредити";
 "Agent" = "Агент";
-"Amp Free" = "Amp Free";
 "Balance" = "Баланс";
 "Base" = "База";
 "Billing" = "Оплата";
@@ -83,11 +82,9 @@
 "Five-hour quota" = "П’ятигодинна квота";
 "Flash" = "Flash";
 "Flash Lite" = "Flash Lite";
-"Fuel Pack" = "Паливний пакет";
 "Gemini Models" = "Моделі Gemini";
 "Inference" = "Інференс";
 "Key allowance" = "Ліміт ключа";
-"Kilo Pass" = "Kilo Pass";
 "Last %d days" = "За останні %d дн.";
 "Last 30 days" = "Останні 30 днів";
 "Memory" = "Пам’ять";
@@ -95,7 +92,6 @@
 "Model quota" = "Квота моделі";
 "Models" = "Моделі";
 "Monthly" = "Місячний";
-"Monthly Bobcoins" = "Bobcoins на місяць";
 "Monthly budget" = "Місячний бюджет";
 "Monthly credits" = "Щомісячні кредити";
 "Monthly quota" = "Місячна квота";
@@ -178,10 +174,7 @@
 "Weekly quota" = "Тижнева квота";
 "Weekly tokens" = "Токени за тиждень";
 "Window" = "Вікно використання";
-"ZeroGPU" = "ZeroGPU";
 "after reset" = "після скидання";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "budget spent" = "витрачено з бюджету";
 "conserving" = "заощадження квоти";
 "full" = "повний";

@@ -30,7 +30,6 @@
 "hooks_add_argument" = "Lägg till argument";
 "hooks_delete_argument" = "Ta bort argument";
 
-
 "(System)" = "(System)";
 "30d" = "30 d";
 "7d" = "7 d";
@@ -513,7 +512,6 @@
 "Admin API key" = "Admin-API-nyckel";
 "Google accounts" = "Google-konton";
 "No local data found" = "Inga lokala data hittades";
-"No available fetch strategy for minimax." = "Ingen tillgänglig hämtningsstrategi för minimax.";
 "No OpenCode session cookies found in browsers." = "Inga OpenCode-sessionscookies hittades i webbläsare.";
 "No available fetch strategy for %@." = "Ingen tillgänglig hämtningsstrategi för %@.";
 "Today" = "Idag";
@@ -627,13 +625,11 @@
 "API spend" = "API-kostnad";
 "Plan utilization chart" = "Diagram över plananvändning";
 "Organization ID" = "Organisations-ID";
-"bars could not replace the live Codex auth on this Mac." = "bars kunde inte ersätta aktiv Codex-autentisering på den här Mac-datorn.";
 "bars could not safely preserve the current system account before switching." = "bars kunde inte spara det aktuella systemkontot säkert före bytet.";
 "Sonnet" = "Sonnet";
 "4 days" = "4 dagar";
 "credits" = "krediter";
 "bars will ask macOS Keychain for “%@” so it can decrypt browser cookies and authenticate your account. Click OK to continue." = "bars kommer att be macOS Nyckelring om ”%@” så att webbläsarcookies kan dekrypteras och ditt konto autentiseras. Klicka på OK för att fortsätta.";
-"Timed out waiting for Cursor login. %@" = "Tidsgränsen nåddes i väntan på Cursor-inloggning. %@";
 "bars will ask macOS Keychain for your %@ cookie header so it can fetch usage. Click OK to continue." = "bars kommer att be macOS Nyckelring om din %@-cookie-header så att användning kan hämtas. Klicka på OK för att fortsätta.";
 "Usage remaining" = "Användning kvar";
 "Usage used" = "Användning förbrukad";
@@ -662,7 +658,6 @@
 "Your spend" = "Din utgift";
 "Stored in ~/.bars/config.json. Requires an Anthropic Admin API key." = "Sparas i ~/.bars/config.json. Kräver en Anthropic Admin API-nyckel.";
 "bars will ask macOS Keychain for your Claude cookie header so it can fetch Claude web usage. Click OK to continue." = "bars kommer att be macOS Nyckelring om din Claude-cookie-header så att Claude-webbanvändning kan hämtas. Klicka på OK för att fortsätta.";
-"bars will ask macOS Keychain for your z.ai API token so it can fetch usage. Click OK to continue." = "bars kommer att be macOS Nyckelring om din z.ai-API-token så att användning kan hämtas. Klicka på OK för att fortsätta.";
 "Verbosity" = "Detaljnivå";
 "%d days of usage data across %d services" = "%d dagar med användningsdata för %d tjänster";
 "Sort providers alphabetically" = "Sortera leverantörer alfabetiskt";
@@ -686,9 +681,7 @@
 "bars could not find saved auth for that account. Re-authenticate it and try again." = "bars kunde inte hitta sparad autentisering för kontot. Autentisera det igen och försök igen.";
 "Capacity End" = "Kapacitetsslut";
 "Copy error" = "Kopieringsfel";
-"bars will ask macOS Keychain for your MiniMax API token so it can fetch usage. Click OK to continue." = "bars kommer att be macOS Nyckelring om din MiniMax-API-token så att användning kan hämtas. Klicka på OK för att fortsätta.";
 "Project ID" = "Projekt-ID";
-"Timed out waiting for Cursor login. %@ Last error: %@" = "Tidsgränsen nåddes i väntan på Cursor-inloggning. %@ Senaste fel: %@";
 "bars can't replace a system account that is signed in with an API key only setup." = "bars kan inte ersätta ett systemkonto som är inloggat med en konfiguration som bara använder API-nyckel.";
 "Utilization Start" = "Användningsstart";
 "Credits remaining" = "Krediter kvar";
@@ -697,7 +690,6 @@
 "requests" = "förfrågningar";
 "bars could not save the current system account before switching." = "bars kunde inte spara det aktuella systemkontot före bytet.";
 "Last 30 days: %@ tokens" = "Senaste 30 dagarna: %@ token";
-"bars will ask macOS Keychain for your GitHub Copilot token so it can fetch usage. Click OK to continue." = "bars kommer att be macOS Nyckelring om din GitHub Copilot-token så att användning kan hämtas. Klicka på OK för att fortsätta.";
 "%.0f%% used" = "%.0f%% använt";
 "%d days of cost data" = "%d dagar med kostnadsdata";
 "Paste a Cookie header captured from %@." = "Klistra in en Cookie-header fångad från %@.";
@@ -712,13 +704,11 @@
 "%d utilization samples" = "%d användningsmätningar";
 "Cap start" = "Gränsstart";
 "Credits used" = "Använda krediter";
-"bars will ask macOS Keychain for your OpenAI cookie header so it can fetch Codex dashboard extras. Click OK to continue." = "bars kommer att be macOS Nyckelring om din OpenAI-cookie-header så att extra Codex-översiktsdata kan hämtas. Klicka på OK för att fortsätta.";
 "Re-login at claude.ai" = "Logga in igen på claude.ai";
 "Day" = "Dag";
 "Cap end" = "Gränsslut";
 "Label" = "Etikett";
 "Overage" = "Överförbrukning";
-"bars will ask macOS Keychain for your Kimi auth token so it can fetch usage. Click OK to continue." = "bars kommer att be macOS Nyckelring om din Kimi-autentiseringstoken så att användning kan hämtas. Klicka på OK för att fortsätta.";
 "Keychain Access Required" = "Åtkomst till Nyckelring krävs";
 "keychain_prompt_learn_more" = "Läs mer…";
 "keychain_prompt_privacy_note" = "Inmatningen av Mac-inloggningslösenordet hanteras av macOS, inte bars. Du kan när som helst inaktivera åtkomst till Nyckelring under Inställningar → Avancerat.";
@@ -737,7 +727,6 @@
 "%@ is waiting for permission" = "%@ väntar på behörighet";
 "Org ID (optional)" = "Org-ID (valfritt)";
 "%@ cookies are disabled." = "%@-cookies är inaktiverade.";
-"bars will ask macOS Keychain for your Synthetic API key so it can fetch usage. Click OK to continue." = "bars kommer att be macOS Nyckelring om din Synthetic-API-nyckel så att användning kan hämtas. Klicka på OK för att fortsätta.";
 "bars could not update managed account storage." = "bars kunde inte uppdatera hanterad kontolagring.";
 "Clear" = "Rensa";
 "No matching providers" = "Inga matchande leverantörer";
@@ -795,8 +784,6 @@
 
 "%@: %@" = "%@: %@";
 "Sign in with Claude Code..." = "Logga in med Claude Code...";
-"Timed out waiting for Cursor account switch. %@" = "Tidsgränsen överskreds i väntan på byte av Cursor-konto. %@";
-"Timed out waiting for Cursor account switch. %@ Last error: %@" = "Tidsgränsen överskreds i väntan på byte av Cursor-konto. %@ Senaste fel: %@";
 /* Spend dashboard */
 "tab_usage_spend" = "Användning och utgifter";
 "Usage & Spend" = "Användning och utgifter";
@@ -914,8 +901,6 @@
 "Run-out estimate unavailable" = "Tar slut: Inte tillgänglig";
 "Cost today unavailable" = "Kostnad idag: Inte tillgänglig";
 "Resets" = "Återställningar";
-"codex_workspaces_model" = "Modell";
-"codex_workspaces_tokens" = "Token";
 
 "Cumulative" = "Kumulativt";
 "Token activity" = "Token-aktivitet";
@@ -1073,12 +1058,10 @@
 "ALL" = "ALLA";
 "ALL-TIME SPEND" = "Totala historiska utgifter";
 "API est." = "API est.";
-"AWS charges $0.01 per Cost Explorer request against the primary billing view. A refresh can make multiple requests, and CloudWatch activity can add charges. The displayed monthly budget does not cap AWS billing." = "AWS debiterar 0,01 USD per Cost Explorer-begäran mot den primära faktureringsvyn. En uppdatering kan göra flera förfrågningar och CloudWatch-aktivitet kan lägga till avgifter. Den visade månadsbudgeten täcker inte AWS-fakturering.";
 "Account %@" = "Konto %@";
 "Account Added" = "Konto har lagts till";
 "Account Usage" = "Kontoanvändning";
 "Account slug" = "Kontoidentifierare (slug)";
-"Account switched; restart the Codex background server manually." = "Konto bytte; starta om Codex-bakgrundsservern manuellt.";
 "Allow reading Claude Code's credentials" = "Tillåt läsning av Claude Codes referenser";
 "Automatically imports the app.devin.ai session from Chromium browsers." = "Importerar automatiskt app.devin.ai-sessionen från Chromium-webbläsare.";
 "BY USAGE" = "Rangordnat efter användning";
@@ -1137,10 +1120,8 @@
 "Open Devin Usage" = "Öppna användningssidan för Devin";
 "OpenCode API key" = "OpenCode API nyckel";
 "Optional for automatic auth. Use a slug, URL, or internal org-... / org_... ID. Manual auth may need the x-cog-org-id header from a successful Devin quota request." = "Valfritt för automatisk autentisering. Använd en slug, URL eller intern org-... / org_... ID. Manuell autentisering kan behöva x-cog-org-id-huvudet från en framgångsrik Devin Kvot-begäran.";
-"Optional when the API key can access one account; bars discovers it automatically. For multiple accounts, find the slug in the app.fireworks.ai home account switcher or run firectl whoami." = "Valfritt när API-nyckeln kan komma åt ett konto; bars upptäcker det automatiskt. För flera konton, hitta slug i app.fireworks.ai hemkontoväxlare eller kör firectl whoami.";
 "Organization" = "Organisation";
 "PARTIAL" = "DELVIS";
-"Paste a cURL capture from the ZoomMate AI credit usage page." = "Klistra in en cURL-fångst från ZoomMate AI Krediter användningssida.";
 "Paste an Authorization Bearer token from app.devin.ai." = "Klistra in en Authorization Bearer token från app.devin.ai.";
 "Paste the Authorization header value from app.devin.ai." = "Klistra in Authorization-huvudvärdet från app.devin.ai.";
 "Path to the cswap executable (github.com/realiti4/claude-swap)." = "Sökväg till den körbara cswap (github.com/realiti4/claude-swap).";
@@ -1251,7 +1232,6 @@
 "/Applications/TcrBar.app/Contents/MacOS/tcr" = "/Applications/TcrBar.app/Contents/MacOS/tcr";
 
 // Additional localized settings, provider controls, sharing, and widgets.
-"Kilo Pass" = "Kilo Pass";
 "Plan credits" = "Prenumerationsplan Krediter";
 "Premium weekly" = "Premium veckovis användning Kvot";
 "Memory" = "Minnesanvändning";
@@ -1284,11 +1264,9 @@
 "Tokens" = "token";
 "Budget" = "Budget";
 "Secondary budget" = "Sekundär budget";
-"Project-scoped Aixy key used to read its own usage and applicable budgets." = "Projektomfattande Aixy-nyckel som används för att läsa dess egen användning och tillämpliga budgetar.";
 "Prompts" = "Uppmaningar";
 "Base" = "Bas";
 "Model quota" = "Modell Kvot";
-"Monthly Bobcoins" = "Månatliga Bobcoins";
 "Shared pool" = "Gemensam kvot";
 "Bearer … or Cookie: …" = "Bearer … eller Cookie: …";
 "On-demand" = "Användning på begäran";
@@ -1304,27 +1282,19 @@
 "OpenCode Go accounts" = "OpenCode Go-konton";
 "Store multiple OpenCode Go API keys or Cookie headers." = "Lagra flera OpenCode Go API-nycklar eller Cookie-huvuden.";
 "API key or Cookie: …" = "API-nyckel eller Cookie: …";
-"Amp Free" = "Amp gratis";
 "Individual and workspace credit balances from Amp." = "Kreditsaldon för enskilda konton och arbetsytor i Amp.";
 "Agent" = "Agent";
 "Bonus" = "Bonus";
 "Daily refresh" = "Daglig uppdatering";
 "session_id=…" = "session_id=…";
-"Raycast AI credits are a monthly allowance, not a cost history." = "Raycast AI Krediter är en månatlig ersättning, inte en kostnadshistorik.";
 "Five-hour quota" = "Fem timmars Kvot";
 "Weekly tokens" = "Veckovis token";
-"Synthetic cost summary is not supported." = "Synthetic kostnadsöversikt stöds inte.";
 "Add-on credits" = "Tillägg Krediter";
-"Fuel Pack" = "Bränslepaket";
 "Daily free tokens" = "Daglig gratis token";
 "Inference" = "Slutledning";
-"ZeroGPU" = "ZeroGPU";
-"Credit balance from the Codebuff API" = "Krediter saldo från Codebuff API";
 "Cookie header or bare session value" = "Cookie rubrik eller obegränsat sessionsvärde";
 "Gemini Models" = "Gemini-modeller";
 "Claude and GPT" = "Claude och GPT";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "Personal budget" = "Personlig budget";
 "Team budget" = "Lagbudget";
 "Standard" = "Standard";
@@ -1396,7 +1366,6 @@
 
 "Click a bar to explore. Use the menu below for exact amounts." = "Klicka på en stapel för detaljer. Menyn nedan visar exakta belopp.";
 
-
 // Structured session performance layout.
 "spend_performance_first_token" = "Första token";
 "spend_performance_output" = "Utdata per samtalstur";
@@ -1422,13 +1391,10 @@
 /* Provider menu bar color */
 "Color by provider" = "Färg per leverantör";
 
-
-
 /* Tool activity (English fallback pending translation) */
 
 /* Account provider usage and credentials */
 "Account JWT" = "JWT för kontot";
-"Account JWT, not an Agent Endpoint key" = "JWT för kontot, inte en Agent Endpoint-nyckel";
 "Input tokens" = "Indatatoken";
 "Output tokens" = "Utdatatoken";
 "Pace sign" = "Tecken för förbrukningstakt";
@@ -1529,9 +1495,7 @@
 "Move down" = "Flytta ned";
 "Leave blank to keep the saved credential." = "Lämna tomt för att behålla de sparade inloggningsuppgifterna.";
 
-
 "monthly_daily_target_format" = "≈ %@ / dag för att räcka till återställningen";
-
 
 // Session usage browser
 "Search sessions" = "Sök sessioner";
@@ -1548,7 +1512,6 @@
 "Turn %d" = "Tur %d";
 "Model requests" = "Modellförfrågningar";
 "Request %d" = "Förfrågan %d";
-
 
 "Primary" = "Primärt";
 "Secondary" = "Sekundärt";

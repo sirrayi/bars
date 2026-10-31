@@ -39,7 +39,6 @@
 "Activity" = "活動";
 "Add-on credits" = "額外購買的額度";
 "Agent" = "智能體";
-"Amp Free" = "Amp Free";
 "Balance" = "餘額";
 "Base" = "基礎";
 "Billing" = "計費";
@@ -83,11 +82,9 @@
 "Five-hour quota" = "5 小時額度";
 "Flash" = "Flash";
 "Flash Lite" = "Flash Lite";
-"Fuel Pack" = "燃料包";
 "Gemini Models" = "Gemini 模型";
 "Inference" = "推理";
 "Key allowance" = "密鑰額度";
-"Kilo Pass" = "Kilo Pass";
 "Last %d days" = "近 %d 天";
 "Last 30 days" = "近 30 天";
 "Memory" = "內存";
@@ -95,7 +92,6 @@
 "Model quota" = "模型額度";
 "Models" = "模型";
 "Monthly" = "每月";
-"Monthly Bobcoins" = "每月 Bobcoin 額度";
 "Monthly budget" = "每月預算";
 "Monthly credits" = "每月 額度";
 "Monthly quota" = "每月額度";
@@ -178,10 +174,7 @@
 "Weekly quota" = "每周額度";
 "Weekly tokens" = "每周 token";
 "Window" = "使用週期";
-"ZeroGPU" = "ZeroGPU";
 "after reset" = "重置之後";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "budget spent" = "額度已耗盡";
 "conserving" = "節省額度";
 "full" = "額度充足";

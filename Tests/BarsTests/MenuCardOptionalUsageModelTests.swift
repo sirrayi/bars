@@ -19,7 +19,7 @@ struct MenuCardOptionalUsageModelTests {
             updatedAt: now,
             identity: identity)
         let metadata = try #require(ProviderDefaults.metadata[.opencode])
-        let credits = CreditsSnapshot(remaining: 12, events: [], updatedAt: now)
+        let credits = CreditsSnapshot(remaining: 12, updatedAt: now)
 
         let model = UsageMenuCardView.Model.make(.init(
             provider: .opencode,

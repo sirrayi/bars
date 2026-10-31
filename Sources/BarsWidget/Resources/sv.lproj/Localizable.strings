@@ -39,7 +39,6 @@
 "Activity" = "Aktivitet";
 "Add-on credits" = "Tillägg Krediter";
 "Agent" = "Agent";
-"Amp Free" = "Amp gratis";
 "Balance" = "Saldo";
 "Base" = "Bas";
 "Billing" = "Fakturering";
@@ -83,11 +82,9 @@
 "Five-hour quota" = "Fem timmars Kvot";
 "Flash" = "Flash";
 "Flash Lite" = "Flash Lite";
-"Fuel Pack" = "Bränslepaket";
 "Gemini Models" = "Gemini-modeller";
 "Inference" = "Slutledning";
 "Key allowance" = "Användningstillägg för denna API-nyckel";
-"Kilo Pass" = "Kilo Pass";
 "Last %d days" = "Senaste %d dagarna";
 "Last 30 days" = "Senaste 30 dagarna";
 "Memory" = "Minnesanvändning";
@@ -95,7 +92,6 @@
 "Model quota" = "Modell Kvot";
 "Models" = "Modeller";
 "Monthly" = "Månadsvis";
-"Monthly Bobcoins" = "Månatliga Bobcoins";
 "Monthly budget" = "Månadsbudget";
 "Monthly credits" = "Månatlig Krediter";
 "Monthly quota" = "Månatlig Kvot";
@@ -178,10 +174,7 @@
 "Weekly quota" = "Veckovis Kvot";
 "Weekly tokens" = "Veckovis token";
 "Window" = "Användningsfönster";
-"ZeroGPU" = "ZeroGPU";
 "after reset" = "efter återställning";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "budget spent" = "Kvot-budgeten är slut";
 "conserving" = "bevara Kvot";
 "full" = "fullständig Kvot tillgänglig";

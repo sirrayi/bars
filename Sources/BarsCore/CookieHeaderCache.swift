@@ -657,10 +657,6 @@ public enum CookieHeaderCache {
     /// Clears all cookie cache scopes for one provider.
     /// Returns keychain/legacy removal and failure counts.
     @discardableResult
-    public static func clearAllScopes(provider: UsageProvider) -> Int {
-        self.clearAllScopesDetailed(provider: provider).clearedCount
-    }
-
     public static func clearAllScopesDetailed(provider: UsageProvider) -> ClearSummary {
         do {
             return try self.withLegacyMutationLock {

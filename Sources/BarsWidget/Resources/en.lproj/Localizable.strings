@@ -39,7 +39,6 @@
 "Activity" = "Activity";
 "Add-on credits" = "Add-on credits";
 "Agent" = "Agent";
-"Amp Free" = "Amp Free";
 "Balance" = "Balance";
 "Base" = "Base";
 "Billing" = "Billing";
@@ -83,11 +82,9 @@
 "Five-hour quota" = "Five-hour quota";
 "Flash" = "Flash";
 "Flash Lite" = "Flash Lite";
-"Fuel Pack" = "Fuel Pack";
 "Gemini Models" = "Gemini Models";
 "Inference" = "Inference";
 "Key allowance" = "Key allowance";
-"Kilo Pass" = "Kilo Pass";
 "Last %d days" = "Last %d days";
 "Last 30 days" = "Last 30 days";
 "Memory" = "Memory";
@@ -95,7 +92,6 @@
 "Model quota" = "Model quota";
 "Models" = "Models";
 "Monthly" = "Monthly";
-"Monthly Bobcoins" = "Monthly Bobcoins";
 "Monthly budget" = "Monthly budget";
 "Monthly credits" = "Monthly credits";
 "Monthly quota" = "Monthly quota";
@@ -178,10 +174,7 @@
 "Weekly quota" = "Weekly quota";
 "Weekly tokens" = "Weekly tokens";
 "Window" = "Window";
-"ZeroGPU" = "ZeroGPU";
 "after reset" = "after reset";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "budget spent" = "budget spent";
 "conserving" = "conserving";
 "full" = "full";

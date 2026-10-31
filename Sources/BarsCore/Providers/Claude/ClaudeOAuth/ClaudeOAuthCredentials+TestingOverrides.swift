@@ -459,22 +459,6 @@ extension ClaudeOAuthCredentialsStore {
         }
     }
 
-    public static func withCurrentTestingOverridesForTask<T>(
-        operation: () async throws -> T) async rethrows -> T
-    {
-        try await self.withTestingOverridesSnapshotForTask(
-            self.currentTestingOverridesSnapshotForTask,
-            operation: operation)
-    }
-
-    public static func withCurrentTestingOverridesForTask<T>(
-        operation: () throws -> T) rethrows -> T
-    {
-        try self.withTestingOverridesSnapshotForTask(
-            self.currentTestingOverridesSnapshotForTask,
-            operation: operation)
-    }
-
     public static var currentTestingOverridesSnapshotForTask: TestingOverridesSnapshot {
         TestingOverridesSnapshot(
             keychainOverrideStore: self.taskClaudeKeychainOverrideStore,

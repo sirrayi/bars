@@ -39,7 +39,6 @@
 "Activity" = "Aktivitas";
 "Add-on credits" = "Tambahan Kredit";
 "Agent" = "Agen";
-"Amp Free" = "Amp Gratis";
 "Balance" = "Saldo";
 "Base" = "Pangkalan";
 "Billing" = "Penagihan";
@@ -83,11 +82,9 @@
 "Five-hour quota" = "Kuota lima jam";
 "Flash" = "Flash";
 "Flash Lite" = "Flash Lite";
-"Fuel Pack" = "Paket Bahan Bakar";
 "Gemini Models" = "Model Gemini";
 "Inference" = "Kesimpulan";
 "Key allowance" = "Tunjangan penggunaan untuk kunci API ini";
-"Kilo Pass" = "Tiket Kilo";
 "Last %d days" = "%d hari terakhir";
 "Last 30 days" = "30 hari terakhir";
 "Memory" = "Penggunaan memori";
@@ -95,7 +92,6 @@
 "Model quota" = "Model Kuota";
 "Models" = "Model";
 "Monthly" = "Bulanan";
-"Monthly Bobcoins" = "Bobcoin Bulanan";
 "Monthly budget" = "Anggaran bulanan";
 "Monthly credits" = "Kredit bulanan";
 "Monthly quota" = "Kuota bulanan";
@@ -178,10 +174,7 @@
 "Weekly quota" = "Kuota mingguan";
 "Weekly tokens" = "token mingguan";
 "Window" = "Jendela penggunaan";
-"ZeroGPU" = "ZeroGPU";
 "after reset" = "setelah diatur ulang";
-"antigravity-cli-usage" = "antigravity-cli-usage";
-"antigravity-cli-version" = "antigravity-cli-version";
 "budget spent" = "Anggaran Kuota habis";
 "conserving" = "melestarikan Kuota";
 "full" = "Kuota lengkap tersedia";
