@@ -131,6 +131,9 @@ let package = Package(
                     "BarsCore",
                 ],
                 path: "Sources/Bars",
+                // Icon-classic.icns is read from Bundle.main, which package_app.sh populates from the
+                // source directory; processing it here too ships a dead 620 KB copy in bars_Bars.bundle.
+                exclude: ["Resources/Icon-classic.icns"],
                 resources: [
                     .process("Resources"),
                 ],
