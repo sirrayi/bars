@@ -19,13 +19,6 @@ public struct ProviderBrowserProfile: Sendable, Equatable {
     }
 
     #if os(macOS)
-    private static func isPermissionError(_ error: Error) -> Bool {
-        let error = error as NSError
-        if error.domain == NSCocoaErrorDomain, error.code == CocoaError.fileReadNoPermission.rawValue { return true }
-        if error.domain == NSPOSIXErrorDomain, error.code == Int(EACCES) || error.code == Int(EPERM) { return true }
-        guard let underlying = error.userInfo[NSUnderlyingErrorKey] as? Error else { return false }
-        return Self.isPermissionError(underlying)
-    }
     #endif
 }
 

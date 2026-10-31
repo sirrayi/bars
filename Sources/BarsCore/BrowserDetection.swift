@@ -369,7 +369,7 @@ public final class BrowserDetection: Sendable {
         return Self.isMissingFileError(underlying)
     }
 
-    private static func isPermissionError(_ error: Error) -> Bool {
+    static func isPermissionError(_ error: Error) -> Bool {
         let nsError = error as NSError
         if nsError.domain == NSCocoaErrorDomain,
            nsError.code == CocoaError.fileReadNoPermission.rawValue
