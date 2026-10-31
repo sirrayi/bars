@@ -202,18 +202,20 @@ public struct OpenCodeGoUsageSnapshot: Sendable {
     }
 
     /// Projects the recorded per-day cost buckets into the shared cost-history model so OpenCode Go
-    /// can reuse the same daily usage chart as Claude instead of a bespoke view. Console-metered rows
+    /// can reuse the same daily usage chart as Claude instead of a bespoke view. Console-billed rows
     /// are the amounts OpenCode charged; local rows are emulated model costs, so they stay estimates.
     public func toCostUsageTokenSnapshot(
         historyDays: Int = 30,
         calendar: Calendar = .current) -> CostUsageTokenSnapshot
     {
-        CostUsageFetcher.tokenSnapshot(
+        if let billed = self.billed {
+            return billed.toCostUsageTokenSnapshot(historyDays: historyDays, calendar: calendar)
+        }
+        return CostUsageFetcher.tokenSnapshot(
             from: CostUsageDailyReport(data: self.daily, summary: nil),
             now: self.updatedAt,
             historyDays: historyDays,
             calendar: calendar,
-            meteredCostUSD: self.billed?.costUSD,
-            costProvenance: self.billed == nil ? .listPriceEstimate : .vendorMetered)
+            costProvenance: .listPriceEstimate)
     }
 }

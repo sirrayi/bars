@@ -35,8 +35,14 @@ struct OpenCodeGoExportCache: @unchecked Sendable {
             .appendingPathComponent("opencodego-export", isDirectory: true)
     }
 
+    /// Tests must never reuse the developer's real cache, which would make stubbed fetches read live rows.
+    private var isDisabled: Bool {
+        TestProcessSafety.isRunning
+    }
+
     /// Returns the cached export text when it is younger than `maximumAge`.
     func load(range: String, now: Date = Date()) -> String? {
+        guard !self.isDisabled else { return nil }
         let url = self.url(for: range)
         guard let attributes = try? self.fileManager.attributesOfItem(atPath: url.path),
               let modified = attributes[.modificationDate] as? Date,
@@ -49,6 +55,7 @@ struct OpenCodeGoExportCache: @unchecked Sendable {
 
     /// Best effort: a cache that cannot be written must never fail the fetch.
     func store(_ text: String, range: String) {
+        guard !self.isDisabled else { return }
         let url = self.url(for: range)
         try? self.fileManager.createDirectory(
             at: self.root,

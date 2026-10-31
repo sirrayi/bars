@@ -22,24 +22,26 @@ extension CostUsageFetcher {
     {
         guard let apiKey = OpenCodeGoSettingsReader.apiKey(environment: environment) else { return nil }
         do {
-            guard let billed = try await OpenCodeGoConsoleFetcher.fetchBilledUsage(
-                read: OpenCodeGoConsoleFetcher.Read(
-                    apiKey: apiKey,
-                    timeout: Self.openCodeGoConsoleTimeout,
-                    session: .shared),
+            let read = OpenCodeGoConsoleFetcher.Read(
+                apiKey: apiKey,
+                timeout: Self.openCodeGoConsoleTimeout,
+                session: .shared)
+            guard let billed = try await OpenCodeGoConsoleFetcher.billedUsage(
+                exportText: OpenCodeGoConsoleFetcher.fetchExportText(
+                    read: read,
+                    historyDays: historyDays,
+                    now: now),
+                periodStart: try? OpenCodeGoConsoleFetcher.fetchMeters(read: read, now: now)?.periodStart,
                 historyDays: historyDays,
-                now: now),
+                now: now,
+                read: read),
                 !billed.daily.isEmpty
             else {
                 return nil
             }
-            return CostUsageTokenResult(snapshot: Self.tokenSnapshot(
-                from: CostUsageDailyReport(data: billed.daily, summary: nil),
-                now: now,
+            return CostUsageTokenResult(snapshot: billed.toCostUsageTokenSnapshot(
                 historyDays: historyDays,
-                calendar: calendar,
-                meteredCostUSD: billed.costUSD,
-                costProvenance: .vendorMetered))
+                calendar: calendar))
         } catch {
             return nil
         }

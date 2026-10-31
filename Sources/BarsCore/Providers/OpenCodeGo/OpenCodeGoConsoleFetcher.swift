@@ -38,12 +38,26 @@ enum OpenCodeGoConsoleFetcher {
         }
     }
 
+    /// Quota meters plus the window they are measured over.
+    struct Meters {
+        let snapshot: OpenCodeGoUsageSnapshot
+        /// Start of the current subscription period. Usage before it belongs to an earlier
+        /// subscription and is not part of the quota these meters describe.
+        let periodStart: Date?
+    }
+
     /// Reads the exact micro-cent quota meters. Returns `nil` when the Console is reachable but does
     /// not report Go access, so callers can fall back to the public API instead of failing.
-    static func fetchMeters(read: Read, now: Date = Date()) async throws -> OpenCodeGoUsageSnapshot? {
+    static func fetchMeters(read: Read, now: Date = Date()) async throws -> Meters? {
         let text = try await self.fetchText(url: self.goStatusURL, read: read)
-        guard let text else { return nil }
-        return OpenCodeGoUsageFetcher.parseConsoleGoStatus(text: text, now: now)
+        guard let text,
+              let snapshot = OpenCodeGoUsageFetcher.parseConsoleGoStatus(text: text, now: now)
+        else {
+            return nil
+        }
+        return Meters(
+            snapshot: snapshot,
+            periodStart: OpenCodeGoUsageFetcher.consolePeriodStart(text: text))
     }
 
     /// Reads the prepaid Zen balance with the API key, which keeps the balance row available without
@@ -55,19 +69,34 @@ enum OpenCodeGoConsoleFetcher {
         return try? OpenCodeGoZenBalanceParser.parseConsoleBillingStatus(text: text)
     }
 
-    /// Reads metered spend and billed token counts for the configured cost window.
-    static func fetchBilledUsage(
+    /// Fetches the per-day export text for the configured window, reusing a recent cached copy.
+    static func fetchExportText(
         read: Read,
         historyDays: Int,
         now: Date = Date(),
-        cache: OpenCodeGoExportCache = OpenCodeGoExportCache()) async throws -> OpenCodeGoBilledUsage?
+        cache: OpenCodeGoExportCache = OpenCodeGoExportCache()) async throws -> String?
+    {
+        try await self.exportText(
+            read,
+            range: self.range(historyDays: historyDays),
+            now: now,
+            cache: cache)
+    }
+
+    /// Rolls an export into billed spend and token counts, bounded by the current period.
+    static func billedUsage(
+        exportText: String?,
+        periodStart: Date?,
+        historyDays: Int,
+        now: Date = Date(),
+        read: Read) async throws -> OpenCodeGoBilledUsage?
     {
         let range = self.range(historyDays: historyDays)
-        let exportText = try await self.exportText(read, range: range, now: now, cache: cache)
         if let exportText {
             let rows = OpenCodeGoConsoleUsageParser.parseExport(text: exportText)
             if let billed = OpenCodeGoConsoleUsageParser.billedUsage(
                 rows: rows,
+                periodStart: periodStart,
                 historyDays: historyDays,
                 updatedAt: now)
             {

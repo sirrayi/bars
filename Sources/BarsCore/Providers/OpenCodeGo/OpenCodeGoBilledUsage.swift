@@ -84,6 +84,23 @@ public struct OpenCodeGoBilledUsage: Sendable, Equatable {
     /// The provider id OpenCode bills Go subscription requests under. Workspace exports also carry
     /// free Zen rows that were never billed to the Go meters.
     static let billableProvider = "opencode-go"
+
+    /// Projects billed rows into the shared cost-history model. Console rows are bounded by the
+    /// current subscription, so they line up with opencode.ai's totals and must not claim a rolling
+    /// window.
+    public func toCostUsageTokenSnapshot(
+        historyDays: Int = 30,
+        calendar: Calendar = .current) -> CostUsageTokenSnapshot
+    {
+        CostUsageFetcher.tokenSnapshot(
+            from: CostUsageDailyReport(data: self.daily, summary: nil),
+            now: self.updatedAt,
+            historyDays: historyDays,
+            calendar: calendar,
+            meteredCostUSD: self.costUSD,
+            costProvenance: .vendorMetered,
+            historyLabel: "This billing period")
+    }
 }
 
 /// Parsing for the Console usage endpoints. Kept free of networking so fixtures can cover them.
@@ -342,10 +359,18 @@ enum OpenCodeGoConsoleUsageParser {
     /// and the window totals the Console's separate summary endpoint used to supply.
     static func billedUsage(
         rows: [ExportRow],
+        periodStart: Date? = nil,
         historyDays: Int,
         updatedAt: Date) -> OpenCodeGoBilledUsage?
     {
-        let billable = rows.filter { $0.provider == OpenCodeGoBilledUsage.billableProvider }
+        let boundary = periodStart.map { Self.utcDayKey(for: $0) }
+        let billable = rows.filter { row in
+            guard row.provider == OpenCodeGoBilledUsage.billableProvider else { return false }
+            // Rows before the current subscription started were billed against a previous one, so the
+            // running totals and quota meters would otherwise disagree with opencode.ai.
+            guard let boundary else { return true }
+            return row.day >= boundary
+        }
         guard !billable.isEmpty else { return nil }
         return OpenCodeGoBilledUsage(
             historyDays: historyDays,
@@ -413,6 +438,18 @@ enum OpenCodeGoConsoleUsageParser {
                 totalTokens: self.sum(rows.map(\.totalTokens)),
                 costUSD: self.totalCost(rows.map(\.costUSD)))
         }
+    }
+
+    /// Console days are UTC dates, so the period boundary has to be compared in UTC too.
+    private static func utcDayKey(for date: Date) -> String {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .current
+        let parts = calendar.dateComponents([.year, .month, .day], from: date)
+        return String(
+            format: "%04d-%02d-%02d",
+            parts.year ?? 0,
+            parts.month ?? 0,
+            parts.day ?? 0)
     }
 
     /// Totals only when every row carried a cost; an unpriced row must not read as a priced zero.

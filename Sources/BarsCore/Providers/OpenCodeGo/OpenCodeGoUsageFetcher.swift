@@ -231,37 +231,34 @@ public struct OpenCodeGoUsageFetcher: Sendable {
     /// The meters and the spend window are independent requests, so the optional one runs alongside
     /// the required one and is joined afterwards; awaiting them in sequence doubled the cold cost.
     private static func consoleUsage(_ request: APIKeyRequest) async throws -> OpenCodeGoUsageSnapshot? {
-        let billedTask = request.includeBilledUsage
-            ? Task { try await OpenCodeGoConsoleFetcher.fetchBilledUsage(
-                read: OpenCodeGoConsoleFetcher.Read(
-                    apiKey: request.token,
-                    timeout: request.timeout,
-                    session: request.session),
+        let read = OpenCodeGoConsoleFetcher.Read(
+            apiKey: request.token,
+            timeout: request.timeout,
+            session: request.session)
+        // The export is independent of the meters, so it downloads alongside them and is only rolled
+        // up once the meters reveal where the current billing period starts.
+        let exportTask = request.includeBilledUsage
+            ? Task { try await OpenCodeGoConsoleFetcher.fetchExportText(
+                read: read,
                 historyDays: request.historyDays,
                 now: request.now) }
             : nil
         let balanceTask = request.includeZenBalance
-            ? Task { try await OpenCodeGoConsoleFetcher.fetchZenBalance(read: OpenCodeGoConsoleFetcher.Read(
-                apiKey: request.token,
-                timeout: request.timeout,
-                session: request.session)) }
+            ? Task { try await OpenCodeGoConsoleFetcher.fetchZenBalance(read: read) }
             : nil
         defer {
-            billedTask?.cancel()
+            exportTask?.cancel()
             balanceTask?.cancel()
         }
-        let snapshot: OpenCodeGoUsageSnapshot
+        let meters: OpenCodeGoConsoleFetcher.Meters
         do {
             guard let metered = try await OpenCodeGoConsoleFetcher.fetchMeters(
-                read: OpenCodeGoConsoleFetcher.Read(
-                    apiKey: request.token,
-                    timeout: request.timeout,
-                    session: request.session),
+                read: read,
                 now: request.now)
             else {
                 return nil
             }
-            snapshot = metered
+            meters = metered
         } catch is CancellationError {
             throw CancellationError()
         } catch let error as URLError where error.code == .cancelled {
@@ -270,8 +267,17 @@ public struct OpenCodeGoUsageFetcher: Sendable {
             Self.log.debug("OpenCode Go console meters unavailable: \(error.localizedDescription)")
             return nil
         }
-        var result = snapshot
-        if let billedTask {
+        var result = meters.snapshot
+        if let exportTask {
+            let billedTask = Task {
+                try await OpenCodeGoConsoleFetcher.billedUsage(
+                    exportText: exportTask.value,
+                    periodStart: meters.periodStart,
+                    historyDays: request.historyDays,
+                    now: request.now,
+                    read: read)
+            }
+            defer { billedTask.cancel() }
             result = try await Self.joinedBilledUsage(
                 result,
                 task: billedTask,
@@ -314,13 +320,26 @@ public struct OpenCodeGoUsageFetcher: Sendable {
         }
         let snapshot = try self.parseAPIUsage(text: text, now: apiRequest.now)
         guard apiRequest.includeBilledUsage else { return snapshot }
-        let billedTask = Task { try await OpenCodeGoConsoleFetcher.fetchBilledUsage(
-            read: OpenCodeGoConsoleFetcher.Read(
-                apiKey: apiRequest.token,
-                timeout: apiRequest.timeout,
-                session: apiRequest.session),
-            historyDays: apiRequest.historyDays,
-            now: apiRequest.now) }
+        // The public API carries no period boundary, so the billed window keeps its own rows; the
+        // Console is read for the boundary when it is reachable.
+        let read = OpenCodeGoConsoleFetcher.Read(
+            apiKey: apiRequest.token,
+            timeout: apiRequest.timeout,
+            session: apiRequest.session)
+        let periodStart = try? await OpenCodeGoConsoleFetcher.fetchMeters(
+            read: read,
+            now: apiRequest.now)?.periodStart
+        let billedTask = Task {
+            try await OpenCodeGoConsoleFetcher.billedUsage(
+                exportText: OpenCodeGoConsoleFetcher.fetchExportText(
+                    read: read,
+                    historyDays: apiRequest.historyDays,
+                    now: apiRequest.now),
+                periodStart: periodStart,
+                historyDays: apiRequest.historyDays,
+                now: apiRequest.now,
+                read: read)
+        }
         defer { billedTask.cancel() }
         return try await Self.joinedBilledUsage(snapshot, task: billedTask, failureLabel: "billed usage")
     }
@@ -657,6 +676,19 @@ extension OpenCodeGoUsageFetcher {
         else { return nil }
         let candidate = url.pathComponents[index + 1]
         return self.isConsoleWorkspaceID(candidate) ? candidate : nil
+    }
+
+    /// Start of the current subscription period from a `go/status` payload. Export rows before it
+    /// belong to an earlier subscription, so counting them would report spend the current quota never
+    /// charged against — the same reason opencode.ai's own totals start at the period boundary.
+    static func consolePeriodStart(text: String) -> Date? {
+        guard let data = text.data(using: .utf8),
+              let root = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+              let access = root["access"] as? [String: Any]
+        else {
+            return nil
+        }
+        return OpenCodeWebParsing.dateValue(from: access["startsAt"])
     }
 
     /// Converts the console's micro-cent meters into the percentage windows the snapshot models.

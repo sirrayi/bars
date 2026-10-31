@@ -135,6 +135,33 @@ struct OpenCodeGoConsoleUsageParserTests {
     }
 
     @Test
+    func `rows before the current subscription period are excluded from billed totals`() throws {
+        let rows = try OpenCodeGoConsoleUsageParser.parseExport(text: self.loadExportFixture())
+        let periodStart = try #require(ISO8601DateFormatter().date(from: "2026-10-29T19:07:22Z"))
+
+        let bounded = try #require(OpenCodeGoConsoleUsageParser.billedUsage(
+            rows: rows,
+            periodStart: periodStart,
+            historyDays: 30,
+            updatedAt: Date(timeIntervalSince1970: 1_793_000_000)))
+
+        // Only the two member days inside the period survive; the earlier service-account days,
+        // including the 100M-token 2026-10-15 row, belonged to a previous subscription.
+        #expect(bounded.daily.map(\.date) == ["2026-10-29", "2026-10-30"])
+        #expect(bounded.totalTokens == 20_543_118 + 36_148_054)
+        #expect(abs((bounded.costUSD ?? 0) - (0.95163306 + 0.58877742)) < 0.0000001)
+        #expect(bounded.models.map(\.model) == ["deepseek-v4.1-flash", "deepseek-v4-pro"])
+
+        // The same rows without a boundary keep the whole 30-day window.
+        let unbounded = try #require(OpenCodeGoConsoleUsageParser.billedUsage(
+            rows: rows,
+            historyDays: 30,
+            updatedAt: Date(timeIntervalSince1970: 1_793_000_000)))
+        #expect(unbounded.daily.count == 7)
+        #expect(unbounded.totalTokens == 20_543_118 + 36_148_054 + 99_996_647 + 1_431_766 + 10_077_048 + 16616 + 36838)
+    }
+
+    @Test
     func `an export with no billable rows falls through to no billed usage`() {
         let rows: [OpenCodeGoConsoleUsageParser.ExportRow] = []
         #expect(OpenCodeGoConsoleUsageParser.billedUsage(
