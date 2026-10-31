@@ -4,7 +4,7 @@ SHELL := /bin/bash
 unexport FILTER
 test_filter_arg = $(if $(value FILTER),--filter '$(subst ','"'"',$(value FILTER))')
 
-.PHONY: build check docs-list format lint release restart start start-debug start-release stop test test-fast test-skip-build test-live test-tty
+.PHONY: bench build check docs-list format lint release restart start start-debug start-release stop test test-fast test-skip-build test-live test-tty
 
 start:
 	./Scripts/compile_and_run.sh
@@ -15,7 +15,7 @@ start-debug:
 start-release:
 	./Scripts/package_app.sh release
 	pkill -x bars || pkill -f bars.app || true
-	cd /Users/steipete/Projects/bars && open -n /Users/steipete/Projects/bars/bars.app
+	open "${CURDIR}/bars.app"
 
 restart: start
 
@@ -30,6 +30,9 @@ format:
 
 docs-list:
 	node Scripts/docs-list.mjs
+
+bench:
+	./Scripts/bench-fetch.sh $(if $(value PROVIDERS),PROVIDERS='$(value PROVIDERS)') $(if $(value RUNS),RUNS='$(value RUNS)')
 
 build:
 	swift build
